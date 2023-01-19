@@ -1,4 +1,4 @@
-CREATE TABLE lyra.platform
+CREATE TABLE lyna.platform
 (
     id       SERIAL NOT NULL
         CONSTRAINT platform_pk
@@ -9,12 +9,12 @@ CREATE TABLE lyra.platform
 );
 
 CREATE UNIQUE INDEX platform_guild_id_lower_name_uindex
-    ON lyra.platform (guild_id, LOWER(name));
+    ON lyna.platform (guild_id, LOWER(name));
 
 CREATE UNIQUE INDEX platform_id_guild_id_uindex
-    ON lyra.platform (id, guild_id);
+    ON lyna.platform (id, guild_id);
 
-CREATE TABLE lyra.product
+CREATE TABLE lyna.product
 (
     id       SERIAL NOT NULL
         CONSTRAINT product_pk
@@ -26,20 +26,20 @@ CREATE TABLE lyra.product
 );
 
 CREATE UNIQUE INDEX product_guild_id_lower_name_uindex
-    ON lyra.product (guild_id, LOWER(name));
+    ON lyna.product (guild_id, LOWER(name));
 
 CREATE UNIQUE INDEX product_id_guild_id_uindex
-    ON lyra.product (id, guild_id);
+    ON lyna.product (id, guild_id);
 
-CREATE TABLE lyra.license
+CREATE TABLE lyna.license
 (
     product_id      INTEGER NOT NULL
         CONSTRAINT keys_product_product_id_id_fk
-            REFERENCES lyra.product
+            REFERENCES lyna.product
             ON DELETE CASCADE,
     platform_id     INTEGER NOT NULL
         CONSTRAINT keys_platform_platform_id_id_fk
-            REFERENCES lyra.platform
+            REFERENCES lyna.platform
             ON DELETE CASCADE,
     user_identifier TEXT    NOT NULL,
     id              SERIAL  NOT NULL
@@ -49,36 +49,36 @@ CREATE TABLE lyra.license
 );
 
 CREATE UNIQUE INDEX keys_key_uindex
-    ON lyra.license (key);
+    ON lyna.license (key);
 
 
-CREATE TABLE lyra.user_license
+CREATE TABLE lyna.user_license
 (
     user_id    BIGINT  NOT NULL,
     license_id INTEGER NOT NULL
         CONSTRAINT user_license_pk
             PRIMARY KEY
         CONSTRAINT user_license_license_license_id_id_fk
-            REFERENCES lyra.license
+            REFERENCES lyna.license
             ON DELETE CASCADE
 );
 
 CREATE INDEX user_license_user_id_index
-    ON lyra.user_license (user_id);
+    ON lyna.user_license (user_id);
 
-CREATE TABLE lyra.user_sub_license
+CREATE TABLE lyna.user_sub_license
 (
     user_id    BIGINT  NOT NULL,
     license_id INTEGER NOT NULL
         CONSTRAINT user_sub_license_license_license_id_id_fk
-            REFERENCES lyra.license (id)
+            REFERENCES lyna.license (id)
             ON DELETE CASCADE,
     CONSTRAINT user_sub_license_pk
         PRIMARY KEY (user_id, license_id)
 );
 
 CREATE INDEX user_sub_license_license_id_index
-    ON lyra.user_sub_license (license_id);
+    ON lyna.user_sub_license (license_id);
 
 CREATE INDEX user_sub_license_user_id_index
-    ON lyra.user_sub_license (user_id);
+    ON lyna.user_sub_license (user_id);

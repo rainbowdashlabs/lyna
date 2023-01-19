@@ -1,5 +1,7 @@
 package de.chojo.lyna.data.dao;
 
+import de.chojo.lyna.data.dao.platforms.Platform;
+import de.chojo.lyna.data.dao.products.Product;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

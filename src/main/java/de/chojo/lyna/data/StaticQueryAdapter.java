@@ -32,6 +32,12 @@ public class StaticQueryAdapter {
         log.info("Static SADU query adapter started");
     }
 
+    public static void start(DataSource dataSource){
+        if (factory != null) throw new AlreadyInitializedException();
+        factory = new QueryFactory(dataSource);
+        log.info("Static SADU query adapter started");
+    }
+
     private static void assertInit() {
         if (factory == null) throw new NotInitializedException();
     }
