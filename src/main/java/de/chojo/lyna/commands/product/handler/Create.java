@@ -1,4 +1,4 @@
-package de.chojo.lyna.commands.products.handler;
+package de.chojo.lyna.commands.product.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;

@@ -3,8 +3,9 @@ package de.chojo.lyna.core;
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.commands.platform.Platform;
+import de.chojo.lyna.commands.product.Product;
 import de.chojo.lyna.configuration.ConfigFile;
-import de.chojo.lyna.commands.products.Product;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -56,10 +57,13 @@ public class Bot {
                     log.error(LogNotify.NOTIFY_ADMIN, "Command execution of {} failed\n{}",
                             context.interaction().meta().name(), context.args(), throwable);
                 })
-                .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.config().baseSettings().botGuild()))
+                .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.config().baseSettings()
+                                                                                      .botGuild()))
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
-                .withCommands(new Product(data.guilds()))
+                .withCommands(
+                        new Product(data.guilds()),
+                        new Platform(data.guilds()))
                 .build();
     }
 }
