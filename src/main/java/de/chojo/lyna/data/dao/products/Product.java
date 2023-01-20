@@ -1,5 +1,10 @@
 package de.chojo.lyna.data.dao.products;
 
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Role;
+
+import java.util.Optional;
+
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
 public class Product {
@@ -47,5 +52,9 @@ public class Product {
 
     public Products products() {
         return products;
+    }
+
+    public Optional<Role> role(Guild guild) {
+        return Optional.ofNullable(guild.getRoleById(role));
     }
 }

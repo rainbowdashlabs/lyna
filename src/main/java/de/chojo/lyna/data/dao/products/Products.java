@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,8 @@ public class Products {
     public Optional<Product> create(String name, Role role, @Nullable String url) {
         return builder(Product.class)
                 .query("INSERT INTO product(guild_id, name, url, role) VALUES (?,?,?,?) RETURNING id")
-                .parameter(stmt -> stmt.setLong(guild.guildId()).setString(name).setString(url).setLong(role.getIdLong()))
+                .parameter(stmt -> stmt.setLong(guild.guildId()).setString(name).setString(url)
+                                       .setLong(role.getIdLong()))
                 .readRow(row -> new Product(this, row.getInt("id"), name, url, role.getIdLong()))
                 .firstSync();
     }
@@ -33,17 +35,17 @@ public class Products {
                 .allSync();
     }
 
-    public List<Command.Choice> complete(String value){
+    public List<Command.Choice> complete(String value) {
         return all().stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
-                                               .map(p -> new Command.Choice(p.name(), p.id()))
-                                               .limit(25)
-                                               .toList();
+                    .map(p -> new Command.Choice(p.name(), p.id()))
+                    .limit(25)
+                    .toList();
 
     }
 
     public Optional<Product> byId(int id) {
         return builder(Product.class)
-                .query("SELECT id, name, url, role FROM product WHERE guild_id = ? and id = ?")
+                .query("SELECT id, name, url, role FROM product WHERE guild_id = ? AND id = ?")
                 .parameter(stmt -> stmt.setLong(guild.guildId()).setInt(id))
                 .readRow(row -> new Product(this, row.getInt("id"), row.getString("name"), row.getString("url"), row.getLong("role")))
                 .firstSync();
@@ -51,5 +53,9 @@ public class Products {
 
     public long guildId() {
         return guild.guildId();
+    }
+
+    public Guild guild() {
+        return guild.guild();
     }
 }

@@ -8,9 +8,11 @@ import de.chojo.lyna.commands.platform.Platform;
 import de.chojo.lyna.commands.product.Product;
 import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.services.RoleService;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import org.apache.commons.codec.language.bm.Rule;
 import org.slf4j.Logger;
 
 import java.util.Collections;
@@ -23,6 +25,7 @@ public class Bot {
     private final Threading threading;
     private final Configuration<ConfigFile> configuration;
     private ShardManager shardManager;
+    private RoleService roleService;
 
     private Bot(Data data, Threading threading, Configuration<ConfigFile> configuration) {
         this.data = data;
@@ -38,7 +41,12 @@ public class Bot {
 
     private void init() {
         initShardManager();
+        initServices();
         initInteractions();
+    }
+
+    private void initServices() {
+        roleService = new RoleService();
     }
 
     private void initShardManager() {
@@ -66,8 +74,8 @@ public class Bot {
                 .withCommands(
                         new Product(data.guilds()),
                         new Platform(data.guilds()),
-                        new License(data.guilds(), configuration),
-                        new Register(data.guilds()))
+                        new License(data.guilds(), configuration, roleService),
+                        new Register(data.guilds(), roleService))
                 .build();
     }
 }

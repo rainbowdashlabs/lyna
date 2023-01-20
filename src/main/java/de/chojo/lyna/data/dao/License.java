@@ -6,7 +6,6 @@ import net.dv8tion.jda.api.entities.Member;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
@@ -61,7 +60,7 @@ public class License {
     }
 
     public long owner() {
-        if(owner  != -1){
+        if (owner != -1) {
             return owner;
         }
         owner = builder(Long.class)
@@ -110,12 +109,16 @@ public class License {
     }
 
     public boolean claim(Member member) {
-        return builder()
-                .query("INSERT INTO user_license(user_id, license_id) VALUES(?,?)")
+        if (builder()
+                .query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
                 .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id))
                 .insert()
                 .sendSync()
-                .changed();
+                .changed()) {
+            owner = member.getIdLong();
+            return true;
+        }
+        return false;
     }
 
     public boolean isClaimed() {

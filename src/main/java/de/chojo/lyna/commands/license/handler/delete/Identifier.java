@@ -4,6 +4,7 @@ import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.License;
+import de.chojo.lyna.services.RoleService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -13,9 +14,11 @@ import java.util.Optional;
 
 public class Identifier implements SlashHandler {
     private final Guilds guilds;
+    private final RoleService roleService;
 
-    public Identifier(Guilds guilds) {
+    public Identifier(Guilds guilds, RoleService roleService) {
         this.guilds = guilds;
+        this.roleService = roleService;
     }
 
     @Override
@@ -41,7 +44,8 @@ public class Identifier implements SlashHandler {
             event.reply("Invalid license").queue();
             return;
         }
-        // TODO: Roles
+
+        roleService.unclaim(license.get());
         if (license.get().delete()) {
             event.reply("Deleted").setEphemeral(true).queue();
         }

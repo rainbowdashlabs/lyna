@@ -52,4 +52,8 @@ public class LicenseGuild {
     public long guildId() {
         return guild.getIdLong();
     }
+
+    public Guild guild() {
+        return guild;
+    }
 }

@@ -2,7 +2,6 @@ package de.chojo.lyna;
 
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
-import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
