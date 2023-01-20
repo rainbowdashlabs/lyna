@@ -14,10 +14,17 @@ public class LicenseGuild {
      * Providing access to registered platforms on this guild.
      */
     Platforms platforms;
+
     /**
      * Providing access to registered products on this guild.
      */
     Products products;
+
+    /**
+     * Providing access to licenses created on this guild.
+     */
+    Licenses licenses;
+
     /**
      * The recently accessed users
      */
@@ -27,6 +34,7 @@ public class LicenseGuild {
         this.guild = guild;
         this.platforms = new Platforms(this);
         this.products = new Products(this);
+        this.licenses = new Licenses(this);
     }
 
     public Platforms platforms() {
@@ -35,6 +43,10 @@ public class LicenseGuild {
 
     public Products products() {
         return products;
+    }
+
+    public Licenses licenses() {
+        return licenses;
     }
 
     public long guildId() {

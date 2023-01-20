@@ -2,6 +2,7 @@ package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -30,6 +31,14 @@ public class Products {
                 .parameter(stmt -> stmt.setLong(guild.guildId()))
                 .readRow(row -> new Product(this, row.getInt("id"), row.getString("name"), row.getString("url"), row.getLong("role")))
                 .allSync();
+    }
+
+    public List<Command.Choice> complete(String value){
+        return all().stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
+                                               .map(p -> new Command.Choice(p.name(), p.id()))
+                                               .limit(25)
+                                               .toList();
+
     }
 
     public Optional<Product> byId(int id) {

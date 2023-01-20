@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Member;
 import java.util.List;
 
 public class LicenseUser {
-    long memberId;
+    long id;
     /**
      * The member attached to this user
      */
@@ -14,4 +14,17 @@ public class LicenseUser {
      * The licenses owned by this user.
      */
     List<License> licenses;
+
+
+    public long id() {
+        return id;
+    }
+
+    public Member member() {
+        return member;
+    }
+
+    public List<License> licenses() {
+        return licenses;
+    }
 }

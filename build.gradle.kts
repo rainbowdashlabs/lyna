@@ -36,6 +36,7 @@ dependencies {
     // unit testing
     testImplementation(platform("org.junit:junit-bom:5.9.2"))
     testImplementation("org.junit.jupiter", "junit-jupiter")
+    testImplementation("org.mockito", "mockito-core", "3.+")
 }
 
 java {

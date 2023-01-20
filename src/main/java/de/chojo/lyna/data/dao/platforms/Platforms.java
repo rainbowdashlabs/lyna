@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.platforms;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
+import net.dv8tion.jda.api.interactions.commands.Command;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,14 @@ public class Platforms {
                 .parameter(stmt -> stmt.setLong(guild.guildId()))
                 .readRow(row -> new Platform(this, row.getInt("id"), row.getString("name"), row.getString("url")))
                 .allSync();
+    }
+
+    public List<Command.Choice> complete(String value) {
+        return all().stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
+                       .map(p -> new Command.Choice(p.name(), p.id()))
+                       .limit(25)
+                       .toList();
+
     }
 
     public Optional<Platform> byId(int id) {

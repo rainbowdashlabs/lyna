@@ -3,8 +3,10 @@ package de.chojo.lyna.core;
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.commands.license.License;
 import de.chojo.lyna.commands.platform.Platform;
 import de.chojo.lyna.commands.product.Product;
+import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.configuration.ConfigFile;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -63,7 +65,9 @@ public class Bot {
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
                 .withCommands(
                         new Product(data.guilds()),
-                        new Platform(data.guilds()))
+                        new Platform(data.guilds()),
+                        new License(data.guilds(), configuration),
+                        new Register(data.guilds()))
                 .build();
     }
 }

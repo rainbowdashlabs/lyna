@@ -19,6 +19,7 @@ public class Product implements SlashProvider<Slash> {
     public Slash slash() {
         return Slash.of("products", "Manage products")
                 .unlocalized()
+                .guildOnly()
                 .subCommand(SubCommand.of("create", "Create a new product")
                         .handler(new Create(guilds))
                         .argument(Argument.text("name", "Product name").asRequired())

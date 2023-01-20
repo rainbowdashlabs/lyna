@@ -19,6 +19,7 @@ public class Platform implements SlashProvider<Slash> {
     public Slash slash() {
         return Slash.of("platform", "Manage platforms")
                 .unlocalized()
+                .guildOnly()
                 .subCommand(SubCommand.of("create", "Create a new platform")
                         .handler(new Create(guilds))
                         .argument(Argument.text("name", "Platform name").asRequired())

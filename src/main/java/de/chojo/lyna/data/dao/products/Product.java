@@ -35,9 +35,17 @@ public class Product {
 
     public boolean delete() {
         return builder().query("DELETE FROM product WHERE id = ? AND guild_id = ?")
-                .parameter(stmt -> stmt.setInt(id).setLong(products.guildId()))
-                .delete()
-                .sendSync()
-                .changed();
+                        .parameter(stmt -> stmt.setInt(id).setLong(products.guildId()))
+                        .delete()
+                        .sendSync()
+                        .changed();
+    }
+
+    public long guildId() {
+        return products.guildId();
+    }
+
+    public Products products() {
+        return products;
     }
 }
