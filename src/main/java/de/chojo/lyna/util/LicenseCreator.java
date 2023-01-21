@@ -18,8 +18,16 @@ public class LicenseCreator {
         return "%s-%s-%s-%s".formatted(prod, plat, user, check);
     }
 
-    private static String generateRandomSequence(long seed, int length) {
+    public static String generateRandomSequence(long seed, int length) {
         Random rand = new Random(seed);
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            builder.append(CHARS.charAt(rand.nextInt(CHARS.length())));
+        }
+        return builder.toString();
+    }
+    public static String generateRandomSequence(int length) {
+        Random rand = new Random();
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < length; i++) {
             builder.append(CHARS.charAt(rand.nextInt(CHARS.length())));
