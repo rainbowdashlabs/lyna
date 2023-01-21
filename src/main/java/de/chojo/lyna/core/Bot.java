@@ -7,6 +7,8 @@ import de.chojo.lyna.commands.license.License;
 import de.chojo.lyna.commands.platform.Platform;
 import de.chojo.lyna.commands.product.Product;
 import de.chojo.lyna.commands.register.Register;
+import de.chojo.lyna.commands.registrations.Registrations;
+import de.chojo.lyna.commands.settings.Settings;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.services.RoleService;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -75,7 +77,9 @@ public class Bot {
                         new Product(data.guilds()),
                         new Platform(data.guilds()),
                         new License(data.guilds(), configuration, roleService),
-                        new Register(data.guilds(), roleService))
+                        new Register(data.guilds(), roleService),
+                        new Registrations(data.guilds(), roleService),
+                        new Settings(data.guilds()))
                 .build();
     }
 }

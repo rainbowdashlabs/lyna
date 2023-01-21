@@ -3,7 +3,7 @@ package de.chojo.lyna.commands.license.handler.delete;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.dao.License;
+import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.services.RoleService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

@@ -82,3 +82,40 @@ CREATE INDEX user_sub_license_license_id_index
 
 CREATE INDEX user_sub_license_user_id_index
     ON lyna.user_sub_license (user_id);
+
+CREATE TABLE lyna.license_settings
+(
+    guild_id BIGINT            NOT NULL
+        CONSTRAINT license_settings_pk
+            PRIMARY KEY,
+    shares   INTEGER DEFAULT 0 NOT NULL
+);
+
+CREATE VIEW lyna.user_products AS
+SELECT guild_id, user_id, p.id, p.name, url, role
+FROM lyna.user_license u
+         LEFT JOIN lyna.license l ON u.license_id = l.id
+         LEFT JOIN lyna.product p ON l.product_id = p.id;
+
+CREATE VIEW lyna.user_platforms AS
+SELECT guild_id, user_id, p.id, p.name, url
+FROM lyna.user_license u
+         LEFT JOIN lyna.license l ON u.license_id = l.id
+         LEFT JOIN lyna.platform p ON l.platform_id = p.id;
+
+CREATE VIEW lyna.guild_license AS
+SELECT product_id, platform_id, user_identifier, l.id, key, guild_id
+FROM lyna.license l
+         LEFT JOIN lyna.product p ON l.product_id = p.id;
+
+CREATE VIEW lyna.user_guild_license AS
+SELECT product_id, platform_id, user_identifier, l.id, key, user_id, guild_id
+FROM lyna.license l
+         LEFT JOIN lyna.user_license u ON l.id = u.license_id
+         LEFT JOIN lyna.product p ON l.product_id = p.id;
+
+CREATE VIEW lyna.user_guild_sub_license AS
+SELECT product_id, platform_id, user_identifier, l.id, key, user_id, guild_id
+FROM lyna.license l
+         LEFT JOIN lyna.user_sub_license u ON l.id = u.license_id
+         LEFT JOIN lyna.product p ON l.product_id = p.id;

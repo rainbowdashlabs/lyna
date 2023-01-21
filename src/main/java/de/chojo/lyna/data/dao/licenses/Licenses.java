@@ -1,6 +1,7 @@
-package de.chojo.lyna.data.dao;
+package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.jdautil.util.Choice;
+import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.util.LicenseCreator;
@@ -14,10 +15,10 @@ import java.util.Optional;
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
 public class Licenses {
-    private final LicenseGuild guild;
+    private final LicenseGuild licenseGuild;
 
-    public Licenses(LicenseGuild guild) {
-        this.guild = guild;
+    public Licenses(LicenseGuild licenseGuild) {
+        this.licenseGuild = licenseGuild;
     }
 
     public Optional<License> create(long seed, Product product, Platform platform, String identifier) {
@@ -32,35 +33,38 @@ public class Licenses {
     public Optional<License> byKey(String key) {
         return builder(License.class)
                 .query("""
-                       SELECT product_id, l.id, platform_id, user_identifier, key
-                       FROM license l
-                       LEFT JOIN product p ON l.product_id = p.id
-                       WHERE l.key = ? AND guild_id = ?
+                       SELECT product_id, id, platform_id, user_identifier, key
+                       FROM guild_license
+                       WHERE key = ? AND guild_id = ?
                        """)
-                .parameter(stmt -> stmt.setString(key).setLong(guild.guildId()))
+                .parameter(stmt -> stmt.setString(key).setLong(licenseGuild.guildId()))
                 .readRow(this::buildLicense)
                 .firstSync();
     }
 
     public Collection<Command.Choice> completeIdentifier(String value) {
         return builder(Command.Choice.class)
-                .query("SELECT user_identifier FROM license WHERE user_identifier ILIKE (? || '%')  LIMIT 25")
-                .parameter(stmt -> stmt.setString(value))
+                .query("SELECT user_identifier FROM guild_license WHERE user_identifier ILIKE (? || '%') AND guild_id = ? LIMIT 25")
+                .parameter(stmt -> stmt.setString(value).setLong(guildId()))
                 .readRow(row -> Choice.toChoice(row.getString("user_identifier")))
                 .allSync();
     }
 
+    private long guildId() {
+        return licenseGuild.guildId();
+    }
+
     public Optional<License> byDetails(Product product, Platform platform, String identifier) {
         return builder(License.class)
-                .query("SELECT * FROM license WHERE product_id = ? AND platform_id = ? AND user_identifier = ?")
-                .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()).setString(identifier))
+                .query("SELECT * FROM guild_license WHERE product_id = ? AND platform_id = ? AND user_identifier = ? AND guild_id = ?")
+                .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()).setString(identifier).setLong(guildId()))
                 .readRow(this::buildLicense)
                 .firstSync();
     }
 
-    private License buildLicense(Row row) throws SQLException {
-        var product = guild.products().byId(row.getInt("product_id"));
-        var platform = guild.platforms().byId(row.getInt("platform_id"));
+    public License buildLicense(Row row) throws SQLException {
+        var product = licenseGuild.products().byId(row.getInt("product_id"));
+        var platform = licenseGuild.platforms().byId(row.getInt("platform_id"));
         int id = row.getInt("id");
         return new License(product.get(), platform.get(), row.getString("user_identifier"), id, row.getString("key"));
     }

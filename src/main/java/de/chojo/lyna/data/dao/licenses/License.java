@@ -1,4 +1,4 @@
-package de.chojo.lyna.data.dao;
+package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
@@ -123,5 +123,44 @@ public class License {
 
     public boolean isClaimed() {
         return owner() != 0;
+    }
+
+    public boolean transfer(Member member) {
+        if (builder()
+                .query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET user_id = excluded.user_id")
+                .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id))
+                .insert()
+                .sendSync()
+                .changed()) {
+            owner = member.getIdLong();
+            return true;
+        }
+        return false;
+    }
+
+    public void clearSubUsers() {
+        builder()
+                .query("DELETE FROM user_sub_license WHERE license_id = ?")
+                .parameter(stmt -> stmt.setInt(id()))
+                .delete()
+                .sendSync();
+    }
+
+    public boolean removeSubUser(Member member) {
+        return builder()
+                .query("DELETE FROM user_sub_license WHERE license_id = ? AND user_id = ?")
+                .parameter(stmt -> stmt.setInt(id()).setLong(member.getIdLong()))
+                .delete()
+                .sendSync()
+                .changed();
+    }
+
+    public boolean addSubUser(Member member) {
+        return builder()
+                .query("INSERT INTO user_sub_license(user_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
+                .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id()))
+                .insert()
+                .sendSync()
+                .changed();
     }
 }

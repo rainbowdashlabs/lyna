@@ -2,10 +2,15 @@ package de.chojo.lyna.data.dao;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import de.chojo.lyna.data.dao.licenses.Licenses;
 import de.chojo.lyna.data.dao.platforms.Platforms;
 import de.chojo.lyna.data.dao.products.Products;
+import de.chojo.lyna.data.dao.settings.Settings;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.Member;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class LicenseGuild {
@@ -25,6 +30,8 @@ public class LicenseGuild {
      */
     Licenses licenses;
 
+    Settings settings;
+
     /**
      * The recently accessed users
      */
@@ -35,6 +42,7 @@ public class LicenseGuild {
         this.platforms = new Platforms(this);
         this.products = new Products(this);
         this.licenses = new Licenses(this);
+        this.settings = new Settings(this);
     }
 
     public Platforms platforms() {
@@ -49,11 +57,23 @@ public class LicenseGuild {
         return licenses;
     }
 
+    public Settings settings() {
+        return settings;
+    }
+
     public long guildId() {
         return guild.getIdLong();
     }
 
     public Guild guild() {
         return guild;
+    }
+
+    public LicenseUser user(Member user) {
+        try {
+            return users.get(user.getIdLong(), () -> new LicenseUser(this, user));
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

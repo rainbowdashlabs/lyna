@@ -1,6 +1,6 @@
 package de.chojo.lyna.services;
 
-import de.chojo.lyna.data.dao.License;
+import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
