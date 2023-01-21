@@ -17,6 +17,7 @@ public class Register implements SlashProvider<Slash> {
     public Slash slash() {
         return Slash.of("register", "Register a product key")
                 .unlocalized()
+                .guildOnly()
                 .command(new Default(guilds))
                 .argument(Argument.text("key", "The product key").asRequired())
                 .build();

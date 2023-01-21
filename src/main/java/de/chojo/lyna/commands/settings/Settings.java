@@ -20,6 +20,7 @@ public class Settings implements SlashProvider<Slash> {
         ;
         return Slash.of("settings", "Manage guild settings")
                 .unlocalized()
+                .adminCommand()
                 .guildOnly()
                 .group(Group.of("license", "Manage license settings")
                         .subCommand(SubCommand.of("shares", "Define how often a license can be shared")

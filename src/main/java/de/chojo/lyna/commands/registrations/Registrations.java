@@ -22,6 +22,7 @@ public class Registrations implements SlashProvider<Slash> {
     public Slash slash() {
         return Slash.of("registrations", "Manage your registered products")
                 .unlocalized()
+                .guildOnly()
                 .group(Group.of("share", "Share your registrations")
                         .subCommand(SubCommand.of("add", "Add a user to your license")
                                 .handler(new Add(guilds))

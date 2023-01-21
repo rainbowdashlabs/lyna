@@ -25,6 +25,7 @@ public class License implements SlashProvider<Slash> {
     public Slash slash() {
         return Slash.of("license", "Manage licenses")
                 .unlocalized()
+                .adminCommand()
                 .guildOnly()
                 .subCommand(SubCommand.of("create", "Create a new license")
                         .handler(new Create(guilds, configuration))
