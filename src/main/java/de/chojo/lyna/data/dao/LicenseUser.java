@@ -42,6 +42,14 @@ public class LicenseUser {
                 .firstSync();
     }
 
+    public Optional<License> subLicenseByProduct(Product product) {
+        return builder(License.class)
+                .query("SELECT product_id, platform_id, user_identifier, id, key FROM user_guild_sub_license WHERE product_id = ? AND user_id = ?")
+                .parameter(stmt -> stmt.setInt(product.id()).setLong(id()))
+                .readRow(licenseGuild.licenses()::buildLicense)
+                .firstSync();
+    }
+
     public List<License> licenses() {
         return builder(License.class)
                 .query("""
@@ -66,9 +74,38 @@ public class LicenseUser {
                 .allSync();
     }
 
-    public List<Command.Choice> completeProducts(String value) {
+    public boolean canAccess(Product product) {
+        return builder(Boolean.class)
+                .query("""
+                        SELECT EXISTS(
+                            SELECT product_id, platform_id, user_identifier, id, key, user_id, guild_id
+                            FROM user_guild_license
+                            WHERE guild_id = ?
+                                AND user_id = ?
+                                AND product_id = ?)
+                            OR EXISTS(
+                                SELECT product_id, platform_id, user_identifier, id, key, user_id, guild_id
+                                FROM user_guild_sub_license
+                                WHERE guild_id = ?
+                                    AND user_id = ?
+                                    AND product_id = ?) as exists
+                       """).parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setInt(product.id())
+                                                  .setLong(guildId()).setLong(id()).setInt(product.id()))
+                .readRow(row -> row.getBoolean("exists"))
+                .firstSync()
+                .orElse(false);
+    }
+
+    public List<Command.Choice> completeOwnProducts(String value) {
         return builder(Command.Choice.class)
                 .query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
+                .parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setString(value))
+                .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
+                .allSync();
+    }
+    public List<Command.Choice> completeAllProducts(String value) {
+        return builder(Command.Choice.class)
+                .query("SELECT id, name FROM user_products_all WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
                 .parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setString(value))
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .allSync();

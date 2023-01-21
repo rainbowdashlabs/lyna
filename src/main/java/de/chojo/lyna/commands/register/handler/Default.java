@@ -5,7 +5,6 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseUser;
 import de.chojo.lyna.data.dao.licenses.License;
-import de.chojo.lyna.services.RoleService;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
@@ -13,11 +12,9 @@ import java.util.Optional;
 
 public class Default implements SlashHandler {
     private final Guilds guilds;
-    private final RoleService roleService;
 
-    public Default(Guilds guilds, RoleService roleService) {
+    public Default(Guilds guilds) {
         this.guilds = guilds;
-        this.roleService = roleService;
     }
 
     @Override
@@ -42,6 +39,5 @@ public class Default implements SlashHandler {
 
         license.get().claim(event.getMember());
         event.reply("License claimed. Roles have been assigned.").setEphemeral(true).queue();
-        roleService.claim(license.get());
     }
 }

@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.products;
 
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
 import java.util.Optional;
@@ -54,7 +55,29 @@ public class Product {
         return products;
     }
 
+    public boolean canAccess(Member member) {
+        return products.licenseGuild().user(member).canAccess(this);
+    }
+
     public Optional<Role> role(Guild guild) {
         return Optional.ofNullable(guild.getRoleById(role));
+    }
+
+    public void assign(Member member) {
+        Role roleById = member.getGuild().getRoleById(role);
+        if (roleById != null && !member.getRoles().contains(roleById)) {
+            member.getGuild().addRoleToMember(member, roleById).queue();
+        }
+    }
+
+    public void revoke(Member member) {
+        Role roleById = member.getGuild().getRoleById(role);
+        if (roleById != null && member.getRoles().contains(roleById)) {
+            member.getGuild().removeRoleFromMember(member, roleById).queue();
+        }
+    }
+
+    public Guild guild() {
+        return products().guild();
     }
 }

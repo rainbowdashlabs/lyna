@@ -100,6 +100,11 @@ public class License {
     }
 
     public boolean delete() {
+        clearSubUsers();
+        Member complete = product.guild().retrieveMemberById(owner).complete();
+        if (complete != null) {
+            product.revoke(complete);
+        }
         return builder()
                 .query("DELETE FROM license WHERE id = ?")
                 .parameter(stmt -> stmt.setInt(id))
@@ -116,6 +121,7 @@ public class License {
                 .sendSync()
                 .changed()) {
             owner = member.getIdLong();
+            product.assign(member);
             return true;
         }
         return false;
@@ -126,19 +132,32 @@ public class License {
     }
 
     public boolean transfer(Member member) {
+        clearSubUsers();
         if (builder()
                 .query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET user_id = excluded.user_id")
                 .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id))
                 .insert()
                 .sendSync()
                 .changed()) {
+            Member oldOwner = member.getGuild().retrieveMemberById(owner).complete();
+            if (oldOwner != null && !product.canAccess(oldOwner)) {
+                product.revoke(oldOwner);
+            }
             owner = member.getIdLong();
+            product.assign(member);
             return true;
         }
         return false;
     }
 
     public void clearSubUsers() {
+        for (Long subUser : subUsers()) {
+            Member complete = product.guild().retrieveMemberById(subUser).complete();
+            if (complete != null && !product.canAccess(complete)) {
+                product.revoke(complete);
+            }
+        }
+
         builder()
                 .query("DELETE FROM user_sub_license WHERE license_id = ?")
                 .parameter(stmt -> stmt.setInt(id()))
@@ -147,15 +166,22 @@ public class License {
     }
 
     public boolean removeSubUser(Member member) {
-        return builder()
+        boolean changed = builder()
                 .query("DELETE FROM user_sub_license WHERE license_id = ? AND user_id = ?")
                 .parameter(stmt -> stmt.setInt(id()).setLong(member.getIdLong()))
                 .delete()
                 .sendSync()
                 .changed();
+        if (changed) {
+            if (!product.canAccess(member)) {
+                product.revoke(member);
+            }
+        }
+        return changed;
     }
 
     public boolean addSubUser(Member member) {
+        product.assign(member);
         return builder()
                 .query("INSERT INTO user_sub_license(user_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
                 .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id()))

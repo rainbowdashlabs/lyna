@@ -11,17 +11,14 @@ import de.chojo.lyna.commands.license.handler.delete.Identifier;
 import de.chojo.lyna.commands.license.handler.delete.Key;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.services.RoleService;
 
 public class License implements SlashProvider<Slash> {
     private final Guilds guilds;
     private final Configuration<ConfigFile> configuration;
-    private final RoleService roleService;
 
-    public License(Guilds guilds, Configuration<ConfigFile> configuration, RoleService roleService) {
+    public License(Guilds guilds, Configuration<ConfigFile> configuration) {
         this.guilds = guilds;
         this.configuration = configuration;
-        this.roleService = roleService;
     }
 
     @Override
@@ -36,10 +33,10 @@ public class License implements SlashProvider<Slash> {
                         .argument(Argument.text("user_identifier", "Unique user identifier").asRequired()))
                 .group(Group.of("delete", "Delete a license")
                         .subCommand(SubCommand.of("key", "Delte by key")
-                                .handler(new Key(guilds, roleService))
+                                .handler(new Key(guilds))
                                 .argument(Argument.text("key", "Key to delete").asRequired()))
                         .subCommand(SubCommand.of("identifier", "Delte a license by identifier")
-                                .handler(new Identifier(guilds, roleService))
+                                .handler(new Identifier(guilds))
                                 .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
                                 .argument(Argument.text("platform", "Platform of key").withAutoComplete().asRequired())
                                 .argument(Argument.text("user_identifier", "Unique user identifier").withAutoComplete().asRequired())))

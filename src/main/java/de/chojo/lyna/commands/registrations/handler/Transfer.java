@@ -5,7 +5,6 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseUser;
 import de.chojo.lyna.data.dao.licenses.License;
-import de.chojo.lyna.services.RoleService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -15,11 +14,9 @@ import java.util.Optional;
 
 public class Transfer implements SlashHandler {
     private final Guilds guilds;
-    private final RoleService roleService;
 
-    public Transfer(Guilds guilds, RoleService roleService) {
+    public Transfer(Guilds guilds) {
         this.guilds = guilds;
-        this.roleService = roleService;
     }
 
     @Override
@@ -46,11 +43,7 @@ public class Transfer implements SlashHandler {
             return;
         }
 
-        roleService.unclaim(license.get());
-        license.get().clearSubUsers();
-
         license.get().transfer(target);
-        roleService.claim(license.get());
 
         event.reply("License transfered").setEphemeral(true).queue();
         target.getUser().openPrivateChannel().complete()
@@ -63,7 +56,7 @@ public class Transfer implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).user(event.getMember()).completeProducts(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).user(event.getMember()).completeOwnProducts(focusedOption.getValue())).queue();
         }
     }
 }
