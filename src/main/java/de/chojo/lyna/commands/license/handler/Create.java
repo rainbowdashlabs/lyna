@@ -32,7 +32,7 @@ public class Create implements SlashHandler {
         var identifier = event.getOption("user_identifier", OptionMapping::getAsString);
 
         if (platform.isEmpty()) {
-            event.reply("Unvalid platform").setEphemeral(true).queue();
+            event.reply("Invalid platform").setEphemeral(true).queue();
             return;
         }
 
