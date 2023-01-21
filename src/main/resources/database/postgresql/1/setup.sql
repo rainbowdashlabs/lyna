@@ -1,6 +1,6 @@
 CREATE TABLE lyna.platform
 (
-    id       SERIAL NOT NULL
+    id       SERIAL
         CONSTRAINT platform_pk
             PRIMARY KEY,
     guild_id BIGINT NOT NULL,
@@ -16,13 +16,13 @@ CREATE UNIQUE INDEX platform_id_guild_id_uindex
 
 CREATE TABLE lyna.product
 (
-    id       SERIAL NOT NULL
+    id       SERIAL
         CONSTRAINT product_pk
             PRIMARY KEY,
     guild_id BIGINT NOT NULL,
     name     TEXT   NOT NULL,
     url      TEXT,
-    role     BIGINT
+    role     BIGINT NOT NULL
 );
 
 CREATE UNIQUE INDEX product_guild_id_lower_name_uindex
@@ -51,7 +51,6 @@ CREATE TABLE lyna.license
 CREATE UNIQUE INDEX keys_key_uindex
     ON lyna.license (key);
 
-
 CREATE TABLE lyna.user_license
 (
     user_id    BIGINT  NOT NULL,
@@ -71,7 +70,7 @@ CREATE TABLE lyna.user_sub_license
     user_id    BIGINT  NOT NULL,
     license_id INTEGER NOT NULL
         CONSTRAINT user_sub_license_license_license_id_id_fk
-            REFERENCES lyna.license (id)
+            REFERENCES lyna.license
             ON DELETE CASCADE,
     CONSTRAINT user_sub_license_pk
         PRIMARY KEY (user_id, license_id)
@@ -98,7 +97,7 @@ FROM lyna.user_license u
          LEFT JOIN lyna.product p ON l.product_id = p.id;
 
 CREATE VIEW lyna.user_products_all AS
-SELECT DISTINCT (p.name),guild_id, user_id, p.id, url, role
+SELECT DISTINCT (p.name), guild_id, user_id, p.id, url, role
 FROM (SELECT user_id, license_id
       FROM lyna.user_license
       UNION
