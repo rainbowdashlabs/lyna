@@ -1,6 +1,6 @@
 <img align="right" src="https://static.wikia.nocookie.net/finalfantasy/images/6/6d/FFXIV_SH_Lyna.png" height="400"/> 
 
-# Lyna
+# Lyna - BETA
 
 Lyna is a discord bot made to create license keys which grant the user a discord role.
 
@@ -15,3 +15,5 @@ Licenses can be transfered to another discord account.
 _Trivia: Lyna is the captain of the defensive guard at Crystarium in the critically acclaimed MMORPG Final Fantasy 
 XIV, which includes a free trial that includes the entirety of "A Realm Reborn" AND the award-winning "Heavensward" 
 expansion up to level 60 with no restrictions on playtime._
+
+*The bot is functional, but considered beta. Not everything can be changed via commands yet.*

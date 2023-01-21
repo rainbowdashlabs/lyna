@@ -98,7 +98,7 @@ FROM lyna.user_license u
          LEFT JOIN lyna.product p ON l.product_id = p.id;
 
 CREATE VIEW lyna.user_products_all AS
-SELECT DISTINCT (p.name),guild_id, user_id, p.id, p.name, url, role
+SELECT DISTINCT (p.name),guild_id, user_id, p.id, url, role
 FROM (SELECT user_id, license_id
       FROM lyna.user_license
       UNION
