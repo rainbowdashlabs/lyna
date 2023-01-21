@@ -88,7 +88,7 @@ public class LicenseUser {
                                 FROM user_guild_sub_license
                                 WHERE guild_id = ?
                                     AND user_id = ?
-                                    AND product_id = ?) as exists
+                                    AND product_id = ?) AS exists
                        """).parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setInt(product.id())
                                                   .setLong(guildId()).setLong(id()).setInt(product.id()))
                 .readRow(row -> row.getBoolean("exists"))
@@ -103,6 +103,7 @@ public class LicenseUser {
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .allSync();
     }
+
     public List<Command.Choice> completeAllProducts(String value) {
         return builder(Command.Choice.class)
                 .query("SELECT id, name FROM user_products_all WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
@@ -125,5 +126,18 @@ public class LicenseUser {
 
     public Guild guild() {
         return licenseGuild.guild();
+    }
+
+    public List<Product> products() {
+        return builder(Integer.class)
+                .query("SELECT id FROM user_products_all WHERE user_id = ? AND guild_id = ?")
+                .parameter(stmt -> stmt.setLong(id()).setLong(guildId()))
+                .readRow(row -> row.getInt("id"))
+                .allSync()
+                .stream()
+                .map(id -> licenseGuild.products().byId(id))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 }

@@ -10,6 +10,7 @@ import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -50,10 +51,11 @@ public class Bot {
     private void initShardManager() {
         shardManager = DefaultShardManagerBuilder
                 .createDefault(configuration.config().baseSettings().token())
-                .enableIntents(GatewayIntent.DIRECT_MESSAGES)
+                .enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS)
                 .setEnableShutdownHook(false)
                 .setThreadFactory(Threading.createThreadFactory(threading.jdaGroup()))
                 .setEventPool(threading.jdaWorker())
+                .addEventListeners(new RoleListener(data.guilds()))
                 .build();
     }
 
