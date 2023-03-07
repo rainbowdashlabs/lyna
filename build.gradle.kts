@@ -25,6 +25,10 @@ dependencies {
     implementation("de.chojo.sadu", "sadu-postgresql", "1.2.0")
     implementation("de.chojo.sadu", "sadu-datasource", "1.2.0")
 
+    // Download api
+    implementation("de.chojo", "nexus-api-wrapper", "1.0.0")
+
+
     // Logging
     implementation("org.slf4j", "slf4j-api", "2.0.6")
     implementation("org.apache.logging.log4j", "log4j-core", "2.20.0")

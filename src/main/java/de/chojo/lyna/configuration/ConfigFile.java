@@ -4,6 +4,7 @@ import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
+import de.chojo.lyna.configuration.elements.Nexus;
 
 @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
 public class ConfigFile {
@@ -11,6 +12,7 @@ public class ConfigFile {
     private Database database = new Database();
     private Links links = new Links();
     private License license = new License();
+    private Nexus nexus = new Nexus();
 
     public BaseSettings baseSettings() {
         return baseSettings;
@@ -26,5 +28,8 @@ public class ConfigFile {
 
     public License license() {
         return license;
+    }
+    public Nexus nexus() {
+        return nexus;
     }
 }
