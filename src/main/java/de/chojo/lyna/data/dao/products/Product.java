@@ -1,5 +1,6 @@
 package de.chojo.lyna.data.dao.products;
 
+import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -14,6 +15,7 @@ public class Product {
     String name;
     String url;
     long role;
+    Downloads downloads;
 
     public Product(Products products, int id, String name, String url, long role) {
         this.products = products;
@@ -21,6 +23,7 @@ public class Product {
         this.name = name;
         this.url = url;
         this.role = role;
+        downloads = new Downloads(this);
     }
 
     public int id() {
@@ -41,10 +44,10 @@ public class Product {
 
     public boolean delete() {
         return builder().query("DELETE FROM product WHERE id = ? AND guild_id = ?")
-                        .parameter(stmt -> stmt.setInt(id).setLong(products.guildId()))
-                        .delete()
-                        .sendSync()
-                        .changed();
+                .parameter(stmt -> stmt.setInt(id).setLong(products.guildId()))
+                .delete()
+                .sendSync()
+                .changed();
     }
 
     public long guildId() {
@@ -68,6 +71,10 @@ public class Product {
         if (roleById != null && !member.getRoles().contains(roleById)) {
             member.getGuild().addRoleToMember(member, roleById).queue();
         }
+    }
+
+    public Downloads downloads() {
+        return downloads;
     }
 
     public void revoke(Member member) {

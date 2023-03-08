@@ -2,9 +2,11 @@ package de.chojo.lyna.data.dao;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import de.chojo.lyna.data.dao.downloadtype.DownloadTypes;
 import de.chojo.lyna.data.dao.licenses.Licenses;
 import de.chojo.lyna.data.dao.platforms.Platforms;
 import de.chojo.lyna.data.dao.products.Products;
+import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.lyna.data.dao.settings.Settings;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.ISnowflake;
@@ -31,6 +33,7 @@ public class LicenseGuild {
     Licenses licenses;
 
     Settings settings;
+    DownloadTypes downloadTypes;
 
     /**
      * The recently accessed users
@@ -43,6 +46,7 @@ public class LicenseGuild {
         this.products = new Products(this);
         this.licenses = new Licenses(this);
         this.settings = new Settings(this);
+        this.downloadTypes = new DownloadTypes(this);
     }
 
     public Platforms platforms() {
@@ -67,6 +71,10 @@ public class LicenseGuild {
 
     public Guild guild() {
         return guild;
+    }
+
+    public DownloadTypes downloadTypes() {
+        return downloadTypes;
     }
 
     public LicenseUser user(Member user) {

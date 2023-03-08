@@ -3,6 +3,7 @@ package de.chojo.lyna.core;
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.commands.downloads.Downloads;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.license.License;
 import de.chojo.lyna.commands.platform.Platform;
@@ -79,7 +80,8 @@ public class Bot {
                         new Register(data.guilds()),
                         new Registrations(data.guilds()),
                         new Settings(data.guilds()),
-                        Info.create(configuration))
+                        Info.create(configuration),
+                        new Downloads(data.guilds()))
                 .build();
     }
 }
