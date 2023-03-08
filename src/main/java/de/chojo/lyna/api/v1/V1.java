@@ -3,7 +3,6 @@ package de.chojo.lyna.api.v1;
 import de.chojo.lyna.api.Api;
 import de.chojo.lyna.api.v1.download.Download;
 
-import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class V1 {

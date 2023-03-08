@@ -9,6 +9,8 @@ import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
+import de.chojo.nexus.entities.AssetXO;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -51,6 +53,7 @@ public class Default implements SlashHandler {
         // Create all possible entries and hide what you do not need yet
         context.registerMenu(MenuAction.forCallback("Please Choose a build type", event)
                 .addComponent(getDownloadTypeMenu(product))
+                .asEphemeral()
                 .build());
     }
 
@@ -75,34 +78,42 @@ public class Default implements SlashHandler {
 
                     String typeId = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
                     var downloadType = product.products().licenseGuild().downloadTypes().byId(Integer.parseInt(typeId)).get();
-
-                    ctx.container().entries().add(getVersionMenu(product, downloadType));
+                    var versionMenu = getVersionMenu(product, downloadType);
+                    if (versionMenu.isEmpty()) {
+                        ctx.refresh("No build of this type found. Please choose another one.");
+                        return;
+                    }
+                    ctx.container().entries().add(versionMenu.get());
                     // hide the build type
                     ctx.entry().hidden();
                     ctx.refresh("Please choose a version");
                 });
     }
 
-    private MenuEntry<?, ?> getVersionMenu(Product product, DownloadType downloadType) {
+    private Optional<MenuEntry<?, ?>> getVersionMenu(Product product, DownloadType downloadType) {
         var download = product.downloads().byType(downloadType).get();
         StringSelectMenu.Builder versionMenu = StringSelectMenu.create("version")
                 .setMinValues(1)
                 .setMaxValues(1)
                 .setPlaceholder("Please choose a version");
 
-        download.latestAssets()
-                .forEach(asset -> versionMenu.addOption(asset.maven2().version(),
-                        asset.id(),
-                        "Published: " + asset.lastModified().format(DateTimeFormatter.ofPattern("yy-MM-dd HH:mm"))));
+        List<AssetXO> assets = download.latestAssets();
+        if (assets.isEmpty()) {
+            return Optional.empty();
+        }
+        assets.forEach(asset -> versionMenu.addOption(asset.maven2().version(),
+                asset.id(),
+                "Published: " + asset.lastModified().format(DateTimeFormatter.ofPattern("yy-MM-dd HH:mm"))));
 
-        return MenuEntry.of(versionMenu.build(), ctx -> {
+        return Optional.of(MenuEntry.of(versionMenu.build(), ctx -> {
             String version = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
             String url = api.v1().download().proxy().registerAsset(version);
-            ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download"), c -> {
+            ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
             }));
             ctx.entry().hidden();
+
             ctx.refresh("Click to download. This is a one time use link. Do not distribute.");
-        });
+        }));
     }
 
     @Override
