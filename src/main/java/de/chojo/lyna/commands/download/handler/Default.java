@@ -101,7 +101,7 @@ public class Default implements SlashHandler {
         if (assets.isEmpty()) {
             return Optional.empty();
         }
-        assets.forEach(asset -> versionMenu.addOption(asset.maven2().version(),
+        assets.stream().limit(25).forEach(asset -> versionMenu.addOption(asset.maven2().version(),
                 asset.id(),
                 "Published: " + asset.lastModified().format(DateTimeFormatter.ofPattern("yy-MM-dd HH:mm"))));
 
