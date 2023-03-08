@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
+import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -11,6 +12,7 @@ import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
 public class Product {
     private final Products products;
+    private final NexusRest nexus;
     int id;
     String name;
     String url;
@@ -19,6 +21,7 @@ public class Product {
 
     public Product(Products products, int id, String name, String url, long role) {
         this.products = products;
+        this.nexus = products.nexus();
         this.id = id;
         this.name = name;
         this.url = url;
@@ -86,5 +89,9 @@ public class Product {
 
     public Guild guild() {
         return products().guild();
+    }
+
+    public NexusRest nexus() {
+        return nexus;
     }
 }

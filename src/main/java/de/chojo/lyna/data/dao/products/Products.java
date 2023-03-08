@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -13,9 +14,11 @@ import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
 public class Products {
     private final LicenseGuild licenseGuild;
+    private final NexusRest nexus;
 
-    public Products(LicenseGuild licenseGuild) {
+    public Products(LicenseGuild licenseGuild, NexusRest nexus) {
         this.licenseGuild = licenseGuild;
+        this.nexus = nexus;
     }
 
     public Optional<Product> create(String name, Role role, @Nullable String url) {
@@ -61,5 +64,9 @@ public class Products {
 
     public LicenseGuild licenseGuild() {
         return licenseGuild;
+    }
+
+    public NexusRest nexus() {
+        return nexus;
     }
 }

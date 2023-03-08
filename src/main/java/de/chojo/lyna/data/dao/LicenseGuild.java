@@ -6,10 +6,9 @@ import de.chojo.lyna.data.dao.downloadtype.DownloadTypes;
 import de.chojo.lyna.data.dao.licenses.Licenses;
 import de.chojo.lyna.data.dao.platforms.Platforms;
 import de.chojo.lyna.data.dao.products.Products;
-import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.lyna.data.dao.settings.Settings;
+import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Member;
 
 import java.util.concurrent.ExecutionException;
@@ -17,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class LicenseGuild {
     private final Guild guild;
+    private final NexusRest nexus;
     /**
      * Providing access to registered platforms on this guild.
      */
@@ -40,10 +40,11 @@ public class LicenseGuild {
      */
     Cache<Long, LicenseUser> users = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
-    public LicenseGuild(Guild guild) {
+    public LicenseGuild(Guild guild, NexusRest nexus) {
         this.guild = guild;
+        this.nexus = nexus;
         this.platforms = new Platforms(this);
-        this.products = new Products(this);
+        this.products = new Products(this, nexus);
         this.licenses = new Licenses(this);
         this.settings = new Settings(this);
         this.downloadTypes = new DownloadTypes(this);

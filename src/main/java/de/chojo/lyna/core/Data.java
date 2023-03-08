@@ -31,10 +31,6 @@ public class Data {
     private Data(Threading threading, Configuration<ConfigFile> configuration) {
         this.threading = threading;
         this.configuration = configuration;
-        Nexus nexus = configuration.config().nexus();
-        this.nexus = NexusRest.builder(nexus.host())
-                .setPasswordAuth(nexus.username(), nexus.password())
-                .build();
     }
 
     public static Data create(Threading threading, Configuration<ConfigFile> configuration) throws SQLException, IOException, InterruptedException {
@@ -88,7 +84,11 @@ public class Data {
 
     private void initDao() {
         log.info("Creating DAOs");
-        guilds = new Guilds();
+        Nexus nexus = configuration.config().nexus();
+        this.nexus = NexusRest.builder(nexus.host())
+                .setPasswordAuth(nexus.username(), nexus.password())
+                .build();
+        guilds = new Guilds(this.nexus);
     }
 
     private HikariDataSource getConnectionPool() {

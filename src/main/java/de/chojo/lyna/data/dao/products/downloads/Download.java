@@ -2,12 +2,17 @@ package de.chojo.lyna.data.dao.products.downloads;
 
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.nexus.entities.AssetXO;
+import de.chojo.nexus.requests.v1.search.Direction;
+import de.chojo.nexus.requests.v1.search.Sort;
+import de.chojo.nexus.requests.v1.search.assets.SearchRequest;
 import de.chojo.sadu.exceptions.ThrowingConsumer;
 import de.chojo.sadu.wrapper.util.ParamBuilder;
 import de.chojo.sadu.wrapper.util.Row;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
@@ -100,5 +105,26 @@ public class Download {
                 .delete()
                 .sendSync()
                 .changed();
+    }
+
+    public List<AssetXO> latestAssets() {
+        SearchRequest jar = product.nexus().v1().search().assets().search()
+                .repository(repository)
+                .mavenGroupId(groupId)
+                .mavenArtifactId(artifactId)
+                .mavenExtension("jar")
+                // We order by version
+                .sort(Sort.VERSION)
+                // Newest first
+                .direction(Direction.DESC);
+        if (classifier != null) {
+            jar.mavenClassifier(classifier);
+        }
+        return jar.complete()
+                .items()
+                .stream()
+                // We can not filter for null classifiers, so we do it afterwards
+                .filter(e -> classifier != null || e.maven2().classifier() == null)
+                .toList();
     }
 }
