@@ -7,9 +7,11 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.api.Api;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.nexus.entities.AssetXO;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -22,6 +24,8 @@ import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Default implements SlashHandler {
     private final Guilds guilds;
@@ -51,27 +55,38 @@ public class Default implements SlashHandler {
 
         // Hello future me. This stuff is cursed, so I try to document it a bit c:
         // Create all possible entries and hide what you do not need yet
+        Optional<MenuEntry<?, ?>> downloadTypeMenu = getDownloadTypeMenu(event.getMember(), product);
+        if (downloadTypeMenu.isEmpty()) {
+            event.reply("You do not have access to any releases").setEphemeral(true).queue();
+            return;
+        }
+
         context.registerMenu(MenuAction.forCallback("Please Choose a build type", event)
-                .addComponent(getDownloadTypeMenu(product))
+                .addComponent(downloadTypeMenu.get())
                 .asEphemeral()
                 .build());
     }
 
-    private MenuEntry<?, ?> getDownloadTypeMenu(Product product) {
+    private Optional<MenuEntry<?, ?>> getDownloadTypeMenu(Member member, Product product) {
         StringSelectMenu.Builder buildType = StringSelectMenu.create("build_type")
                 .setMaxValues(1)
                 .setMinValues(1)
                 .setPlaceholder("Please choose a build type");
 
-        List<Download> downloads = product.downloads().downloads();
+        Set<ReleaseType> access = product.license(member).stream().flatMap(l -> l.access().stream()).collect(Collectors.toSet());
+        List<Download> downloads = product.downloads().downloads().stream().filter(d -> access.contains(d.type().releaseType())).toList();
 
+        if (downloads.isEmpty()) {
+            return Optional.empty();
+        }
 
         for (Download download : downloads) {
             DownloadType type = download.type();
+            if (!access.contains(type.releaseType())) continue;
             buildType.addOption(type.name(), String.valueOf(type.id()), type.description());
         }
 
-        return MenuEntry.of(buildType.build(),
+        return Optional.of(MenuEntry.of(buildType.build(),
                 ctx -> {
                     // Remove the version selection menu again
                     ctx.container().entries().removeIf(e -> e.id().equals("version"));
@@ -87,7 +102,7 @@ public class Default implements SlashHandler {
                     // hide the build type
                     ctx.entry().hidden();
                     ctx.refresh("Please choose a version");
-                });
+                }));
     }
 
     private Optional<MenuEntry<?, ?>> getVersionMenu(Product product, DownloadType downloadType) {

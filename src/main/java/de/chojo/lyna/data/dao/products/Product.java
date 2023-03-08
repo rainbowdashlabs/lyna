@@ -1,11 +1,13 @@
 package de.chojo.lyna.data.dao.products;
 
+import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
+import java.util.List;
 import java.util.Optional;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
@@ -93,5 +95,31 @@ public class Product {
 
     public NexusRest nexus() {
         return nexus;
+    }
+
+    public List<License> license(Member member) {
+        return builder(Integer.class)
+                .query("""
+                        SELECT
+                        	guild_id,
+                        	user_id,
+                        	product_id,
+                        	platform_id,
+                        	license_id,
+                        	user_identifier,
+                        	key
+                        FROM
+                        	user_license_all
+                        WHERE guild_id = ?
+                          AND product_id = ?
+                          AND user_id = ?""")
+                .parameter(stmt -> stmt.setLong(guildId()).setInt(id).setLong(member.getIdLong()))
+                .readRow(row -> row.getInt("license_id"))
+                .allSync()
+                .stream()
+                .map(i -> products.licenseGuild().licenses().byId(i))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 }

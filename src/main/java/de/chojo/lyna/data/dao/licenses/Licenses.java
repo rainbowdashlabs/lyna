@@ -42,6 +42,18 @@ public class Licenses {
                 .firstSync();
     }
 
+    public Optional<License> byId(int id) {
+        return builder(License.class)
+                .query("""
+                       SELECT product_id, id, platform_id, user_identifier, key
+                       FROM guild_license
+                       WHERE id = ? AND guild_id = ?
+                       """)
+                .parameter(stmt -> stmt.setInt(id).setLong(licenseGuild.guildId()))
+                .readRow(this::buildLicense)
+                .firstSync();
+    }
+
     public Collection<Command.Choice> completeIdentifier(String value) {
         return builder(Command.Choice.class)
                 .query("SELECT user_identifier FROM guild_license WHERE user_identifier ILIKE (? || '%') AND guild_id = ? LIMIT 25")

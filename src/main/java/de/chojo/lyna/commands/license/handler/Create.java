@@ -5,6 +5,7 @@ import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -48,6 +49,9 @@ public class Create implements SlashHandler {
             event.reply("License already created.").setEphemeral(true).queue();
             return;
         }
+
+        license.get().grantAccess(ReleaseType.STABLE);
+
         event.reply("License created.\n`%s`".formatted(license.get().key())).setEphemeral(true).queue();
     }
 
