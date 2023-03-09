@@ -70,8 +70,14 @@ public class Product {
     }
 
     public boolean canAccess(Member member) {
-        if(free) return true;
-        return products.licenseGuild().user(member).canAccess(this);
+        if (free) return true;
+        boolean hasLicense = products.licenseGuild().user(member).canAccess(this);
+        boolean hasRole = builder(ReleaseType.class)
+                                  .query("SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
+                                  .parameter(stmt -> stmt.setInt(id).setArray(member.getRoles().stream().map(Role::getIdLong).toList(), PostgreSqlTypes.BIGINT))
+                                  .readRow(row -> row.getEnum("release_type", ReleaseType.class))
+                                  .allSync().size() > 0;
+        return hasLicense || hasRole;
     }
 
     public Set<ReleaseType> availableReleaseTypes(Member member) {
