@@ -1,5 +1,6 @@
 package de.chojo.lyna.data.dao.licenses;
 
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Member;
@@ -188,5 +189,22 @@ public class License {
                 .insert()
                 .sendSync()
                 .changed();
+    }
+
+    public boolean grantAccess(ReleaseType type) {
+        return builder()
+                .query("INSERT INTO license_access(license_id, release_type) VALUES (?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
+                .parameter(stmt -> stmt.setInt(id).setEnum(type))
+                .insert()
+                .sendSync()
+                .changed();
+    }
+
+    public List<ReleaseType> access() {
+        return builder(ReleaseType.class)
+                .query("SELECT release_type FROM license_access WHERE license_id = ?")
+                .parameter(stmt -> stmt.setInt(id))
+                .readRow(row -> row.getEnum("release_type", ReleaseType.class))
+                .allSync();
     }
 }

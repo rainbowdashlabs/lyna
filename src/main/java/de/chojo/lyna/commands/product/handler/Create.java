@@ -21,10 +21,11 @@ public class Create implements SlashHandler {
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         String name = event.getOption("name", OptionMapping::getAsString);
         Role role = event.getOption("role", OptionMapping::getAsRole);
-        String url = event.getOption("url", () -> null, OptionMapping::getAsString);
+        String url = event.getOption("url", OptionMapping::getAsString);
+        boolean free = event.getOption("free", () -> false, OptionMapping::getAsBoolean);
 
         Optional<Product> product = guilds.guild(event.getGuild()).products()
-                .create(name, role, url);
+                .create(name, role, url, free);
 
         if(product.isEmpty()){
             event.reply("Product name is taken").setEphemeral(true).queue();

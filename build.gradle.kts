@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     //discord
-    implementation("de.chojo", "cjda-util", "2.8.0+beta.3-DEV") {
+    implementation("de.chojo", "cjda-util", "2.8.3+beta.5-DEV") {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
@@ -24,6 +24,10 @@ dependencies {
     implementation("de.chojo.sadu", "sadu-updater", "1.2.0")
     implementation("de.chojo.sadu", "sadu-postgresql", "1.2.0")
     implementation("de.chojo.sadu", "sadu-datasource", "1.2.0")
+
+    // Download api
+    implementation("de.chojo", "nexus-api-wrapper", "1.0.2")
+
 
     // Logging
     implementation("org.slf4j", "slf4j-api", "2.0.6")

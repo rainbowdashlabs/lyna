@@ -3,6 +3,8 @@ package de.chojo.lyna.core;
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.commands.download.Download;
+import de.chojo.lyna.commands.downloads.Downloads;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.license.License;
 import de.chojo.lyna.commands.platform.Platform;
@@ -26,16 +28,18 @@ public class Bot {
     private final Data data;
     private final Threading threading;
     private final Configuration<ConfigFile> configuration;
+    private final Web web;
     private ShardManager shardManager;
 
-    private Bot(Data data, Threading threading, Configuration<ConfigFile> configuration) {
+    private Bot(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web) {
         this.data = data;
         this.threading = threading;
         this.configuration = configuration;
+        this.web = web;
     }
 
-    public static Bot create(Data data, Threading threading, Configuration<ConfigFile> configuration) {
-        Bot bot = new Bot(data, threading, configuration);
+    public static Bot create(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web) {
+        Bot bot = new Bot(data, threading, configuration, web);
         bot.init();
         return bot;
     }
@@ -69,7 +73,7 @@ public class Bot {
                             context.interaction().meta().name(), context.args(), throwable);
                 })
                 .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.config().baseSettings()
-                                                                                      .botGuild()))
+                        .botGuild()))
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
                 .withCommands(
@@ -79,7 +83,9 @@ public class Bot {
                         new Register(data.guilds()),
                         new Registrations(data.guilds()),
                         new Settings(data.guilds()),
-                        Info.create(configuration))
+                        Info.create(configuration),
+                        new Downloads(data.guilds()),
+                        new Download(data.guilds(), web.api()))
                 .build();
     }
 }
