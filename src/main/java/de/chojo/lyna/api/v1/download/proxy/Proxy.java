@@ -33,7 +33,7 @@ public class Proxy {
                 <meta property="og:url" content="https://cdn.discordapp.com/emojis/940946164646293514.webp">
                         
                 <meta name="twitter:card" content="summary_large_image">
-                <meta name="theme-color" content="#ff0000">
+                <meta name="theme-color" content="#ff0faf">
                         
                 <link rel="icon" href="{{ favicon }}">
                         
