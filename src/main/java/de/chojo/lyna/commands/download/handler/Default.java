@@ -51,9 +51,6 @@ public class Default implements SlashHandler {
             return;
         }
 
-
-        // Hello future me. This stuff is cursed, so I try to document it a bit c:
-        // Create all possible entries and hide what you do not need yet
         Optional<MenuEntry<?, ?>> downloadTypeMenu = getDownloadTypeMenu(event.getMember(), product);
         if (downloadTypeMenu.isEmpty()) {
             event.reply("You do not have access to any releases").setEphemeral(true).queue();
