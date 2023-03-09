@@ -75,15 +75,15 @@ public class Proxy {
                 }
 
                 var asset = download.v1().api().nexus().v1().assets().get(assetId).complete();
-                byte[] download = asset.download().complete();
+                try (var in = asset.downloadStream().complete()) {
+                    String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
 
-                String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
-
-                ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
-                        .header("X-Content-Type-Options", "nosniff")
-                        .contentType(ContentType.APPLICATION_OCTET_STREAM)
-                        .status(HttpCode.OK)
-                        .result(download);
+                    ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
+                            .header("X-Content-Type-Options", "nosniff")
+                            .contentType(ContentType.APPLICATION_OCTET_STREAM)
+                            .status(HttpCode.OK)
+                            .result(in);
+                }
             });
         });
     }

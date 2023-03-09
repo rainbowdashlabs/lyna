@@ -3,7 +3,6 @@ package de.chojo.lyna.api.v1.download;
 import de.chojo.lyna.api.v1.V1;
 import de.chojo.lyna.api.v1.download.proxy.Proxy;
 
-import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Download {

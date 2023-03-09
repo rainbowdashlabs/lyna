@@ -26,7 +26,7 @@ dependencies {
     implementation("de.chojo.sadu", "sadu-datasource", "1.2.0")
 
     // Download api
-    implementation("de.chojo", "nexus-api-wrapper", "1.0.3")
+    implementation("de.chojo", "nexus-api-wrapper", "1.0.4")
 
     // Logging
     implementation("org.slf4j", "slf4j-api", "2.0.6")
