@@ -2,10 +2,13 @@ package de.chojo.lyna.data.dao;
 
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.sadu.types.PostgreSqlTypes;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -102,6 +105,28 @@ public class LicenseUser {
                 .parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setString(value))
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .allSync();
+    }
+    public List<Command.Choice> completeDownloadableProducts(String value) {
+        List<Command.Choice> byLicense = builder(Command.Choice.class)
+                .query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
+                .parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setString(value))
+                .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
+                .allSync();
+        List<Command.Choice> byRole = builder(Command.Choice.class)
+                .query("SELECT product_id, name FROM role_access a LEFT JOIN product p ON a.product_id = p.id WHERE ARRAY[role_id] && ? ")
+                .parameter(stmt -> stmt.setArray(member.getRoles().stream().map(ISnowflake::getIdLong).toList(), PostgreSqlTypes.BIGINT))
+                .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("product_id")))
+                .allSync();
+        List<Command.Choice> free = builder(Command.Choice.class)
+                .query("SELECT id, name FROM product WHERE free AND guild_id = ?")
+                .parameter(stmt -> stmt.setLong(guildId()))
+                .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
+                .allSync();
+
+        var result = new HashSet<>(byLicense);
+        result.addAll(byRole);
+        result.addAll(free);
+        return result.stream().limit(25).toList();
     }
 
     public List<Command.Choice> completeAllProducts(String value) {

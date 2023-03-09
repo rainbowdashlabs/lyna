@@ -11,6 +11,7 @@ import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.util.Colors;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.data.access.Guilds;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.jetbrains.annotations.NotNull;

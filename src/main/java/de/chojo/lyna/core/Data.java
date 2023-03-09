@@ -4,11 +4,12 @@ import com.zaxxer.hikari.HikariDataSource;
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.data.StaticQueryAdapter;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.nexus.NexusRest;
 import de.chojo.sadu.databases.PostgreSql;
 import de.chojo.sadu.datasource.DataSourceCreator;
-import de.chojo.sadu.mapper.RowMapperRegistry;
 import de.chojo.sadu.updater.QueryReplacement;
 import de.chojo.sadu.updater.SqlUpdater;
 import de.chojo.sadu.wrapper.QueryBuilderConfig;
@@ -25,6 +26,7 @@ public class Data {
     private final Configuration<ConfigFile> configuration;
     private HikariDataSource dataSource;
     private Guilds guilds;
+    private NexusRest nexus;
 
     private Data(Threading threading, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -82,7 +84,11 @@ public class Data {
 
     private void initDao() {
         log.info("Creating DAOs");
-        guilds = new Guilds();
+        Nexus nexus = configuration.config().nexus();
+        this.nexus = NexusRest.builder(nexus.host())
+                .setPasswordAuth(nexus.username(), nexus.password())
+                .build();
+        guilds = new Guilds(this.nexus);
     }
 
     private HikariDataSource getConnectionPool() {
@@ -112,5 +118,9 @@ public class Data {
 
     public Guilds guilds() {
         return guilds;
+    }
+
+    public NexusRest nexus() {
+        return nexus;
     }
 }

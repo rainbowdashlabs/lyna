@@ -39,13 +39,7 @@ public class Delete implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("name")) {
-            List<Product> products = guilds.guild(event.getGuild()).products().all();
-            var value = focusedOption.getValue().toLowerCase();
-            List<Command.Choice> choices = products.stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
-                                                   .map(p -> new Command.Choice(p.name(), p.id()))
-                                                   .limit(25)
-                                                   .toList();
-            event.replyChoices(choices).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
         }
     }
 }
