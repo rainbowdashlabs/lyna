@@ -85,4 +85,8 @@ public class LicenseGuild {
             throw new RuntimeException(e);
         }
     }
+
+    public NexusRest nexus() {
+        return nexus;
+    }
 }

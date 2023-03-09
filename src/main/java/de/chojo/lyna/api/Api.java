@@ -3,6 +3,7 @@ package de.chojo.lyna.api;
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.lyna.api.v1.V1;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.core.Data;
 import de.chojo.nexus.NexusRest;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
@@ -24,16 +25,16 @@ public class Api {
 
     private static final Logger log = getLogger(Api.class);
 
-    private Api(Javalin javalin, Configuration<ConfigFile> configuration, NexusRest nexus) {
+    private Api(Javalin javalin, Configuration<ConfigFile> configuration, Data data) {
         this.javalin = javalin;
         this.configuration = configuration;
-        this.nexus = nexus;
-        v1 = new V1(this);
+        this.nexus = data.nexus();
+        v1 = new V1(this, data.products());
     }
 
-    public static Api create(Configuration<ConfigFile> configuration, NexusRest nexus) {
+    public static Api create(Configuration<ConfigFile> configuration, Data data) {
         Javalin javalin = Javalin.create();
-        Api api = new Api(javalin, configuration, nexus);
+        Api api = new Api(javalin, configuration, data);
         api.init();
         return api;
     }

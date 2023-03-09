@@ -88,4 +88,8 @@ public class Bot {
                         new Download(data.guilds(), web.api()))
                 .build();
     }
+
+    public ShardManager shardManager() {
+        return shardManager;
+    }
 }

@@ -23,6 +23,7 @@ public class Lyna {
         var threading = new Threading();
         Data data = Data.create(threading, configuration);
         Web web = Web.create(configuration, data);
-        Bot.create(data, threading, configuration,web);
+        Bot bot = Bot.create(data, threading, configuration, web);
+        data.inject(bot);
     }
 }

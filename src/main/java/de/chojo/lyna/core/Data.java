@@ -7,6 +7,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.data.StaticQueryAdapter;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.Products;
 import de.chojo.nexus.NexusRest;
 import de.chojo.sadu.databases.PostgreSql;
 import de.chojo.sadu.datasource.DataSourceCreator;
@@ -26,6 +27,7 @@ public class Data {
     private final Configuration<ConfigFile> configuration;
     private HikariDataSource dataSource;
     private Guilds guilds;
+    private Products products;
     private NexusRest nexus;
 
     private Data(Threading threading, Configuration<ConfigFile> configuration) {
@@ -89,6 +91,7 @@ public class Data {
                 .setPasswordAuth(nexus.username(), nexus.password())
                 .build();
         guilds = new Guilds(this.nexus);
+        products = new Products(this.guilds);
     }
 
     private HikariDataSource getConnectionPool() {
@@ -122,5 +125,13 @@ public class Data {
 
     public NexusRest nexus() {
         return nexus;
+    }
+
+    public void inject(Bot bot) {
+        products.shardManager(bot.shardManager());
+    }
+
+    public Products products() {
+        return products;
     }
 }
