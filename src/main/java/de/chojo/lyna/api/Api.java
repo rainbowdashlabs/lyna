@@ -60,7 +60,7 @@ public class Api {
                         ctx.status(),
                         ctx.res.getHeaderNames().stream().map(h -> "   " + h + ": " + ctx.res.getHeader(h))
                                 .collect(Collectors.joining("\n")),
-                        ContentType.OCTET_STREAM.equals(ctx.contentType()) ? "Bytes" : ctx.body().substring(0, Math.min(ctx.body().length(), 180)));
+                        ContentType.OCTET_STREAM.equals(ctx.contentType()) ? "Bytes" : ctx.resultString().substring(0, Math.min(ctx.resultString().length(), 180)));
             });
 
             path("api", () -> {

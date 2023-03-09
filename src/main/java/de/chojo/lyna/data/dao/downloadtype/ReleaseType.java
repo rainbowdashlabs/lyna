@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public enum ReleaseType {
+public enum ReleaseType implements Comparable<ReleaseType> {
     STABLE(Collections.emptySet()), DEV(Set.of(STABLE)), SNAPSHOT(Set.of(STABLE, DEV));
 
     private final Set<ReleaseType> descendants;
@@ -16,6 +16,8 @@ public enum ReleaseType {
         d.add(this);
         this.descendants = Collections.unmodifiableSet(d);
     }
+
+
 
     public static ReleaseType parse(String string) {
         return Enums.parse(ReleaseType.class, string).get();

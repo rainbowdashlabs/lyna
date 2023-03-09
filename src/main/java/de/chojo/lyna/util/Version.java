@@ -59,6 +59,6 @@ public record Version(String version, List<Integer> nums, ReleaseType type) impl
                     version.nums().size() > i ? version.nums().get(i) : 0);
             if (compare != 0) return compare;
         }
-        return 0;
+        return version.type().compareTo(type());
     }
 }
