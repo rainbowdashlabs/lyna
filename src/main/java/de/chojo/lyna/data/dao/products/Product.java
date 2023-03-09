@@ -70,8 +70,13 @@ public class Product {
     }
 
     public boolean canAccess(Member member) {
-        if(free) return true;
+        if (free) return true;
         return products.licenseGuild().user(member).canAccess(this);
+    }
+
+    public boolean canDownload(Member member) {
+        if (free) return true;
+        return !availableReleaseTypes(member).isEmpty();
     }
 
     public Set<ReleaseType> availableReleaseTypes(Member member) {
