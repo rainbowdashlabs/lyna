@@ -29,7 +29,7 @@ public class Remove implements SlashHandler {
         LicenseUser licenseUser = guild.user(event.getMember());
         Member target = event.getOption("user", OptionMapping::getAsMember);
         if (product.isEmpty()) {
-            event.reply("Unkown product").setEphemeral(true).queue();
+            event.reply("Unknown product").setEphemeral(true).queue();
             return;
         }
 

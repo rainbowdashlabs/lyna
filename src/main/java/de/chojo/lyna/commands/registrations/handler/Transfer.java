@@ -26,7 +26,7 @@ public class Transfer implements SlashHandler {
 
         var product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
         if (product.isEmpty()) {
-            event.reply("Unkown product").setEphemeral(true).queue();
+            event.reply("Unknown product").setEphemeral(true).queue();
             return;
         }
         Optional<License> license = user.licenseByProduct(product.get());
@@ -45,9 +45,9 @@ public class Transfer implements SlashHandler {
 
         license.get().transfer(target);
 
-        event.reply("License transfered").setEphemeral(true).queue();
+        event.reply("License transferred").setEphemeral(true).queue();
         target.getUser().openPrivateChannel().complete()
-              .sendMessage("A license for %s was transfered to you by %s.".formatted(
+              .sendMessage("A license for %s was transferred to you by %s.".formatted(
                       product.get().name(), event.getMember().getAsMention()))
               .queue();
     }

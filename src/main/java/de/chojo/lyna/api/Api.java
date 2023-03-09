@@ -64,9 +64,6 @@ public class Api {
 
             path("api", () -> {
                 v1.init();
-                get(ctx -> {
-                    ctx.result("Henlo");
-                });
             });
         });
         javalin.start(configuration.config().api().host(), configuration.config().api().port());

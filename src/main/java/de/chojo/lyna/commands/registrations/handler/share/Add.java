@@ -30,7 +30,7 @@ public class Add implements SlashHandler {
         Optional<Product> product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
         Member target = event.getOption("user", OptionMapping::getAsMember);
         if (product.isEmpty()) {
-            event.reply("Unkown product").setEphemeral(true).queue();
+            event.reply("Unknown product").setEphemeral(true).queue();
             return;
         }
 
