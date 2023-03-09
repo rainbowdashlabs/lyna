@@ -32,7 +32,7 @@ public class Info implements SlashHandler {
         LicenseUser licenseUser = guild.user(event.getMember());
         Optional<Product> product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
         if (product.isEmpty()) {
-            event.reply("Unkown product.").setEphemeral(true).queue();
+            event.reply("Unknown product.").setEphemeral(true).queue();
             return;
         }
         if (!licenseUser.canAccess(product.get())) {

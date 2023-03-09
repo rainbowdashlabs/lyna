@@ -77,7 +77,7 @@ public class Data {
         log.info("Configuring QueryBuilder");
         var logger = getLogger("DbLogger");
         QueryBuilderConfig.setDefault(QueryBuilderConfig.builder()
-                .withExceptionHandler(err -> logger.error(LogNotify.NOTIFY_ADMIN, "An error occured during a database request", err))
+                .withExceptionHandler(err -> logger.error(LogNotify.NOTIFY_ADMIN, "An error occurred during a database request", err))
                 .withExecutor(threading.botWorker())
                 .build());
     }
