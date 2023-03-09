@@ -24,14 +24,16 @@ public class Product {
     String url;
     long role;
     Downloads downloads;
+    boolean free;
 
-    public Product(Products products, int id, String name, String url, long role) {
+    public Product(Products products, int id, String name, String url, long role, boolean free) {
         this.products = products;
         this.nexus = products.nexus();
         this.id = id;
         this.name = name;
         this.url = url;
         this.role = role;
+        this.free = free;
         downloads = new Downloads(this);
     }
 
@@ -68,10 +70,14 @@ public class Product {
     }
 
     public boolean canAccess(Member member) {
+        if(free) return true;
         return products.licenseGuild().user(member).canAccess(this);
     }
 
     public Set<ReleaseType> availableReleaseTypes(Member member) {
+        if (free) {
+            return Set.of(ReleaseType.values());
+        }
         List<ReleaseType> byUser = builder(ReleaseType.class)
                 .query("SELECT release_type FROM user_product_access WHERE user_id = ? AND product_id = ?")
                 .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id))

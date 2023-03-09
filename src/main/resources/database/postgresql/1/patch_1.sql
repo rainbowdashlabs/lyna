@@ -101,8 +101,6 @@ CREATE VIEW lyna.user_product_access AS
 			LEFT JOIN lyna.license_access a
 			ON l.license_id = a.license_id;
 
-CREATE VIEW lyna.role_product_access AS;
+ALTER TABLE lyna.product
+	ADD free BOOL DEFAULT FALSE NOT NULL;
 
-SELECT *
-FROM
-	lyna.role_access

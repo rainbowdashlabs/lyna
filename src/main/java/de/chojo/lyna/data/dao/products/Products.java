@@ -21,20 +21,20 @@ public class Products {
         this.nexus = nexus;
     }
 
-    public Optional<Product> create(String name, Role role, @Nullable String url) {
+    public Optional<Product> create(String name, Role role, @Nullable String url, boolean free) {
         return builder(Product.class)
-                .query("INSERT INTO product(guild_id, name, url, role) VALUES (?,?,?,?) RETURNING id")
+                .query("INSERT INTO product(guild_id, name, url, role, free) VALUES (?,?,?,?,?) RETURNING id")
                 .parameter(stmt -> stmt.setLong(licenseGuild.guildId()).setString(name).setString(url)
-                                       .setLong(role.getIdLong()))
-                .readRow(row -> new Product(this, row.getInt("id"), name, url, role.getIdLong()))
+                                       .setLong(role.getIdLong()).setBoolean(free))
+                .readRow(row -> new Product(this, row.getInt("id"), name, url, role.getIdLong(), free))
                 .firstSync();
     }
 
     public List<Product> all() {
         return builder(Product.class)
-                .query("SELECT id, name, url, role FROM product WHERE guild_id = ?")
+                .query("SELECT id, name, url, role, free FROM product WHERE guild_id = ?")
                 .parameter(stmt -> stmt.setLong(licenseGuild.guildId()))
-                .readRow(row -> new Product(this, row.getInt("id"), row.getString("name"), row.getString("url"), row.getLong("role")))
+                .readRow(row -> new Product(this, row.getInt("id"), row.getString("name"), row.getString("url"), row.getLong("role"), row.getBoolean("free")))
                 .allSync();
     }
 
@@ -48,9 +48,9 @@ public class Products {
 
     public Optional<Product> byId(int id) {
         return builder(Product.class)
-                .query("SELECT id, name, url, role FROM product WHERE guild_id = ? AND id = ?")
+                .query("SELECT id, name, url, role, free FROM product WHERE guild_id = ? AND id = ?")
                 .parameter(stmt -> stmt.setLong(licenseGuild.guildId()).setInt(id))
-                .readRow(row -> new Product(this, row.getInt("id"), row.getString("name"), row.getString("url"), row.getLong("role")))
+                .readRow(row -> new Product(this, row.getInt("id"), row.getString("name"), row.getString("url"), row.getLong("role"), row.getBoolean("free")))
                 .firstSync();
     }
 

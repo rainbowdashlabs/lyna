@@ -47,7 +47,7 @@ public class Default implements SlashHandler {
         Product product = optProduct.get();
 
         if (!optProduct.get().canAccess(event.getMember())) {
-            event.reply("You do not have access to this product").queue();
+            event.reply("You do not have access to this product").setEphemeral(true).queue();
             return;
         }
 

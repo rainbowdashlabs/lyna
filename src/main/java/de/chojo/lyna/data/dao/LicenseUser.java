@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.interactions.commands.Command;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
@@ -107,7 +106,7 @@ public class LicenseUser {
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .allSync();
     }
-    public Set<Command.Choice> completeDownloadableProducts(String value) {
+    public List<Command.Choice> completeDownloadableProducts(String value) {
         List<Command.Choice> byLicense = builder(Command.Choice.class)
                 .query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
                 .parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setString(value))
@@ -118,9 +117,16 @@ public class LicenseUser {
                 .parameter(stmt -> stmt.setArray(member.getRoles().stream().map(ISnowflake::getIdLong).toList(), PostgreSqlTypes.BIGINT))
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("product_id")))
                 .allSync();
+        List<Command.Choice> free = builder(Command.Choice.class)
+                .query("SELECT id, name FROM product WHERE free AND guild_id = ?")
+                .parameter(stmt -> stmt.setLong(guildId()))
+                .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
+                .allSync();
+
         var result = new HashSet<>(byLicense);
         result.addAll(byRole);
-        return result;
+        result.addAll(free);
+        return result.stream().limit(25).toList();
     }
 
     public List<Command.Choice> completeAllProducts(String value) {
