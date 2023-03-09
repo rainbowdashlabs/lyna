@@ -64,22 +64,45 @@ FROM
 	lyna.license;
 
 CREATE VIEW lyna.user_license_all AS
-SELECT guild_id,  user_id, product_id, platform_id, license_id, user_identifier, key
+	SELECT
+		guild_id,
+		user_id,
+		product_id,
+		platform_id,
+		license_id,
+		user_identifier,
+		key
+	FROM
+		(
+			SELECT
+				license_id,
+				user_id
+			FROM
+				lyna.user_license
+			UNION
+			SELECT
+				license_id,
+				user_id
+			FROM
+				lyna.user_sub_license
+		) a
+			LEFT JOIN lyna.license l
+			ON a.license_id = l.id
+			LEFT JOIN lyna.product p
+			ON l.product_id = p.id;
+
+CREATE VIEW lyna.user_product_access AS
+	SELECT
+		user_id,
+		release_type,
+		product_id
+	FROM
+		lyna.user_license_all l
+			LEFT JOIN lyna.license_access a
+			ON l.license_id = a.license_id;
+
+CREATE VIEW lyna.role_product_access AS;
+
+SELECT *
 FROM
-	(
-		SELECT
-			license_id,
-			user_id
-		FROM
-			lyna.user_license
-		UNION
-		SELECT
-			license_id,
-			user_id
-		FROM
-			lyna.user_sub_license
-	) a
-		LEFT JOIN lyna.license l
-		ON a.license_id = l.id
-		LEFT JOIN lyna.product p
-		ON l.product_id = p.id;
+	lyna.role_access

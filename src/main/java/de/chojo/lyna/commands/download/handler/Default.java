@@ -25,7 +25,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Default implements SlashHandler {
     private final Guilds guilds;
@@ -73,7 +72,7 @@ public class Default implements SlashHandler {
                 .setMinValues(1)
                 .setPlaceholder("Please choose a build type");
 
-        Set<ReleaseType> access = product.license(member).stream().flatMap(l -> l.access().stream()).collect(Collectors.toSet());
+        Set<ReleaseType> access = product.availableReleaseTypes(member);
         List<Download> downloads = product.downloads().downloads().stream().filter(d -> access.contains(d.type().releaseType())).toList();
 
         if (downloads.isEmpty()) {
@@ -136,7 +135,7 @@ public class Default implements SlashHandler {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
             var choices = guilds.guild(event.getGuild()).user(event.getMember())
-                    .completeOwnProducts(focusedOption.getValue());
+                    .completeDownloadableProducts(focusedOption.getValue());
             event.replyChoices(choices).queue();
         }
     }

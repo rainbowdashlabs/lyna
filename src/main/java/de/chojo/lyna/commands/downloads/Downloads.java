@@ -6,6 +6,8 @@ import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
 import de.chojo.jdautil.interactions.slash.provider.SlashCommand;
 import de.chojo.lyna.commands.downloads.handler.download.CreateDownload;
+import de.chojo.lyna.commands.downloads.handler.roles.Grant;
+import de.chojo.lyna.commands.downloads.handler.roles.Revoke;
 import de.chojo.lyna.commands.downloads.handler.type.CreateType;
 import de.chojo.lyna.commands.downloads.handler.type.DeleteType;
 import de.chojo.lyna.commands.downloads.handler.type.EditType;
@@ -56,6 +58,20 @@ public class Downloads extends SlashCommand {
                         )
                         .subCommand(SubCommand.of("delete", "Edit a download")
                                 .handler(new DeleteType(guilds))
+                                .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
+                                .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
+                        )
+                )
+                .group(Group.of("roles", "Manage download privileges of roles")
+                        .subCommand(SubCommand.of("grant", "Grant download rights to a role")
+                                .handler(new Grant(guilds))
+                                .argument(Argument.role("role", "Role to grant").asRequired())
+                                .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
+                                .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
+                        )
+                        .subCommand(SubCommand.of("revoke", "Revoke download rights from a role")
+                                .handler(new Revoke(guilds))
+                                .argument(Argument.role("role", "Role to grant").asRequired())
                                 .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
                                 .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
                         )

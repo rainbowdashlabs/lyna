@@ -9,6 +9,8 @@ import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.lyna.commands.license.handler.Create;
 import de.chojo.lyna.commands.license.handler.delete.Identifier;
 import de.chojo.lyna.commands.license.handler.delete.Key;
+import de.chojo.lyna.commands.license.handler.downloads.Grant;
+import de.chojo.lyna.commands.license.handler.downloads.Revoke;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Guilds;
 
@@ -40,7 +42,25 @@ public class License implements SlashProvider<Slash> {
                                 .handler(new Identifier(guilds))
                                 .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
                                 .argument(Argument.text("platform", "Platform of key").withAutoComplete().asRequired())
-                                .argument(Argument.text("user_identifier", "Unique user identifier").withAutoComplete().asRequired())))
+                                .argument(Argument.text("user_identifier", "Unique user identifier").withAutoComplete().asRequired())
+                        )
+                )
+                .group(Group.of("downloads", "Manage license download rights")
+                        .subCommand(SubCommand.of("grant", "Grant download rights to a license")
+                                .handler(new Grant(guilds))
+                                .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
+                                .argument(Argument.text("platform", "Platform of key").withAutoComplete().asRequired())
+                                .argument(Argument.text("user_identifier", "Unique user identifier").withAutoComplete().asRequired())
+                                .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
+                        )
+                        .subCommand(SubCommand.of("revoke", "Revoke download rights from a license")
+                                .handler(new Revoke(guilds))
+                                .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
+                                .argument(Argument.text("platform", "Platform of key").withAutoComplete().asRequired())
+                                .argument(Argument.text("user_identifier", "Unique user identifier").withAutoComplete().asRequired())
+                                .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
+                        )
+                )
                 .build();
     }
 }

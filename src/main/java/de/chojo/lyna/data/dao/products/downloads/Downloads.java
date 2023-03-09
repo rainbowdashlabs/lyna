@@ -1,13 +1,16 @@
 package de.chojo.lyna.data.dao.products.downloads;
 
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
+import net.dv8tion.jda.api.entities.Role;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.lyna.data.StaticQueryAdapter.start;
 
 public class Downloads {
     Product product;
@@ -56,5 +59,22 @@ public class Downloads {
                 .parameter(stmt -> stmt.setInt(product.id()).setInt(type.id()))
                 .readRow(row -> Download.build(product, row))
                 .firstSync();
+    }
+
+    public boolean grant(Role role, ReleaseType type) {
+        return builder()
+                .query("INSERT INTO role_access(role_id, product_id, release_type) VALUES (?,?,?::release_type) ON CONFLICT DO NOTHING")
+                .parameter(stmt -> stmt.setLong(role.getIdLong()).setInt(product.id()).setEnum(type))
+                .insert()
+                .sendSync()
+                .changed();
+    }
+    public boolean revoke(Role role, ReleaseType type) {
+        return builder()
+                .query("DELETE FROM role_access WHERE role_id = ? AND product_id = ? AND release_type = ?::release_type")
+                .parameter(stmt -> stmt.setLong(role.getIdLong()).setInt(product.id()).setEnum(type))
+                .insert()
+                .sendSync()
+                .changed();
     }
 }

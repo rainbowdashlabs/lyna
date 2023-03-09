@@ -1,14 +1,18 @@
 package de.chojo.lyna.data.dao.products;
 
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.nexus.NexusRest;
+import de.chojo.sadu.types.PostgreSqlTypes;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
@@ -65,6 +69,24 @@ public class Product {
 
     public boolean canAccess(Member member) {
         return products.licenseGuild().user(member).canAccess(this);
+    }
+
+    public Set<ReleaseType> availableReleaseTypes(Member member) {
+        List<ReleaseType> byUser = builder(ReleaseType.class)
+                .query("SELECT release_type FROM user_product_access WHERE user_id = ? AND product_id = ?")
+                .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id))
+                .readRow(row -> row.getEnum("release_type", ReleaseType.class))
+                .allSync();
+
+        List<ReleaseType> byRole = builder(ReleaseType.class)
+                .query("SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
+                .parameter(stmt -> stmt.setInt(id).setArray(member.getRoles().stream().map(Role::getIdLong).toList(), PostgreSqlTypes.BIGINT))
+                .readRow(row -> row.getEnum("release_type", ReleaseType.class))
+                .allSync();
+        var result = EnumSet.noneOf(ReleaseType.class);
+        result.addAll(byUser);
+        result.addAll(byRole);
+        return result;
     }
 
     public Optional<Role> role(Guild guild) {
