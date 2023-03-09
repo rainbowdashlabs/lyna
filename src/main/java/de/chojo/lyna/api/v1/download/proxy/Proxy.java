@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import de.chojo.lyna.api.v1.download.Download;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpCode;
+import org.intellij.lang.annotations.Language;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +17,32 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 public class Proxy {
     private final Download download;
     private final Cache<String, String> tokens = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
+    @Language("HTML")
+    private final String shareHtml = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <meta name="author" content="Chojo">
+                <meta name="description" content="I know sharing is caring, but it would be nice if your links stay your links ^-^">
+                        
+                <meta property="og:title" content="I said do not share c:">
+                <meta property="og:description" content="I know sharing is caring, but it would be nice if your links stay your links ^-^">
+                <meta property="og:image" content="https://cdn.discordapp.com/emojis/940946164646293514.webp">
+                <meta property="og:url" content="https://cdn.discordapp.com/emojis/940946164646293514.webp">
+                        
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="theme-color" content="#ff0000">
+                        
+                <link rel="icon" href="{{ favicon }}">
+                        
+                <title>I said do not share c:</title>
+            <body>
+            </body>
+            </html>
+                        
+            """;
 
     public Proxy(Download download) {
         this.download = download;
@@ -38,6 +65,12 @@ public class Proxy {
                 }
 
                 tokens.invalidate(token);
+                String agent = ctx.header("User-Agent");
+                if (agent != null && agent.contains("DiscordBot")) {
+                    ctx.status(HttpCode.OK)
+                            .result(shareHtml);
+                    return;
+                }
 
                 var asset = download.v1().api().nexus().v1().assets().get(assetId).complete();
                 byte[] download = asset.download().complete();
