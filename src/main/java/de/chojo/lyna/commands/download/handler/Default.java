@@ -114,7 +114,7 @@ public class Default implements SlashHandler {
         }
         assets.stream().limit(25).forEach(asset -> versionMenu.addOption(asset.maven2().version(),
                 asset.id(),
-                "Published: " + asset.lastModified().format(DateTimeFormatter.ofPattern("yy-MM-dd HH:mm"))));
+                "Published: " + asset.lastModified().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
 
         return Optional.of(MenuEntry.of(versionMenu.build(), ctx -> {
             String version = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
