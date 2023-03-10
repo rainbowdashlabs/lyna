@@ -21,7 +21,7 @@ public class Web {
     }
 
     private void init() {
-        api = Api.create(configuration, data.nexus());
+        api = Api.create(configuration, data);
     }
 
     public Api api() {

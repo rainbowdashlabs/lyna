@@ -2,13 +2,20 @@ package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
+import de.chojo.lyna.util.Version;
 import de.chojo.nexus.NexusRest;
+import de.chojo.nexus.entities.AssetXO;
+import de.chojo.nexus.entities.PageComponentXO;
+import de.chojo.nexus.requests.v1.search.Direction;
+import de.chojo.nexus.requests.v1.search.Sort;
 import de.chojo.sadu.types.PostgreSqlTypes;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -154,5 +161,28 @@ public class Product {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
+    }
+
+    public Optional<Version> latestVersion(Set<ReleaseType> types) {
+        var downloads = downloads().downloads().stream()
+                .filter(download -> types.contains(download.type().releaseType()))
+                .toList();
+        if (downloads.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<Version> assets = new ArrayList<>();
+        for (Download download : downloads) {
+            PageComponentXO complete = products().nexus().v1().search().search()
+                    .repository(download.repository())
+                    .mavenGroupId(download.groupId())
+                    .mavenArtifactId(download.artifactId())
+                    .sort(Sort.VERSION)
+                    .direction(Direction.DESC)
+                    .complete();
+            if(complete.isEmpty()) continue;
+            assets.add(Version.parse(complete.items().get(0).version()));
+        }
+        return assets.stream().max(Version::compareTo);
     }
 }
