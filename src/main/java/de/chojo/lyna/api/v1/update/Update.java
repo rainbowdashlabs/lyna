@@ -24,7 +24,7 @@ public class Update {
 
     public void init() {
         path("update", () -> {
-            // version
+            // ?id=<>&version=<>
             get("check", ctx -> {
                 int id;
                 try {
