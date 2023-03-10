@@ -1,8 +1,10 @@
 package de.chojo.lyna.commands.download.handler;
 
+import de.chojo.jdautil.interactions.message.builder.MessageBuilder;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.menus.MenuAction;
 import de.chojo.jdautil.menus.entries.MenuEntry;
+import de.chojo.jdautil.util.Colors;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.api.Api;
 import de.chojo.lyna.data.access.Guilds;
@@ -11,7 +13,10 @@ import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.nexus.entities.AssetXO;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -21,6 +26,8 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -122,10 +129,33 @@ public class Default implements SlashHandler {
             ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
             }));
             ctx.entry().hidden();
+            AssetXO asset = assets.stream().filter(assetXO -> assetXO.id().equals(version)).findFirst().get();
+            String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
 
-            ctx.refresh("Click to download. This is a one time use link. Do not distribute.");
+            MessageEmbed build = new EmbedBuilder()
+                    .setTitle("📦 " + filename)
+                    .addField("Size", humanReadableByteCountSI(asset.fileSize()), true)
+                    .addField("Md5", asset.checksum().md5(), true)
+                    .addField("Sha256", asset.checksum().sha256(), true)
+                    .setColor(Colors.Strong.PINK)
+                    .setFooter("This is a one time use link. Do not distribute.")
+                    .build();
+            ctx.refresh(build);
         }));
     }
+
+    private String humanReadableByteCountSI(long bytes) {
+        if (-1000 < bytes && bytes < 1000) {
+            return bytes + " B";
+        }
+        CharacterIterator ci = new StringCharacterIterator("kMGTPE");
+        while (bytes <= -999_950 || bytes >= 999_950) {
+            bytes /= 1000;
+            ci.next();
+        }
+        return String.format("%.1f %cB", bytes / 1000.0, ci.current());
+    }
+
 
     @Override
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
