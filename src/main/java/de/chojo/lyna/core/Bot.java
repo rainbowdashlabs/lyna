@@ -84,7 +84,7 @@ public class Bot {
                         new Registrations(data.guilds()),
                         new Settings(data.guilds()),
                         Info.create(configuration),
-                        new Downloads(data.guilds()),
+                        new Downloads(data.guilds(), data.nexus()),
                         new Download(data.guilds(), web.api()))
                 .build();
     }
