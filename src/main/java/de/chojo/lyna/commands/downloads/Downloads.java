@@ -6,15 +6,18 @@ import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
 import de.chojo.jdautil.interactions.slash.provider.SlashCommand;
 import de.chojo.lyna.commands.downloads.handler.download.CreateDownload;
+import de.chojo.lyna.commands.downloads.handler.download.DeleteDownload;
+import de.chojo.lyna.commands.downloads.handler.download.EditDownload;
 import de.chojo.lyna.commands.downloads.handler.roles.Grant;
 import de.chojo.lyna.commands.downloads.handler.roles.Revoke;
 import de.chojo.lyna.commands.downloads.handler.type.CreateType;
 import de.chojo.lyna.commands.downloads.handler.type.DeleteType;
 import de.chojo.lyna.commands.downloads.handler.type.EditType;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.nexus.NexusRest;
 
 public class Downloads extends SlashCommand {
-    public Downloads(Guilds guilds) {
+    public Downloads(Guilds guilds, NexusRest nexusRest) {
         super(Slash.of("downloads", "Manage downloads")
                 .guildOnly()
                 .unlocalized()
@@ -39,7 +42,7 @@ public class Downloads extends SlashCommand {
                 )
                 .group(Group.of("download", "Manage downloads")
                         .subCommand(SubCommand.of("create", "Create a download")
-                                .handler(new CreateDownload(guilds))
+                                .handler(new CreateDownload(guilds, nexusRest))
                                 .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
                                 .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
                                 .argument(Argument.text("repository", "Group id of download").asRequired())
@@ -48,7 +51,7 @@ public class Downloads extends SlashCommand {
                                 .argument(Argument.text("classifier", "Group id of download"))
                         )
                         .subCommand(SubCommand.of("edit", "Edit a download")
-                                .handler(new EditType(guilds))
+                                .handler(new EditDownload(guilds, nexusRest))
                                 .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
                                 .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
                                 .argument(Argument.text("repository", "Group id of download"))
@@ -57,7 +60,7 @@ public class Downloads extends SlashCommand {
                                 .argument(Argument.text("classifier", "Group id of download"))
                         )
                         .subCommand(SubCommand.of("delete", "Edit a download")
-                                .handler(new DeleteType(guilds))
+                                .handler(new DeleteDownload(guilds))
                                 .argument(Argument.text("product", "Product name").withAutoComplete().asRequired())
                                 .argument(Argument.text("type", "Download type").withAutoComplete().asRequired())
                         )
