@@ -18,6 +18,7 @@ import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
 public class Download {
     private final Product product;
+    private final int id;
     private final int typeId;
     private String repository;
     private String groupId;
@@ -25,8 +26,9 @@ public class Download {
     @Nullable
     private String classifier;
 
-    public Download(Product product, int typeId, String repository, String groupId, String artifactId, @Nullable String classifier) {
+    public Download(Product product, int id, int typeId, String repository, String groupId, String artifactId, @Nullable String classifier) {
         this.product = product;
+        this.id = id;
         this.typeId = typeId;
         this.repository = repository;
         this.groupId = groupId;
@@ -36,6 +38,7 @@ public class Download {
 
     public static Download build(Product product, Row row) throws SQLException {
         return new Download(product,
+                row.getInt("id"),
                 row.getInt("type_id"),
                 row.getString("repository"),
                 row.getString("group_id"),
@@ -126,5 +129,19 @@ public class Download {
                 // We can not filter for null classifiers, so we do it afterwards
                 .filter(e -> classifier != null || e.maven2().classifier() == null)
                 .toList();
+    }
+
+    public void downloaded(String version) {
+        builder().query("""
+                        INSERT
+                        INTO download_stat AS d
+                        	(download_id, version, count)
+                        VALUES
+                        	(?, ?, 1)
+                        ON CONFLICT (download_id, date, version) DO UPDATE SET
+                        	count = d.count + 1""")
+                .parameter(stmt -> stmt.setInt(id).setString(version))
+                .insert()
+                .sendSync();
     }
 }
