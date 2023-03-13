@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
-import static de.chojo.lyna.data.StaticQueryAdapter.start;
 
 public class Downloads {
     Product product;
@@ -25,6 +24,27 @@ public class Downloads {
                 .parameter(stmt -> stmt.setInt(product.id()))
                 .readRow(row -> Download.build(product, row))
                 .allSync();
+    }
+
+    public Optional<Download> byReleaseTypeAndArtifact(ReleaseType releaseType, String artifact) {
+        return builder(Download.class)
+                .query("""
+                        SELECT
+                        	type_id,
+                        	group_id,
+                        	artifact_id,
+                        	classifier,
+                        	repository
+                        FROM
+                        	download d
+                        		LEFT JOIN download_type t
+                        		ON d.type_id = t.id
+                        WHERE product_id = ?
+                          AND artifact_id = ?
+                          AND release_type = ?::RELEASE_TYPE;""")
+                .parameter(stmt -> stmt.setInt(product.id()).setString(artifact).setEnum(releaseType))
+                .readRow(row -> Download.build(product, row))
+                .firstSync();
     }
 
     public Optional<Download> create(DownloadType type, String repository, String groupId, String artifactId, @Nullable String classifier) {
@@ -63,18 +83,39 @@ public class Downloads {
 
     public boolean grant(Role role, ReleaseType type) {
         return builder()
-                .query("INSERT INTO role_access(role_id, product_id, release_type) VALUES (?,?,?::release_type) ON CONFLICT DO NOTHING")
+                .query("INSERT INTO role_access(role_id, product_id, release_type) VALUES (?,?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
                 .parameter(stmt -> stmt.setLong(role.getIdLong()).setInt(product.id()).setEnum(type))
                 .insert()
                 .sendSync()
                 .changed();
     }
+
     public boolean revoke(Role role, ReleaseType type) {
         return builder()
-                .query("DELETE FROM role_access WHERE role_id = ? AND product_id = ? AND release_type = ?::release_type")
+                .query("DELETE FROM role_access WHERE role_id = ? AND product_id = ? AND release_type = ?::RELEASE_TYPE")
                 .parameter(stmt -> stmt.setLong(role.getIdLong()).setInt(product.id()).setEnum(type))
                 .insert()
                 .sendSync()
                 .changed();
+    }
+
+    public Optional<Download> byReleaseType(ReleaseType releaseType) {
+        return builder(Download.class)
+                .query("""
+                        SELECT
+                        	type_id,
+                        	group_id,
+                        	artifact_id,
+                        	classifier,
+                        	repository
+                        FROM
+                        	download d
+                        		LEFT JOIN download_type t
+                        		ON d.type_id = t.id
+                        WHERE product_id = ?
+                          AND release_type = ?::RELEASE_TYPE;""")
+                .parameter(stmt -> stmt.setInt(product.id()).setEnum(releaseType))
+                .readRow(row -> Download.build(product, row))
+                .firstSync();
     }
 }
