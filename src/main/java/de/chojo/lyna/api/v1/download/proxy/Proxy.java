@@ -17,7 +17,7 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Proxy {
     private final Download download;
-    private final Cache<String, String> tokens = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
+    private final Cache<String, AssetDownload> tokens = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
     @Language("HTML")
     private final String shareHtml = """
             <!DOCTYPE html>
@@ -58,8 +58,8 @@ public class Proxy {
                     ctx.result("Missing token");
                     return;
                 }
-                String assetId = tokens.getIfPresent(token);
-                if (assetId == null) {
+                AssetDownload download = tokens.getIfPresent(token);
+                if (download == null) {
                     ctx.status(HttpCode.BAD_REQUEST);
                     ctx.result("Invalid token.");
                     return;
@@ -74,8 +74,10 @@ public class Proxy {
                     return;
                 }
 
-                var asset = download.v1().api().nexus().v1().assets().get(assetId).complete();
+                var asset = this.download.v1().api().nexus().v1().assets().get(download.assetId()).complete();
                 String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
+
+                download.download().downloaded(asset.maven2().version());
 
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")
@@ -86,9 +88,9 @@ public class Proxy {
         });
     }
 
-    public String registerAsset(String assetId) {
-        var hashCode = Hashing.sha512().hashString(System.nanoTime() + assetId + System.nanoTime(), StandardCharsets.UTF_8).toString();
-        tokens.put(hashCode, assetId);
+    public String registerAsset(AssetDownload assetDownload) {
+        var hashCode = Hashing.sha512().hashString(System.nanoTime() + assetDownload.assetId() + System.nanoTime(), StandardCharsets.UTF_8).toString();
+        tokens.put(hashCode, assetDownload);
         return "%s/api/v1/download/proxy?token=%s".formatted(download.v1().api().configuration().config().api().url(), hashCode);
     }
 }

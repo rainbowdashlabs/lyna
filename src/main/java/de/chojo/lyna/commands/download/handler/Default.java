@@ -1,12 +1,12 @@
 package de.chojo.lyna.commands.download.handler;
 
-import de.chojo.jdautil.interactions.message.builder.MessageBuilder;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.menus.MenuAction;
 import de.chojo.jdautil.menus.entries.MenuEntry;
 import de.chojo.jdautil.util.Colors;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.api.Api;
+import de.chojo.lyna.api.v1.download.proxy.AssetDownload;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
@@ -15,7 +15,6 @@ import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.nexus.entities.AssetXO;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -124,12 +123,12 @@ public class Default implements SlashHandler {
                 "Published: " + asset.lastModified().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
 
         return Optional.of(MenuEntry.of(versionMenu.build(), ctx -> {
-            String version = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
-            String url = api.v1().download().proxy().registerAsset(version);
+            String assetId = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
+            String url = api.v1().download().proxy().registerAsset(new AssetDownload(download, assetId));
             ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
             }));
             ctx.entry().hidden();
-            AssetXO asset = assets.stream().filter(assetXO -> assetXO.id().equals(version)).findFirst().get();
+            AssetXO asset = assets.stream().filter(assetXO -> assetXO.id().equals(assetId)).findFirst().get();
             String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
 
             MessageEmbed build = new EmbedBuilder()

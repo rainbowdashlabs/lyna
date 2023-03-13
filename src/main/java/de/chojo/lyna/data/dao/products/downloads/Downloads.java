@@ -20,7 +20,7 @@ public class Downloads {
 
     public List<Download> downloads() {
         return builder(Download.class)
-                .query("SELECT type_id, group_id, artifact_id, classifier, repository FROM download WHERE product_id =?;")
+                .query("SELECT id, type_id, group_id, artifact_id, classifier, repository FROM download WHERE product_id =?;")
                 .parameter(stmt -> stmt.setInt(product.id()))
                 .readRow(row -> Download.build(product, row))
                 .allSync();
@@ -56,7 +56,7 @@ public class Downloads {
                         VALUES
                         	(?, ?, ?, ?, ?, ?)
                         ON CONFLICT DO NOTHING
-                        RETURNING type_id, repository, group_id, artifact_id, classifier""")
+                        RETURNING id, type_id, repository, group_id, artifact_id, classifier""")
                 .parameter(stmt -> stmt.setInt(product.id()).setInt(type.id()).setString(repository).setString(groupId).setString(artifactId).setString(classifier))
                 .readRow(row -> Download.build(product, row))
                 .firstSync();
@@ -66,6 +66,7 @@ public class Downloads {
         return builder(Download.class)
                 .query("""
                         SELECT
+                            id,
                         	product_id,
                         	type_id,
                         	group_id,
