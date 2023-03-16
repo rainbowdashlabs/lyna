@@ -9,6 +9,7 @@ public class Settings {
     private final LicenseGuild licenseGuild;
 
     private License license = null;
+    private Trial trial;
 
     public Settings(LicenseGuild licenseGuild) {
         this.licenseGuild = licenseGuild;
@@ -36,5 +37,16 @@ public class Settings {
                     .orElseGet(() -> new License(this));
         }
         return license;
+    }
+    public Trial trial() {
+        if (trial == null) {
+            trial = builder(Trial.class)
+                    .query("SELECT * FROM trial_settings WHERE guild_id = ?")
+                    .parameter(stmt -> stmt.setLong(guildId()))
+                    .readRow(row -> new Trial(this, row.getInt("server_time"), row.getInt("account_time")))
+                    .firstSync()
+                    .orElseGet(() -> new Trial(this));
+        }
+        return trial;
     }
 }
