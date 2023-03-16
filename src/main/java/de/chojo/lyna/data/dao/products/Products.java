@@ -44,6 +44,15 @@ public class Products {
                     .limit(25)
                     .toList();
 
+
+    }
+    public List<Command.Choice> complete(String value, boolean free) {
+        return all().stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
+                .filter(p -> p.free() == free)
+                    .map(p -> new Command.Choice(p.name(), p.id()))
+                    .limit(25)
+                    .toList();
+
     }
 
     public Optional<Product> byId(int id) {

@@ -26,12 +26,12 @@ import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 public class Product {
     private final Products products;
     private final NexusRest nexus;
-    int id;
-    String name;
-    String url;
-    long role;
-    Downloads downloads;
-    boolean free;
+    private final int id;
+    private String name;
+    private String url;
+    private long role;
+    private final Downloads downloads;
+    private boolean free;
 
     public Product(Products products, int id, String name, String url, long role, boolean free) {
         this.products = products;
@@ -184,5 +184,9 @@ public class Product {
             assets.add(Version.parse(complete.items().get(0).version()));
         }
         return assets.stream().max(Version::compareTo);
+    }
+
+    public boolean free() {
+        return free;
     }
 }
