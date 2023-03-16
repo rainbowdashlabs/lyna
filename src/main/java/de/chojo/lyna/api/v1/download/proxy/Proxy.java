@@ -77,7 +77,7 @@ public class Proxy {
                 var asset = this.download.v1().api().nexus().v1().assets().get(download.assetId()).complete();
                 String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
 
-                download.download().downloaded(asset.maven2().version());
+                download.postDownload().run();
 
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")

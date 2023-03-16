@@ -1,4 +1,4 @@
-package de.chojo.lyna.commands.download.handler;
+package de.chojo.lyna.commands.trial.download.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.menus.MenuAction;
@@ -12,6 +12,8 @@ import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
+import de.chojo.lyna.data.dao.settings.Trial;
+import de.chojo.lyna.util.Formatting;
 import de.chojo.nexus.entities.AssetXO;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
@@ -25,12 +27,10 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
-import java.time.format.DateTimeFormatter;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static de.chojo.lyna.util.Formatting.humanReadableByteCountSI;
 
@@ -52,10 +52,25 @@ public class Default implements SlashHandler {
             return;
         }
 
+        Trial trial = guild.settings().trial();
+        if (Duration.between(event.getMember().getTimeJoined(), OffsetDateTime.now()).toSeconds() > trial.serverTime().toSeconds()) {
+            event.reply("You need to be part of the server for at least %s.".formatted(Formatting.duration(trial.serverTime())))
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        if (Duration.between(event.getMember().getUser().getTimeCreated(), OffsetDateTime.now()).toSeconds() > trial.accountTime().toSeconds()) {
+            event.reply("Your account need to be at least %s old.".formatted(Formatting.duration(trial.serverTime())))
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
         Product product = optProduct.get();
 
-        if (!optProduct.get().canDownload(event.getMember())) {
-            event.reply("You do not have access to this product").setEphemeral(true).queue();
+        if (!optProduct.get().hasTrial(event.getMember())) {
+            event.reply("You have no trial left for this product").setEphemeral(true).queue();
             return;
         }
 
@@ -77,8 +92,7 @@ public class Default implements SlashHandler {
                 .setMinValues(1)
                 .setPlaceholder("Please choose a build type");
 
-        Set<ReleaseType> access = product.availableReleaseTypes(member);
-        List<Download> downloads = product.downloads().downloads().stream().filter(d -> access.contains(d.type().releaseType())).toList();
+        List<Download> downloads = product.downloads().downloads().stream().filter(d -> d.type().releaseType() == ReleaseType.STABLE).toList();
 
         if (downloads.isEmpty()) {
             return Optional.empty();
@@ -86,7 +100,7 @@ public class Default implements SlashHandler {
 
         for (Download download : downloads) {
             DownloadType type = download.type();
-            if (!access.contains(type.releaseType())) continue;
+            if (type.releaseType() != ReleaseType.STABLE) continue;
             buildType.addOption(type.name(), String.valueOf(type.id()), type.description());
         }
 
@@ -97,61 +111,43 @@ public class Default implements SlashHandler {
 
                     String typeId = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
                     var downloadType = product.products().licenseGuild().downloadTypes().byId(Integer.parseInt(typeId)).get();
-                    var versionMenu = getVersionMenu(product, downloadType);
-                    if (versionMenu.isEmpty()) {
+
+                    var download = product.downloads().byType(downloadType).get();
+                    List<AssetXO> assets = download.latestAssets();
+                    if (assets.isEmpty()) {
                         ctx.refresh("No build of this type found. Please choose another one.");
                         return;
                     }
-                    ctx.container().entries().add(versionMenu.get());
-                    // hide the build type
+                    AssetXO asset = assets.get(0);
+
+                    String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
+
+                    MessageEmbed build = new EmbedBuilder()
+                            .setTitle("📦 " + filename)
+                            .addField("Size", humanReadableByteCountSI(asset.fileSize()), true)
+                            .addField("Md5", asset.checksum().md5(), true)
+                            .addField("Sha256", asset.checksum().sha256(), true)
+                            .setColor(Colors.Strong.PINK)
+                            .setFooter("This is a one time use link. Do not distribute.")
+                            .build();
+                    String url = api.v1().download().proxy().registerAsset(new AssetDownload(asset.id(), () -> {
+                        download.downloaded(asset.maven2().version());
+                        product.claimTrial(member);
+                    }));
                     ctx.entry().hidden();
-                    ctx.refresh("Please choose a version");
+
+                    ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
+                    }));
+                    ctx.refresh(build);
+
                 }));
-    }
-
-    private Optional<MenuEntry<?, ?>> getVersionMenu(Product product, DownloadType downloadType) {
-        var download = product.downloads().byType(downloadType).get();
-        StringSelectMenu.Builder versionMenu = StringSelectMenu.create("version")
-                .setMinValues(1)
-                .setMaxValues(1)
-                .setPlaceholder("Please choose a version");
-
-        List<AssetXO> assets = download.latestAssets();
-        if (assets.isEmpty()) {
-            return Optional.empty();
-        }
-        assets.stream().limit(25).forEach(asset -> versionMenu.addOption(asset.maven2().version(),
-                asset.id(),
-                "Published: " + asset.lastModified().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
-
-        return Optional.of(MenuEntry.of(versionMenu.build(), ctx -> {
-            String assetId = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
-            AssetXO asset = assets.stream().filter(assetXO -> assetXO.id().equals(assetId)).findFirst().get();
-            String url = api.v1().download().proxy()
-                    .registerAsset(new AssetDownload(assetId, () -> download.downloaded(asset.maven2().version())));
-            ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
-            }));
-            ctx.entry().hidden();
-            String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
-
-            MessageEmbed build = new EmbedBuilder()
-                    .setTitle("📦 " + filename)
-                    .addField("Size", humanReadableByteCountSI(asset.fileSize()), true)
-                    .addField("Md5", asset.checksum().md5(), true)
-                    .addField("Sha256", asset.checksum().sha256(), true)
-                    .setColor(Colors.Strong.PINK)
-                    .setFooter("This is a one time use link. Do not distribute.")
-                    .build();
-            ctx.refresh(build);
-        }));
     }
 
     @Override
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            var choices = guilds.guild(event.getGuild()).user(event.getMember())
-                    .completeDownloadableProducts(focusedOption.getValue());
+            var choices = guilds.guild(event.getGuild()).products().completeTrials(focusedOption.getValue());
             event.replyChoices(choices).queue();
         }
     }
