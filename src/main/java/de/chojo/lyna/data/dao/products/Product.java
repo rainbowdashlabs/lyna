@@ -6,15 +6,17 @@ import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.NexusRest;
-import de.chojo.nexus.entities.AssetXO;
 import de.chojo.nexus.entities.PageComponentXO;
 import de.chojo.nexus.requests.v1.search.Direction;
 import de.chojo.nexus.requests.v1.search.Sort;
+import de.chojo.sadu.exceptions.ThrowingConsumer;
 import de.chojo.sadu.types.PostgreSqlTypes;
+import de.chojo.sadu.wrapper.util.ParamBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -32,8 +34,9 @@ public class Product {
     private long role;
     private final Downloads downloads;
     private boolean free;
+    private boolean trial;
 
-    public Product(Products products, int id, String name, String url, long role, boolean free) {
+    public Product(Products products, int id, String name, String url, long role, boolean free, boolean trial) {
         this.products = products;
         this.nexus = products.nexus();
         this.id = id;
@@ -41,6 +44,7 @@ public class Product {
         this.url = url;
         this.role = role;
         this.free = free;
+        this.trial = trial;
         downloads = new Downloads(this);
     }
 
@@ -80,6 +84,22 @@ public class Product {
         if (free) return true;
         return products.licenseGuild().user(member).canAccess(this);
     }
+
+    public boolean hasTrial(Member member) {
+        return builder(Boolean.class).query("SELECT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?)")
+                .parameter(stmt -> stmt.setInt(id).setLong(member.getIdLong()))
+                .readRow(row -> row.getBoolean("exists"))
+                .firstSync()
+                .orElse(false);
+    }
+
+    public void claimTrial(Member member) {
+        builder().query("INSERT INTO trial(product_id, user_id) VALUES(?,?) ON CONFLICT DO NOTHING")
+                .parameter(stmt -> stmt.setInt(id).setLong(member.getIdLong()))
+                .insert()
+                .sendSync();
+    }
+
 
     public boolean canDownload(Member member) {
         if (free) return true;
@@ -180,7 +200,7 @@ public class Product {
                     .sort(Sort.VERSION)
                     .direction(Direction.DESC)
                     .complete();
-            if(complete.isEmpty()) continue;
+            if (complete.isEmpty()) continue;
             assets.add(Version.parse(complete.items().get(0).version()));
         }
         return assets.stream().max(Version::compareTo);
@@ -188,5 +208,62 @@ public class Product {
 
     public boolean free() {
         return free;
+    }
+
+    public boolean trial() {
+        return trial;
+    }
+
+    public void name(String name) {
+        if (set("name", stmt -> stmt.setString(name))) {
+            this.name = name;
+        }
+    }
+
+    public void url(String url) {
+        if (set("url", stmt -> stmt.setString(url))) {
+            this.url = url;
+        }
+    }
+
+    public void role(long role) {
+        if (set("role", stmt -> stmt.setLong(role))) {
+            this.role = role;
+        }
+    }
+
+    public void free(boolean free) {
+        if (set("free", stmt -> stmt.setBoolean(free))) {
+            this.free = free;
+        }
+    }
+
+    public void trial(boolean trial) {
+        if (set("trial", stmt -> stmt.setBoolean(trial))) {
+            this.trial = trial;
+        }
+    }
+
+    private boolean set(String column, ThrowingConsumer<ParamBuilder, SQLException> consumer) {
+        return builder().query("""
+                        UPDATE
+                            product
+                        SET %s = ?
+                        WHERE
+                            id = ?""", column)
+                .parameter(stmt -> {
+                    consumer.accept(stmt);
+                    stmt.setInt(id);
+                }).update()
+                .sendSync()
+                .changed();
+    }
+
+    public void role(Role role) {
+        if (role.isPublicRole()) {
+            role(0);
+            return;
+        }
+        role(role.getIdLong());
     }
 }

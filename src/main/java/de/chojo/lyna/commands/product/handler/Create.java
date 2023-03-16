@@ -23,9 +23,10 @@ public class Create implements SlashHandler {
         Role role = event.getOption("role", OptionMapping::getAsRole);
         String url = event.getOption("url", OptionMapping::getAsString);
         boolean free = event.getOption("free", () -> false, OptionMapping::getAsBoolean);
+        boolean trial = event.getOption("trial", () -> false, OptionMapping::getAsBoolean);
 
         Optional<Product> product = guilds.guild(event.getGuild()).products()
-                .create(name, role, url, free);
+                .create(name, role, url, free, trial);
 
         if(product.isEmpty()){
             event.reply("Product name is taken").setEphemeral(true).queue();
