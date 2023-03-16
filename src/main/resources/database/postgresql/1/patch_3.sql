@@ -16,3 +16,5 @@ CREATE TABLE lyna.trial_settings (
 	account_time INTEGER DEFAULT 43200 NOT NULL
 );
 
+ALTER TABLE lyna.product
+	ADD trial BOOLEAN DEFAULT FALSE NOT NULL
