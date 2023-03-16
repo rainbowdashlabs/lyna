@@ -10,8 +10,8 @@ import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
 public class Trial {
     private final Settings settings;
-    private int serverTime;
-    private int accountTime;
+    private int serverTime = 30;
+    private int accountTime = 43200;
 
     public Trial(Settings settings) {
         this.settings = settings;

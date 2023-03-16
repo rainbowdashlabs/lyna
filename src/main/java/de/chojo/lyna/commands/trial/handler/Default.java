@@ -1,4 +1,4 @@
-package de.chojo.lyna.commands.trial.download.handler;
+package de.chojo.lyna.commands.trial.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.menus.MenuAction;
@@ -53,14 +53,14 @@ public class Default implements SlashHandler {
         }
 
         Trial trial = guild.settings().trial();
-        if (Duration.between(event.getMember().getTimeJoined(), OffsetDateTime.now()).toSeconds() > trial.serverTime().toSeconds()) {
+        if (Duration.between(event.getMember().getTimeJoined(), OffsetDateTime.now()).toSeconds() < trial.serverTime().toSeconds()) {
             event.reply("You need to be part of the server for at least %s.".formatted(Formatting.duration(trial.serverTime())))
                     .setEphemeral(true)
                     .queue();
             return;
         }
 
-        if (Duration.between(event.getMember().getUser().getTimeCreated(), OffsetDateTime.now()).toSeconds() > trial.accountTime().toSeconds()) {
+        if (Duration.between(event.getMember().getUser().getTimeCreated(), OffsetDateTime.now()).toSeconds() < trial.accountTime().toSeconds()) {
             event.reply("Your account need to be at least %s old.".formatted(Formatting.duration(trial.serverTime())))
                     .setEphemeral(true)
                     .queue();
@@ -124,6 +124,11 @@ public class Default implements SlashHandler {
 
                     MessageEmbed build = new EmbedBuilder()
                             .setTitle("📦 " + filename)
+                            .setDescription("""
+                                    You can download this file once with your account.
+                                    This is a normal version like everyone gets after a purchase without any limitations.
+                                    Please do not distribute this file and use it for evaluation only.
+                                    If you like it please consider buying it and supporting my work.""".stripIndent())
                             .addField("Size", humanReadableByteCountSI(asset.fileSize()), true)
                             .addField("Md5", asset.checksum().md5(), true)
                             .addField("Sha256", asset.checksum().sha256(), true)

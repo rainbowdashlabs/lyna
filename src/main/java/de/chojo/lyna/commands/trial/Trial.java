@@ -1,10 +1,10 @@
-package de.chojo.lyna.commands.trial.download;
+package de.chojo.lyna.commands.trial;
 
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashCommand;
 import de.chojo.lyna.api.Api;
-import de.chojo.lyna.commands.trial.download.handler.Default;
+import de.chojo.lyna.commands.trial.handler.Default;
 import de.chojo.lyna.data.access.Guilds;
 
 public class Trial extends SlashCommand {

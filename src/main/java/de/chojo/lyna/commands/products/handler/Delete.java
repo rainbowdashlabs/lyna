@@ -1,4 +1,4 @@
-package de.chojo.lyna.commands.product.handler;
+package de.chojo.lyna.commands.products.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
@@ -7,10 +7,8 @@ import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
-import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
-import java.util.List;
 import java.util.Optional;
 
 public class Delete implements SlashHandler {
