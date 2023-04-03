@@ -1,0 +1,2 @@
+ALTER TABLE lyna.trial
+	ADD claimed TIMESTAMP DEFAULT now() NOT NULL;
