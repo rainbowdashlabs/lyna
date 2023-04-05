@@ -8,10 +8,11 @@ import de.chojo.lyna.commands.downloads.Downloads;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.license.License;
 import de.chojo.lyna.commands.platform.Platform;
-import de.chojo.lyna.commands.product.Product;
+import de.chojo.lyna.commands.products.Products;
 import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
+import de.chojo.lyna.commands.trial.Trial;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -77,7 +78,7 @@ public class Bot {
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
                 .withCommands(
-                        new Product(data.guilds()),
+                        new Products(data.guilds()),
                         new Platform(data.guilds()),
                         new License(data.guilds(), configuration),
                         new Register(data.guilds()),
@@ -85,7 +86,9 @@ public class Bot {
                         new Settings(data.guilds()),
                         Info.create(configuration),
                         new Downloads(data.guilds(), data.nexus()),
-                        new Download(data.guilds(), web.api()))
+                        new Download(data.guilds(), web.api()),
+                        new Trial(data.guilds(), web.api())
+                )
                 .build();
     }
 

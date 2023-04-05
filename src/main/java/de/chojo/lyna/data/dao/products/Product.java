@@ -86,7 +86,7 @@ public class Product {
     }
 
     public boolean hasTrial(Member member) {
-        return builder(Boolean.class).query("SELECT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?)")
+        return builder(Boolean.class).query("SELECT NOT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?) as exists")
                 .parameter(stmt -> stmt.setInt(id).setLong(member.getIdLong()))
                 .readRow(row -> row.getBoolean("exists"))
                 .firstSync()
