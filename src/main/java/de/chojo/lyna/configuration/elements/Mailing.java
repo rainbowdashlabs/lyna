@@ -1,11 +1,10 @@
 package de.chojo.lyna.configuration.elements;
 
+@SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal"})
 public class Mailing {
     String host;
     String user;
     String password;
-    String directory;
-    int frequency;
 
     public String host() {
         return host;
@@ -17,13 +16,5 @@ public class Mailing {
 
     public String password() {
         return password;
-    }
-
-    public String directory() {
-        return directory;
-    }
-
-    public int frequency() {
-        return frequency;
     }
 }

@@ -34,7 +34,6 @@ public class Formatting {
         if (minutes != 0) {
             parts.add(minutes == 1 ? "1 Minute" : minutes + " Minutes");
         }
-        return String.join(" ", parts);
+        return String.join(":", parts);
     }
-
 }

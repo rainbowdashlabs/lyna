@@ -28,11 +28,14 @@ dependencies {
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
 
+    // Mailing
+    implementation("org.eclipse.angus", "angus-mail", "2.0.1")
+
     // Logging
     implementation("org.slf4j", "slf4j-api", "2.0.7")
     implementation("org.apache.logging.log4j", "log4j-core", "2.20.0")
     implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.20.0")
-    implementation("de.chojo", "log-util", "1.0.1"){
+    implementation("de.chojo", "log-util", "1.0.1") {
         exclude("org.apache.logging.log4j")
     }
 
@@ -55,7 +58,7 @@ tasks {
         from(sourceSets.main.get().resources.srcDirs) {
             filesMatching("version") {
                 expand(
-                    "version" to project.version
+                        "version" to project.version
                 )
             }
             duplicatesStrategy = DuplicatesStrategy.INCLUDE

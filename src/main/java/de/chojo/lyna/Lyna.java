@@ -6,6 +6,7 @@ import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.core.Web;
+import de.chojo.lyna.mail.MailingService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,6 +25,7 @@ public class Lyna {
         Data data = Data.create(threading, configuration);
         Web web = Web.create(configuration, data);
         Bot bot = Bot.create(data, threading, configuration, web);
+        MailingService.create(threading, configuration);
         data.inject(bot);
     }
 }
