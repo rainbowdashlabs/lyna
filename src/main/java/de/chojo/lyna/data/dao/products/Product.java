@@ -4,6 +4,7 @@ import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
+import de.chojo.lyna.data.dao.products.mailings.Mailings;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.NexusRest;
 import de.chojo.nexus.entities.PageComponentXO;
@@ -33,6 +34,7 @@ public class Product {
     private String url;
     private long role;
     private final Downloads downloads;
+    private final Mailings mailings;
     private boolean free;
     private boolean trial;
 
@@ -46,6 +48,7 @@ public class Product {
         this.free = free;
         this.trial = trial;
         downloads = new Downloads(this);
+        mailings = new Mailings(this);
     }
 
     public int id() {
@@ -265,5 +268,9 @@ public class Product {
             return;
         }
         role(role.getIdLong());
+    }
+
+    public Mailings mailings() {
+        return mailings;
     }
 }
