@@ -1,0 +1,579 @@
+<html dir="ltr" lang="de">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,width=device-width,height=device-height,target-densitydpi=device-dpi,user-scalable=no" />
+    <title>Benachrichtigung über Zahlungseingang</title>
+    <style type="text/css">
+      /**
+ * PayPal-Open Fonts
+ */
+      /* Body text - font-weight:400 */
+      @font-face {
+        font-family: PayPal-Open;
+        font-style: normal;
+        font-weight: 400;
+        src: url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Regular.otf') format("opentype");
+        /* IE9 Compat Modes */
+        src: url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Regular.woff2') format('woff2'),
+          /*Moderner Browsers*/
+          url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Regular.woff') format('woff');
+        /* Modern Browsers */
+        /* Fallback font for - MS Outlook older versions (2007,13, 16)*/
+        mso-font-alt: 'Calibri';
+      }
+
+      /* Headline/Subheadline/Button text font-weight:500 */
+      @font-face {
+        font-family: PayPal-Open;
+        font-style: normal;
+        font-weight: 500;
+        src: url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Medium.otf') format("opentype");
+        /* IE9 Compat Modes */
+        src: url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Medium.woff2') format('woff2'),
+          /*Moderner Browsers*/
+          url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Medium.woff') format('woff');
+        /* Modern Browsers */
+        /* Fallback font for - MS Outlook older versions (2007,13, 16)*/
+        mso-font-alt: 'Calibri';
+      }
+
+      /* Bold text - <b>, <strong> Bold equals to font-weight:700 */
+      @font-face {
+        font-family: PayPal-Open;
+        font-style: normal;
+        font-weight: 700;
+        src: url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Bold.otf') format("opentype");
+        /* IE9 Compat Modes */
+        src: url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Bold.woff2') format('woff2'),
+          /*Moderner Browsers*/
+          url('https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/fonts/PayPalOpen/PayPalOpen-Bold.woff') format('woff');
+        /* Modern Browsers */
+        /* Fallback font for - MS Outlook older versions (2007,13, 16)*/
+        mso-font-alt: 'Calibri';
+      }
+
+      /* End - PayPal-Open Fonts */
+
+      /**
+ * VX-LIB Styles
+ * Import only the styles required for Email templates.
+ */
+      @charset "UTF-8";
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      /* Setting these elements to height of 100% ensures that
+ * .vx_foreground-container fully covers the whole viewport
+ */
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-size: 14px !important;
+        font-family: PayPal-Open, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-smoothing: antialiased;
+      }
+
+      a,
+      a:visited {
+        color: #0070E0;
+        text-decoration: none;
+        font-weight: 500;
+        font-family: PayPal-Open, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      }
+
+      a:active,
+      a:focus,
+      a:hover {
+        color: #003087;
+        text-decoration: underline;
+      }
+
+      p,
+      li,
+      dd,
+      dt,
+      label,
+      input,
+      textarea,
+      pre,
+      code,
+      table {
+        font-size: 14px;
+        line-height: 1.6;
+        font-weight: 400;
+        text-transform: none;
+        font-family: PayPal-Open, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #001435;
+      }
+
+      .vx_legal-text {
+        font-size: 0.8125rem;
+        line-height: 1.38461538;
+        font-weight: 400;
+        text-transform: none;
+        font-family: PayPal-Open, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #6c7378;
+      }
+
+      /* End - VX-LIB Styles */
+
+      /**
+ * Styles from Neptune
+ */
+      /* prevent iOS font upsizing */
+      * {
+        -webkit-text-size-adjust: none;
+      }
+
+      /* force Outlook.com to honor line-height */
+      .ExternalClass * {
+        line-height: 100%;
+      }
+
+      td {
+        mso-line-height-rule: exactly;
+      }
+
+      /* prevent iOS auto-linking */
+      /* Android margin fix */
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      div[style*="margin: 16px 0"] {
+        margin: 0 !important;
+      }
+
+      /** Prevent Outlook Purple Links **/
+      .greyLink a:link {
+        color: #949595;
+      }
+
+      /* prevent iOS auto-linking */
+      .applefix a {
+        /* use on a span around the text */
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .ppsans {
+        font-family: PayPal-Open, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+      }
+
+      /* use to make image scale to 100 percent */
+      .mpidiv img {
+        width: 100%;
+        height: auto;
+        min-width: 100%;
+        max-width: 100%;
+      }
+
+      .stackTbl {
+        width: 100%;
+        display: table;
+      }
+
+      .offer-logo {
+        border-radius: 25px;
+      }
+
+      .offer-subtitle {
+        font-weight: 600 !important;
+      }
+
+      /* Responsive CSS */
+      @media screen and (max-width: 640px) {
+
+        /*** Image Width Styles ***/
+        .imgWidth {
+          width: 20px !important;
+        }
+      }
+
+      @media screen and (max-width: 480px) {
+
+        /*** Image Width Styles ***/
+        .imgWidth {
+          width: 10px !important;
+        }
+      }
+
+      /* End - Responsive CSS */
+
+      /* Fix for Neptune partner logo */
+      .partner_image {
+        max-width: 250px;
+        max-height: 90px;
+        display: block;
+      }
+
+      /* End - Styles from Neptune */
+
+      /**
+ * Styles - overrides for PayPal rebranding
+ */
+      html,
+      body {
+        background: #FAF8F5;
+        color: #001435;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .footerDivider {
+        margin: 0px 35px;
+      }
+
+      /* Button  */
+      td.paypal-button-primary:hover {
+        /*Setting border to td would increase the buttton size on hover */
+        background-color: #0070E0 !important;
+      }
+
+      a.paypal-button-primary:hover {
+        background-color: #0070E0 !important;
+        border: 2px solid #0070E0 !important;
+      }
+
+      a.paypal-button-secondary:hover {
+        border: 2px solid #0070E0 !important;
+        color: #0070E0 !important;
+      }
+
+      /**
+ * Styles for Dark mode
+ */
+      @media (prefers-color-scheme: dark) {
+
+        /* Wrap entire logo with border */
+        .footerDivider {
+          margin-left: 0px
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <h4 id="preHeader" style="display:none;color:#FAF8F5;font-size:0px;line-height:0px">Florian Fülling, hier sind die Details.</h4>
+    <table cellPadding="0" cellSpacing="0" border="0" width="100%">
+      <tbody>
+        <tr>
+          <td bgcolor="#FAF8F5" style="font-size:0px"></td>
+          <td bgcolor="#FAF8F5" width="640" align="center" class="mobContent">
+            <table cellPadding="0" cellSpacing="0" border="0" width="100%" dir="ltr">
+              <tbody>
+                <tr>
+                  <td>
+                    <table cellPadding="0" cellSpacing="0" border="0" width="100%">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <table width="100%" cellPadding="0" cellSpacing="0" border="0" style="background:#fff" dir="ltr">
+                              <tbody>
+                                <tr>
+                                  <td style="color:#687173;font-weight:500;font-size:14px;line-height:20px;padding:10px"><span>Hallo Florian Fülling!</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <table width="100%" cellPadding="0" cellSpacing="0" border="0" dir="ltr">
+                              <tbody>
+                                <tr>
+                                  <td style="padding:15px 20px 25px 20px"><img src="https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/images/paypal-rebranding/pp-logo-in-circle-2x.png" style="display:block" border="0" width="63" height="63" alt="PayPal" title="PayPal" /></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <table cellPadding="0" cellSpacing="0" border="0" width="100%" class="ppsans" dir="ltr">
+              <tbody>
+                <tr>
+                  <td width="640" valign="top">
+                    <table width="100%" cellSpacing="0" cellPadding="0" border="0" style="padding:0px 35px 30px 35px;word-break:break-word">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <p class="ppsans" style="font-size:32px;font-weight:500;line-height:38px;color:#001C64;margin:0" dir="ltr"><span>Sie haben eine Zahlung über &euro;9,90 EUR von Eldoria (testing@eldoria.de) erhalten</span></p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table width="100%" cellSpacing="0" cellPadding="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="padding:0px 25px 20px 25px">
+                            <table id="cartDetails" cellSpacing="0" cellPadding="0" border="0" width="100%" dir="ltr" style="font-size:14px">
+                              <tbody>
+                                <tr>
+                                  <td style="padding:10px 10px;text-align:left;border-top:0px;vertical-align:top">
+                                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                                      <tbody>
+                                        <tr>
+                                          <td class="ppsans" style="padding:0px 0px 20px 0px">
+                                            <p class="ppsans" style="font-size:14px;line-height:20px;color:#001435;margin:0;word-break:break-word" dir="ltr"><span>Danke, dass Sie PayPal nutzen. Sie können jetzt alle Artikel versenden. Alle Details zu dieser Zahlung finden Sie in Ihrer PayPal-Kontoübersicht.</span></p>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                                      <tbody>
+                                        <tr>
+                                          <td class="ppsans" style="padding:0px 0px 20px 0px">
+                                            <p class="ppsans" style="font-size:14px;line-height:20px;color:#001435;margin:0;word-break:break-word" dir="ltr"><span>Es kann einige Minuten dauern, bis die Transaktion in Ihrem Konto angezeigt wird.</span></p>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                                      <tbody>
+                                        <tr>
+                                          <td class="ppsans" style="padding:0px 0px 20px 0px">
+                                            <p class="ppsans" style="font-size:14px;line-height:20px;color:#001435;margin:0;word-break:break-word" dir="ltr"><span><strong>Verkäuferschutz – </strong></span><span style="color:#299976">Berechtigt</span></p>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table width="100%" cellSpacing="0" cellPadding="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="padding:0px 25px 20px 25px">
+                            <table id="cartDetails" cellSpacing="0" cellPadding="0" border="0" width="100%" dir="ltr" style="font-size:14px">
+                              <tbody>
+                                <tr>
+                                  <td style="padding:0px 10px;text-align:left;border-top:0px;width:50%;vertical-align:top">
+                                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                                      <tbody>
+                                        <tr>
+                                          <td class="ppsans" style="padding:0px 0px 20px 0px">
+                                            <p class="ppsans" style="font-size:14px;line-height:25px;color:#001435;margin:0;word-break:break-word" dir="ltr"><span><strong>Transaktionscode</strong></span><br /><a href="nope c:" target="_blank"><span>XXXXXXXXXXXXXXX</span></a></p>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                  <td style="padding:0px 10px;text-align:left;border-top:0px;width:50%;vertical-align:top">
+                                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                                      <tbody>
+                                        <tr>
+                                          <td class="ppsans" style="padding:0px 0px 20px 0px">
+                                            <p class="ppsans" style="font-size:14px;line-height:25px;color:#001435;margin:0;word-break:break-word" dir="ltr"><span><strong>Transaktionsdatum</strong></span><br /><span>20.03.2023 17:49:36 MEZ</span></p>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                </tr>
+                                <tr></tr>
+                                <tr>
+                                  <td style="padding:0px 10px;text-align:left;border-top:0px;width:50%;vertical-align:top">
+                                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                                      <tbody>
+                                        <tr>
+                                          <td class="ppsans" style="padding:0px 0px 20px 0px">
+                                            <p class="ppsans" style="font-size:14px;line-height:25px;color:#001435;margin:0;word-break:break-word" dir="ltr"><span><strong>Käufer</strong></span><br /><span>Eldoria<br/></span><span>testing@eldoria.de<br/></span></p>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                  <td style="padding:0px 10px;text-align:left;border-top:0px;width:50%;vertical-align:top">
+                                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                                      <tbody>
+                                        <tr>
+                                          <td class="ppsans" style="padding:0px 0px 20px 0px">
+                                            <p class="ppsans" style="font-size:14px;line-height:25px;color:#001435;margin:0;word-break:break-word" dir="ltr"><span><strong>Anweisungen an Händler</strong></span><br /><span>Der Käufer hat keine Anweisungen eingegeben.</span></p>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table width="100%" cellSpacing="0" cellPadding="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="padding:0px 25px 20px 25px">
+                            <table id="cartDetails" cellSpacing="0" cellPadding="0" border="0" width="100%" dir="ltr" style="font-size:14px">
+                              <tbody>
+                                <tr>
+                                  <th style="border-bottom:1px solid #B7BCBF;padding:15px 10px;text-align:left;border-top:1px solid #B7BCBF;background-color:#F5F7FA"><span>Beschreibung</span></th>
+                                  <th style="border-bottom:1px solid #B7BCBF;padding:15px 10px;text-align:right;border-top:1px solid #B7BCBF;background-color:#F5F7FA;width:110px"><span>Einzelpreis</span></th>
+                                  <th style="border-bottom:1px solid #B7BCBF;padding:15px 10px;text-align:right;border-top:1px solid #B7BCBF;background-color:#F5F7FA"><span>Menge</span></th>
+                                  <th style="border-bottom:1px solid #B7BCBF;padding:15px 10px;text-align:right;border-top:1px solid #B7BCBF;background-color:#F5F7FA;width:135px"><span>Betrag</span></th>
+                                </tr>
+                                <tr>
+                                  <td style="border-bottom:1px solid #CBD2D6;padding:10px 10px;text-align:left;border-top:0px;line-height:22px"><span class="" style="font-size:14px;color:#001435"><span>Purchase Resource: Schematic Brush Reborn 2 - Schematic pasting reinvented (Eldoria)</span></span></td>
+                                  <td style="border-bottom:1px solid #CBD2D6;padding:10px 10px;text-align:right;border-top:0px"><span>&euro;9,90 EUR</span></td>
+                                  <td style="border-bottom:1px solid #CBD2D6;padding:10px 10px;text-align:right;border-top:0px"><span>1</span></td>
+                                  <td style="border-bottom:1px solid #CBD2D6;padding:10px 10px;text-align:right;border-top:0px"><span>&euro;9,90 EUR</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table width="100%" cellSpacing="0" cellPadding="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="padding:0px 25px 20px 25px">
+                            <table id="cartDetails" cellSpacing="0" cellPadding="0" border="0" width="100%" dir="ltr" style="font-size:14px">
+                              <tbody>
+                                <tr>
+                                  <td style="text-align:right;padding:5px 10px 0px 0px;vertical-align:top" colSpan="1"><span><strong>Zwischensumme</strong></span></td>
+                                  <td style="text-align:right;padding:5px 10px 0px 0px;width:135px"><span>&euro;9,90 EUR</span></td>
+                                </tr>
+                                <tr>
+                                  <td style="text-align:right;padding:5px 10px 0px 0px;vertical-align:top" colSpan="1"><span><strong>Summe</strong></span></td>
+                                  <td style="text-align:right;padding:5px 10px 0px 0px;width:135px"><span>&euro;9,90 EUR</span></td>
+                                </tr>
+                                <tr>
+                                  <td style="text-align:right;padding:5px 10px 0px 0px;vertical-align:top;padding-top:15px;padding-bottom:10px" colSpan="1"><span><strong>Zahlung</strong></span></td>
+                                  <td style="text-align:right;padding:5px 10px 0px 0px;width:135px;padding-top:15px;padding-bottom:10px"><span>&euro;9,90 EUR</span></td>
+                                </tr>
+                                <tr>
+                                  <td style="text-align:right;padding:5px 10px 0px 0px;vertical-align:top" colSpan="2"><span>Zahlung gesendet an testing@eldoria.de</span></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="640">
+                    <table width="100%" cellPadding="0" cellSpacing="0" border="0" dir="ltr">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                              <tbody>
+                                <tr>
+                                  <td width="120" valign="top"><img src="https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/images/paypal-rebranding/footer-logo-with-crop-2x.png" width="283" height="100" style="display:block" border="0" alt="PayPal" />
+                                    <hr class="footerDivider" style="border-top:1px solid #C6C6C6;margin:0px 35px" />
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table id="body_footer_links" width="100%" cellPadding="0" cellSpacing="0" border="0" style="margin-bottom:0px" dir="ltr">
+                      <tbody>
+                        <tr>
+                          <td style="font-size:11px;line-height:31px;padding:10px 35px;color:#001435;font-weight:500" class="ppsans"><a href="https://www.paypal.com/de/smarthelp/home?v=1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank" class="ppsans" style="color:#0070E0;text-decoration:none" alt="Help &amp; Contact">Hilfe &amp; Kontakt</a><span style="padding:0px 5px"> | </span><a href="https://www.paypal.com/de/webapps/mpp/paypal-safety-and-security?v=1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank" class="ppsans" style="color:#0070E0;text-decoration:none" alt="Security">Sicherheit</a><span style="padding:0px 5px"> | </span><a href="https://www.paypal.com/de/webapps/mpp/mobile-apps?v=1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank" class="ppsans" style="color:#0070E0;text-decoration:none" alt="Apps">Apps</a></td>
+                        </tr>
+                        <tr>
+                          <td style="padding-bottom:20px;padding-top:20px;padding-left:20px;padding-right:20px">
+                            <table cellPadding="0" cellSpacing="0" border="0" dir="ltr">
+                              <tbody>
+                                <tr>
+                                  <td align="center" valign="middle" width="60"><a id="twitter" href="https://twitter.com/PayPal?v=1%2C0.1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank"><img border="0" src="https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/images/paypal-rebranding/footer-social-icons_twitter-2x.png" width="28" height="28" style="display:block" alt="Twitter" /></a></td>
+                                  <td align="center" valign="middle" width="60"><a id="instagram" href="https://www.instagram.com/paypal/?v=1%2C0.1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank"><img border="0" src="https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/images/paypal-rebranding/footer-social-icons_instagram-2x.png" width="28" height="28" style="display:block" alt="Instagram" /></a></td>
+                                  <td align="center" valign="middle" width="60"><a id="facebook" href="https://www.facebook.com/PayPalUSA?v=1%2C0.1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank"><img border="0" src="https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/images/paypal-rebranding/footer-social-icons_facebook-2x.png" width="28" height="28" style="display:block" alt="Facebook" /></a></td>
+                                  <td align="center" valign="middle" width="60"><a id="linkedin" href="http://www.linkedin.com/company/1482?trk=tyah&v=1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank"><img border="0" src="https://www.paypalobjects.com/digitalassets/c/system-triggered-email/n/layout/images/paypal-rebranding/footer-social-icons_linkedin-2x.png" width="28" height="28" style="display:block" alt="LinkedIn" /></a></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <table cellPadding="0" cellSpacing="0" border="0" width="100%" style="padding:5px 35px 20px 35px">
+              <tbody>
+                <tr>
+                  <td class="ppsans" width="600">
+                    <table id="hideForTextFooter" width="100%" cellPadding="0" cellSpacing="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="font-size:11px;line-height:13px;padding:5px 0px">
+                            <p class="ppsans" style="font-size:11px;margin:0" dir="ltr"><span>PayPal setzt alles daran, Sie vor betrügerischen E-Mails zu schützen. PayPal wird Sie immer mit Ihrem Vor- und Nachnamen anschreiben. <a href="https://www.paypal.com/us/webapps/mpp/security/suspicious-activity?v=1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank" style="text-decoration:none">So erkennen Sie Phishing-Mails</a></span></p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table id="hideForTextFooter" width="100%" cellPadding="0" cellSpacing="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="font-size:11px;line-height:13px;padding:5px 0px">
+                            <p class="ppsans" style="font-size:11px;margin:0" dir="ltr"><span>Bitte antworten Sie nicht auf diese E-Mail. Wenn Sie mit uns Kontakt aufnehmen möchten, klicken Sie auf <a href="https://www.paypal.com/selfhelp/home?v=1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank" style="text-decoration:none">Hilfe & Kontakt</a>.</span></p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table id="" width="100%" cellPadding="0" cellSpacing="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="font-size:11px;line-height:13px;padding:5px 0px">
+                            <p class="ppsans" style="font-size:11px;margin:0" dir="ltr"><span>Sie sind sich nicht sicher, warum Sie diese E-Mail erhalten haben? <a href="https://www.paypal.com/de/smarthelp/article/why-am-i-receiving-emails-from-paypal-when-i-dont-have-an-account-faq4172?v=1&utm_source=unp&utm_medium=email&utm_campaign=RT000019&utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&ppid=RT000019&cnac=DE&rsta=de_DE%28de-DE%29&cust=7JT45GYYJE4LY&unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&calc=f557724d8b367&unp_tpcid=email-xclick-payment-notification&page=main%3Aemail%3ART000019&pgrp=main%3Aemail&e=cl&mchn=em&s=ci&mail=sys&appVersion=1.153.0&xt=104038%2C127632" target="_blank" style="text-decoration:none">Mehr erfahren</a></span></p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table width="100%" cellPadding="0" cellSpacing="0" border="0">
+                      <tbody>
+                        <tr>
+                          <td style="font-size:11px;line-height:13px;padding:5px 0px">
+                            <p class="ppsans" style="font-size:11px;margin:0" dir="ltr">
+                            <div style="font-size:11px" dir="ltr"><span>Copyright © 1999-2023 PayPal. Alle Rechte vorbehalten.<br/><br/>PayPal (Europe) S. à r.l. et Cie, S.C.A. Société en commandite par actions. Eingetragener Firmensitz: 22-24 Boulevard Royal, L-2449 Luxembourg RCS Luxembourg B 118 349</span></div>
+                            <p style="font-size:11px" dir="ltr">PayPal RT000019:de_DE(de-DE):1.1.0:f557724d8b367</p><img alt="" height="1" width="1" border="0" src="https://t.paypal.com/ts?v=1&amp;utm_source=unp&amp;utm_medium=email&amp;utm_campaign=RT000019&amp;utm_unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&amp;ppid=RT000019&amp;cnac=DE&amp;rsta=de_DE%28de-DE%29&amp;cust=7JT45GYYJE4LY&amp;unptid=38aee952-c73f-11ed-b400-3cfdfeef7e88&amp;calc=f557724d8b367&amp;unp_tpcid=email-xclick-payment-notification&amp;page=main%3Aemail%3ART000019&amp;pgrp=main%3Aemail&amp;e=op&amp;mchn=em&amp;s=ci&amp;mail=sys&amp;appVersion=1.153.0&amp;xt=104038%2C127632" /></p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+          <td bgcolor="#FAF8F5" style="font-size:0px"></td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+
+</html>

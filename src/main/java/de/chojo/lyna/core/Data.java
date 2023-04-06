@@ -7,6 +7,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.data.StaticQueryAdapter;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.nexus.NexusRest;
 import de.chojo.sadu.databases.PostgreSql;
@@ -29,6 +30,7 @@ public class Data {
     private Guilds guilds;
     private Products products;
     private NexusRest nexus;
+    private Mailings mailings;
 
     private Data(Threading threading, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -92,6 +94,7 @@ public class Data {
                 .build();
         guilds = new Guilds(this.nexus);
         products = new Products(this.guilds);
+        mailings = new Mailings(this.guilds);
     }
 
     private HikariDataSource getConnectionPool() {
@@ -129,9 +132,14 @@ public class Data {
 
     public void inject(Bot bot) {
         products.shardManager(bot.shardManager());
+        mailings.shardManager(bot.shardManager());
     }
 
     public Products products() {
         return products;
+    }
+
+    public Mailings mailings() {
+        return mailings;
     }
 }

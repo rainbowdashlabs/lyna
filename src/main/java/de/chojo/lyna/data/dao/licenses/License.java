@@ -1,50 +1,54 @@
 package de.chojo.lyna.data.dao.licenses;
 
+import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Member;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class License {
+    private static final Logger log = getLogger(License.class);
     /**
      * The product the license is for.
      */
-    Product product;
+    private  final Product product;
 
     /**
      * Information about the platform and license.
      */
-    Platform platform;
+    private final Platform platform;
 
     /**
      * Identifier of the user on the platform.
      */
-    String userIdentifier;
+    private final String userIdentifier;
 
     /**
      * License id
      */
-    int id;
+    private final int id;
 
     /**
      * License key
      */
-    String key;
+    private final String key;
 
     /**
      * The owner owning this license.
      */
-    long owner;
+    private long owner;
 
     /**
      * The sub users of the license.
      */
-    List<Long> subUsers;
+    private final List<Long> subUsers;
 
     public License(Product product, Platform platform, String userIdentifier, int id, String key) {
         this(product, platform, userIdentifier, id, key, -1, new ArrayList<>());
@@ -121,6 +125,7 @@ public class License {
                 .insert()
                 .sendSync()
                 .changed()) {
+            log.info(LogNotify.STATUS, "{} claimed license {} for {}", member.getEffectiveName(), id, product().name());
             owner = member.getIdLong();
             product.assign(member);
             return true;
@@ -142,6 +147,7 @@ public class License {
                 .changed()) {
             Member oldOwner = member.getGuild().retrieveMemberById(owner).complete();
             if (oldOwner != null && !product.canAccess(oldOwner)) {
+                log.info(LogNotify.STATUS, "{} transferred license for {} to {}", oldOwner.getEffectiveName(), product.name(), member.getEffectiveName());
                 product.revoke(oldOwner);
             }
             owner = member.getIdLong();
@@ -183,6 +189,7 @@ public class License {
 
     public boolean addSubUser(Member member) {
         product.assign(member);
+        log.info(LogNotify.STATUS, "{} shared license for {} with {}", owner, product.name(), member.getEffectiveName());
         return builder()
                 .query("INSERT INTO user_sub_license(user_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
                 .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id()))
