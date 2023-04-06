@@ -33,7 +33,7 @@ public class Mailings {
                     LicenseGuild licenseGuild = guilds.guild(guild);
                     Product product = licenseGuild.products().byId(row.getInt("product_id")).get();
                     Platform platform = licenseGuild.platforms().byId(row.getInt("product_id")).get();
-                    return new Mailing(row.getInt("id"), product, platform, row.getString("name"), row.getString("mail_test"));
+                    return new Mailing(row.getInt("id"), product, platform, row.getString("name"), row.getString("mail_text"));
                 }).firstSync();
     }
 

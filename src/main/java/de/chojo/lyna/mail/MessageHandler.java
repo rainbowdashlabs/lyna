@@ -31,45 +31,43 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
     @Override
     public void accept(Message message) throws Exception {
         InternetAddress address = (InternetAddress) message.getFrom()[0];
-        if (!"service@paypal.de".equals(address.getAddress()) && "false".equalsIgnoreCase(System.getProperty("bot.testmode", "false"))) {
+        if (!"service@paypal.de".equals(address.getAddress()) && "false".equalsIgnoreCase(System.getProperty("bot.verifypaypal", "false"))) {
             log.info("Received mail from unknown sender {}", address.getAddress());
             return;
         }
 
-        var mailHtml = new MailParser(message).parsed().replaceAll("[\\n\\r]", "").replaceAll("\\t", "  ").replaceAll("\\s+", "");
+        var mailHtml = new MailParser(message).parsed();
 
-        Optional<String> product = PayPalMail.extractProduct(mailHtml);
+        PayPalMail parsed = PayPalMail.parse(mailHtml);
 
-        if (product.isEmpty()) {
+        if (parsed.product().isEmpty()) {
             log.error(LogNotify.NOTIFY_ADMIN, "Could not extract product from {}!", message.getSubject());
             return;
         }
 
-        Optional<String> name = PayPalMail.extractName(mailHtml);
-        if (name.isEmpty()) {
+        if (parsed.name().isEmpty()) {
             log.error(LogNotify.NOTIFY_ADMIN, "Could not extract name from {}!", message.getSubject());
             return;
         }
 
-        Optional<String> mail = PayPalMail.extractMail(mailHtml);
-        if (mail.isEmpty()) {
+        if (parsed.mail().isEmpty()) {
             log.error(LogNotify.NOTIFY_ADMIN, "Could not extract mail from {}", message.getSubject());
             return;
         }
 
-        Optional<Mailing> optMailing = mailings.byName(product.get());
+        Optional<Mailing> optMailing = mailings.byName(parsed.product().get());
         if (optMailing.isEmpty()) {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not find a matching mailing entry for {}", product.get());
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not find a matching mailing entry for {}", parsed.product().get());
             return;
         }
 
         Mailing mailing = optMailing.get();
         Optional<License> license = mailing.product().products().licenseGuild().licenses()
-                .create(configuration.config().license().baseSeed(), mailing.product(), mailing.platform(), mail.get());
+                .create(configuration.config().license().baseSeed(), mailing.product(), mailing.platform(), parsed.mail().get());
         String html = mailing.mailText();
         html = html.replace("{{ key }}", license.get().key());
-        html = html.replace("{{ name }}", name.get());
-        mailingService.sendMail(html, "Thank you for purchasing " + mailing.product().name(), mail.get());
+        html = html.replace("{{ name }}", parsed.name().get());
+        mailingService.sendMail(html, "Thank you for purchasing " + mailing.product().name(), parsed.mail().get());
     }
 
 }
