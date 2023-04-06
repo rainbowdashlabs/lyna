@@ -7,6 +7,7 @@ import de.chojo.lyna.commands.download.Download;
 import de.chojo.lyna.commands.downloads.Downloads;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.license.License;
+import de.chojo.lyna.commands.mailing.Mailing;
 import de.chojo.lyna.commands.platform.Platform;
 import de.chojo.lyna.commands.products.Products;
 import de.chojo.lyna.commands.register.Register;
@@ -77,6 +78,7 @@ public class Bot {
                         .botGuild()))
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
+                .withDefaultModalService()
                 .withCommands(
                         new Products(data.guilds()),
                         new Platform(data.guilds()),
@@ -87,7 +89,8 @@ public class Bot {
                         Info.create(configuration),
                         new Downloads(data.guilds(), data.nexus()),
                         new Download(data.guilds(), web.api()),
-                        new Trial(data.guilds(), web.api())
+                        new Trial(data.guilds(), web.api()),
+                        new Mailing(data.guilds())
                 )
                 .build();
     }

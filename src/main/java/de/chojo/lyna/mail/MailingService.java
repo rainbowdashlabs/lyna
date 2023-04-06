@@ -1,9 +1,13 @@
 package de.chojo.lyna.mail;
 
 import de.chojo.jdautil.configuratino.Configuration;
+import de.chojo.jdautil.consumer.ThrowingConsumer;
+import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Mailing;
+import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
+import jakarta.activation.DataHandler;
 import jakarta.mail.*;
 import jakarta.mail.event.MessageCountAdapter;
 import jakarta.mail.event.MessageCountEvent;
@@ -17,41 +21,40 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class MailingService {
     private final Threading threading;
+    private final Data data;
     private final Configuration<ConfigFile> configuration;
     private static final Logger log = getLogger(MailingService.class);
     private Session session;
     private Store imapStore;
-    private final List<Consumer<Message>> receivedListener = new ArrayList<>();
+    private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
 
-    public MailingService(Threading threading, Configuration<ConfigFile> configuration) {
+    public MailingService(Threading threading,Data data, Configuration<ConfigFile> configuration) {
         this.threading = threading;
+        this.data = data;
         this.configuration = configuration;
     }
 
-    public static MailingService create(Threading threading, Configuration<ConfigFile> configuration) {
-        MailingService mailingService = new MailingService(threading, configuration);
+    public static MailingService create(Threading threading, Data data, Configuration<ConfigFile> configuration) {
+        MailingService mailingService = new MailingService(threading,data, configuration);
         try {
             mailingService.init();
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
-        mailingService.registerMessageListener(message -> {
-            try {
-                mailingService.sendMail("<b>Received c:</b>",((InternetAddress) message.getFrom()[0]).getAddress());
-            } catch (MessagingException e) {
-                throw new RuntimeException(e);
-            }
-        });
         return mailingService;
     }
 
     private void init() throws MessagingException {
+        connect();
+        registerMessageListener(new MessageHandler(data, this, configuration));
+    }
+
+    private void connect() throws MessagingException {
         Properties props = System.getProperties();
         Mailing mailing = configuration.config().mailing();
         props.put("mail.smtp.host", mailing.host());
@@ -73,8 +76,12 @@ public class MailingService {
                 if (e.getType() == MessageCountEvent.REMOVED) return;
                 log.info("Received messages");
                 for (Message message : e.getMessages()) {
-                    for (Consumer<Message> messageConsumer : receivedListener) {
-                        messageConsumer.accept(message);
+                    for (var messageConsumer : receivedListener) {
+                        try {
+                            messageConsumer.accept(message);
+                        } catch (Exception ex) {
+                            log.error("Error when handling mail", ex);
+                        }
                     }
                 }
             }
@@ -88,11 +95,12 @@ public class MailingService {
             try {
                 folder.idle();
             } catch (MessagingException e) {
+                log.error(LogNotify.NOTIFY_ADMIN, "Could not start connection idling", e);
                 throw new RuntimeException(e);
             }
         }, threading.botWorker()).whenComplete((res, err) -> {
             if (err != null) {
-                log.error("Could not read mails");
+                log.error("Could not read mails", err);
             } else {
                 log.info("New email received");
             }
@@ -100,14 +108,14 @@ public class MailingService {
         });
     }
 
-    public void registerMessageListener(Consumer<Message> listener) {
+    public void registerMessageListener(ThrowingConsumer<Message, Exception> listener) {
         receivedListener.add(listener);
     }
 
-    public void sendMail(String text, String address) {
+    public void sendMail(String text, String subject, String address) {
         MimeMessage mimeMessage;
         try {
-            mimeMessage = buildMessage(text, address);
+            mimeMessage = buildMessage(text, subject, address);
         } catch (MessagingException e) {
             log.error("Could not build mail", e);
             return;
@@ -128,13 +136,12 @@ public class MailingService {
         sent.appendMessages(new Message[]{message});
     }
 
-    private MimeMessage buildMessage(String text, String address) throws MessagingException {
+    private MimeMessage buildMessage(String html, String subject, String address) throws MessagingException {
         var message = new MimeMessage(session);
         message.addFrom(new Address[]{new InternetAddress(configuration.config().mailing().user())});
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(address, false));
-        // "<b>Received c:</b>"
-        message.setText(text);
-        message.setSubject("Henlo");
+        message.setDataHandler(new DataHandler(html, "text/html"));
+        message.setSubject(subject);
         message.setHeader("X-Mailer", "Lyna");
         message.setSentDate(new Date());
         return message;

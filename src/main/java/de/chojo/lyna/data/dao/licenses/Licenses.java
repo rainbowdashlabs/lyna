@@ -7,15 +7,18 @@ import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.util.LicenseCreator;
 import de.chojo.sadu.wrapper.util.Row;
 import net.dv8tion.jda.api.interactions.commands.Command;
+import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class Licenses {
     private final LicenseGuild licenseGuild;
+    private static final Logger log = getLogger(Licenses.class);
 
     public Licenses(LicenseGuild licenseGuild) {
         this.licenseGuild = licenseGuild;
@@ -23,6 +26,7 @@ public class Licenses {
 
     public Optional<License> create(long seed, Product product, Platform platform, String identifier) {
         String key = LicenseCreator.create(seed, product, platform, identifier);
+        log.info("Creating license key for {} on {} purchased by {}", product.name(), platform.name(), identifier);
         return builder(License.class)
                 .query("INSERT INTO license(product_id, platform_id, user_identifier, key) VALUES(?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
                 .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()).setString(identifier).setString(key))

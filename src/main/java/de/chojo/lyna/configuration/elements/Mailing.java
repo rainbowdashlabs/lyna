@@ -2,9 +2,9 @@ package de.chojo.lyna.configuration.elements;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal"})
 public class Mailing {
-    String host;
-    String user;
-    String password;
+    private String host = "";
+    private String user = "";
+    private String password = "";
 
     public String host() {
         return host;
