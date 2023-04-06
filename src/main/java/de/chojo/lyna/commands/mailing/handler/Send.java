@@ -1,36 +1,41 @@
 package de.chojo.lyna.commands.mailing.handler;
 
+import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
-import de.chojo.jdautil.modals.handler.ModalHandler;
-import de.chojo.jdautil.modals.handler.TextInputHandler;
 import de.chojo.jdautil.wrapper.EventContext;
+import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.data.dao.products.mailings.Mailing;
+import de.chojo.lyna.mail.Mail;
+import de.chojo.lyna.mail.MailCreator;
+import de.chojo.lyna.mail.MailingService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import org.slf4j.Logger;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import java.util.Optional;
 
-public class Create implements SlashHandler {
-    private static final Logger log = getLogger(Create.class);
+public class Send implements SlashHandler {
+    private final MailingService mailingService;
+    private final Configuration<ConfigFile> configuration;
     private final Guilds guilds;
 
-    public Create(Guilds guilds) {
+    public Send(MailingService mailingService, Configuration<ConfigFile> configuration, Guilds guilds) {
+        this.mailingService = mailingService;
+        this.configuration = configuration;
         this.guilds = guilds;
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         LicenseGuild guild = guilds.guild(event.getGuild());
-
         var product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
         var platform = guild.platforms().byId(event.getOption("platform", OptionMapping::getAsInt));
-        var mailName = event.getOption("mail_name", OptionMapping::getAsString);
-        var mail = event.getOption("mail", OptionMapping::getAsAttachment);
+        var address = event.getOption("address", OptionMapping::getAsString);
+        var name = event.getOption("name", OptionMapping::getAsString);
 
         if (platform.isEmpty()) {
             event.reply("Invalid platform").setEphemeral(true).queue();
@@ -42,23 +47,24 @@ public class Create implements SlashHandler {
             return;
         }
 
-        if (mail != null) {
-            String mailText;
-            try (var download = mail.getProxy().download().join()) {
-                mailText = new String(download.readAllBytes());
-            } catch (Exception e) {
-                log.error("Could not download file", e);
-                return;
-            }
-            product.get().mailings().create(platform.get(), mailName, mailText);
-            event.reply("Created").setEphemeral(true).queue();
-        } else {
-            event.reply("Please provide a address test").setEphemeral(true).queue();
-            context.registerModal(ModalHandler.builder("modal").addInput(TextInputHandler.builder("html", "HTML", TextInputStyle.PARAGRAPH)
-                            .withHandler(text -> product.get().mailings().create(platform.get(), mailName, text.getAsString())))
-                    .withHandler(e -> e.reply("Registered").setEphemeral(true).queue())
-                    .build());
+        Optional<Mailing> optMailing = product.get().mailings().byPlatform(platform.get());
+        if (optMailing.isEmpty()) {
+            event.reply("No mailing found for this product and platform").queue();
+            return;
         }
+
+        Optional<License> license = guild.licenses().create(configuration.config().license().baseSeed(), product.get(), platform.get(), address);
+
+        if (license.isEmpty()) {
+            event.reply("A license does already exist for this address").setEphemeral(true).queue();
+            return;
+        }
+
+        Mailing mailing = optMailing.get();
+        Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), name, address);
+
+        mailingService.sendMail(mail);
+        event.reply("Email sent").setEphemeral(true).queue();
     }
 
     @Override

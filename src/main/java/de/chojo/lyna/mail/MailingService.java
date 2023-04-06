@@ -33,14 +33,14 @@ public class MailingService {
     private Store imapStore;
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
 
-    public MailingService(Threading threading,Data data, Configuration<ConfigFile> configuration) {
+    public MailingService(Threading threading, Data data, Configuration<ConfigFile> configuration) {
         this.threading = threading;
         this.data = data;
         this.configuration = configuration;
     }
 
     public static MailingService create(Threading threading, Data data, Configuration<ConfigFile> configuration) {
-        MailingService mailingService = new MailingService(threading,data, configuration);
+        MailingService mailingService = new MailingService(threading, data, configuration);
         try {
             mailingService.init();
         } catch (MessagingException e) {
@@ -74,8 +74,12 @@ public class MailingService {
             @Override
             public void messagesAdded(MessageCountEvent e) {
                 if (e.getType() == MessageCountEvent.REMOVED) return;
-                log.info("Received messages");
                 for (Message message : e.getMessages()) {
+                    try {
+                        log.info("Received new message from {}", ((InternetAddress) message.getFrom()[0]).getAddress());
+                    } catch (MessagingException ex) {
+                        // ignore
+                    }
                     for (var messageConsumer : receivedListener) {
                         try {
                             messageConsumer.accept(message);
@@ -112,10 +116,10 @@ public class MailingService {
         receivedListener.add(listener);
     }
 
-    public void sendMail(String text, String subject, String address) {
+    public void sendMail(Mail mail) {
         MimeMessage mimeMessage;
         try {
-            mimeMessage = buildMessage(text, subject, address);
+            mimeMessage = buildMessage(mail);
         } catch (MessagingException e) {
             log.error("Could not build mail", e);
             return;
@@ -128,7 +132,9 @@ public class MailingService {
     }
 
     private void sendMessage(MimeMessage message) throws MessagingException {
+        log.info("Sending mail to {}", ((InternetAddress) message.getAllRecipients()[0]).getAddress());
         Transport.send(message, configuration.config().mailing().user(), configuration.config().mailing().password());
+        log.info("Mail sent.");
         Folder sent = imapStore.getFolder("inbox").getFolder("Sent");
         if (!sent.exists()) {
             sent.create(Folder.HOLDS_MESSAGES);
@@ -136,12 +142,12 @@ public class MailingService {
         sent.appendMessages(new Message[]{message});
     }
 
-    private MimeMessage buildMessage(String html, String subject, String address) throws MessagingException {
+    private MimeMessage buildMessage(Mail mail) throws MessagingException {
         var message = new MimeMessage(session);
         message.addFrom(new Address[]{new InternetAddress(configuration.config().mailing().user())});
-        message.setRecipient(Message.RecipientType.TO, new InternetAddress(address, false));
-        message.setDataHandler(new DataHandler(html, "text/html"));
-        message.setSubject(subject);
+        message.setRecipient(Message.RecipientType.TO, new InternetAddress(mail.address(), false));
+        message.setDataHandler(new DataHandler(mail.text(), "text/html"));
+        message.setSubject(mail.subject());
         message.setHeader("X-Mailer", "Lyna");
         message.setSentDate(new Date());
         return message;

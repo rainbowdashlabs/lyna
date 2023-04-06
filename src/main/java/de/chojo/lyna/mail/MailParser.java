@@ -59,8 +59,6 @@ public class MailParser {
         }
     }
 
-    private int level = 0;
-
     private void append(String s) {
         builder.append(s);
     }

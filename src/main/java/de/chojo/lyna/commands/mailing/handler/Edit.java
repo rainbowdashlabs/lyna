@@ -1,32 +1,31 @@
 package de.chojo.lyna.commands.mailing.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
-import de.chojo.jdautil.modals.handler.ModalHandler;
-import de.chojo.jdautil.modals.handler.TextInputHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import org.slf4j.Logger;
+
+import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Create implements SlashHandler {
-    private static final Logger log = getLogger(Create.class);
+public class Edit implements SlashHandler {
+    private static final Logger log = getLogger(Edit.class);
     private final Guilds guilds;
 
-    public Create(Guilds guilds) {
+    public Edit(Guilds guilds) {
         this.guilds = guilds;
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         LicenseGuild guild = guilds.guild(event.getGuild());
-
         var product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
         var platform = guild.platforms().byId(event.getOption("platform", OptionMapping::getAsInt));
         var mailName = event.getOption("mail_name", OptionMapping::getAsString);
@@ -42,6 +41,13 @@ public class Create implements SlashHandler {
             return;
         }
 
+        Optional<Mailing> optMailing = product.get().mailings().byPlatform(platform.get());
+        if (optMailing.isEmpty()) {
+            event.reply("No mailing found for this product and platform").queue();
+            return;
+        }
+
+        Mailing mailing = optMailing.get();
         if (mail != null) {
             String mailText;
             try (var download = mail.getProxy().download().join()) {
@@ -50,15 +56,15 @@ public class Create implements SlashHandler {
                 log.error("Could not download file", e);
                 return;
             }
-            product.get().mailings().create(platform.get(), mailName, mailText);
-            event.reply("Created").setEphemeral(true).queue();
-        } else {
-            event.reply("Please provide a address test").setEphemeral(true).queue();
-            context.registerModal(ModalHandler.builder("modal").addInput(TextInputHandler.builder("html", "HTML", TextInputStyle.PARAGRAPH)
-                            .withHandler(text -> product.get().mailings().create(platform.get(), mailName, text.getAsString())))
-                    .withHandler(e -> e.reply("Registered").setEphemeral(true).queue())
-                    .build());
+
+            mailing.mailText(mailText);
         }
+
+        if (mailName != null) {
+            mailing.name(mailName);
+        }
+
+        event.reply("Updated").setEphemeral(true).queue();
     }
 
     @Override

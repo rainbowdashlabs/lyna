@@ -15,6 +15,7 @@ import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
 import de.chojo.lyna.commands.trial.Trial;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -31,17 +32,19 @@ public class Bot {
     private final Threading threading;
     private final Configuration<ConfigFile> configuration;
     private final Web web;
+    private final MailingService mailingService;
     private ShardManager shardManager;
 
-    private Bot(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web) {
+    private Bot(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web, MailingService mailingService) {
         this.data = data;
         this.threading = threading;
         this.configuration = configuration;
         this.web = web;
+        this.mailingService = mailingService;
     }
 
-    public static Bot create(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web) {
-        Bot bot = new Bot(data, threading, configuration, web);
+    public static Bot create(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web, MailingService mailingService) {
+        Bot bot = new Bot(data, threading, configuration, web, mailingService);
         bot.init();
         return bot;
     }
@@ -90,7 +93,7 @@ public class Bot {
                         new Downloads(data.guilds(), data.nexus()),
                         new Download(data.guilds(), web.api()),
                         new Trial(data.guilds(), web.api()),
-                        new Mailing(data.guilds())
+                        new Mailing(data.guilds(), configuration, mailingService)
                 )
                 .build();
     }

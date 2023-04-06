@@ -30,10 +30,31 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
 
     @Override
     public void accept(Message message) throws Exception {
+        de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.config().mailing();
         InternetAddress address = (InternetAddress) message.getFrom()[0];
-        if (!"service@paypal.de".equals(address.getAddress()) && "false".equalsIgnoreCase(System.getProperty("bot.verifypaypal", "false"))) {
-            log.info("Received mail from unknown sender {}", address.getAddress());
-            return;
+        if ("false".equalsIgnoreCase(System.getProperty("bot.mailing.skipverify", "false"))) {
+            // Check if address is from PayPal
+            if (!"service@paypal.de".equals(address.getAddress())
+                && !mailConf.originMails().contains(address.getAddress())) {
+                log.info("Received mail from unknown sender {}", address.getAddress());
+                return;
+            }
+            // Verify that address was forwarded from whitelisted mail address, if it was forwarded.
+            // We always accept mails from the origin address.
+            String[] header = message.getHeader("X-Forwarded-For");
+            if (header != null) {
+                boolean valid = false;
+                for (String mail : mailConf.originMails()) {
+                    if (header[0].contains(mail)) {
+                        valid = true;
+                        break;
+                    }
+                }
+                if (!valid) {
+                    log.info("Invalid forwarding address {}", header[0]);
+                    return;
+                }
+            }
         }
 
         var mailHtml = new MailParser(message).parsed();
@@ -51,7 +72,7 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
         }
 
         if (parsed.mail().isEmpty()) {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not extract mail from {}", message.getSubject());
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not extract address from {}", message.getSubject());
             return;
         }
 
@@ -64,10 +85,7 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
         Mailing mailing = optMailing.get();
         Optional<License> license = mailing.product().products().licenseGuild().licenses()
                 .create(configuration.config().license().baseSeed(), mailing.product(), mailing.platform(), parsed.mail().get());
-        String html = mailing.mailText();
-        html = html.replace("{{ key }}", license.get().key());
-        html = html.replace("{{ name }}", parsed.name().get());
-        mailingService.sendMail(html, "Thank you for purchasing " + mailing.product().name(), parsed.mail().get());
+        Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), parsed.name().get(), parsed.mail().get());
+        mailingService.sendMail(mail);
     }
-
 }

@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.jdautil.util.Choice;
+import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
@@ -26,7 +27,7 @@ public class Licenses {
 
     public Optional<License> create(long seed, Product product, Platform platform, String identifier) {
         String key = LicenseCreator.create(seed, product, platform, identifier);
-        log.info("Creating license key for {} on {} purchased by {}", product.name(), platform.name(), identifier);
+        log.info(LogNotify.STATUS,"Creating license key for {} on {} purchased by {}", product.name(), platform.name(), identifier);
         return builder(License.class)
                 .query("INSERT INTO license(product_id, platform_id, user_identifier, key) VALUES(?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
                 .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()).setString(identifier).setString(key))
