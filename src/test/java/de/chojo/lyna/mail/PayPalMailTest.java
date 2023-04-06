@@ -6,20 +6,21 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 class PayPalMailTest {
+    PayPalMail mail = PayPalMail.parse(read("/mail.html"));
 
     @Test
     void extractMail() {
-        Assertions.assertEquals("testing@eldoria.de", PayPalMail.extractMail(read("/mail.html")).get());
+        Assertions.assertEquals("testing@eldoria.de", mail.mail().get());
     }
 
     @Test
     void extractName() {
-        Assertions.assertEquals("Eldoria", PayPalMail.extractName(read("/mail.html")).get());
+        Assertions.assertEquals("Eldoria", mail.name().get());
     }
 
     @Test
     void extractProduct() {
-        Assertions.assertEquals("Schematic Brush Reborn 2 - Schematic pasting reinvented", PayPalMail.extractProduct(read("/mail.html")).get());
+        Assertions.assertEquals("Schematic Brush Reborn 2 - Schematic pasting reinvented", mail.product().get());
 
     }
 
