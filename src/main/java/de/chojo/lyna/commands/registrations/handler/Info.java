@@ -45,7 +45,6 @@ public class Info implements SlashHandler {
             License license = optLicense.get();
             var builder = new EmbedBuilder()
                     .setTitle(product.get().name(), product.get().url())
-                    .setAuthor("Purchased via " + license.platform().name(), license.platform().url())
                     .setColor(Colors.Pastel.DARK_PINK)
                     .addField("Key", "|| %s ||".formatted(license.key()), true);
 

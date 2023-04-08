@@ -2,9 +2,10 @@ package de.chojo.lyna.data.dao;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import de.chojo.jdautil.configuratino.Configuration;
+import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.dao.downloadtype.DownloadTypes;
 import de.chojo.lyna.data.dao.licenses.Licenses;
-import de.chojo.lyna.data.dao.platforms.Platforms;
 import de.chojo.lyna.data.dao.products.Products;
 import de.chojo.lyna.data.dao.settings.Settings;
 import de.chojo.nexus.NexusRest;
@@ -17,15 +18,12 @@ import java.util.concurrent.TimeUnit;
 public class LicenseGuild {
     private final Guild guild;
     private final NexusRest nexus;
-    /**
-     * Providing access to registered platforms on this guild.
-     */
-    Platforms platforms;
 
     /**
      * Providing access to registered products on this guild.
      */
     Products products;
+    private final Configuration<ConfigFile> configuration;
 
     /**
      * Providing access to licenses created on this guild.
@@ -40,18 +38,14 @@ public class LicenseGuild {
      */
     Cache<Long, LicenseUser> users = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
-    public LicenseGuild(Guild guild, NexusRest nexus) {
+    public LicenseGuild(Guild guild, NexusRest nexus, Configuration<ConfigFile> configuration) {
         this.guild = guild;
         this.nexus = nexus;
-        this.platforms = new Platforms(this);
         this.products = new Products(this, nexus);
+        this.configuration = configuration;
         this.licenses = new Licenses(this);
         this.settings = new Settings(this);
         this.downloadTypes = new DownloadTypes(this);
-    }
-
-    public Platforms platforms() {
-        return platforms;
     }
 
     public Products products() {
@@ -88,5 +82,9 @@ public class LicenseGuild {
 
     public NexusRest nexus() {
         return nexus;
+    }
+
+    public Configuration<ConfigFile> configuration() {
+        return configuration;
     }
 }

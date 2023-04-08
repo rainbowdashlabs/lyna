@@ -17,11 +17,9 @@ import java.util.Optional;
 
 public class Create implements SlashHandler {
     private final Guilds guilds;
-    private final Configuration<ConfigFile> configuration;
 
-    public Create(Guilds guilds, Configuration<ConfigFile> configuration) {
+    public Create(Guilds guilds) {
         this.guilds = guilds;
-        this.configuration = configuration;
     }
 
     @Override
@@ -29,21 +27,15 @@ public class Create implements SlashHandler {
         LicenseGuild guild = guilds.guild(event.getGuild());
 
         var product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
-        var platform = guild.platforms().byId(event.getOption("platform", OptionMapping::getAsInt));
         var identifier = event.getOption("user_identifier", OptionMapping::getAsString);
-
-        if (platform.isEmpty()) {
-            event.reply("Invalid platform").setEphemeral(true).queue();
-            return;
-        }
 
         if (product.isEmpty()) {
             event.reply("Invalid product").setEphemeral(true).queue();
             return;
         }
 
-        Optional<License> license = guild.licenses()
-                .create(configuration.config().license().baseSeed(), product.get(), platform.get(), identifier);
+
+        Optional<License> license = product.get().createLicense(identifier);
 
         if (license.isEmpty()) {
             event.reply("License already created.").setEphemeral(true).queue();
@@ -60,9 +52,6 @@ public class Create implements SlashHandler {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
             event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue(), false)).queue();
-        }
-        if (focusedOption.getName().equals("platform")) {
-            event.replyChoices(guilds.guild(event.getGuild()).platforms().complete(focusedOption.getValue())).queue();
         }
     }
 }

@@ -8,7 +8,6 @@ import de.chojo.lyna.commands.downloads.Downloads;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.license.License;
 import de.chojo.lyna.commands.mailing.Mailing;
-import de.chojo.lyna.commands.platform.Platform;
 import de.chojo.lyna.commands.products.Products;
 import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
@@ -84,7 +83,6 @@ public class Bot {
                 .withDefaultModalService()
                 .withCommands(
                         new Products(data.guilds()),
-                        new Platform(data.guilds()),
                         new License(data.guilds(), configuration),
                         new Register(data.guilds()),
                         new Registrations(data.guilds()),

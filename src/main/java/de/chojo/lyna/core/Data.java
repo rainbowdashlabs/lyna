@@ -92,7 +92,7 @@ public class Data {
         this.nexus = NexusRest.builder(nexus.host())
                 .setPasswordAuth(nexus.username(), nexus.password())
                 .build();
-        guilds = new Guilds(this.nexus);
+        guilds = new Guilds(this.nexus, configuration);
         products = new Products(this.guilds);
         mailings = new Mailings(this.guilds);
     }

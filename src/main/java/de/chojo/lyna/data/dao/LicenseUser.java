@@ -39,7 +39,7 @@ public class LicenseUser {
 
     public Optional<License> licenseByProduct(Product product) {
         return builder(License.class)
-                .query("SELECT product_id, platform_id, user_identifier, id, key FROM user_guild_license WHERE product_id = ? AND user_id = ?")
+                .query("SELECT product_id, user_identifier, id, key FROM user_guild_license WHERE product_id = ? AND user_id = ?")
                 .parameter(stmt -> stmt.setInt(product.id()).setLong(id()))
                 .readRow(licenseGuild.licenses()::buildLicense)
                 .firstSync();
@@ -47,7 +47,7 @@ public class LicenseUser {
 
     public Optional<License> subLicenseByProduct(Product product) {
         return builder(License.class)
-                .query("SELECT product_id, platform_id, user_identifier, id, key FROM user_guild_sub_license WHERE product_id = ? AND user_id = ?")
+                .query("SELECT product_id, user_identifier, id, key FROM user_guild_sub_license WHERE product_id = ? AND user_id = ?")
                 .parameter(stmt -> stmt.setInt(product.id()).setLong(id()))
                 .readRow(licenseGuild.licenses()::buildLicense)
                 .firstSync();
@@ -56,7 +56,7 @@ public class LicenseUser {
     public List<License> licenses() {
         return builder(License.class)
                 .query("""
-                       SELECT product_id, platform_id, user_identifier, id, key
+                       SELECT product_id, user_identifier, id, key
                        FROM user_guild_license
                        WHERE user_id = ? AND guild_id = ?
                        """)
@@ -68,7 +68,7 @@ public class LicenseUser {
     public List<License> sharedLicenses() {
         return builder(License.class)
                 .query("""
-                       SELECT product_id, platform_id, user_identifier, id, key
+                       SELECT product_id, user_identifier, id, key
                        FROM user_guild_sub_license
                        WHERE user_id = ? AND guild_id = ?
                        """)
@@ -81,13 +81,13 @@ public class LicenseUser {
         return builder(Boolean.class)
                 .query("""
                         SELECT EXISTS(
-                            SELECT product_id, platform_id, user_identifier, id, key, user_id, guild_id
+                            SELECT product_id, user_identifier, id, key, user_id, guild_id
                             FROM user_guild_license
                             WHERE guild_id = ?
                                 AND user_id = ?
                                 AND product_id = ?)
                             OR EXISTS(
-                                SELECT product_id, platform_id, user_identifier, id, key, user_id, guild_id
+                                SELECT product_id, user_identifier, id, key, user_id, guild_id
                                 FROM user_guild_sub_license
                                 WHERE guild_id = ?
                                     AND user_id = ?
@@ -132,14 +132,6 @@ public class LicenseUser {
     public List<Command.Choice> completeAllProducts(String value) {
         return builder(Command.Choice.class)
                 .query("SELECT id, name FROM user_products_all WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
-                .parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setString(value))
-                .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
-                .allSync();
-    }
-
-    public List<Command.Choice> completePlatform(String value) {
-        return builder(Command.Choice.class)
-                .query("SELECT id, name FROM user_platforms WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
                 .parameter(stmt -> stmt.setLong(guildId()).setLong(id()).setString(value))
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .allSync();
