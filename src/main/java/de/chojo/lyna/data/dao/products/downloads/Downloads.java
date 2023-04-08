@@ -30,6 +30,7 @@ public class Downloads {
         return builder(Download.class)
                 .query("""
                         SELECT
+                            d.id,
                         	type_id,
                         	group_id,
                         	artifact_id,
@@ -104,6 +105,7 @@ public class Downloads {
         return builder(Download.class)
                 .query("""
                         SELECT
+                            d.id,
                         	type_id,
                         	group_id,
                         	artifact_id,
