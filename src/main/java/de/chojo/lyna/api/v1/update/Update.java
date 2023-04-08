@@ -8,6 +8,7 @@ import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.HttpCode;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -54,29 +55,20 @@ public class Update {
                     return;
                 }
 
-                String artifact = ctx.queryParam("artifact");
-                if (artifact == null) {
-                    ctx.status(HttpCode.BAD_REQUEST)
-                            .result("Missing artifact");
-                    return;
-                }
+                @Nullable String artifact = ctx.queryParam("artifact");
 
-                String unixString = ctx.queryParam("unix");
-                if (unixString == null) {
-                    ctx.status(HttpCode.BAD_REQUEST)
-                            .result("Missing artifact");
-                    return;
-                }
+                @Nullable String unixString = ctx.queryParam("unix");
+
                 long unix;
                 try {
-                    unix = Long.parseLong(ctx.queryParam("unix"));
+                    unix = unixString == null ? 0 : Long.parseLong(unixString);
                 } catch (NumberFormatException e) {
                     ctx.status(HttpCode.BAD_REQUEST)
                             .result("Invalid unix timestamp");
                     return;
                 }
 
-                Instant created = Instant.ofEpochSecond(unix);
+                @Nullable Instant created = unix == 0 ? null : Instant.ofEpochSecond(unix);
 
                 Version current = Version.parse(versionString);
 
@@ -91,7 +83,7 @@ public class Update {
         });
     }
 
-    private UpdateResponse handleStableBuild(Product product, Version current, String artifact) {
+    private UpdateResponse handleStableBuild(Product product, Version current, @Nullable String artifact) {
         // Find stable release with artifact
         Optional<Download> download = getDownload(product, ReleaseType.STABLE, artifact);
 
@@ -113,7 +105,7 @@ public class Update {
         return new UpdateResponse(latest.isNewer(current), latest.version(), latestAsset.lastModified().toEpochSecond());
     }
 
-    private UpdateResponse handleDevBuild(Product product, Instant created, Version current, String artifact) {
+    private UpdateResponse handleDevBuild(Product product, @Nullable Instant created, Version current, @Nullable String artifact) {
         UpdateResponse stableResponse = handleStableBuild(product, current, artifact);
         if (stableResponse.update()) {
             return stableResponse;
@@ -127,7 +119,7 @@ public class Update {
 
     }
 
-    private UpdateResponse handleSnapshotBuild(Product product, Instant created, Version current, String artifact) {
+    private UpdateResponse handleSnapshotBuild(Product product, @Nullable Instant created, Version current, @Nullable String artifact) {
         UpdateResponse stableResponse = handleStableBuild(product, current, artifact);
         if (stableResponse.update()) {
             return stableResponse;
@@ -150,7 +142,7 @@ public class Update {
         return snapshotResponse;
     }
 
-    private UpdateResponse evaluateDevAndSnapshotVersion(Download download, Version current, Instant created) {
+    private UpdateResponse evaluateDevAndSnapshotVersion(Download download, Version current, @Nullable Instant created) {
         List<AssetXO> assetXOS = download.latestAssets();
 
         if (assetXOS.isEmpty()) {
@@ -173,6 +165,10 @@ public class Update {
         // Equal versions from here on.
         // Since dev and snapshot builds are overridden on publish we need to check if there is a newer build time.
 
+        if (created == null) {
+            return new UpdateResponse(false, latest.version(), 0);
+        }
+
         long seconds = created.until(latestAsset.lastModified().toInstant(), ChronoUnit.SECONDS);
         // Check if the latest build is current build is newer than 5 minutes
         if (seconds > 300) {
@@ -181,7 +177,7 @@ public class Update {
         return new UpdateResponse(false, latest.version(), 0);
     }
 
-    private Optional<Download> getDownload(Product product, ReleaseType type, String artifact){
+    private Optional<Download> getDownload(Product product, ReleaseType type, @Nullable String artifact) {
         return product.downloads().byReleaseTypeAndArtifact(ReleaseType.DEV, artifact)
                 .or(() -> product.downloads().byReleaseType(type));
     }

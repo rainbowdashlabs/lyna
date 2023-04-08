@@ -26,7 +26,7 @@ public class Downloads {
                 .allSync();
     }
 
-    public Optional<Download> byReleaseTypeAndArtifact(ReleaseType releaseType, String artifact) {
+    public Optional<Download> byReleaseTypeAndArtifact(ReleaseType releaseType, @Nullable String artifact) {
         return builder(Download.class)
                 .query("""
                         SELECT
@@ -41,9 +41,9 @@ public class Downloads {
                         		LEFT JOIN download_type t
                         		ON d.type_id = t.id
                         WHERE product_id = ?
-                          AND artifact_id = ?
+                          AND (artifact_id = ? OR ? IS NULL)
                           AND release_type = ?::RELEASE_TYPE;""")
-                .parameter(stmt -> stmt.setInt(product.id()).setString(artifact).setEnum(releaseType))
+                .parameter(stmt -> stmt.setInt(product.id()).setString(artifact).setString(artifact).setEnum(releaseType))
                 .readRow(row -> Download.build(product, row))
                 .firstSync();
     }

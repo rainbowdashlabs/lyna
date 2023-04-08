@@ -113,13 +113,13 @@ public class LicenseUser {
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .allSync();
         List<Command.Choice> byRole = builder(Command.Choice.class)
-                .query("SELECT product_id, name FROM role_access a LEFT JOIN product p ON a.product_id = p.id WHERE ARRAY[role_id] && ? ")
-                .parameter(stmt -> stmt.setArray(member.getRoles().stream().map(ISnowflake::getIdLong).toList(), PostgreSqlTypes.BIGINT))
+                .query("SELECT product_id, name FROM role_access a LEFT JOIN product p ON a.product_id = p.id WHERE ARRAY[role_id] && ? AND name ILIKE (? || '%')")
+                .parameter(stmt -> stmt.setArray(member.getRoles().stream().map(ISnowflake::getIdLong).toList(), PostgreSqlTypes.BIGINT).setString(value))
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("product_id")))
                 .allSync();
         List<Command.Choice> free = builder(Command.Choice.class)
-                .query("SELECT id, name FROM product WHERE free AND guild_id = ?")
-                .parameter(stmt -> stmt.setLong(guildId()))
+                .query("SELECT id, name FROM product WHERE free AND guild_id = ? AND name ILIKE (? || '%')")
+                .parameter(stmt -> stmt.setLong(guildId()).setString(value))
                 .readRow(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .allSync();
 
