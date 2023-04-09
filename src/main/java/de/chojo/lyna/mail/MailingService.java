@@ -58,7 +58,8 @@ public class MailingService {
     }
 
     private void init() throws MessagingException {
-        connect();
+        createSession();
+        startMailMonitor();
         registerMessageListener(new MessageHandler(data, this, configuration));
     }
 
@@ -75,7 +76,7 @@ public class MailingService {
         });
     }
 
-    private void connect() throws MessagingException {
+    private void startMailMonitor() throws MessagingException {
         imapStore = session.getStore("imap");
         imapStore.connect();
         IMAPFolder inbox = (IMAPFolder) imapStore.getFolder("Inbox");
@@ -132,7 +133,7 @@ public class MailingService {
         try {
             mimeMessage = buildMessage(mail);
         } catch (MessagingException e) {
-            log.error("Could not build mail", e);
+            log.error(LogNotify.NOTIFY_ADMIN,"Could not build mail", e);
             return;
         }
         try {
@@ -140,7 +141,7 @@ public class MailingService {
         } catch (MessagingException e) {
             createSession();
             sendMail(mail);
-            log.error("Could not sent mail", e);
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not sent mail", e);
         }
     }
 
