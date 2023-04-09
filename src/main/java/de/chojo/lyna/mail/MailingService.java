@@ -8,7 +8,15 @@ import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
 import jakarta.activation.DataHandler;
-import jakarta.mail.*;
+import jakarta.mail.Address;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Store;
+import jakarta.mail.Transport;
 import jakarta.mail.event.MessageCountAdapter;
 import jakarta.mail.event.MessageCountEvent;
 import jakarta.mail.internet.InternetAddress;
@@ -54,7 +62,7 @@ public class MailingService {
         registerMessageListener(new MessageHandler(data, this, configuration));
     }
 
-    private void connect() throws MessagingException {
+    private void createSession() {
         Properties props = System.getProperties();
         Mailing mailing = configuration.config().mailing();
         props.put("mail.smtp.host", mailing.host());
@@ -65,6 +73,9 @@ public class MailingService {
                 return new PasswordAuthentication(mailing.user(), mailing.password());
             }
         });
+    }
+
+    private void connect() throws MessagingException {
         imapStore = session.getStore("imap");
         imapStore.connect();
         IMAPFolder inbox = (IMAPFolder) imapStore.getFolder("Inbox");
@@ -127,6 +138,8 @@ public class MailingService {
         try {
             sendMessage(mimeMessage);
         } catch (MessagingException e) {
+            createSession();
+            sendMail(mail);
             log.error("Could not sent mail", e);
         }
     }
