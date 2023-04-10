@@ -21,7 +21,6 @@ import jakarta.mail.event.MessageCountAdapter;
 import jakarta.mail.event.MessageCountEvent;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import org.apache.commons.logging.Log;
 import org.eclipse.angus.mail.imap.IMAPFolder;
 import org.slf4j.Logger;
 
@@ -38,7 +37,7 @@ public class MailingService {
     private final Data data;
     private final Configuration<ConfigFile> configuration;
     private static final Logger log = getLogger(MailingService.class);
-    private Session session;
+    private volatile Session session;
     private Store imapStore;
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
 
@@ -60,8 +59,15 @@ public class MailingService {
 
     private void init() throws MessagingException {
         createSession();
+        createImapStore();
         startMailMonitor();
         registerMessageListener(new MessageHandler(data, this, configuration));
+    }
+
+    private void createImapStore() throws MessagingException {
+        log.info("Creating imap store");
+        imapStore = session.getStore("imap");
+        imapStore.connect();
     }
 
     private void createSession() {
@@ -76,11 +82,14 @@ public class MailingService {
                 return new PasswordAuthentication(mailing.user(), mailing.password());
             }
         });
+        try {
+            createImapStore();
+        } catch (MessagingException e) {
+            log.error("Could not recreate imap store");
+        }
     }
 
     private void startMailMonitor() throws MessagingException {
-        imapStore = session.getStore("imap");
-        imapStore.connect();
         IMAPFolder inbox = (IMAPFolder) imapStore.getFolder("Inbox");
 
         inbox.open(Folder.READ_WRITE);
@@ -118,6 +127,7 @@ public class MailingService {
             }
         }, threading.botWorker()).whenComplete((res, err) -> {
             if (err != null) {
+                createSession();
                 log.error("Could not read mails", err);
             } else {
                 log.info("New email received");
@@ -153,7 +163,7 @@ public class MailingService {
             }
         }
 
-        if(retries == 3){
+        if (retries == 3) {
             log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
             return;
         }
@@ -169,6 +179,9 @@ public class MailingService {
                 createSession();
                 retries++;
             }
+        }
+        if (retries == 3) {
+            log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
         }
     }
 
