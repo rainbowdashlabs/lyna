@@ -21,6 +21,7 @@ import jakarta.mail.event.MessageCountAdapter;
 import jakarta.mail.event.MessageCountEvent;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.apache.commons.logging.Log;
 import org.eclipse.angus.mail.imap.IMAPFolder;
 import org.slf4j.Logger;
 
@@ -64,6 +65,7 @@ public class MailingService {
     }
 
     private void createSession() {
+        log.info("Creating new mail session");
         Properties props = System.getProperties();
         Mailing mailing = configuration.config().mailing();
         props.put("mail.smtp.host", mailing.host());
@@ -128,20 +130,45 @@ public class MailingService {
         receivedListener.add(listener);
     }
 
+
     public void sendMail(Mail mail) {
         MimeMessage mimeMessage;
         try {
             mimeMessage = buildMessage(mail);
         } catch (MessagingException e) {
-            log.error(LogNotify.NOTIFY_ADMIN,"Could not build mail", e);
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not build mail", e);
             return;
         }
-        try {
-            sendMessage(mimeMessage);
-        } catch (MessagingException e) {
-            createSession();
-            sendMail(mail);
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not sent mail", e);
+
+        boolean send = false;
+        var retries = 0;
+        while (!send && retries < 3) {
+            try {
+                sendMessage(mimeMessage);
+                send = true;
+            } catch (MessagingException e) {
+                log.error(LogNotify.NOTIFY_ADMIN, "Could not sent mail", e);
+                createSession();
+                retries++;
+            }
+        }
+
+        if(retries == 3){
+            log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
+            return;
+        }
+
+        boolean stored = false;
+        retries = 0;
+        while (!stored && retries < 3) {
+            try {
+                storeMessage(mimeMessage);
+                stored = true;
+            } catch (MessagingException e) {
+                log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
+                createSession();
+                retries++;
+            }
         }
     }
 
@@ -149,6 +176,9 @@ public class MailingService {
         log.info("Sending mail to {}", ((InternetAddress) message.getAllRecipients()[0]).getAddress());
         Transport.send(message, configuration.config().mailing().user(), configuration.config().mailing().password());
         log.info("Mail sent.");
+    }
+
+    private void storeMessage(MimeMessage message) throws MessagingException {
         Folder sent = imapStore.getFolder("inbox").getFolder("Sent");
         if (!sent.exists()) {
             sent.create(Folder.HOLDS_MESSAGES);
