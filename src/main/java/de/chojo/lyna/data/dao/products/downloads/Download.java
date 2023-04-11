@@ -126,7 +126,7 @@ public class Download {
         return jar.complete()
                 .items()
                 .stream()
-                // We can not filter for null classifiers, so we do it afterwards
+                // We can not filter for null classifiers, so we do it afterward
                 .filter(e -> classifier != null || e.maven2().classifier() == null)
                 .toList();
     }
