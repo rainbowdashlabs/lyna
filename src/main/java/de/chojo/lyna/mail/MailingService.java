@@ -203,7 +203,7 @@ public class MailingService {
         var message = new MimeMessage(session);
         message.addFrom(new Address[]{new InternetAddress(configuration.config().mailing().user())});
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(mail.address(), false));
-        message.setDataHandler(new DataHandler(mail.text(), "text/html"));
+        message.setDataHandler(new DataHandler(mail.text(), "text/html; charset=UTF-8"));
         message.setSubject(mail.subject());
         message.setHeader("X-Mailer", "Lyna");
         message.setSentDate(new Date());
