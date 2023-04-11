@@ -178,7 +178,7 @@ public class Update {
     }
 
     private Optional<Download> getDownload(Product product, ReleaseType type, @Nullable String artifact) {
-        return product.downloads().byReleaseTypeAndArtifact(ReleaseType.DEV, artifact)
+        return product.downloads().byReleaseTypeAndArtifact(type, artifact)
                 .or(() -> product.downloads().byReleaseType(type));
     }
 
