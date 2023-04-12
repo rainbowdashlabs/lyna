@@ -1,6 +1,5 @@
 package de.chojo.lyna.data.dao.products.mailings;
 
-import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.sadu.exceptions.ThrowingConsumer;
 import de.chojo.sadu.wrapper.util.ParamBuilder;
@@ -12,24 +11,18 @@ import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 public class Mailing {
     private final int id;
     private final Product product;
-    private final Platform platform;
     private String name;
     private String mailText;
 
-    public Mailing(int id, Product product, Platform platform, String name, String mailText) {
+    public Mailing(int id, Product product, String name, String mailText) {
         this.id = id;
         this.product = product;
-        this.platform = platform;
         this.name = name;
         this.mailText = mailText;
     }
 
     public Product product() {
         return product;
-    }
-
-    public Platform platform() {
-        return platform;
     }
 
     public String name() {

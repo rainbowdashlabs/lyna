@@ -1,12 +1,10 @@
 package de.chojo.lyna.data.dao.products.mailings;
 
-import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
 
 import java.util.Optional;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
-import static de.chojo.lyna.data.StaticQueryAdapter.start;
 
 public class Mailings {
     private final Product product;
@@ -15,23 +13,23 @@ public class Mailings {
         this.product = product;
     }
 
-    public Mailing create(Platform platform, String name, String mailText) {
+    public Mailing create(String name, String mailText) {
         return builder(Mailing.class).query("""
-                        INSERT INTO mail_products(product_id, platform_id, name, mail_text) VALUES (?,?,?,?) RETURNING id
+                        INSERT INTO mail_products(product_id, name, mail_text) VALUES (?,?,?) RETURNING id
                         """)
-                .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()).setString(name).setString(mailText))
-                .readRow(row -> new Mailing(row.getInt("id"), product, platform, name, mailText))
+                .parameter(stmt -> stmt.setInt(product.id()).setString(name).setString(mailText))
+                .readRow(row -> new Mailing(row.getInt("id"), product, name, mailText))
                 .firstSync()
                 .get();
     }
 
-    public Optional<Mailing> byPlatform(Platform platform) {
+    public Optional<Mailing> get() {
         return builder(Mailing.class)
                 .query("""
-                        SELECT id, product_id, platform_id, name, mail_text FROM mail_products WHERE product_id = ? AND platform_id = ?
+                        SELECT id, product_id, name, mail_text FROM mail_products WHERE product_id = ?
                         """)
-                .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()))
-                .readRow(row -> new Mailing(row.getInt("id"), product, platform, row.getString("name"), row.getString("mail_text")))
+                .parameter(stmt -> stmt.setInt(product.id()))
+                .readRow(row -> new Mailing(row.getInt("id"), product, row.getString("name"), row.getString("mail_text")))
                 .firstSync();
     }
 }

@@ -24,7 +24,6 @@ public class Grant implements SlashHandler {
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         var guild = guilds.guild(event.getGuild());
         var product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
-        var platform = guild.platforms().byId(event.getOption("platform", OptionMapping::getAsInt));
         var userIdentifier = event.getOption("user_identifier", OptionMapping::getAsString);
 
         if (product.isEmpty()) {
@@ -32,12 +31,8 @@ public class Grant implements SlashHandler {
             return;
         }
 
-        if (platform.isEmpty()) {
-            event.reply("Invalid platform").setEphemeral(true).queue();
-            return;
-        }
 
-        Optional<License> license = guild.licenses().byDetails(product.get(), platform.get(), userIdentifier);
+        Optional<License> license = guild.licenses().byDetails(product.get(), userIdentifier);
 
         if (license.isEmpty()) {
             event.reply("Invalid license").queue();
@@ -53,9 +48,6 @@ public class Grant implements SlashHandler {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
             event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
-        }
-        if (focusedOption.getName().equals("platform")) {
-            event.replyChoices(guilds.guild(event.getGuild()).platforms().complete(focusedOption.getValue())).queue();
         }
         if (focusedOption.getName().equals("user_identifier")) {
             event.replyChoices(guilds.guild(event.getGuild()).licenses().completeIdentifier(focusedOption.getValue()))

@@ -3,7 +3,6 @@ package de.chojo.lyna.data.dao.licenses;
 import de.chojo.jdautil.util.Choice;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.util.LicenseCreator;
 import de.chojo.sadu.wrapper.util.Row;
@@ -25,23 +24,23 @@ public class Licenses {
         this.licenseGuild = licenseGuild;
     }
 
-    public Optional<License> create(long seed, Product product, Platform platform, String identifier) {
-        String key = LicenseCreator.create(seed, product, platform, identifier);
-        log.info(LogNotify.STATUS,"Creating license key for {} on {} purchased by {}", product.name(), platform.name(), identifier);
+    public Optional<License> create(Product product, String identifier) {
+        String key = LicenseCreator.create(licenseGuild.configuration().config().license().baseSeed(), product, identifier);
+        log.info(LogNotify.STATUS, "Creating license key for {} purchased by {}", product.name(), identifier);
         return builder(License.class)
-                .query("INSERT INTO license(product_id, platform_id, user_identifier, key) VALUES(?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
-                .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()).setString(identifier).setString(key))
-                .readRow(row -> new License(product, platform, identifier, row.getInt("id"), key))
+                .query("INSERT INTO license(product_id, user_identifier, key) VALUES(?,?,?) ON CONFLICT DO NOTHING RETURNING id")
+                .parameter(stmt -> stmt.setInt(product.id()).setString(identifier).setString(key))
+                .readRow(row -> new License(product, identifier, row.getInt("id"), key))
                 .firstSync();
     }
 
     public Optional<License> byKey(String key) {
         return builder(License.class)
                 .query("""
-                       SELECT product_id, id, platform_id, user_identifier, key
-                       FROM guild_license
-                       WHERE key = ? AND guild_id = ?
-                       """)
+                        SELECT product_id, id, user_identifier, key
+                        FROM guild_license
+                        WHERE key = ? AND guild_id = ?
+                        """)
                 .parameter(stmt -> stmt.setString(key).setLong(licenseGuild.guildId()))
                 .readRow(this::buildLicense)
                 .firstSync();
@@ -50,10 +49,10 @@ public class Licenses {
     public Optional<License> byId(int id) {
         return builder(License.class)
                 .query("""
-                       SELECT product_id, id, platform_id, user_identifier, key
-                       FROM guild_license
-                       WHERE id = ? AND guild_id = ?
-                       """)
+                        SELECT product_id, id, user_identifier, key
+                        FROM guild_license
+                        WHERE id = ? AND guild_id = ?
+                        """)
                 .parameter(stmt -> stmt.setInt(id).setLong(licenseGuild.guildId()))
                 .readRow(this::buildLicense)
                 .firstSync();
@@ -71,18 +70,17 @@ public class Licenses {
         return licenseGuild.guildId();
     }
 
-    public Optional<License> byDetails(Product product, Platform platform, String identifier) {
+    public Optional<License> byDetails(Product product, String identifier) {
         return builder(License.class)
-                .query("SELECT * FROM guild_license WHERE product_id = ? AND platform_id = ? AND user_identifier = ? AND guild_id = ?")
-                .parameter(stmt -> stmt.setInt(product.id()).setInt(platform.id()).setString(identifier).setLong(guildId()))
+                .query("SELECT * FROM guild_license WHERE product_id = ? AND user_identifier = ? AND guild_id = ?")
+                .parameter(stmt -> stmt.setInt(product.id()).setString(identifier).setLong(guildId()))
                 .readRow(this::buildLicense)
                 .firstSync();
     }
 
     public License buildLicense(Row row) throws SQLException {
         var product = licenseGuild.products().byId(row.getInt("product_id"));
-        var platform = licenseGuild.platforms().byId(row.getInt("platform_id"));
         int id = row.getInt("id");
-        return new License(product.get(), platform.get(), row.getString("user_identifier"), id, row.getString("key"));
+        return new License(product.get(), row.getString("user_identifier"), id, row.getString("key"));
     }
 }

@@ -2,7 +2,6 @@ package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.platforms.Platform;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
@@ -18,15 +17,10 @@ public class License {
     /**
      * The product the license is for.
      */
-    private  final Product product;
+    private final Product product;
 
     /**
-     * Information about the platform and license.
-     */
-    private final Platform platform;
-
-    /**
-     * Identifier of the user on the platform.
+     * Identifier of the user.
      */
     private final String userIdentifier;
 
@@ -50,13 +44,12 @@ public class License {
      */
     private final List<Long> subUsers;
 
-    public License(Product product, Platform platform, String userIdentifier, int id, String key) {
-        this(product, platform, userIdentifier, id, key, -1, new ArrayList<>());
+    public License(Product product, String userIdentifier, int id, String key) {
+        this(product, userIdentifier, id, key, -1, new ArrayList<>());
     }
 
-    public License(Product product, Platform platform, String userIdentifier, int id, String key, long owner, List<Long> subUsers) {
+    public License(Product product, String userIdentifier, int id, String key, long owner, List<Long> subUsers) {
         this.product = product;
-        this.platform = platform;
         this.userIdentifier = userIdentifier;
         this.id = id;
         this.key = key;
@@ -98,10 +91,6 @@ public class License {
 
     public Product product() {
         return product;
-    }
-
-    public Platform platform() {
-        return platform;
     }
 
     public boolean delete() {
