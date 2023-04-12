@@ -83,8 +83,7 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
         }
 
         Mailing mailing = optMailing.get();
-        Optional<License> license = mailing.product().products().licenseGuild().licenses()
-                .create(configuration.config().license().baseSeed(), mailing.product(), mailing.platform(), parsed.mail().get());
+        Optional<License> license = mailing.product().createLicense(parsed.mail().get());
         Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), parsed.name().get(), parsed.mail().get());
         mailingService.sendMail(mail);
     }

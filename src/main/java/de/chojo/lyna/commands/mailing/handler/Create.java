@@ -28,14 +28,9 @@ public class Create implements SlashHandler {
         LicenseGuild guild = guilds.guild(event.getGuild());
 
         var product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
-        var platform = guild.platforms().byId(event.getOption("platform", OptionMapping::getAsInt));
         var mailName = event.getOption("mail_name", OptionMapping::getAsString);
         var mail = event.getOption("mail", OptionMapping::getAsAttachment);
 
-        if (platform.isEmpty()) {
-            event.reply("Invalid platform").setEphemeral(true).queue();
-            return;
-        }
 
         if (product.isEmpty()) {
             event.reply("Invalid product").setEphemeral(true).queue();
@@ -50,12 +45,12 @@ public class Create implements SlashHandler {
                 log.error("Could not download file", e);
                 return;
             }
-            product.get().mailings().create(platform.get(), mailName, mailText);
+            product.get().mailings().create(mailName, mailText);
             event.reply("Created").setEphemeral(true).queue();
         } else {
             event.reply("Please provide a address test").setEphemeral(true).queue();
             context.registerModal(ModalHandler.builder("modal").addInput(TextInputHandler.builder("html", "HTML", TextInputStyle.PARAGRAPH)
-                            .withHandler(text -> product.get().mailings().create(platform.get(), mailName, text.getAsString())))
+                            .withHandler(text -> product.get().mailings().create(mailName, text.getAsString())))
                     .withHandler(e -> e.reply("Registered").setEphemeral(true).queue())
                     .build());
         }
@@ -66,9 +61,6 @@ public class Create implements SlashHandler {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
             event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue(), false)).queue();
-        }
-        if (focusedOption.getName().equals("platform")) {
-            event.replyChoices(guilds.guild(event.getGuild()).platforms().complete(focusedOption.getValue())).queue();
         }
     }
 }

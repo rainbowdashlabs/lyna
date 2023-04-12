@@ -33,27 +33,23 @@ public class Send implements SlashHandler {
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         LicenseGuild guild = guilds.guild(event.getGuild());
         var product = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
-        var platform = guild.platforms().byId(event.getOption("platform", OptionMapping::getAsInt));
         var address = event.getOption("address", OptionMapping::getAsString);
         var name = event.getOption("name", OptionMapping::getAsString);
-
-        if (platform.isEmpty()) {
-            event.reply("Invalid platform").setEphemeral(true).queue();
-            return;
-        }
 
         if (product.isEmpty()) {
             event.reply("Invalid product").setEphemeral(true).queue();
             return;
         }
 
-        Optional<Mailing> optMailing = product.get().mailings().byPlatform(platform.get());
+        Optional<Mailing> optMailing = product.get().mailings().get();
         if (optMailing.isEmpty()) {
-            event.reply("No mailing found for this product and platform").queue();
+            event.reply("No mailing found for this product").queue();
             return;
         }
 
-        Optional<License> license = guild.licenses().create(configuration.config().license().baseSeed(), product.get(), platform.get(), address);
+
+
+        Optional<License> license = product.get().createLicense(address);
 
         if (license.isEmpty()) {
             event.reply("A license does already exist for this address").setEphemeral(true).queue();
@@ -72,9 +68,6 @@ public class Send implements SlashHandler {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
             event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue(), false)).queue();
-        }
-        if (focusedOption.getName().equals("platform")) {
-            event.replyChoices(guilds.guild(event.getGuild()).platforms().complete(focusedOption.getValue())).queue();
         }
     }
 }

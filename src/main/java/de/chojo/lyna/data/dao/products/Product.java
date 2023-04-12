@@ -18,11 +18,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
@@ -167,7 +163,6 @@ public class Product {
                         	guild_id,
                         	user_id,
                         	product_id,
-                        	platform_id,
                         	license_id,
                         	user_identifier,
                         	key
@@ -272,5 +267,9 @@ public class Product {
 
     public Mailings mailings() {
         return mailings;
+    }
+
+    public Optional<License> createLicense(String identifier) {
+        return products().licenseGuild().licenses().create(this, identifier);
     }
 }
