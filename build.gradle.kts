@@ -30,7 +30,7 @@ dependencies {
 
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.1")
-    implementation("org.jsoup", "jsoup", "1.15.4")
+    implementation("org.jsoup", "jsoup", "1.16.1")
 
 
     // Logging
