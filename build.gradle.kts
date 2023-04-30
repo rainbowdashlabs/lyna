@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.chojo"
-version = "1.4.0"
+version = "1.4.1"
 
 repositories {
     mavenCentral()
@@ -30,7 +30,7 @@ dependencies {
 
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.1")
-    implementation("org.jsoup", "jsoup", "1.15.4")
+    implementation("org.jsoup", "jsoup", "1.16.1")
 
 
     // Logging
@@ -42,7 +42,7 @@ dependencies {
     }
 
     // unit testing
-    testImplementation(platform("org.junit:junit-bom:5.9.2"))
+    testImplementation(platform("org.junit:junit-bom:5.9.3"))
     testImplementation("org.junit.jupiter", "junit-jupiter")
     testImplementation("org.mockito", "mockito-core", "3.+")
 }

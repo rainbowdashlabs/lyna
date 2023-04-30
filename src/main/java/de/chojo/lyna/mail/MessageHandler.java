@@ -6,6 +6,7 @@ import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.data.access.Mailings;
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import jakarta.mail.Message;
@@ -84,6 +85,7 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
 
         Mailing mailing = optMailing.get();
         Optional<License> license = mailing.product().createLicense(parsed.mail().get());
+        license.get().grantAccess(ReleaseType.STABLE);
         Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), parsed.name().get(), parsed.mail().get());
         mailingService.sendMail(mail);
     }
