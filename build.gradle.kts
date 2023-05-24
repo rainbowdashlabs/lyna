@@ -29,7 +29,7 @@ dependencies {
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
 
     // Mailing
-    implementation("org.eclipse.angus", "angus-mail", "2.0.1")
+    implementation("org.eclipse.angus", "angus-mail", "2.0.2")
     implementation("org.jsoup", "jsoup", "1.16.1")
 
 
