@@ -6,6 +6,7 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.Mail;
@@ -55,6 +56,8 @@ public class Send implements SlashHandler {
             event.reply("A license does already exist for this address").setEphemeral(true).queue();
             return;
         }
+
+        license.get().grantAccess(ReleaseType.STABLE);
 
         Mailing mailing = optMailing.get();
         Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), name, address);
