@@ -31,6 +31,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -91,10 +93,16 @@ public class MailingService {
         }
     }
 
-    private void startMailMonitor() throws MessagingException {
+    private void startMailMonitor() {
+        log.info(LogNotify.STATUS, "Starting monitoring");
         IMAPFolder inbox = getFolder("Inbox");
 
-        inbox.open(Folder.READ_WRITE);
+        try {
+            inbox.open(Folder.READ_WRITE);
+        } catch (MessagingException e) {
+            // c:
+            throw new RuntimeException(e);
+        }
         inbox.addMessageCountListener(new MessageCountAdapter() {
             @Override
             public void messagesAdded(MessageCountEvent e) {
@@ -120,27 +128,31 @@ public class MailingService {
     }
 
     private void waitForMail(IMAPFolder folder) {
-        threading.botWorker().execute(() -> {
+        CompletableFuture.runAsync(() -> {
             var inbox = folder;
             while (true) {
                 try {
                     try {
-                        inbox.idle();
+                        log.info("Waiting for new mail.");
+                        inbox.idle(true);
                     } catch (FolderClosedException e) {
                         log.error(LogNotify.NOTIFY_ADMIN, "Folder closed. Attempting to restart monitoring.");
                         startMailMonitor();
                         break;
                     } catch (MessagingException e) {
                         log.error(LogNotify.NOTIFY_ADMIN, "Could not start connection idling", e);
+                        startMailMonitor();
                         break;
                     }
                 } catch (Exception e) {
                     log.error(LogNotify.NOTIFY_ADMIN, "Connection to folder failed.", e);
-                    break;
+                    continue;
                 }
                 log.info("New email received");
             }
-        });
+        }, threading.botWorker())
+                .completeOnTimeout(null, 1, TimeUnit.HOURS)
+                .thenRun(this::startMailMonitor);
     }
 
     public void registerMessageListener(ThrowingConsumer<Message, Exception> listener) {
