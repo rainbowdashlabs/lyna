@@ -31,7 +31,8 @@ public class Licenses {
                 .query("INSERT INTO license(product_id, user_identifier, key) VALUES(?,?,?) ON CONFLICT DO NOTHING RETURNING id")
                 .parameter(stmt -> stmt.setInt(product.id()).setString(identifier).setString(key))
                 .readRow(row -> new License(product, identifier, row.getInt("id"), key))
-                .firstSync();
+                .firstSync()
+                .or(() -> byKey(key));
     }
 
     public Optional<License> byKey(String key) {
