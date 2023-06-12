@@ -44,6 +44,7 @@ public class MailingService {
     private volatile Session session;
     private Store imapStore;
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
+    private MessageCountAdapter countAdapter;
 
     public MailingService(Threading threading, Data data, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -64,8 +65,32 @@ public class MailingService {
     private void init() throws MessagingException {
         createSession();
         createImapStore();
+        createMailListener();
         startMailMonitor();
         registerMessageListener(new MessageHandler(data, this, configuration));
+    }
+
+    private void createMailListener() {
+        countAdapter = new MessageCountAdapter() {
+            @Override
+            public void messagesAdded(MessageCountEvent e) {
+                if (e.getType() == MessageCountEvent.REMOVED) return;
+                for (Message message : e.getMessages()) {
+                    try {
+                        log.info("Received new message from {}", ((InternetAddress) message.getFrom()[0]).getAddress());
+                    } catch (MessagingException ex) {
+                        // ignore
+                    }
+                    for (var messageConsumer : receivedListener) {
+                        try {
+                            messageConsumer.accept(message);
+                        } catch (Exception ex) {
+                            log.error("Error when handling mail", ex);
+                        }
+                    }
+                }
+            }
+        };
     }
 
     private void createImapStore() throws MessagingException {
@@ -103,54 +128,37 @@ public class MailingService {
             // c:
             throw new RuntimeException(e);
         }
-        inbox.addMessageCountListener(new MessageCountAdapter() {
-            @Override
-            public void messagesAdded(MessageCountEvent e) {
-                if (e.getType() == MessageCountEvent.REMOVED) return;
-                for (Message message : e.getMessages()) {
-                    try {
-                        log.info("Received new message from {}", ((InternetAddress) message.getFrom()[0]).getAddress());
-                    } catch (MessagingException ex) {
-                        // ignore
-                    }
-                    for (var messageConsumer : receivedListener) {
-                        try {
-                            messageConsumer.accept(message);
-                        } catch (Exception ex) {
-                            log.error("Error when handling mail", ex);
-                        }
-                    }
-                }
-            }
-        });
+
+        inbox.removeMessageCountListener(countAdapter);
+        inbox.addMessageCountListener(countAdapter);
         log.info(LogNotify.STATUS, "Registered mail listener");
         waitForMail(inbox);
     }
 
     private void waitForMail(IMAPFolder folder) {
         CompletableFuture.runAsync(() -> {
-            var inbox = folder;
-            while (true) {
-                try {
-                    try {
-                        log.info("Waiting for new mail.");
-                        inbox.idle(true);
-                    } catch (FolderClosedException e) {
-                        log.error(LogNotify.NOTIFY_ADMIN, "Folder closed. Attempting to restart monitoring.");
-                        startMailMonitor();
-                        break;
-                    } catch (MessagingException e) {
-                        log.error(LogNotify.NOTIFY_ADMIN, "Could not start connection idling", e);
-                        startMailMonitor();
-                        break;
+                    var inbox = folder;
+                    while (true) {
+                        try {
+                            try {
+                                log.info("Waiting for new mail.");
+                                inbox.idle(true);
+                            } catch (FolderClosedException e) {
+                                log.error(LogNotify.NOTIFY_ADMIN, "Folder closed. Attempting to restart monitoring.");
+                                startMailMonitor();
+                                break;
+                            } catch (MessagingException e) {
+                                log.error(LogNotify.NOTIFY_ADMIN, "Could not start connection idling", e);
+                                startMailMonitor();
+                                break;
+                            }
+                        } catch (Exception e) {
+                            log.error(LogNotify.NOTIFY_ADMIN, "Connection to folder failed.", e);
+                            continue;
+                        }
+                        log.info("New email received");
                     }
-                } catch (Exception e) {
-                    log.error(LogNotify.NOTIFY_ADMIN, "Connection to folder failed.", e);
-                    continue;
-                }
-                log.info("New email received");
-            }
-        }, threading.botWorker())
+                }, threading.botWorker())
                 .completeOnTimeout(null, 1, TimeUnit.HOURS)
                 .thenRun(this::startMailMonitor);
     }
