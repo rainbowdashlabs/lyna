@@ -119,7 +119,7 @@ public class MailingService {
     }
 
     private void startMailMonitor() {
-        log.info(LogNotify.STATUS, "Starting monitoring");
+        log.info(LogNotify.DISCORD, "Starting monitoring");
         IMAPFolder inbox = getFolder("Inbox");
 
         try {
@@ -131,7 +131,7 @@ public class MailingService {
 
         inbox.removeMessageCountListener(countAdapter);
         inbox.addMessageCountListener(countAdapter);
-        log.info(LogNotify.STATUS, "Registered mail listener");
+        log.info("Registered mail listener");
         waitForMail(inbox);
     }
 
@@ -159,7 +159,7 @@ public class MailingService {
                         log.info("New email received");
                     }
                 }, threading.botWorker())
-                .completeOnTimeout(null, 1, TimeUnit.HOURS)
+                .completeOnTimeout(null, 2, TimeUnit.HOURS)
                 .thenRun(this::startMailMonitor);
     }
 
