@@ -1,5 +1,7 @@
 package de.chojo.lyna.mail;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
@@ -14,6 +16,7 @@ import jakarta.mail.internet.InternetAddress;
 import org.slf4j.Logger;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -22,6 +25,8 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
     private static final Logger log = getLogger(MessageHandler.class);
     private final MailingService mailingService;
     private final Configuration<ConfigFile> configuration;
+
+    private final Cache<String, String> cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
     public MessageHandler(Data data, MailingService mailingService, Configuration<ConfigFile> configuration) {
         this.mailings = data.mailings();
@@ -36,7 +41,7 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
         if ("false".equalsIgnoreCase(System.getProperty("bot.mailing.skipverify", "false"))) {
             // Check if address is from PayPal
             if (!"service@paypal.de".equals(address.getAddress())
-                && !mailConf.originMails().contains(address.getAddress())) {
+                    && !mailConf.originMails().contains(address.getAddress())) {
                 log.info("Received mail from unknown sender {}", address.getAddress());
                 return;
             }
@@ -77,6 +82,14 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
             return;
         }
 
+        // This is cursed, but the quickest workaround.
+        synchronized (cache) {
+            if (cache.getIfPresent(parsed.mail().get()) != null) {
+                return;
+            }
+
+            cache.put(parsed.mail().get(), parsed.mail().get());
+        }
         Optional<Mailing> optMailing = mailings.byName(parsed.product().get());
         if (optMailing.isEmpty()) {
             log.error(LogNotify.NOTIFY_ADMIN, "Could not find a matching mailing entry for {}", parsed.product().get());
