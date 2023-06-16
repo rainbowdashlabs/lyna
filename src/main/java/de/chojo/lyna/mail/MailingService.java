@@ -136,12 +136,12 @@ public class MailingService {
     }
 
     private void waitForMail(IMAPFolder folder) {
+        log.info("Waiting for mail");
         CompletableFuture.runAsync(() -> {
                     var inbox = folder;
                     while (true) {
                         try {
                             try {
-                                log.info("Waiting for new mail.");
                                 inbox.idle(true);
                             } catch (FolderClosedException e) {
                                 log.error(LogNotify.NOTIFY_ADMIN, "Folder closed. Attempting to restart monitoring.");
@@ -156,7 +156,6 @@ public class MailingService {
                             log.error(LogNotify.NOTIFY_ADMIN, "Connection to folder failed.", e);
                             continue;
                         }
-                        log.info("New email received");
                     }
                 }, threading.botWorker())
                 .completeOnTimeout(null, 2, TimeUnit.HOURS)
