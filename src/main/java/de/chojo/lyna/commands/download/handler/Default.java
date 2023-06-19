@@ -78,7 +78,7 @@ public class Default implements SlashHandler {
                 .setPlaceholder("Please choose a build type");
 
         Set<ReleaseType> access = product.availableReleaseTypes(member);
-        List<Download> downloads = product.downloads().downloads().stream().filter(d -> access.contains(d.type().releaseType())).toList();
+        List<Download> downloads = product.downloads().downloads().stream().filter(d -> access.contains(d.type().releaseType())).sorted().toList();
 
         if (downloads.isEmpty()) {
             return Optional.empty();

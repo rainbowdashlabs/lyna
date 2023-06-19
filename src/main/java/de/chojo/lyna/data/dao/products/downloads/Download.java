@@ -9,6 +9,7 @@ import de.chojo.nexus.requests.v1.search.assets.SearchRequest;
 import de.chojo.sadu.exceptions.ThrowingConsumer;
 import de.chojo.sadu.wrapper.util.ParamBuilder;
 import de.chojo.sadu.wrapper.util.Row;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static de.chojo.lyna.data.StaticQueryAdapter.builder;
 
-public class Download {
+public class Download implements Comparable<Download> {
     private final Product product;
     private final int id;
     private final int typeId;
@@ -143,5 +144,13 @@ public class Download {
                 .parameter(stmt -> stmt.setInt(id).setString(version))
                 .insert()
                 .sendSync();
+    }
+
+    @Override
+    public int compareTo(@NotNull Download o) {
+        int compare = Integer.compare(type().releaseType().ordinal(), o.type().releaseType().ordinal());
+        if (compare != 0) return compare;
+
+        return String.CASE_INSENSITIVE_ORDER.compare(type().name(), o.type().name());
     }
 }
