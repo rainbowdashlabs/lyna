@@ -20,10 +20,7 @@ dependencies {
 
     // database
     implementation("org.postgresql", "postgresql", "42.6.0")
-    implementation("de.chojo.sadu", "sadu-queries", "1.3.0")
-    implementation("de.chojo.sadu", "sadu-updater", "1.3.0")
-    implementation("de.chojo.sadu", "sadu-postgresql", "1.3.0")
-    implementation("de.chojo.sadu", "sadu-datasource", "1.3.0")
+    implementation(libs.bundles.sadu)
 
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
@@ -34,9 +31,7 @@ dependencies {
 
 
     // Logging
-    implementation("org.slf4j", "slf4j-api", "2.0.7")
-    implementation("org.apache.logging.log4j", "log4j-core", "2.20.0")
-    implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.20.0")
+    implementation(libs.bundles.log4j)
     implementation("de.chojo", "log-util", "1.0.1") {
         exclude("org.apache.logging.log4j")
     }
@@ -83,6 +78,7 @@ tasks {
     }
 
     shadowJar {
+
         mergeServiceFiles()
         manifest {
             attributes(mapOf("Main-Class" to "de.chojo.lyna.Lyna"))

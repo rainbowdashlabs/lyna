@@ -17,5 +17,6 @@ class FormattingTest {
         Assertions.assertEquals("2 Hours",Formatting.duration(Duration.ofHours(2)));
         Assertions.assertEquals("1 Day",Formatting.duration(Duration.ofDays(1)));
         Assertions.assertEquals("2 Days",Formatting.duration(Duration.ofDays(2)));
+        System.out.println("⏹\uFE0F");
     }
 }
