@@ -71,12 +71,16 @@ public class Update {
                 @Nullable Instant created = unix == 0 ? null : Instant.ofEpochSecond(unix);
 
                 Version current = Version.parse(versionString);
-
-                var response = switch (current.type()) {
-                    case STABLE -> handleStableBuild(product, current, artifact);
-                    case DEV -> handleDevBuild(product, created, current, artifact);
-                    case SNAPSHOT -> handleSnapshotBuild(product, created, current, artifact);
-                };
+                UpdateResponse response;
+                try {
+                    response = switch (current.type()) {
+                        case STABLE -> handleStableBuild(product, current, artifact);
+                        case DEV -> handleDevBuild(product, created, current, artifact);
+                        case SNAPSHOT -> handleSnapshotBuild(product, created, current, artifact);
+                    };
+                } catch (RuntimeException e) {
+                    response = new UpdateResponse(false, versionString, unix);
+                }
 
                 ctx.status(HttpCode.OK).json(response);
             });
