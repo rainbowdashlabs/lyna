@@ -173,9 +173,9 @@ public class Update {
             return new UpdateResponse(false, latest.version(), 0);
         }
 
-        long seconds = created.until(latestAsset.lastModified().toInstant(), ChronoUnit.SECONDS);
-        // Check if the latest build is current build is newer than 5 minutes
-        if (seconds > 300) {
+        long seconds = created.until(Instant.now(), ChronoUnit.SECONDS);
+        // Check if the current build is newer than 5 minutes
+        if (created.isBefore(latestAsset.lastModified().toInstant())) {
             return new UpdateResponse(true, latest.version(), assetAge(latestAsset));
         }
         return new UpdateResponse(false, latest.version(), 0);
