@@ -71,12 +71,16 @@ public class Update {
                 @Nullable Instant created = unix == 0 ? null : Instant.ofEpochSecond(unix);
 
                 Version current = Version.parse(versionString);
-
-                var response = switch (current.type()) {
-                    case STABLE -> handleStableBuild(product, current, artifact);
-                    case DEV -> handleDevBuild(product, created, current, artifact);
-                    case SNAPSHOT -> handleSnapshotBuild(product, created, current, artifact);
-                };
+                UpdateResponse response;
+                try {
+                    response = switch (current.type()) {
+                        case STABLE -> handleStableBuild(product, current, artifact);
+                        case DEV -> handleDevBuild(product, created, current, artifact);
+                        case SNAPSHOT -> handleSnapshotBuild(product, created, current, artifact);
+                    };
+                } catch (RuntimeException e) {
+                    response = new UpdateResponse(false, versionString, unix);
+                }
 
                 ctx.status(HttpCode.OK).json(response);
             });
@@ -169,9 +173,9 @@ public class Update {
             return new UpdateResponse(false, latest.version(), 0);
         }
 
-        long seconds = created.until(latestAsset.lastModified().toInstant(), ChronoUnit.SECONDS);
-        // Check if the latest build is current build is newer than 5 minutes
-        if (seconds > 300) {
+        long seconds = created.until(Instant.now(), ChronoUnit.SECONDS);
+        // Check if the current build is newer than 5 minutes
+        if (created.isBefore(latestAsset.lastModified().toInstant())) {
             return new UpdateResponse(true, latest.version(), assetAge(latestAsset));
         }
         return new UpdateResponse(false, latest.version(), 0);
