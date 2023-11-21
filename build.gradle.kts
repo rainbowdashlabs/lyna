@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
+
 plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
     java
@@ -78,7 +80,7 @@ tasks {
     }
 
     shadowJar {
-
+        transform(Log4j2PluginsCacheFileTransformer::class.java)
         mergeServiceFiles()
         manifest {
             attributes(mapOf("Main-Class" to "de.chojo.lyna.Lyna"))
