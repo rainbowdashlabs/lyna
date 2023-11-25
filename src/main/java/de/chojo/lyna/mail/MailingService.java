@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -137,6 +138,9 @@ public class MailingService {
 
     private void waitForMail(IMAPFolder folder) {
         log.info("Waiting for mail");
+        if(threading.botWorker() instanceof ScheduledThreadPoolExecutor ex){
+        log.debug("Executor status: {}/{} are running", ex.getActiveCount(), ex.getPoolSize());
+        }
         CompletableFuture.runAsync(() -> {
                     var inbox = folder;
                     while (true) {
@@ -159,7 +163,7 @@ public class MailingService {
                     }
                 }, threading.botWorker())
                 .completeOnTimeout(null, 2, TimeUnit.HOURS)
-                .thenRun(this::startMailMonitor);
+                .thenRunAsync(this::startMailMonitor, threading.botWorker());
     }
 
     public void registerMessageListener(ThrowingConsumer<Message, Exception> listener) {
