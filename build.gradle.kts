@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.chojo"
-version = "1.4.2"
+version = "1.4.3"
 
 repositories {
     mavenCentral()
@@ -21,7 +21,7 @@ dependencies {
     }
 
     // database
-    implementation("org.postgresql", "postgresql", "42.6.0")
+    implementation("org.postgresql", "postgresql", "42.7.0")
     implementation(libs.bundles.sadu)
 
     // Download api
@@ -29,7 +29,7 @@ dependencies {
 
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.2")
-    implementation("org.jsoup", "jsoup", "1.16.1")
+    implementation("org.jsoup", "jsoup", "1.16.2")
 
 
     // Logging
@@ -39,14 +39,14 @@ dependencies {
     }
 
     // unit testing
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter", "junit-jupiter")
-    testImplementation("org.mockito", "mockito-core", "3.+")
+    testImplementation("org.mockito", "mockito-core", "5.+")
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(18))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
     withSourcesJar()
     withJavadocJar()
