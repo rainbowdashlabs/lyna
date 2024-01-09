@@ -55,10 +55,14 @@ public class MailingService {
 
     public static MailingService create(Threading threading, Data data, Configuration<ConfigFile> configuration) {
         MailingService mailingService = new MailingService(threading, data, configuration);
-        try {
-            mailingService.init();
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
+        while (true) {
+            try {
+                mailingService.init();
+            } catch (MessagingException e) {
+                log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to mail", e);
+                continue;
+            }
+            break;
         }
         return mailingService;
     }
