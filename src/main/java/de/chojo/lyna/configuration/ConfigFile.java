@@ -3,6 +3,7 @@ package de.chojo.lyna.configuration;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
+import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
 import de.chojo.lyna.configuration.elements.Mailing;
@@ -17,6 +18,7 @@ public class ConfigFile {
     private Nexus nexus = new Nexus();
     private Api api = new Api();
     private Mailing mailing = new Mailing();
+    private Kofi kofi = new Kofi();
 
     public BaseSettings baseSettings() {
         return baseSettings;
@@ -43,5 +45,8 @@ public class ConfigFile {
 
     public Mailing mailing() {
         return mailing;
+    }
+    public Kofi kofi() {
+        return kofi;
     }
 }

@@ -45,6 +45,10 @@ public class KoFiApi {
                 var results = Urls.splitQuery(ctx.body());
                 var json = results.get("data");
                 var post = mapper.readValue(json, KofiPost.class);
+                if (!post.verificationToken().equals(v1.configuration().config().kofi().verificationToken())) {
+                    ctx.status(HttpCode.FORBIDDEN);
+                    return;
+                }
                 if (post.type() == DataType.SHOP_ORDER) {
                     for (ShopItem shopItem : post.shopItems()) {
                         Optional<Product> optProduct = kofi.byCode(shopItem.directLinkCode());
@@ -55,7 +59,7 @@ public class KoFiApi {
                         if (optProductMail.isEmpty()) continue;
                         Mailing productMail = optProductMail.get();
                         Optional<License> license = product.createLicense("kofi:%s".formatted(post.email()));
-                        if(license.isEmpty()) continue;
+                        if (license.isEmpty()) continue;
                         var mail = MailCreator.createLicenseMessage(productMail, license.get().key(), post.from(), post.email());
                         mailing.sendMail(mail);
                     }
