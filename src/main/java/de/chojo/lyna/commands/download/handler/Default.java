@@ -25,8 +25,6 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +44,13 @@ public class Default implements SlashHandler {
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         var guild = guilds.guild(event.getGuild());
-        Optional<Product> optProduct = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
+        Optional<Product> optProduct;
+        try {
+            optProduct = guild.products().byId(event.getOption("product", OptionMapping::getAsInt));
+        } catch (NumberFormatException e) {
+            event.reply("Invalid Product. Please use the auto completion.").setEphemeral(true).queue();
+            return;
+        }
         if (optProduct.isEmpty()) {
             event.reply("Invalid Product").setEphemeral(true).queue();
             return;
