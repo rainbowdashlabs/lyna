@@ -26,7 +26,6 @@ dependencies {
 
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:*")
 
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.3")
