@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.chojo"
-version = "1.4.3"
+version = "1.5.0"
 
 repositories {
     mavenCentral()
@@ -21,15 +21,16 @@ dependencies {
     }
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.0")
+    implementation("org.postgresql", "postgresql", "42.7.1")
     implementation(libs.bundles.sadu)
 
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:*")
 
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.2")
-    implementation("org.jsoup", "jsoup", "1.16.2")
+    implementation("org.jsoup", "jsoup", "1.17.2")
 
 
     // Logging

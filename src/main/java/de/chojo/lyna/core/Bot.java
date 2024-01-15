@@ -6,6 +6,7 @@ import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.commands.download.Download;
 import de.chojo.lyna.commands.downloads.Downloads;
 import de.chojo.lyna.commands.info.Info;
+import de.chojo.lyna.commands.kofi.KoFi;
 import de.chojo.lyna.commands.license.License;
 import de.chojo.lyna.commands.mailing.Mailing;
 import de.chojo.lyna.commands.products.Products;
@@ -91,7 +92,8 @@ public class Bot {
                         new Downloads(data.guilds(), data.nexus()),
                         new Download(data.guilds(), web.api()),
                         new Trial(data.guilds(), web.api()),
-                        new Mailing(data.guilds(), configuration, mailingService)
+                        new Mailing(data.guilds(), configuration, mailingService),
+                        new KoFi(data.guilds(), data.kofi())
                 )
                 .build();
     }

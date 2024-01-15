@@ -7,6 +7,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.data.StaticQueryAdapter;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.nexus.NexusRest;
@@ -31,6 +32,7 @@ public class Data {
     private Products products;
     private NexusRest nexus;
     private Mailings mailings;
+    private KoFiProducts kofi;
 
     private Data(Threading threading, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -95,6 +97,7 @@ public class Data {
         guilds = new Guilds(this.nexus, configuration);
         products = new Products(this.guilds);
         mailings = new Mailings(this.guilds);
+        kofi = new KoFiProducts(products);
     }
 
     private HikariDataSource getConnectionPool() {
@@ -133,6 +136,10 @@ public class Data {
     public void inject(Bot bot) {
         products.shardManager(bot.shardManager());
         mailings.shardManager(bot.shardManager());
+    }
+
+    public KoFiProducts kofi() {
+        return kofi;
     }
 
     public Products products() {
