@@ -4,16 +4,17 @@ import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.lyna.api.v1.V1;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.core.Data;
+import de.chojo.lyna.mail.MailingService;
 import de.chojo.nexus.NexusRest;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import org.slf4j.Logger;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.javalin.apibuilder.ApiBuilder.after;
 import static io.javalin.apibuilder.ApiBuilder.before;
-import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -25,16 +26,16 @@ public class Api {
 
     private static final Logger log = getLogger(Api.class);
 
-    private Api(Javalin javalin, Configuration<ConfigFile> configuration, Data data) {
+    private Api(Javalin javalin, Configuration<ConfigFile> configuration, Data data, MailingService mailingService) {
         this.javalin = javalin;
         this.configuration = configuration;
         this.nexus = data.nexus();
-        v1 = new V1(this, data.products());
+        v1 = new V1(this, data.products(), mailingService, data.kofi());
     }
 
-    public static Api create(Configuration<ConfigFile> configuration, Data data) {
+    public static Api create(Configuration<ConfigFile> configuration, Data data, MailingService mailingService) {
         Javalin javalin = Javalin.create();
-        Api api = new Api(javalin, configuration, data);
+        Api api = new Api(javalin, configuration, data, mailingService);
         api.init();
         return api;
     }
@@ -60,7 +61,10 @@ public class Api {
                         ctx.status(),
                         ctx.res.getHeaderNames().stream().map(h -> "   " + h + ": " + ctx.res.getHeader(h))
                                 .collect(Collectors.joining("\n")),
-                        ContentType.OCTET_STREAM.equals(ctx.contentType()) ? "Bytes" : ctx.resultString().substring(0, Math.min(ctx.resultString().length(), 180)));
+                        ContentType.OCTET_STREAM.equals(ctx.contentType()) ? "Bytes"
+                                : Objects.requireNonNullElse(ctx.resultString(), "")
+                                .substring(0, Math.min(
+                                        Objects.requireNonNullElse(ctx.resultString(), "").length(), 180)));
             });
 
             path("api", () -> {

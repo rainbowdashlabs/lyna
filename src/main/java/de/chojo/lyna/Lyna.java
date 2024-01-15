@@ -23,8 +23,8 @@ public class Lyna {
         Configuration<ConfigFile> configuration = Configuration.create(new ConfigFile());
         var threading = new Threading();
         Data data = Data.create(threading, configuration);
-        Web web = Web.create(configuration, data);
         MailingService mailingService = MailingService.create(threading, data, configuration);
+        Web web = Web.create(configuration, data, mailingService);
         Bot bot = Bot.create(data, threading, configuration, web, mailingService);
         data.inject(bot);
     }
