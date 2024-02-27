@@ -9,6 +9,7 @@ import de.chojo.lyna.api.v1.kofi.payloads.DataType;
 import de.chojo.lyna.api.v1.kofi.payloads.KofiPost;
 import de.chojo.lyna.api.v1.kofi.payloads.ShopItem;
 import de.chojo.lyna.data.access.KoFiProducts;
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
@@ -60,6 +61,7 @@ public class KoFiApi {
                         Mailing productMail = optProductMail.get();
                         Optional<License> license = product.createLicense("kofi:%s".formatted(post.email()));
                         if (license.isEmpty()) continue;
+                        license.get().grantAccess(ReleaseType.STABLE);
                         var mail = MailCreator.createLicenseMessage(productMail, license.get().key(), post.from(), post.email());
                         mailing.sendMail(mail);
                     }
