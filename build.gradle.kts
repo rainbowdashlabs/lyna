@@ -29,7 +29,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:*")
 
     // Mailing
-    implementation("org.eclipse.angus", "angus-mail", "2.0.2")
+    implementation("org.eclipse.angus", "angus-mail", "2.0.3")
     implementation("org.jsoup", "jsoup", "1.17.2")
 
 
