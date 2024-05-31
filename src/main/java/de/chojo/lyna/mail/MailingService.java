@@ -42,7 +42,6 @@ public class MailingService {
     private final Configuration<ConfigFile> configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
-    private MessageCountAdapter countAdapter;
 
     public MailingService(Threading threading, Data data, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -65,7 +64,7 @@ public class MailingService {
     }
 
     private void init() throws MessagingException {
-        threading.botWorker().scheduleAtFixedRate(this::loop, 1, 5, TimeUnit.MINUTES);
+        threading.botWorker().scheduleAtFixedRate(this::loop, 10, 300, TimeUnit.SECONDS);
         registerMessageListener(new MessageHandler(data, this, configuration));
     }
 
@@ -73,14 +72,16 @@ public class MailingService {
         try {
             check();
         } catch (Exception e){
+            log.error("Could not check emails",e);
             // c:
         }
     }
 
     private void check() throws Exception {
+        log.debug("Performing mail check");
         Session session = createSession();
         var store = (IMAPStore) createImapStore(session);
-        IMAPFolder inbox = (IMAPFolder) store.getFolder("INBOX");
+        IMAPFolder inbox = getInbox(store);
         Message[] search = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
 
         for (Message message : search) {
@@ -92,7 +93,10 @@ public class MailingService {
                     log.error("Error when handling mail", ex);
                 }
             }
+            message.setFlag(Flags.Flag.SEEN, true);
         }
+
+        log.debug("Mail check done");
     }
 
     private IMAPStore createImapStore(Session session) {
@@ -188,9 +192,11 @@ public class MailingService {
     private IMAPFolder getFolder(IMAPStore store, String name) {
         return Retry.retryAndReturn(3, () -> {
             log.info(LogNotify.STATUS, "Connecting to folder {}", name);
-            return (IMAPFolder) store.getFolder(name);
+            IMAPFolder folder = (IMAPFolder) store.getFolder(name);
+            folder.open(Folder.READ_WRITE);
+            return folder;
         }, err -> {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to folder. Rebuilding session.");
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to folder. Retrying.");
             getFolder(store, name);
         }).orElseThrow(() -> new RuntimeException("Reconnecting to folder failed."));
     }
