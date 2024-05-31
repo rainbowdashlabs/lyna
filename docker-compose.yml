@@ -24,9 +24,11 @@ services:
   postgres:
     networks:
       - lyna
-    image: postgres:16.1
+    image: postgres:latest
     expose:
       - 5432
+    ports:
+      - 5432:5432
     volumes:
       - db_data:/var/lib/postgres/data
     environment:
