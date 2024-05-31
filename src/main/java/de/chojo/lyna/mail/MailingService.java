@@ -11,19 +11,20 @@ import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
 import jakarta.mail.Address;
 import jakarta.mail.Authenticator;
+import jakarta.mail.Flags;
 import jakarta.mail.Folder;
-import jakarta.mail.FolderClosedException;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import jakarta.mail.NoSuchProviderException;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
-import jakarta.mail.Store;
 import jakarta.mail.Transport;
 import jakarta.mail.event.MessageCountAdapter;
-import jakarta.mail.event.MessageCountEvent;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.search.FlagTerm;
 import org.eclipse.angus.mail.imap.IMAPFolder;
+import org.eclipse.angus.mail.imap.IMAPStore;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -31,8 +32,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -42,10 +41,7 @@ public class MailingService {
     private final Data data;
     private final Configuration<ConfigFile> configuration;
     private static final Logger log = getLogger(MailingService.class);
-    private volatile Session session;
-    private Store imapStore;
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
-    private MessageCountAdapter countAdapter;
 
     public MailingService(Threading threading, Data data, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -68,106 +64,65 @@ public class MailingService {
     }
 
     private void init() throws MessagingException {
-        createSession();
-        createImapStore();
-        createMailListener();
-        startMailMonitor();
+        threading.botWorker().scheduleAtFixedRate(this::loop, 10, 300, TimeUnit.SECONDS);
         registerMessageListener(new MessageHandler(data, this, configuration));
     }
 
-    private void createMailListener() {
-        countAdapter = new MessageCountAdapter() {
-            @Override
-            public void messagesAdded(MessageCountEvent e) {
-                if (e.getType() == MessageCountEvent.REMOVED) return;
-                for (Message message : e.getMessages()) {
-                    try {
-                        log.info("Received new message from {}", ((InternetAddress) message.getFrom()[0]).getAddress());
-                    } catch (MessagingException ex) {
-                        // ignore
-                    }
-                    for (var messageConsumer : receivedListener) {
-                        try {
-                            messageConsumer.accept(message);
-                        } catch (Exception ex) {
-                            log.error("Error when handling mail", ex);
-                        }
-                    }
+    private void loop(){
+        try {
+            check();
+        } catch (Exception e){
+            log.error("Could not check emails",e);
+            // c:
+        }
+    }
+
+    private void check() throws Exception {
+        log.debug("Performing mail check");
+        Session session = createSession();
+        var store = (IMAPStore) createImapStore(session);
+        IMAPFolder inbox = getInbox(store);
+        Message[] search = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
+
+        for (Message message : search) {
+            log.info("Received new message from {}", ((InternetAddress) message.getFrom()[0]).getAddress());
+            for (ThrowingConsumer<Message, Exception> consumer : receivedListener) {
+                try {
+                    consumer.accept(message);
+                } catch (Exception ex) {
+                    log.error("Error when handling mail", ex);
                 }
             }
-        };
+            message.setFlag(Flags.Flag.SEEN, true);
+        }
+
+        log.debug("Mail check done");
     }
 
-    private void createImapStore() throws MessagingException {
+    private IMAPStore createImapStore(Session session) {
         log.info(LogNotify.STATUS, "Creating imap store");
-        imapStore = session.getStore("imap");
+        IMAPStore imapStore = null;
+        try {
+            imapStore = (IMAPStore) session.getStore("imap");
         imapStore.connect();
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+        return imapStore;
     }
 
-    private void createSession() {
+    private Session createSession() {
         log.info(LogNotify.STATUS, "Creating new mail session");
         Properties props = System.getProperties();
         Mailing mailing = configuration.config().mailing();
         props.put("mail.smtp.host", mailing.host());
         props.put("mail.imap.host", mailing.host());
-        session = Session.getInstance(props, new Authenticator() {
+        return Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(mailing.user(), mailing.password());
             }
         });
-        try {
-            createImapStore();
-        } catch (MessagingException e) {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not recreate imap store");
-        }
-    }
-
-    private void startMailMonitor() {
-        log.info(LogNotify.DISCORD, "Starting monitoring");
-        IMAPFolder inbox = getFolder("Inbox");
-
-        try {
-            inbox.open(Folder.READ_WRITE);
-        } catch (MessagingException e) {
-            // c:
-            throw new RuntimeException(e);
-        }
-
-        inbox.removeMessageCountListener(countAdapter);
-        inbox.addMessageCountListener(countAdapter);
-        log.info("Registered mail listener");
-        waitForMail(inbox);
-    }
-
-    private void waitForMail(IMAPFolder folder) {
-        log.info("Waiting for mail");
-        if(threading.botWorker() instanceof ScheduledThreadPoolExecutor ex){
-        log.debug("Executor status: {}/{} are running", ex.getActiveCount(), ex.getPoolSize());
-        }
-        CompletableFuture.runAsync(() -> {
-                    var inbox = folder;
-                    while (true) {
-                        try {
-                            try {
-                                inbox.idle(true);
-                            } catch (FolderClosedException e) {
-                                log.error(LogNotify.NOTIFY_ADMIN, "Folder closed. Attempting to restart monitoring.");
-                                startMailMonitor();
-                                break;
-                            } catch (MessagingException e) {
-                                log.error(LogNotify.NOTIFY_ADMIN, "Could not start connection idling", e);
-                                startMailMonitor();
-                                break;
-                            }
-                        } catch (Exception e) {
-                            log.error(LogNotify.NOTIFY_ADMIN, "Connection to folder failed.", e);
-                            continue;
-                        }
-                    }
-                }, threading.botWorker())
-                .completeOnTimeout(null, 2, TimeUnit.HOURS)
-                .thenRunAsync(this::startMailMonitor, threading.botWorker());
     }
 
     public void registerMessageListener(ThrowingConsumer<Message, Exception> listener) {
@@ -176,9 +131,10 @@ public class MailingService {
 
 
     public void sendMail(Mail mail) {
+        Session session = createSession();
         MimeMessage mimeMessage;
         try {
-            mimeMessage = buildMessage(mail);
+            mimeMessage = buildMessage(session, mail);
         } catch (MessagingException e) {
             log.error(LogNotify.NOTIFY_ADMIN, "Could not build mail", e);
             return;
@@ -188,7 +144,7 @@ public class MailingService {
                 () -> sendMessage(mimeMessage),
                 err -> {
                     log.error(LogNotify.NOTIFY_ADMIN, "Could not sent mail", err);
-                    createSession();
+                    sendMail(mail);
                 });
 
         if (sendResult.isEmpty()) {
@@ -196,11 +152,13 @@ public class MailingService {
             return;
         }
 
+        IMAPStore imapStore = createImapStore(session);
+
         Optional<Boolean> result = Retry.retryAndReturn(3,
-                () -> storeMessage(mimeMessage),
+                () -> storeMessage(imapStore,mimeMessage),
                 err -> {
                     log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
-                    createSession();
+                    sendMail(mail);
                 });
 
         if (result.isPresent() && result.get()) {
@@ -217,8 +175,9 @@ public class MailingService {
         return true;
     }
 
-    private boolean storeMessage(MimeMessage message) throws MessagingException {
-        Folder sent = getFolder("inbox").getFolder("Sent");
+    private boolean storeMessage(IMAPStore store, MimeMessage message) throws MessagingException {
+        store.getFolder("inbox");
+        Folder sent = getInbox(store).getFolder("Sent");
         if (!sent.exists()) {
             sent.create(Folder.HOLDS_MESSAGES);
         }
@@ -226,17 +185,23 @@ public class MailingService {
         return true;
     }
 
-    private IMAPFolder getFolder(String name) {
+    private IMAPFolder getInbox(IMAPStore store) {
+        return getFolder(store, "inbox");
+    }
+
+    private IMAPFolder getFolder(IMAPStore store, String name) {
         return Retry.retryAndReturn(3, () -> {
             log.info(LogNotify.STATUS, "Connecting to folder {}", name);
-            return (IMAPFolder) imapStore.getFolder(name);
+            IMAPFolder folder = (IMAPFolder) store.getFolder(name);
+            folder.open(Folder.READ_WRITE);
+            return folder;
         }, err -> {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to folder. Rebuilding session.");
-            createSession();
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to folder. Retrying.");
+            getFolder(store, name);
         }).orElseThrow(() -> new RuntimeException("Reconnecting to folder failed."));
     }
 
-    private MimeMessage buildMessage(Mail mail) throws MessagingException {
+    private MimeMessage buildMessage(Session session, Mail mail) throws MessagingException {
         var message = new MimeMessage(session);
         message.addFrom(new Address[]{new InternetAddress(configuration.config().mailing().user())});
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(mail.address(), false));
