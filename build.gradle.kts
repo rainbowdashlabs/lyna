@@ -37,6 +37,9 @@ dependencies {
     implementation("de.chojo", "log-util", "1.0.1") {
         exclude("org.apache.logging.log4j")
     }
+    //asm
+    implementation("org.ow2.asm:asm:9.4")
+    implementation("org.ow2.asm:asm-util:9.4")
 
     // unit testing
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
