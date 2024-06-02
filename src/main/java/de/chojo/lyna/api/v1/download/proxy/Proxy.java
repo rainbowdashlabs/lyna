@@ -102,8 +102,7 @@ public class Proxy {
                         if (entry.getName().endsWith(".class")) {
                             ByteArrayOutputStream out = new ByteArrayOutputStream();
                             zipInputStream.transferTo(out);
-                            byte[] bytes = replaceStringInJar(out.toByteArray(), replacements);
-                            new ByteArrayInputStream(bytes).transferTo(newZip);
+                            replaceStringInJar(out.toByteArray(), replacements).writeTo(newZip);
                         } else {
                             zipInputStream.transferTo(newZip);
                         }
