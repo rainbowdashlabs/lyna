@@ -33,22 +33,5 @@ public class Lyna {
         Web web = Web.create(configuration, data, mailingService);
         Bot bot = Bot.create(data, threading, configuration, web, mailingService);
         data.inject(bot);
-
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
-
-        IntStream.range(0,3).mapToObj(a -> CompletableFuture.runAsync(() -> {
-                //do something
-        }, executorService)).forEach(CompletableFuture::join);
-
-
-        ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
-
-        for (int i = 0; i < 3; i++) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            }, executorService);
-            futures.add(future);
-        }
-
-        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
     }
 }
