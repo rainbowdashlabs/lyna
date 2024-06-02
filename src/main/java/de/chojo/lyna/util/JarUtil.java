@@ -25,14 +25,13 @@ public class JarUtil {
         for (int i = 0; i < poolCount; i++) {
             int tag = input.readUnsignedByte();
             if (tag == 1) {
-                var start = byteArrayInputStream.pos();
                 String str = input.readUTF();
 
                 for (var entry : replacements.entrySet()) {
                     if (!str.equals(entry.getKey())) {
                         continue;
                     }
-                    outputStream.write(bytes, 0, start);
+                    outputStream.writeByte(1);
                     outputStream.writeUTF(entry.getValue());
                 }
             } else {
