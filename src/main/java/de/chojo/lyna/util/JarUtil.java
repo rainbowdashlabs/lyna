@@ -19,7 +19,7 @@ public class JarUtil {
         DataInputStream input = new DataInputStream(byteArrayInputStream);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream outputStream = new DataOutputStream(byteArrayOutputStream);
-        input.skip(8);
+        input.skipBytes(8);
         int poolCount = input.readUnsignedShort() - 1;
 
         for (int i = 0; i < poolCount; i++) {
@@ -47,7 +47,7 @@ public class JarUtil {
                     default -> throw new IllegalArgumentException("No tag found for %s".formatted(tag));
                 };
                 outputStream.write(bytes, byteArrayInputStream.pos()-1, skip);
-                input.skip(skip);
+                input.skipBytes(skip);
             }
         }
         return byteArrayOutputStream;
