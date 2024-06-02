@@ -10,6 +10,12 @@ import de.chojo.lyna.mail.MailingService;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Lyna {
     private static Lyna instance;
@@ -27,5 +33,22 @@ public class Lyna {
         Web web = Web.create(configuration, data, mailingService);
         Bot bot = Bot.create(data, threading, configuration, web, mailingService);
         data.inject(bot);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+
+        IntStream.range(0,3).mapToObj(a -> CompletableFuture.runAsync(() -> {
+                //do something
+        }, executorService)).forEach(CompletableFuture::join);
+
+
+        ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
+
+        for (int i = 0; i < 3; i++) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+            }, executorService);
+            futures.add(future);
+        }
+
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
     }
 }

@@ -18,7 +18,6 @@ public enum ReleaseType implements Comparable<ReleaseType> {
     }
 
 
-
     public static ReleaseType parse(String string) {
         return Enums.parse(ReleaseType.class, string).get();
     }

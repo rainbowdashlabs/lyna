@@ -6,7 +6,8 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.util.Optional;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Products {
     private ShardManager shardManager;
@@ -17,15 +18,14 @@ public class Products {
     }
 
     public Optional<Product> byId(int id) {
-        return builder(Product.class)
-                .query("""
-                        SELECT id, guild_id, name, url, role, free FROM product WHERE id = ?
-                        """)
-                .parameter(stmt -> stmt.setInt(id))
-                .readRow(row -> {
+        return query("""
+                SELECT id, guild_id, name, url, role, free FROM product WHERE id = ?
+                """)
+                .single(call().bind(id))
+                .map(row -> {
                     Guild guild = shardManager.getGuildById(row.getLong("guild_id"));
                     return guilds.guild(guild).products().byId(id).orElse(null);
-                }).firstSync();
+                }).first();
     }
 
     public void shardManager(ShardManager shardManager) {
