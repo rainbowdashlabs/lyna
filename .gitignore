@@ -34,3 +34,4 @@ buildNumber.properties
 /config/
 /logs/
 /out/
+.direnv

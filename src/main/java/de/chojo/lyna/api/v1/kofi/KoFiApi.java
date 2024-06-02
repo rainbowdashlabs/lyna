@@ -9,6 +9,7 @@ import de.chojo.lyna.api.v1.kofi.payloads.DataType;
 import de.chojo.lyna.api.v1.kofi.payloads.KofiPost;
 import de.chojo.lyna.api.v1.kofi.payloads.ShopItem;
 import de.chojo.lyna.data.access.KoFiProducts;
+import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
@@ -45,6 +46,10 @@ public class KoFiApi {
                 var results = Urls.splitQuery(ctx.body());
                 var json = results.get("data");
                 var post = mapper.readValue(json, KofiPost.class);
+                if (!post.verificationToken().equals(v1.configuration().config().kofi().verificationToken())) {
+                    ctx.status(HttpCode.FORBIDDEN);
+                    return;
+                }
                 if (post.type() == DataType.SHOP_ORDER) {
                     for (ShopItem shopItem : post.shopItems()) {
                         Optional<Product> optProduct = kofi.byCode(shopItem.directLinkCode());
@@ -55,7 +60,8 @@ public class KoFiApi {
                         if (optProductMail.isEmpty()) continue;
                         Mailing productMail = optProductMail.get();
                         Optional<License> license = product.createLicense("kofi:%s".formatted(post.email()));
-                        if(license.isEmpty()) continue;
+                        if (license.isEmpty()) continue;
+                        license.get().grantAccess(ReleaseType.STABLE);
                         var mail = MailCreator.createLicenseMessage(productMail, license.get().key(), post.from(), post.email());
                         mailing.sendMail(mail);
                     }
