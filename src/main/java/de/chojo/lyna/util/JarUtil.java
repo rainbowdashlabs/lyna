@@ -28,6 +28,7 @@ public class JarUtil {
         throw new RuntimeException("version.new.error.jarNotFound");
     }
 
+    // Made by goldmensch
     public static byte[] replaceStringInJar(byte[] bytes, Map<String, String> replacements)  {
         int current = 10;
         int poolCount = (Byte.toUnsignedInt(bytes[8]) << 8) | Byte.toUnsignedInt(bytes[9]) - 1;
@@ -45,7 +46,7 @@ public class JarUtil {
                 current += stringByes.length;
 
                 for (var entry : byteMap.entrySet()) {
-                    if (str.equals(entry.getKey())) {
+                    if (!str.equals(entry.getKey())) {
                         continue;
                     }
                     var first = Arrays.copyOfRange(bytes, 0, start);
