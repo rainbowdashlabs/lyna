@@ -3,7 +3,8 @@ package de.chojo.lyna.data.dao.settings;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import net.dv8tion.jda.api.entities.Guild;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Settings {
     private final LicenseGuild licenseGuild;
@@ -29,22 +30,21 @@ public class Settings {
 
     public License license() {
         if (license == null) {
-            license = builder(License.class)
-                    .query("SELECT * FROM license_settings WHERE guild_id = ?")
-                    .parameter(stmt -> stmt.setLong(guildId()))
-                    .readRow(row -> new License(this, row.getInt("shares")))
-                    .firstSync()
+            license = query("SELECT * FROM license_settings WHERE guild_id = ?")
+                    .single(call().bind(guildId()))
+                    .map(row -> new License(this, row.getInt("shares")))
+                    .first()
                     .orElseGet(() -> new License(this));
         }
         return license;
     }
+
     public Trial trial() {
         if (trial == null) {
-            trial = builder(Trial.class)
-                    .query("SELECT * FROM trial_settings WHERE guild_id = ?")
-                    .parameter(stmt -> stmt.setLong(guildId()))
-                    .readRow(row -> new Trial(this, row.getInt("server_time"), row.getInt("account_time")))
-                    .firstSync()
+            trial = query("SELECT * FROM trial_settings WHERE guild_id = ?")
+                    .single(call().bind(guildId()))
+                    .map(row -> new Trial(this, row.getInt("server_time"), row.getInt("account_time")))
+                    .first()
                     .orElseGet(() -> new Trial(this));
         }
         return trial;

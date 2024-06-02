@@ -1,13 +1,14 @@
 package de.chojo.lyna.data.dao.downloadtype;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.sadu.exceptions.ThrowingConsumer;
-import de.chojo.sadu.wrapper.util.ParamBuilder;
-import de.chojo.sadu.wrapper.util.Row;
+import de.chojo.sadu.mapper.wrapper.Row;
+import de.chojo.sadu.queries.api.call.Call;
 
 import java.sql.SQLException;
+import java.util.function.Function;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class DownloadType {
     LicenseGuild guild;
@@ -49,39 +50,33 @@ public class DownloadType {
     }
 
     public void name(String name) {
-        if (set("name", stmt -> stmt.setString(name))) {
+        if (set("name", stmt -> stmt.bind(name))) {
             this.name = name;
         }
     }
 
     public void description(String description) {
-        if (set("description", stmt -> stmt.setString(description))) {
+        if (set("description", stmt -> stmt.bind(description))) {
             this.description = description;
         }
     }
 
     public void releaseType(ReleaseType releaseType) {
-        if (set("release_type", stmt -> stmt.setEnum(releaseType))) {
+        if (set("release_type", stmt -> stmt.bind(releaseType))) {
             this.releaseType = releaseType;
         }
     }
 
-    private boolean set(String column, ThrowingConsumer<ParamBuilder, SQLException> consumer) {
-        return builder().query("UPDATE download_type SET %s = ? WHERE id = ?", column)
-                .parameter(stmt -> {
-                    consumer.accept(stmt);
-                    stmt.setInt(id);
-                }).update()
-                .sendSync()
+    private boolean set(String column, Function<Call, Call> consumer) {
+        return query("UPDATE download_type SET %s = ? WHERE id = ?", column)
+                .single(consumer.apply(call()).bind(id)).update()
                 .changed();
     }
 
     public boolean delete() {
-        return builder()
-                .query("DELETE FROM download_type WHERE guild_id = ? AND id =  ?")
-                .parameter(stmt -> stmt.setLong(guild.guildId()).setInt(id))
+        return query("DELETE FROM download_type WHERE guild_id = ? AND id =  ?")
+                .single(call().bind(guild.guildId()).bind(id))
                 .delete()
-                .sendSync()
                 .changed();
     }
 }

@@ -2,7 +2,8 @@ package de.chojo.lyna.data.dao.settings;
 
 import net.dv8tion.jda.api.entities.Guild;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class License {
     private final Settings settings;
@@ -22,16 +23,14 @@ public class License {
     }
 
     public void shares(int shares) {
-        if (builder()
-                .query("""
-                       INSERT INTO license_settings(guild_id, shares) VALUES(?,?)
-                       ON CONFLICT(guild_id)
-                            DO UPDATE
-                                SET shares = excluded.shares
-                       """)
-                .parameter(stmt -> stmt.setLong(guildId()).setInt(shares))
+        if (query("""
+                INSERT INTO license_settings(guild_id, shares) VALUES(?,?)
+                ON CONFLICT(guild_id)
+                     DO UPDATE
+                         SET shares = excluded.shares
+                """)
+                .single(call().bind(guildId()).bind(shares))
                 .insert()
-                .sendSync()
                 .changed()) {
             this.shares = shares;
         }

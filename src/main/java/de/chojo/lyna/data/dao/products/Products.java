@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Products {
     private final LicenseGuild licenseGuild;
@@ -22,26 +23,24 @@ public class Products {
     }
 
     public Optional<Product> create(String name, Role role, @Nullable String url, boolean free, boolean trial) {
-        return builder(Product.class)
-                .query("INSERT INTO product(guild_id, name, url, role, free) VALUES (?,?,?,?,?) RETURNING id")
-                .parameter(stmt -> stmt.setLong(licenseGuild.guildId()).setString(name).setString(url)
-                        .setLong(role.getIdLong()).setBoolean(free))
-                .readRow(row -> new Product(this, row.getInt("id"), name, url, role.isPublicRole() ? 0 : role.getIdLong(), free, trial))
-                .firstSync();
+        return query("INSERT INTO product(guild_id, name, url, role, free) VALUES (?,?,?,?,?) RETURNING id")
+                .single(call().bind(licenseGuild.guildId()).bind(name).bind(url)
+                        .bind(role.getIdLong()).bind(free))
+                .map(row -> new Product(this, row.getInt("id"), name, url, role.isPublicRole() ? 0 : role.getIdLong(), free, trial))
+                .first();
     }
 
     public List<Product> all() {
-        return builder(Product.class)
-                .query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ?")
-                .parameter(stmt -> stmt.setLong(licenseGuild.guildId()))
-                .readRow(row -> new Product(this,
+        return query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ?")
+                .single(call().bind(licenseGuild.guildId()))
+                .map(row -> new Product(this,
                         row.getInt("id"),
                         row.getString("name"),
                         row.getString("url"),
                         row.getLong("role"),
                         row.getBoolean("free"),
                         row.getBoolean("trial")))
-                .allSync();
+                .all();
     }
 
     public List<Command.Choice> complete(String value) {
@@ -70,17 +69,16 @@ public class Products {
     }
 
     public Optional<Product> byId(int id) {
-        return builder(Product.class)
-                .query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ? AND id = ?")
-                .parameter(stmt -> stmt.setLong(licenseGuild.guildId()).setInt(id))
-                .readRow(row -> new Product(this,
+        return query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ? AND id = ?")
+                .single(call().bind(licenseGuild.guildId()).bind(id))
+                .map(row -> new Product(this,
                         row.getInt("id"),
                         row.getString("name"),
                         row.getString("url"),
                         row.getLong("role"),
                         row.getBoolean("free"),
                         row.getBoolean("trial")))
-                .firstSync();
+                .first();
     }
 
     public long guildId() {

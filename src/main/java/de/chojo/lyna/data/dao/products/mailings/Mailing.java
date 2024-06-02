@@ -1,12 +1,12 @@
 package de.chojo.lyna.data.dao.products.mailings;
 
 import de.chojo.lyna.data.dao.products.Product;
-import de.chojo.sadu.exceptions.ThrowingConsumer;
-import de.chojo.sadu.wrapper.util.ParamBuilder;
+import de.chojo.sadu.queries.api.call.Call;
 
-import java.sql.SQLException;
+import java.util.function.Function;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Mailing {
     private final int id;
@@ -34,28 +34,25 @@ public class Mailing {
     }
 
     public void name(String name) {
-        if (set("name", stmt -> stmt.setString(name))) {
+        if (set("name", stmt -> stmt.bind(name))) {
             this.name = name;
         }
     }
 
-    private boolean set(String column, ThrowingConsumer<ParamBuilder, SQLException> consumer) {
-        return builder().query("""
-                        UPDATE
-                            mail_products
-                        SET %s = ?
-                        WHERE
-                            id = ?""", column)
-                .parameter(stmt -> {
-                    consumer.accept(stmt);
-                    stmt.setInt(id);
-                }).update()
-                .sendSync()
+    private boolean set(String column, Function<Call, Call> consumer) {
+        return query("""
+                UPDATE
+                    mail_products
+                SET %s = ?
+                WHERE
+                    id = ?""", column)
+                .single(consumer.apply(call()).bind(id))
+                .update()
                 .changed();
     }
 
     public void mailText(String mailText) {
-        if (set("mail_text", stmt -> stmt.setString(mailText))) {
+        if (set("mail_text", stmt -> stmt.bind(mailText))) {
             this.mailText = mailText;
         }
     }
