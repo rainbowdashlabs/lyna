@@ -46,7 +46,8 @@ public class JarUtil {
                     case 15 -> 4;
                     default -> throw new IllegalArgumentException("No tag found for %s".formatted(tag));
                 };
-                outputStream.write(bytes, byteArrayInputStream.pos(), skip);
+                outputStream.write(bytes, byteArrayInputStream.pos()-1, skip);
+                input.skip(skip);
             }
         }
         return byteArrayOutputStream;
