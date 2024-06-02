@@ -3,15 +3,23 @@ package de.chojo.lyna.api.v1.download.proxy;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
+import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.lyna.api.v1.download.Download;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpCode;
 import org.intellij.lang.annotations.Language;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
+import static de.chojo.lyna.util.JarUtil.replaceStringInJar;
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
@@ -44,6 +52,7 @@ public class Proxy {
             </html>
                         
             """;
+    private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
 
     public Proxy(Download download) {
         this.download = download;
@@ -79,11 +88,38 @@ public class Proxy {
 
                 download.postDownload().run();
 
+                var complete = asset.downloadStream().complete();
+
+
+                ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+                var newZip = new ZipOutputStream(bytesOut);
+                ZipInputStream zipInputStream = new ZipInputStream(complete);
+                var entry = zipInputStream.getNextEntry();
+                Map<String, String> replacements = Map.of("%%__USER__%%", download.userId(), "%%__RESOURCE__%%", download.assetId(), "%%__NONCE__%%", snowflakeCreator.nextString());
+                while (entry != null) {
+                    if (!entry.isDirectory()) {
+                        newZip.putNextEntry(entry);
+                        if (entry.getName().endsWith(".class")) {
+                            ByteArrayOutputStream out = new ByteArrayOutputStream();
+                            zipInputStream.transferTo(out);
+                            byte[] bytes = replaceStringInJar(out.toByteArray(), replacements);
+                            new ByteArrayInputStream(bytes).transferTo(newZip);
+                        } else {
+                            zipInputStream.transferTo(newZip);
+                        }
+
+                        newZip.closeEntry();
+                    }
+
+                    entry = zipInputStream.getNextEntry();
+                }
+                newZip.close();
+
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")
                         .contentType(ContentType.APPLICATION_OCTET_STREAM)
                         .status(HttpCode.OK)
-                        .result(asset.downloadStream().complete());
+                        .result(bytesOut.toByteArray());
             });
         });
     }
