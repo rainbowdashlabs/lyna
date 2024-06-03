@@ -37,29 +37,29 @@ public class JarUtil {
             if (tag == 1) {
                 String str = input.readUTF();
 
-                for (var entry : replacements.entrySet()) {
-                    if (str.equals(entry.getKey())) {
-                        System.out.println("yeah " + entry.getKey());
-                        System.out.println(entry.getValue());
-                        outputStream.writeUTF(entry.getValue());
-                    }
-                }
+                var out = replacements.entrySet().stream()
+                        .filter(entry -> entry.getKey().equals(str))
+                        .findAny()
+                        .map(Map.Entry::getValue)
+                        .orElse(str);
+                outputStream.writeUTF(out);
             } else {
                 var skip = switch (tag) {
-                    case 10, 9, 11, 12, 18, 3, 4 -> 5;
-                    case 8, 16, 7 -> 3;
+                    case 10, 9, 11, 12, 18, 3, 4 -> 4;
+                    case 8, 16, 7 -> 2;
                     case 5, 6 -> {
                         i++;
-                        yield 9;
+                        yield 8;
                     }
-                    case 15 -> 4;
+                    case 15 -> 3;
                     default -> throw new IllegalArgumentException("No tag found for %s".formatted(tag));
                 };
-                outputStream.write(bytes, byteArrayInputStream.pos()-1, skip-1);
-                input.skipBytes(skip-1);
+                outputStream.write(bytes, byteArrayInputStream.pos(), skip);
+                input.skipBytes(skip);
             }
         }
-        outputStream.write(bytes, byteArrayInputStream.pos()-1, input.available());
+
+        outputStream.write(bytes, byteArrayInputStream.pos(), input.available());
         return byteArrayOutputStream;
 
     }
