@@ -100,9 +100,8 @@ public class Proxy {
                     if (!entry.isDirectory()) {
                         newZip.putNextEntry(entry);
                         if (entry.getName().endsWith(".class")) {
-                            ByteArrayOutputStream out = new ByteArrayOutputStream();
-                            zipInputStream.transferTo(out);
-                            replaceStringInJar(out.toByteArray(), replacements).writeTo(newZip);
+                            byte[] bytes = replaceStringInJar(zipInputStream, replacements);
+                            newZip.write(bytes);
                         } else {
                             zipInputStream.transferTo(newZip);
                         }
