@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -88,30 +89,30 @@ public class Proxy {
 
                 download.postDownload().run();
 
+                Map<String, String> replacements = Map.of(
+                        "%%__USER__%%", download.userId(),
+                        "%%__RESOURCE__%%", download.assetId(),
+                        "%%__NONCE__%%", snowflakeCreator.nextString()
+                );
+
                 var complete = asset.downloadStream().complete();
+                var bytesOut = new ByteArrayOutputStream();
+                try(var outputZip = new ZipOutputStream(bytesOut); var inputZip = new ZipInputStream(complete);) {
+                    ZipEntry entry;
+                    while ((entry = inputZip.getNextEntry()) != null) {
+                        if (!entry.isDirectory()) {
+                            outputZip.putNextEntry(entry);
+                            if (entry.getName().endsWith(".class")) {
+                                byte[] bytes = replaceStringInJar(inputZip, replacements);
+                                outputZip.write(bytes);
+                            } else {
+                                inputZip.transferTo(outputZip);
+                            }
 
-
-                ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-                var newZip = new ZipOutputStream(bytesOut);
-                ZipInputStream zipInputStream = new ZipInputStream(complete);
-                var entry = zipInputStream.getNextEntry();
-                Map<String, String> replacements = Map.of("%%__USER__%%", download.userId(), "%%__RESOURCE__%%", download.assetId(), "%%__NONCE__%%", snowflakeCreator.nextString());
-                while (entry != null) {
-                    if (!entry.isDirectory()) {
-                        newZip.putNextEntry(entry);
-                        if (entry.getName().endsWith(".class")) {
-                            byte[] bytes = replaceStringInJar(zipInputStream, replacements);
-                            newZip.write(bytes);
-                        } else {
-                            zipInputStream.transferTo(newZip);
+                            outputZip.closeEntry();
                         }
-
-                        newZip.closeEntry();
                     }
-
-                    entry = zipInputStream.getNextEntry();
                 }
-                newZip.close();
 
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")
