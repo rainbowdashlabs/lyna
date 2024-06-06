@@ -5,22 +5,16 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
 import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.lyna.api.v1.download.Download;
+import de.chojo.lyna.util.JarUtil;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpCode;
 import org.intellij.lang.annotations.Language;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
-import static de.chojo.lyna.util.JarUtil.replaceStringInJar;
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
@@ -96,29 +90,13 @@ public class Proxy {
                 );
 
                 var complete = asset.downloadStream().complete();
-                var bytesOut = new ByteArrayOutputStream();
-                try(var outputZip = new ZipOutputStream(bytesOut); var inputZip = new ZipInputStream(complete);) {
-                    ZipEntry entry;
-                    while ((entry = inputZip.getNextEntry()) != null) {
-                        if (!entry.isDirectory()) {
-                            outputZip.putNextEntry(entry);
-                            if (entry.getName().endsWith(".class")) {
-                                byte[] bytes = replaceStringInJar(inputZip, replacements);
-                                outputZip.write(bytes);
-                            } else {
-                                inputZip.transferTo(outputZip);
-                            }
-
-                            outputZip.closeEntry();
-                        }
-                    }
-                }
+                var replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
 
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")
                         .contentType(ContentType.APPLICATION_OCTET_STREAM)
                         .status(HttpCode.OK)
-                        .result(bytesOut.toByteArray());
+                        .result(replacedJarFile);
             });
         });
     }

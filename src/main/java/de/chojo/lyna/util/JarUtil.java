@@ -1,21 +1,37 @@
 package de.chojo.lyna.util;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.jar.JarInputStream;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class JarUtil {
 
     // Made by goldmensch (contact goldmensch on discord, or write email to nickhensel25@icloud.com if it breaks)
-    public static byte[] replaceStringInJar(InputStream inputStream, Map<String, String> replacements) throws IOException {
+    public static byte[] replaceStringsInJar(InputStream stream, Map<String, String> replacements) throws IOException {
+        var bytesOut = new ByteArrayOutputStream();
+        try(var outputZip = new ZipOutputStream(bytesOut); var inputZip = new ZipInputStream(stream)) {
+            ZipEntry entry;
+            while ((entry = inputZip.getNextEntry()) != null) {
+                if (!entry.isDirectory()) {
+                    outputZip.putNextEntry(entry);
+                    if (entry.getName().endsWith(".class")) {
+                        byte[] bytes = replaceStringsInClass(inputZip, replacements);
+                        outputZip.write(bytes);
+                    } else {
+                        inputZip.transferTo(outputZip);
+                    }
+
+                    outputZip.closeEntry();
+                }
+            }
+        }
+        return bytesOut.toByteArray();
+    }
+
+    // Made by goldmensch (contact goldmensch on discord, or write email to nickhensel25@icloud.com if it breaks)
+    public static byte[] replaceStringsInClass(InputStream inputStream, Map<String, String> replacements) throws IOException {
         DataInputStream input = new DataInputStream(inputStream);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream output = new DataOutputStream(byteArrayOutputStream);

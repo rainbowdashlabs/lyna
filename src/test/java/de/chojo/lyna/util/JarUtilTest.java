@@ -4,25 +4,29 @@ package de.chojo.lyna.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.Map;
 
 public class JarUtilTest {
 
-    @Test
-    void testIt() throws IOException {
-        Map<String, String> replacements = Map.of("%%__USER__%%", "testId", "%%__RESOURCE__%%", "testResource", "%%__NONCE__%%", "testNonce");
+    Map<String, String> replacements = Map.of("%%__USER__%%", "testId", "%%__RESOURCE__%%", "testResource", "%%__NONCE__%%", "testNonce");
 
+    @Test
+    void testClass() throws IOException {
         var userData = JarUtilTest.class.getClassLoader().getResourceAsStream("UserData.class");
-        var out = JarUtil.replaceStringInJar(userData, replacements);
+        var out = JarUtil.replaceStringsInClass(userData, replacements);
 
         var replacedUserData = JarUtil.class.getClassLoader().getResourceAsStream("ReplacedUserData.class");
         Assertions.assertArrayEquals(out, replacedUserData.readAllBytes());
+    }
+
+    @Test
+    void testJar() throws IOException {
+        InputStream testJar = JarUtil.class.getClassLoader().getResourceAsStream("TestJar.jar");
+        var replaced = JarUtil.replaceStringsInJar(testJar, replacements);
+
+        var replacedTestJar = JarUtil.class.getClassLoader().getResourceAsStream("ReplacedTestJar.jar");
+        Assertions.assertArrayEquals(replaced, replacedTestJar.readAllBytes());
     }
 }
