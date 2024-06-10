@@ -3,13 +3,16 @@ package de.chojo.lyna.api.v1.download.proxy;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
+import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.lyna.api.v1.download.Download;
+import de.chojo.lyna.util.JarUtil;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpCode;
 import org.intellij.lang.annotations.Language;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -44,6 +47,7 @@ public class Proxy {
             </html>
                         
             """;
+    private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
 
     public Proxy(Download download) {
         this.download = download;
@@ -79,11 +83,20 @@ public class Proxy {
 
                 download.postDownload().run();
 
+                Map<String, String> replacements = Map.of(
+                        "%%__USER__%%", download.userId(),
+                        "%%__RESOURCE__%%", download.assetId(),
+                        "%%__NONCE__%%", snowflakeCreator.nextString()
+                );
+
+                var complete = asset.downloadStream().complete();
+                var replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
+
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")
                         .contentType(ContentType.APPLICATION_OCTET_STREAM)
                         .status(HttpCode.OK)
-                        .result(asset.downloadStream().complete());
+                        .result(replacedJarFile);
             });
         });
     }

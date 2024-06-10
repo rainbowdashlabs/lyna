@@ -10,6 +10,12 @@ import de.chojo.lyna.mail.MailingService;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Lyna {
     private static Lyna instance;

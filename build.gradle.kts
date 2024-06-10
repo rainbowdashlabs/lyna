@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.chojo"
-version = "1.5.0"
+version = "1.6.0"
 
 repositories {
     mavenCentral()
@@ -21,14 +21,14 @@ dependencies {
     }
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.1")
+    implementation("org.postgresql", "postgresql", "42.7.3")
     implementation(libs.bundles.sadu)
 
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
 
     // Mailing
-    implementation("org.eclipse.angus", "angus-mail", "2.0.2")
+    implementation("org.eclipse.angus", "angus-mail", "2.0.3")
     implementation("org.jsoup", "jsoup", "1.17.2")
 
 
@@ -39,7 +39,7 @@ dependencies {
     }
 
     // unit testing
-    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter", "junit-jupiter")
     testImplementation("org.mockito", "mockito-core", "5.+")
 }

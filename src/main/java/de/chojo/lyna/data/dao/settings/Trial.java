@@ -1,12 +1,12 @@
 package de.chojo.lyna.data.dao.settings;
 
-import de.chojo.sadu.exceptions.ThrowingConsumer;
-import de.chojo.sadu.wrapper.util.ParamBuilder;
+import de.chojo.sadu.queries.api.call.Call;
 
-import java.sql.SQLException;
 import java.time.Duration;
+import java.util.function.Function;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Trial {
     private final Settings settings;
@@ -32,31 +32,28 @@ public class Trial {
     }
 
     public void serverTime(Duration serverTime) {
-        if (set("server_time", stmt -> stmt.setLong(serverTime.toMinutes()))) {
+        if (set("server_time", stmt -> stmt.bind(serverTime.toMinutes()))) {
             this.serverTime = (int) serverTime.toMinutes();
         }
     }
 
     public void accountTime(Duration accountTime) {
-        if (set("account_time", stmt -> stmt.setLong(accountTime.toMinutes()))) {
+        if (set("account_time", stmt -> stmt.bind(accountTime.toMinutes()))) {
             this.accountTime = (int) accountTime.toMinutes();
         }
     }
 
-    private boolean set(String column, ThrowingConsumer<ParamBuilder, SQLException> consumer) {
-        return builder().query("""
-                        INSERT
-                        INTO
-                        	trial_settings(guild_id, %s)
-                        VALUES
-                        	(?, ?)
-                        ON CONFLICT(guild_id) DO UPDATE SET
-                        	%s = ?""", column)
-                .parameter(stmt -> {
-                    stmt.setLong(settings.guildId());
-                    consumer.accept(stmt);
-                }).update()
-                .sendSync()
+    private boolean set(String column, Function<Call, Call> consumer) {
+        return query("""
+                INSERT
+                INTO
+                	trial_settings(guild_id, %s)
+                VALUES
+                	(?, ?)
+                ON CONFLICT(guild_id) DO UPDATE SET
+                	%s = ?""", column)
+                .single(consumer.apply(call().bind(settings.guildId())))
+                .update()
                 .changed();
     }
 

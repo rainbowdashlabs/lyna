@@ -101,7 +101,7 @@ public class Default implements SlashHandler {
 
                     String typeId = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
                     var downloadType = product.products().licenseGuild().downloadTypes().byId(Integer.parseInt(typeId)).get();
-                    var versionMenu = getVersionMenu(product, downloadType);
+                    var versionMenu = getVersionMenu(member,product, downloadType);
                     if (versionMenu.isEmpty()) {
                         ctx.refresh("No build of this type found. Please choose another one.");
                         return;
@@ -113,7 +113,7 @@ public class Default implements SlashHandler {
                 }));
     }
 
-    private Optional<MenuEntry<?, ?>> getVersionMenu(Product product, DownloadType downloadType) {
+    private Optional<MenuEntry<?, ?>> getVersionMenu(Member member, Product product, DownloadType downloadType) {
         var download = product.downloads().byType(downloadType).get();
         StringSelectMenu.Builder versionMenu = StringSelectMenu.create("version")
                 .setMinValues(1)
@@ -132,7 +132,7 @@ public class Default implements SlashHandler {
             String assetId = ctx.event().getInteraction().getSelectedOptions().get(0).getValue();
             AssetXO asset = assets.stream().filter(assetXO -> assetXO.id().equals(assetId)).findFirst().get();
             String url = api.v1().download().proxy()
-                    .registerAsset(new AssetDownload(assetId, () -> download.downloaded(asset.maven2().version())));
+                    .registerAsset(new AssetDownload(assetId, () -> download.downloaded(asset.maven2().version()), "%s(%s)".formatted(member.getUser().getName(), member.getId())));
             ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
             }));
             ctx.entry().hidden();
@@ -141,8 +141,9 @@ public class Default implements SlashHandler {
             MessageEmbed build = new EmbedBuilder()
                     .setTitle("📦 " + filename)
                     .addField("Size", humanReadableByteCountSI(asset.fileSize()), true)
-                    .addField("Md5", asset.checksum().md5(), true)
-                    .addField("Sha256", asset.checksum().sha256(), true)
+                    // TODO: Files are individual per user. Therefore a static hash can't be used.
+                    //.addField("Md5", asset.checksum().md5(), true)
+                    //.addField("Sha256", asset.checksum().sha256(), true)
                     .setColor(Colors.Strong.PINK)
                     .setFooter("This is a one time use link. Do not distribute.")
                     .build();

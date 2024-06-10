@@ -5,17 +5,16 @@ import de.chojo.jdautil.configuratino.Configuration;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
-import de.chojo.lyna.data.StaticQueryAdapter;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.nexus.NexusRest;
-import de.chojo.sadu.databases.PostgreSql;
 import de.chojo.sadu.datasource.DataSourceCreator;
+import de.chojo.sadu.postgresql.databases.PostgreSql;
+import de.chojo.sadu.queries.configuration.QueryConfiguration;
 import de.chojo.sadu.updater.QueryReplacement;
 import de.chojo.sadu.updater.SqlUpdater;
-import de.chojo.sadu.wrapper.QueryBuilderConfig;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -46,17 +45,11 @@ public class Data {
     }
 
     public void init() throws SQLException, IOException, InterruptedException {
-        configure();
         initConnection();
+        configure();
         updateDatabase();
-        initSaduAdapter();
         initDao();
     }
-
-    private void initSaduAdapter() {
-        StaticQueryAdapter.start(dataSource);
-    }
-
     public void initConnection() {
         try {
             dataSource = getConnectionPool();
@@ -82,9 +75,8 @@ public class Data {
     private void configure() {
         log.info("Configuring QueryBuilder");
         var logger = getLogger("DbLogger");
-        QueryBuilderConfig.setDefault(QueryBuilderConfig.builder()
-                .withExceptionHandler(err -> logger.error(LogNotify.NOTIFY_ADMIN, "An error occurred during a database request", err))
-                .withExecutor(threading.botWorker())
+        QueryConfiguration.setDefault(QueryConfiguration.builder(dataSource)
+                .setExceptionHandler(err -> logger.error(LogNotify.NOTIFY_ADMIN, "An error occurred during a database request", err))
                 .build());
     }
 

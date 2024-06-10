@@ -10,17 +10,21 @@ import de.chojo.nexus.NexusRest;
 import de.chojo.nexus.entities.PageComponentXO;
 import de.chojo.nexus.requests.v1.search.Direction;
 import de.chojo.nexus.requests.v1.search.Sort;
-import de.chojo.sadu.exceptions.ThrowingConsumer;
-import de.chojo.sadu.types.PostgreSqlTypes;
-import de.chojo.sadu.wrapper.util.ParamBuilder;
+import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
+import de.chojo.sadu.queries.api.call.Call;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
-import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Product {
     private final Products products;
@@ -64,10 +68,9 @@ public class Product {
     }
 
     public boolean delete() {
-        return builder().query("DELETE FROM product WHERE id = ? AND guild_id = ?")
-                .parameter(stmt -> stmt.setInt(id).setLong(products.guildId()))
+        return query("DELETE FROM product WHERE id = ? AND guild_id = ?")
+                .single(call().bind(id).bind(products.guildId()))
                 .delete()
-                .sendSync()
                 .changed();
     }
 
@@ -85,18 +88,17 @@ public class Product {
     }
 
     public boolean hasTrial(Member member) {
-        return builder(Boolean.class).query("SELECT NOT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?) as exists")
-                .parameter(stmt -> stmt.setInt(id).setLong(member.getIdLong()))
-                .readRow(row -> row.getBoolean("exists"))
-                .firstSync()
+        return query("SELECT NOT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?) as exists")
+                .single(call().bind(id).bind(member.getIdLong()))
+                .map(row -> row.getBoolean("exists"))
+                .first()
                 .orElse(false);
     }
 
     public void claimTrial(Member member) {
-        builder().query("INSERT INTO trial(product_id, user_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .parameter(stmt -> stmt.setInt(id).setLong(member.getIdLong()))
-                .insert()
-                .sendSync();
+        query("INSERT INTO trial(product_id, user_id) VALUES(?,?) ON CONFLICT DO NOTHING")
+                .single(call().bind(id).bind(member.getIdLong()))
+                .insert();
     }
 
 
@@ -109,17 +111,17 @@ public class Product {
         if (free) {
             return Set.of(ReleaseType.values());
         }
-        List<ReleaseType> byUser = builder(ReleaseType.class)
-                .query("SELECT release_type FROM user_product_access WHERE user_id = ? AND product_id = ?")
-                .parameter(stmt -> stmt.setLong(member.getIdLong()).setInt(id))
-                .readRow(row -> row.getEnum("release_type", ReleaseType.class))
-                .allSync();
+        List<ReleaseType> byUser =
+                query("SELECT release_type FROM user_product_access WHERE user_id = ? AND product_id = ?")
+                        .single(call().bind(member.getIdLong()).bind(id))
+                        .map(row -> row.getEnum("release_type", ReleaseType.class))
+                        .all();
 
-        List<ReleaseType> byRole = builder(ReleaseType.class)
-                .query("SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
-                .parameter(stmt -> stmt.setInt(id).setArray(member.getRoles().stream().map(Role::getIdLong).toList(), PostgreSqlTypes.BIGINT))
-                .readRow(row -> row.getEnum("release_type", ReleaseType.class))
-                .allSync();
+        List<ReleaseType> byRole =
+                query("SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
+                        .single(call().bind(id).bind(member.getRoles().stream().map(Role::getIdLong).toList(), PostgreSqlTypes.BIGINT))
+                        .map(row -> row.getEnum("release_type", ReleaseType.class))
+                        .all();
         var result = EnumSet.noneOf(ReleaseType.class);
         result.addAll(byUser);
         result.addAll(byRole);
@@ -157,23 +159,22 @@ public class Product {
     }
 
     public List<License> license(Member member) {
-        return builder(Integer.class)
-                .query("""
-                        SELECT
-                        	guild_id,
-                        	user_id,
-                        	product_id,
-                        	license_id,
-                        	user_identifier,
-                        	key
-                        FROM
-                        	user_license_all
-                        WHERE guild_id = ?
-                          AND product_id = ?
-                          AND user_id = ?""")
-                .parameter(stmt -> stmt.setLong(guildId()).setInt(id).setLong(member.getIdLong()))
-                .readRow(row -> row.getInt("license_id"))
-                .allSync()
+        return query("""
+                SELECT
+                	guild_id,
+                	user_id,
+                	product_id,
+                	license_id,
+                	user_identifier,
+                	key
+                FROM
+                	user_license_all
+                WHERE guild_id = ?
+                  AND product_id = ?
+                  AND user_id = ?""")
+                .single(call().bind(guildId()).bind(id).bind(member.getIdLong()))
+                .map(row -> row.getInt("license_id"))
+                .all()
                 .stream()
                 .map(i -> products.licenseGuild().licenses().byId(i))
                 .filter(Optional::isPresent)
@@ -213,47 +214,43 @@ public class Product {
     }
 
     public void name(String name) {
-        if (set("name", stmt -> stmt.setString(name))) {
+        if (set("name", stmt -> stmt.bind(name))) {
             this.name = name;
         }
     }
 
     public void url(String url) {
-        if (set("url", stmt -> stmt.setString(url))) {
+        if (set("url", stmt -> stmt.bind(url))) {
             this.url = url;
         }
     }
 
     public void role(long role) {
-        if (set("role", stmt -> stmt.setLong(role))) {
+        if (set("role", stmt -> stmt.bind(role))) {
             this.role = role;
         }
     }
 
     public void free(boolean free) {
-        if (set("free", stmt -> stmt.setBoolean(free))) {
+        if (set("free", stmt -> stmt.bind(free))) {
             this.free = free;
         }
     }
 
     public void trial(boolean trial) {
-        if (set("trial", stmt -> stmt.setBoolean(trial))) {
+        if (set("trial", stmt -> stmt.bind(trial))) {
             this.trial = trial;
         }
     }
 
-    private boolean set(String column, ThrowingConsumer<ParamBuilder, SQLException> consumer) {
-        return builder().query("""
-                        UPDATE
-                            product
-                        SET %s = ?
-                        WHERE
-                            id = ?""", column)
-                .parameter(stmt -> {
-                    consumer.accept(stmt);
-                    stmt.setInt(id);
-                }).update()
-                .sendSync()
+    private boolean set(String column, Function<Call, Call> consumer) {
+        return query("""
+                UPDATE
+                    product
+                SET %s = ?
+                WHERE
+                    id = ?""", column)
+                .single(consumer.apply(call()).bind(id)).update()
                 .changed();
     }
 

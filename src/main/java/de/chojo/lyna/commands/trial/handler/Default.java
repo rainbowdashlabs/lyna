@@ -138,7 +138,7 @@ public class Default implements SlashHandler {
                     String url = api.v1().download().proxy().registerAsset(new AssetDownload(asset.id(), () -> {
                         download.downloaded(asset.maven2().version());
                         product.claimTrial(member);
-                    }));
+                    },"%s(%s)".formatted(member.getUser().getName(), member.getId())));
                     ctx.entry().hidden();
 
                     ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {

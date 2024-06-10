@@ -6,16 +6,17 @@ import de.chojo.nexus.entities.AssetXO;
 import de.chojo.nexus.requests.v1.search.Direction;
 import de.chojo.nexus.requests.v1.search.Sort;
 import de.chojo.nexus.requests.v1.search.assets.SearchRequest;
-import de.chojo.sadu.exceptions.ThrowingConsumer;
-import de.chojo.sadu.wrapper.util.ParamBuilder;
-import de.chojo.sadu.wrapper.util.Row;
+import de.chojo.sadu.mapper.wrapper.Row;
+import de.chojo.sadu.queries.api.call.Call;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.Function;
 
-import static de.chojo.lyna.data.StaticQueryAdapter.builder;
+import static de.chojo.sadu.queries.api.call.Call.call;
+import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Download implements Comparable<Download> {
     private final Product product;
@@ -57,7 +58,7 @@ public class Download implements Comparable<Download> {
     }
 
     public void repository(String repository) {
-        if (set("repository", stmt -> stmt.setString(repository))) {
+        if (set("repository", stmt -> stmt.bind(repository))) {
             this.repository = repository;
         }
     }
@@ -67,7 +68,7 @@ public class Download implements Comparable<Download> {
     }
 
     public void groupId(String groupId) {
-        if (set("group_id", stmt -> stmt.setString(groupId))) {
+        if (set("group_id", stmt -> stmt.bind(groupId))) {
             this.groupId = groupId;
         }
     }
@@ -77,7 +78,7 @@ public class Download implements Comparable<Download> {
     }
 
     public void artifactId(String artifactId) {
-        if (set("artifact_id", stmt -> stmt.setString(artifactId))) {
+        if (set("artifact_id", stmt -> stmt.bind(artifactId))) {
             this.artifactId = artifactId;
         }
     }
@@ -87,27 +88,21 @@ public class Download implements Comparable<Download> {
     }
 
     public void classifier(String classifier) {
-        if (set("classifier", stmt -> stmt.setString(classifier))) {
+        if (set("classifier", stmt -> stmt.bind(classifier))) {
             this.classifier = classifier;
         }
     }
 
-    private boolean set(String column, ThrowingConsumer<ParamBuilder, SQLException> consumer) {
-        return builder().query("UPDATE download SET %s = ? WHERE product_id = ? AND type_id = ?", column)
-                .parameter(stmt -> {
-                    consumer.accept(stmt);
-                    stmt.setInt(product.id()).setInt(typeId);
-                }).update()
-                .sendSync()
+    private boolean set(String column, Function<Call, Call> consumer) {
+        return query("UPDATE download SET %s = ? WHERE product_id = ? AND type_id = ?", column)
+                .single(consumer.apply(call()).bind(product.id()).bind(typeId)).update()
                 .changed();
     }
 
     public boolean delete() {
-        return builder()
-                .query("DELETE FROM download WHERE product_id = ? AND type_id = ?")
-                .parameter(stmt -> stmt.setInt(product.id()).setInt(typeId))
+        return query("DELETE FROM download WHERE product_id = ? AND type_id = ?")
+                .single(call().bind(product.id()).bind(typeId))
                 .delete()
-                .sendSync()
                 .changed();
     }
 
@@ -133,17 +128,16 @@ public class Download implements Comparable<Download> {
     }
 
     public void downloaded(String version) {
-        builder().query("""
-                        INSERT
-                        INTO download_stat AS d
-                        	(download_id, version, count)
-                        VALUES
-                        	(?, ?, 1)
-                        ON CONFLICT (download_id, date, version) DO UPDATE SET
-                        	count = d.count + 1""")
-                .parameter(stmt -> stmt.setInt(id).setString(version))
-                .insert()
-                .sendSync();
+        query("""
+                INSERT
+                INTO download_stat AS d
+                	(download_id, version, count)
+                VALUES
+                	(?, ?, 1)
+                ON CONFLICT (download_id, date, version) DO UPDATE SET
+                	count = d.count + 1""")
+                .single(call().bind(id).bind(version))
+                .insert();
     }
 
     @Override

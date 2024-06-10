@@ -11,7 +11,6 @@ import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.util.Colors;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.configuration.ConfigFile;
-import de.chojo.lyna.data.access.Guilds;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,7 @@ public class Default implements SlashHandler {
     private String contributors;
     private Instant lastFetch = Instant.MIN;
 
-    public Default(String version, Configuration configuration) {
+    public Default(String version, Configuration<ConfigFile> configuration) {
         this.version = version;
         this.configuration = configuration;
     }
