@@ -141,8 +141,9 @@ public class Default implements SlashHandler {
             MessageEmbed build = new EmbedBuilder()
                     .setTitle("📦 " + filename)
                     .addField("Size", humanReadableByteCountSI(asset.fileSize()), true)
-                    .addField("Md5", asset.checksum().md5(), true)
-                    .addField("Sha256", asset.checksum().sha256(), true)
+                    // TODO: Files are individual per user. Therefore a static hash can't be used.
+                    //.addField("Md5", asset.checksum().md5(), true)
+                    //.addField("Sha256", asset.checksum().sha256(), true)
                     .setColor(Colors.Strong.PINK)
                     .setFooter("This is a one time use link. Do not distribute.")
                     .build();
