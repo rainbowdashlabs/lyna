@@ -22,6 +22,8 @@ services:
     profiles:
       - dev
   postgres:
+    networks:
+      - lyna
     image: postgres:latest
     expose:
       - 5432
