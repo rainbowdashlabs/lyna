@@ -46,11 +46,7 @@ public class JarUtil {
             if (tag == 1) {
                 String str = input.readUTF();
 
-                var out = replacements.entrySet().stream()
-                        .filter(entry -> entry.getKey().equals(str))
-                        .findAny()
-                        .map(Map.Entry::getValue)
-                        .orElse(str);
+                var out = replacements.getOrDefault(str, str);
                 output.writeUTF(out);
             } else {
                 var skip = switch (tag) {
