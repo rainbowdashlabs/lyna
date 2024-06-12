@@ -99,7 +99,9 @@ public class Proxy {
                     replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
                 } catch (Exception e) {
                     log.error(LogNotify.NOTIFY_ADMIN, "Could not replace strings in jar.", e);
-                    replacedJarFile = complete.readAllBytes();
+                    try (var in = asset.downloadStream().complete()) {
+                        replacedJarFile = in.readAllBytes();
+                    }
                 }
 
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
