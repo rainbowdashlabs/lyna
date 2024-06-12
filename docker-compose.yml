@@ -21,6 +21,8 @@ services:
       - ./config/:/app/config/
     profiles:
       - dev
+    ports:
+      - 8888:8888
   postgres:
     networks:
       - lyna

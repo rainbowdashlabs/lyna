@@ -4,11 +4,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
 import de.chojo.jdautil.util.SnowflakeCreator;
+import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.api.v1.download.Download;
 import de.chojo.lyna.util.JarUtil;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpCode;
 import org.intellij.lang.annotations.Language;
+import org.slf4j.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -17,8 +19,10 @@ import java.util.concurrent.TimeUnit;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class Proxy {
+    private static final Logger log = getLogger(Proxy.class);
     private final Download download;
     private final Cache<String, AssetDownload> tokens = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
     @Language("HTML")
@@ -90,7 +94,13 @@ public class Proxy {
                 );
 
                 var complete = asset.downloadStream().complete();
-                var replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
+                byte[] replacedJarFile;
+                try {
+                    replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
+                } catch (Exception e) {
+                    log.error(LogNotify.NOTIFY_ADMIN, "Could not replace strings in jar.", e);
+                    replacedJarFile = complete.readAllBytes();
+                }
 
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")

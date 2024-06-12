@@ -12,6 +12,10 @@ public class Mailing {
     private List<String> originMail = java.util.List.of("");
     private boolean sslSmtp = false;
     private boolean sslImap = false;
+    // While we do no use javamail, we use angus and both implement jakarta.mail
+    // Most of the parameters of javamail can be applied here as well
+    // https://www.tutorialspoint.com/javamail_api/javamail_api_imap_servers.htm
+    // https://www.tutorialspoint.com/javamail_api/javamail_api_smtp_servers.htm
     private Map<String, String> properties = Collections.emptyMap();
 
     public String host() {
