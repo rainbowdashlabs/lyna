@@ -15,11 +15,9 @@ import jakarta.mail.Flags;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
-import jakarta.mail.NoSuchProviderException;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
-import jakarta.mail.event.MessageCountAdapter;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.search.FlagTerm;
@@ -68,11 +66,11 @@ public class MailingService {
         registerMessageListener(new MessageHandler(data, this, configuration));
     }
 
-    private void loop(){
+    private void loop() {
         try {
             check();
-        } catch (Exception e){
-            log.error("Could not check emails",e);
+        } catch (Exception e) {
+            log.error("Could not check emails", e);
             // c:
         }
     }
@@ -104,7 +102,7 @@ public class MailingService {
         IMAPStore imapStore = null;
         try {
             imapStore = (IMAPStore) session.getStore("imap");
-        imapStore.connect();
+            imapStore.connect();
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
@@ -119,6 +117,7 @@ public class MailingService {
         props.put("mail.imap.host", mailing.host());
         props.put("mail.smtp.ssl.enable", mailing.sslSmtp());
         props.put("mail.imap.ssl.enable", mailing.sslImap());
+        props.putAll(mailing.properties());
         return Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -157,7 +156,7 @@ public class MailingService {
         IMAPStore imapStore = createImapStore(session);
 
         Optional<Boolean> result = Retry.retryAndReturn(3,
-                () -> storeMessage(imapStore,mimeMessage),
+                () -> storeMessage(imapStore, mimeMessage),
                 err -> {
                     log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
                     sendMail(mail);
