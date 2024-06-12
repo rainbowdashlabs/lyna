@@ -8,6 +8,8 @@ public class Mailing {
     private String user = "";
     private String password = "";
     private List<String> originMail = java.util.List.of("");
+    private boolean sslSmtp = false;
+    private boolean sslImap = false;
 
     public String host() {
         return host;
@@ -23,5 +25,13 @@ public class Mailing {
 
     public List<String> originMails() {
         return originMail;
+    }
+
+    public boolean sslSmtp() {
+        return sslSmtp;
+    }
+
+    public boolean sslImap() {
+        return sslImap;
     }
 }

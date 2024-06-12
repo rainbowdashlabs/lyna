@@ -117,6 +117,8 @@ public class MailingService {
         Mailing mailing = configuration.config().mailing();
         props.put("mail.smtp.host", mailing.host());
         props.put("mail.imap.host", mailing.host());
+        props.put("mail.smtp.ssl.enable", mailing.sslSmtp());
+        props.put("mail.imap.ssl.enable", mailing.sslImap());
         return Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
