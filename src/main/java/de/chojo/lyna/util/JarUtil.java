@@ -50,8 +50,8 @@ public class JarUtil {
                 output.writeUTF(out);
             } else {
                 var skip = switch (tag) {
-                    case 10, 9, 11, 12, 18, 3, 4 -> 4;
-                    case 8, 16, 7 -> 2;
+                    case 3, 4, 9, 10, 11, 12, 17, 18 -> 4;
+                    case 7, 8, 16, 19, 20 -> 2;
                     case 5, 6 -> {
                         i++;
                         yield 8;
