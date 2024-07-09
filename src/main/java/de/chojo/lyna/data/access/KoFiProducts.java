@@ -1,7 +1,7 @@
 package de.chojo.lyna.data.access;
 
-import de.chojo.lyna.api.v1.kofi.payloads.KofiPost;
-import de.chojo.lyna.api.v1.kofi.payloads.ShopItem;
+import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
+import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
 import de.chojo.lyna.data.dao.products.Product;
 import org.jetbrains.annotations.Nullable;
 

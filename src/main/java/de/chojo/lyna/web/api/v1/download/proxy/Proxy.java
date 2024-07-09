@@ -1,11 +1,11 @@
-package de.chojo.lyna.api.v1.download.proxy;
+package de.chojo.lyna.web.api.v1.download.proxy;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
 import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.api.v1.download.Download;
+import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.util.JarUtil;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpCode;

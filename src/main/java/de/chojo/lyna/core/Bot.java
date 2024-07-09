@@ -90,8 +90,8 @@ public class Bot {
                         new Settings(data.guilds()),
                         Info.create(configuration),
                         new Downloads(data.guilds(), data.nexus()),
-                        new Download(data.guilds(), web.api()),
-                        new Trial(data.guilds(), web.api()),
+                        new Download(data.guilds(), web.webService().api()),
+                        new Trial(data.guilds(), web.webService().api()),
                         new Mailing(data.guilds(), configuration, mailingService),
                         new KoFi(data.guilds(), data.kofi())
                 )

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
@@ -125,6 +126,28 @@ public class Download implements Comparable<Download> {
                 // We can not filter for null classifiers, so we do it afterward
                 .filter(e -> classifier != null || e.maven2().classifier() == null)
                 .toList();
+    }
+
+    public Optional<AssetXO> assetByVersion(String version) {
+        SearchRequest jar = product.nexus().v1().search().assets().search()
+                .repository(repository)
+                .mavenGroupId(groupId)
+                .mavenArtifactId(artifactId)
+                .mavenExtension("jar")
+                // We order by version
+                .sort(Sort.VERSION)
+                // Newest first
+                .direction(Direction.DESC)
+                .mavenBaseVersion(version);
+        if (classifier != null) {
+            jar.mavenClassifier(classifier);
+        }
+        return jar.complete()
+                .items()
+                .stream()
+                // We can not filter for null classifiers, so we do it afterward
+                .filter(e -> classifier != null || e.maven2().classifier() == null)
+                .findFirst();
     }
 
     public void downloaded(String version) {

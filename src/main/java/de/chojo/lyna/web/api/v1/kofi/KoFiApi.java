@@ -1,13 +1,13 @@
-package de.chojo.lyna.api.v1.kofi;
+package de.chojo.lyna.web.api.v1.kofi;
 
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import de.chojo.lyna.api.v1.V1;
-import de.chojo.lyna.api.v1.kofi.payloads.DataType;
-import de.chojo.lyna.api.v1.kofi.payloads.KofiPost;
-import de.chojo.lyna.api.v1.kofi.payloads.ShopItem;
+import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.kofi.payloads.DataType;
+import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
+import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
