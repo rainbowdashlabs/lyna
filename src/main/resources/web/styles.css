@@ -1,14 +1,16 @@
 :root {
-    --primary-color: #111317;
-    --secondary-color: #1E2129;
+    --bg-dark: #111317;
+    --bg: #1E2129;
+    --light-highlight: #AAB7C8;
     --text-color: #eceff4;
-    --button-color: #E92063;
-    --accent-color: #E92063;
-    --accent-color-dark: #AD1849;
+    --main-accent: #E92063;
+    --main-accent-dark: #AD1849;
+    --secondary-accent: #2CB0ED;
+    --secondary-accent-dark: #446DF2;
 }
 
 body {
-    background-color: var(--primary-color);
+    background-color: var(--bg-dark);
     color: var(--text-color);
     display: flex;
     justify-content: center;
@@ -20,17 +22,17 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: var(--secondary-color);
+    color: var(--bg);
 }
 
 a {
-    color: var(--button-color);
+    color: var(--main-accent);
 }
 
 button {
-    background-color: var(--button-color);
-    color: var(--primary-color);
-    border-color: var(--accent-color);
+    background-color: var(--main-accent);
+    color: var(--bg-dark);
+    border-color: var(--main-accent);
 }
 
 body {
@@ -47,7 +49,7 @@ body {
 .container {
     display: flex;
     justify-content: space-between; /* Add this line to evenly space the columns */
-    background: var(--secondary-color);
+    background: var(--bg);
     max-width: 80vw; /* make the max width of the container 80% of the viewport width */
     min-width: 1000px;
     height: 80vh; /* make the container 80% of the viewport height */
@@ -58,18 +60,19 @@ body {
 .column {
     flex: 1;
     max-width: 800px; /* make the max width of the column 800px */
-    padding: 10px;
+    padding: 0;
     border: 1px solid var(--text-color);
     overflow: auto;
 }
 
 .entry {
     border-bottom: 1px solid var(--text-color); /* adds bottom border to each entry */
-    padding: 10px 0; /* adds some vertical padding */
+    padding: 10px;
+    min-height: 50px;
 }
 
 .entry:hover {
-
+    background-color: var(--bg-dark);
 }
 
 .primary-line {
@@ -87,9 +90,9 @@ body {
     justify-content: center;
     width: 50px;
     height: 50px;
-    background-color: var(--button-color);
-    color: var(--primary-color);
-    border-color: var(--accent-color);
+    background-color: var(--main-accent);
+    color: var(--bg-dark);
+    border-color: var(--main-accent-dark);
     border-width: 2px;
     text-align: center;
     text-decoration: none;
@@ -98,8 +101,9 @@ body {
     cursor: pointer;
 }
 
-.button.download_button:hover {
-    background-color: #45a049; /* choose color for hover effect */
+.download_button:hover {
+    background-color: var(--secondary-accent);
+    border-color: var(--secondary-accent-dark);
     color: white;
 }
 

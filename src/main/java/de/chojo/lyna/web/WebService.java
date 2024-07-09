@@ -54,7 +54,7 @@ public class WebService {
                         "frame-src 'none'",
                         "connect-src {{ HOST }} *.fontawesome.com",
                         "style-src 'self' {{ HOST }} fonts.googleapis.com 'unsafe-inline'", // unsafe inline for fontawesome
-                        "img-src {{ HOST }} eldoria.de discordapp.com",
+                        "img-src {{ HOST }} discordapp.com",
                         "media-src 'none'",
                         "font-src  fonts.gstatic.com *.fontawesome.com");
                 var csp =  String.join("; ", cspList);

@@ -47,9 +47,10 @@ window.addEventListener("DOMContentLoaded", async () => listProducts(), false)
 async function listProducts() {
     for (let item of await fetchJson("/api/v1/products")) {
         let entry = createEntry(item.id, "entry")
+        entry.addEventListener('click', async (e) => listTypes(e), false)
         entry.classList.add("flex-entry")
         entry.appendChild(createEntry(null, "primary-line", item.name))
-        entry.addEventListener('click', async (e) => listTypes(e), false)
+        entry.appendChild(createEntry(null, "secondary-line", "")) // This will be a tagline in the future
         let button = document.createElement("button");
         button.classList.add("fa")
         button.classList.add("fa-link")
@@ -63,6 +64,9 @@ async function listProducts() {
 
 async function listTypes(event) {
     let product = event.target.parentElement.id
+    if (isNaN(Number(product))) {
+        product = event.target.id
+    }
     clearTypes()
     clearAssets()
     for (let item of await fetchJson("/api/v1/releases/" + product)) {
