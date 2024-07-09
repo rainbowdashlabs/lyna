@@ -3,7 +3,7 @@ package de.chojo.lyna.commands.download;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashCommand;
-import de.chojo.lyna.api.Api;
+import de.chojo.lyna.web.api.Api;
 import de.chojo.lyna.commands.download.handler.Default;
 import de.chojo.lyna.data.access.Guilds;
 

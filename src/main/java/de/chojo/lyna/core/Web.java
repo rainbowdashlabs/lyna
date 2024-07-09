@@ -1,7 +1,7 @@
 package de.chojo.lyna.core;
 
 import de.chojo.jdautil.configuratino.Configuration;
-import de.chojo.lyna.api.Api;
+import de.chojo.lyna.web.WebService;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.mail.MailingService;
 
@@ -9,7 +9,7 @@ public class Web {
     private final Configuration<ConfigFile> configuration;
     private final Data data;
     private final MailingService mailingService;
-    private Api api;
+    private WebService webService;
 
     public Web(Configuration<ConfigFile> configuration, Data data, MailingService mailingService) {
         this.configuration = configuration;
@@ -24,10 +24,10 @@ public class Web {
     }
 
     private void init() {
-        api = Api.create(configuration, data, mailingService);
+        webService = WebService.create(configuration, data, mailingService);
     }
 
-    public Api api() {
-        return api;
+    public WebService webService() {
+        return webService;
     }
 }

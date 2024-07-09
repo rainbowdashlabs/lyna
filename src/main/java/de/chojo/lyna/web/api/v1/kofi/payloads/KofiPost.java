@@ -1,4 +1,4 @@
-package de.chojo.lyna.api.v1.kofi.payloads;
+package de.chojo.lyna.web.api.v1.kofi.payloads;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.Nullable;

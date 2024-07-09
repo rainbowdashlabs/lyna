@@ -1,6 +1,6 @@
-package de.chojo.lyna.api.v1.update;
+package de.chojo.lyna.web.api.v1.update;
 
-import de.chojo.lyna.api.v1.V1;
+import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;

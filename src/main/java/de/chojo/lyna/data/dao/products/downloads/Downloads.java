@@ -62,6 +62,10 @@ public class Downloads {
     }
 
     public Optional<Download> byType(DownloadType type) {
+        return byType(type.id());
+    }
+
+    public Optional<Download> byType(int type) {
         return query("""
                 SELECT
                     id,
@@ -75,7 +79,7 @@ public class Downloads {
                 	download
                 WHERE product_id = ?
                   AND type_id = ?""")
-                .single(call().bind(product.id()).bind(type.id()))
+                .single(call().bind(product.id()).bind(type))
                 .map(row -> Download.build(product, row))
                 .first();
     }
