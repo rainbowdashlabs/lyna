@@ -82,7 +82,7 @@ async function listTypes(event) {
 
 async function listAssets(event) {
     let productType = event.target.parentElement.id
-    if (productType.match("[]")) {
+    if (!productType.match("[0-9]+/[0-9]+")) {
         productType = event.target.id
     }
 
