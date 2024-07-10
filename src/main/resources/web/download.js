@@ -1,5 +1,3 @@
-const host = "{{ HOST }}"
-
 function products() {
     return document.getElementById('products');
 }
