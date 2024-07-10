@@ -47,16 +47,19 @@ window.addEventListener("DOMContentLoaded", async () => listProducts(), false)
 async function listProducts() {
     for (let item of await fetchJson("/api/v1/products")) {
         let entry = createEntry(item.id, "entry")
+
         entry.addEventListener('click', async (e) => listTypes(e), false)
         entry.classList.add("flex-entry")
         entry.classList.add("clickable")
         entry.appendChild(createEntry(null, "primary-line", item.name))
         entry.appendChild(createEntry(null, "secondary-line", "")) // This will be a tagline in the future
+
         let button = document.createElement("button");
         button.classList.add("fa")
         button.classList.add("fa-link")
         button.classList.add("download_button")
         button.addEventListener('click', e => openPage(item.url));
+
         entry.appendChild(button);
 
         products().appendChild(entry);
@@ -89,13 +92,18 @@ async function listAssets(event) {
     clearAssets()
     for (let item of await fetchJson("/api/v1/releases/" + productType)) {
         let id = productType + "/" + item.version
+
         let entry = createEntry(productType + "/" + item.version, "entry")
         entry.classList.add("flex-entry")
+
         let text = document.createElement("div")
+
         text.appendChild(createEntry(null, "primary-line", item.version))
+
         let date = new Date(item.published * 1000)
-        text.appendChild(createEntry(null, "secondary-line", date.toLocaleString()))
+        text.appendChild(createEntry(null, "secondary-line", formatDate(date)))
         entry.appendChild(text)
+
         let button = document.createElement("button");
         button.id = id
         button.classList.add("fa")
@@ -104,15 +112,19 @@ async function listAssets(event) {
         button.addEventListener('click', downloadButton);
         entry.appendChild(button);
 
-
         assets().appendChild(entry)
     }
+}
+
+function formatDate(date){
+    let iso = date.toISOString().replace(new RegExp("\.[0-9]+Z"), "").split("T")
+    return iso.join(" ")
 }
 
 function downloadButton(event) {
     let id = event.target.id
     event.stopPropagation();
-    window.open(`/api/v1/download/direct/${id.replace("-", "/")}`, '_blank');
+    window.open(`/api/v1/download/direct/${id}`, '_blank');
 }
 
 function openPage(url) {
