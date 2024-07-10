@@ -71,8 +71,9 @@ body {
     min-height: 50px;
 }
 
-.entry:hover {
+.clickable:hover {
     background-color: var(--bg-dark);
+    cursor: pointer;
 }
 
 .primary-line {

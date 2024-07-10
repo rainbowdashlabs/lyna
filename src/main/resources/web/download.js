@@ -49,6 +49,7 @@ async function listProducts() {
         let entry = createEntry(item.id, "entry")
         entry.addEventListener('click', async (e) => listTypes(e), false)
         entry.classList.add("flex-entry")
+        entry.classList.add("clickable")
         entry.appendChild(createEntry(null, "primary-line", item.name))
         entry.appendChild(createEntry(null, "secondary-line", "")) // This will be a tagline in the future
         let button = document.createElement("button");
@@ -71,6 +72,7 @@ async function listTypes(event) {
     clearAssets()
     for (let item of await fetchJson("/api/v1/releases/" + product)) {
         let entry = createEntry(product + "/" + item.id, "entry")
+        entry.classList.add("clickable")
         entry.addEventListener('click', async (e) => listAssets(e))
         entry.appendChild(createEntry(null, "primary-line", item.name))
         entry.appendChild(createEntry(null, "secondary-line", item.description))
@@ -80,6 +82,10 @@ async function listTypes(event) {
 
 async function listAssets(event) {
     let productType = event.target.parentElement.id
+    if (productType.match("[]")) {
+        productType = event.target.id
+    }
+
     clearAssets()
     for (let item of await fetchJson("/api/v1/releases/" + productType)) {
         let id = productType + "/" + item.version
