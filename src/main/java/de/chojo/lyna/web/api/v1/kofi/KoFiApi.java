@@ -52,8 +52,8 @@ public class KoFiApi {
                 }
                 if (post.type() == DataType.SHOP_ORDER) {
                     for (ShopItem shopItem : post.shopItems()) {
-                        Optional<Product> optProduct = kofi.byCode(shopItem.directLinkCode());
                         kofi.logTransaction(post, json, shopItem);
+                        Optional<Product> optProduct = kofi.byCode(shopItem.directLinkCode());
                         if (optProduct.isEmpty()) continue;
                         Product product = optProduct.get();
                         Optional<Mailing> optProductMail = product.mailings().get();
