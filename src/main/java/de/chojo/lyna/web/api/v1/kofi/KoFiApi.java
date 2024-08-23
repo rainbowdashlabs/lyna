@@ -17,14 +17,17 @@ import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.util.Urls;
 import io.javalin.http.HttpCode;
+import org.slf4j.Logger;
 
 import java.util.Optional;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class KoFiApi {
     private final V1 v1;
+    private static final Logger log = getLogger(KoFiApi.class);
 
     private final KoFiProducts kofi;
     private final MailingService mailing;
@@ -50,6 +53,7 @@ public class KoFiApi {
                     ctx.status(HttpCode.FORBIDDEN);
                     return;
                 }
+                log.info("Received new purchase from kofi: {}", json);
                 if (post.type() == DataType.SHOP_ORDER) {
                     for (ShopItem shopItem : post.shopItems()) {
                         kofi.logTransaction(post, json, shopItem);
