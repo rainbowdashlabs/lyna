@@ -30,7 +30,7 @@ public class KoFiProducts {
 
     public Optional<Product> byCode(String name) {
         var id = query("""
-                SELECT id, name, guild_id, product_id, url
+                SELECT p.id
                 FROM kofi_products kp
                          LEFT JOIN product p ON kp.product_id = p.id
                 WHERE ? = link_code
