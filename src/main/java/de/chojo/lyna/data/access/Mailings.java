@@ -24,7 +24,7 @@ public class Mailings {
                 SELECT mp.id, guild_id, product_id, mp.name, mail_text
                 FROM mail_products mp
                          LEFT JOIN product p ON mp.product_id = p.id
-                WHERE ? ILIKE ('%' || mp.name || '%%')
+                WHERE ? ILIKE ('%' || mp.name || '%')
                 """)
                 .single(call().bind(name))
                 .map(row -> {

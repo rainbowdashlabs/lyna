@@ -58,7 +58,7 @@ public class Licenses {
     }
 
     public Collection<Command.Choice> completeIdentifier(String value) {
-        return query("SELECT user_identifier FROM guild_license WHERE user_identifier ILIKE (? || '%%') AND guild_id = ? LIMIT 25")
+        return query("SELECT user_identifier FROM guild_license WHERE user_identifier ILIKE (? || '%') AND guild_id = ? LIMIT 25")
                 .single(call().bind(value).bind(guildId()))
                 .map(row -> Choice.toChoice(row.getString("user_identifier")))
                 .all();
