@@ -1,6 +1,6 @@
 package de.chojo.lyna.web.api.v1;
 
-import de.chojo.jdautil.configuratino.Configuration;
+import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.web.api.Api;
 import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.web.api.v1.kofi.KoFiApi;

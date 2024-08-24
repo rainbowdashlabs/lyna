@@ -5,10 +5,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
 import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.util.JarUtil;
+import de.chojo.lyna.web.api.v1.download.Download;
 import io.javalin.http.ContentType;
-import io.javalin.http.HttpCode;
+import io.javalin.http.HttpStatus;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 
@@ -62,13 +62,13 @@ public class Proxy {
             get(ctx -> {
                 String token = ctx.queryParam("token");
                 if (token == null) {
-                    ctx.status(HttpCode.BAD_REQUEST);
+                    ctx.status(HttpStatus.BAD_REQUEST);
                     ctx.result("Missing token");
                     return;
                 }
                 AssetDownload download = tokens.getIfPresent(token);
                 if (download == null) {
-                    ctx.status(HttpCode.BAD_REQUEST);
+                    ctx.status(HttpStatus.BAD_REQUEST);
                     ctx.result("Invalid token.");
                     return;
                 }
@@ -76,7 +76,7 @@ public class Proxy {
                 tokens.invalidate(token);
                 String agent = ctx.header("User-Agent");
                 if (agent != null && agent.toLowerCase(Locale.ROOT).contains("discordbot")) {
-                    ctx.status(HttpCode.OK)
+                    ctx.status(HttpStatus.OK)
                             .contentType(ContentType.TEXT_HTML)
                             .result(shareHtml);
                     return;
@@ -87,13 +87,23 @@ public class Proxy {
 
                 download.postDownload().run();
 
+                var complete = asset.downloadStream().complete();
+                ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
+                        .header("X-Content-Type-Options", "nosniff")
+                        .contentType(ContentType.APPLICATION_OCTET_STREAM)
+                        .status(HttpStatus.OK);
+
+                if ("true".equalsIgnoreCase(System.getProperty("bot.jarsigning.skip"))) {
+                    ctx.result(complete);
+                    return;
+                }
+
                 Map<String, String> replacements = Map.of(
                         "%%__USER__%%", download.userId(),
                         "%%__RESOURCE__%%", download.assetId(),
                         "%%__NONCE__%%", snowflakeCreator.nextString()
                 );
 
-                var complete = asset.downloadStream().complete();
                 byte[] replacedJarFile;
                 try {
                     replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
@@ -103,12 +113,7 @@ public class Proxy {
                         replacedJarFile = in.readAllBytes();
                     }
                 }
-
-                ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
-                        .header("X-Content-Type-Options", "nosniff")
-                        .contentType(ContentType.APPLICATION_OCTET_STREAM)
-                        .status(HttpCode.OK)
-                        .result(replacedJarFile);
+                ctx.result(replacedJarFile);
             });
         });
     }

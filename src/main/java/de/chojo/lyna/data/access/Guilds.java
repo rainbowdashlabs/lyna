@@ -2,7 +2,7 @@ package de.chojo.lyna.data.access;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import de.chojo.jdautil.configuratino.Configuration;
+import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.nexus.NexusRest;

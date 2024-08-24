@@ -4,10 +4,6 @@ import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import de.chojo.lyna.web.api.v1.V1;
-import de.chojo.lyna.web.api.v1.kofi.payloads.DataType;
-import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
-import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
@@ -16,7 +12,11 @@ import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.util.Urls;
-import io.javalin.http.HttpCode;
+import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.kofi.payloads.DataType;
+import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
+import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
+import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
 
 import java.util.Optional;
@@ -50,7 +50,7 @@ public class KoFiApi {
                 var json = results.get("data");
                 var post = mapper.readValue(json, KofiPost.class);
                 if (!post.verificationToken().equals(v1.configuration().config().kofi().verificationToken())) {
-                    ctx.status(HttpCode.FORBIDDEN);
+                    ctx.status(HttpStatus.FORBIDDEN);
                     return;
                 }
                 log.info("Received new purchase from kofi: {}", json);
@@ -72,7 +72,7 @@ public class KoFiApi {
                 } else {
                     kofi.logTransaction(post, json, null);
                 }
-                ctx.status(HttpCode.OK);
+                ctx.status(HttpStatus.OK);
             });
         });
     }

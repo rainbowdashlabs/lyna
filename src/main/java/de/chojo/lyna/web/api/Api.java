@@ -1,6 +1,6 @@
 package de.chojo.lyna.web.api;
 
-import de.chojo.jdautil.configuratino.Configuration;
+import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.mail.MailingService;

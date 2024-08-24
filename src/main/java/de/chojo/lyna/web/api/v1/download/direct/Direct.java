@@ -6,7 +6,7 @@ import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.ContentType;
-import io.javalin.http.HttpCode;
+import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -36,7 +36,7 @@ public class Direct {
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")
                         .contentType(ContentType.APPLICATION_OCTET_STREAM)
-                        .status(HttpCode.OK)
+                        .status(HttpStatus.OK)
                         .result(asset.downloadStream().complete());
             });
         });

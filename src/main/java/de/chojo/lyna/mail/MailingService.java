@@ -1,6 +1,6 @@
 package de.chojo.lyna.mail;
 
-import de.chojo.jdautil.configuratino.Configuration;
+import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.ConfigFile;
@@ -62,7 +62,7 @@ public class MailingService {
     }
 
     private void init() throws MessagingException {
-        threading.botWorker().scheduleAtFixedRate(this::loop, 10, 300, TimeUnit.SECONDS);
+        threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.config().mailing().pollSeconds(), TimeUnit.SECONDS);
         registerMessageListener(new MessageHandler(data, this, configuration));
     }
 

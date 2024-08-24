@@ -1,7 +1,7 @@
 package de.chojo.lyna.core;
 
 import com.zaxxer.hikari.HikariDataSource;
-import de.chojo.jdautil.configuratino.Configuration;
+import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;

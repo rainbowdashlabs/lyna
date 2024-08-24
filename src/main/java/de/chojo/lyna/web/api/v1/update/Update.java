@@ -1,13 +1,13 @@
 package de.chojo.lyna.web.api.v1.update;
 
-import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.util.Version;
+import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.nexus.entities.AssetXO;
-import io.javalin.http.HttpCode;
+import io.javalin.http.HttpStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
@@ -35,7 +35,7 @@ public class Update {
                 try {
                     id = Integer.parseInt(ctx.queryParam("id"));
                 } catch (NumberFormatException e) {
-                    ctx.status(HttpCode.BAD_REQUEST)
+                    ctx.status(HttpStatus.BAD_REQUEST)
                             .result("Invalid id");
                     return;
                 }
@@ -43,14 +43,14 @@ public class Update {
                 Optional<Product> optProduct = products.byId(id);
 
                 if (optProduct.isEmpty()) {
-                    ctx.status(HttpCode.NOT_FOUND)
+                    ctx.status(HttpStatus.NOT_FOUND)
                             .result("Unknown id");
                     return;
                 }
                 Product product = optProduct.get();
                 String versionString = ctx.queryParam("version");
                 if (versionString == null) {
-                    ctx.status(HttpCode.BAD_REQUEST)
+                    ctx.status(HttpStatus.BAD_REQUEST)
                             .result("Missing version");
                     return;
                 }
@@ -63,7 +63,7 @@ public class Update {
                 try {
                     unix = unixString == null ? 0 : Long.parseLong(unixString);
                 } catch (NumberFormatException e) {
-                    ctx.status(HttpCode.BAD_REQUEST)
+                    ctx.status(HttpStatus.BAD_REQUEST)
                             .result("Invalid unix timestamp");
                     return;
                 }
@@ -82,7 +82,7 @@ public class Update {
                     response = new UpdateResponse(false, versionString, unix);
                 }
 
-                ctx.status(HttpCode.OK).json(response);
+                ctx.status(HttpStatus.OK).json(response);
             });
         });
     }
