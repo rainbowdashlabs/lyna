@@ -63,7 +63,7 @@ public class MailingService {
 
     private void init() throws MessagingException {
         threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.config().mailing().pollSeconds(), TimeUnit.SECONDS);
-        registerMessageListener(new MessageHandler(data, this, configuration));
+        registerMessageListener(new MailHandler(data, this, configuration));
     }
 
     private void loop() {
@@ -153,19 +153,21 @@ public class MailingService {
             return;
         }
 
-        IMAPStore imapStore = createImapStore(session);
+        try (IMAPStore imapStore = createImapStore(session)) {
+            Optional<Boolean> result = Retry.retryAndReturn(3,
+                    () -> storeMessage(imapStore, mimeMessage),
+                    err -> {
+                        log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
+                        sendMail(mail);
+                    });
 
-        Optional<Boolean> result = Retry.retryAndReturn(3,
-                () -> storeMessage(imapStore, mimeMessage),
-                err -> {
-                    log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
-                    sendMail(mail);
-                });
-
-        if (result.isPresent() && result.get()) {
-            log.debug(LogNotify.STATUS, "Mail stored");
-        } else {
-            log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
+            if (result.isPresent() && result.get()) {
+                log.debug(LogNotify.STATUS, "Mail stored");
+            } else {
+                log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
+            }
+        } catch (MessagingException e) {
+            log.error("Error occurred while sending a mail", e);
         }
     }
 

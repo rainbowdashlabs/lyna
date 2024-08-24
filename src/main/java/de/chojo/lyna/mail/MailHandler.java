@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
+import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.core.Data;
@@ -20,15 +21,15 @@ import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class MessageHandler implements ThrowingConsumer<Message, Exception> {
+public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final Mailings mailings;
-    private static final Logger log = getLogger(MessageHandler.class);
+    private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
     private final Configuration<ConfigFile> configuration;
 
     private final Cache<String, String> cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
-    public MessageHandler(Data data, MailingService mailingService, Configuration<ConfigFile> configuration) {
+    public MailHandler(Data data, MailingService mailingService, Configuration<ConfigFile> configuration) {
         this.mailings = data.mailings();
         this.mailingService = mailingService;
         this.configuration = configuration;
@@ -38,7 +39,7 @@ public class MessageHandler implements ThrowingConsumer<Message, Exception> {
     public void accept(Message message) throws Exception {
         de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.config().mailing();
         InternetAddress address = (InternetAddress) message.getFrom()[0];
-        if ("false".equalsIgnoreCase(System.getProperty("bot.mailing.skipverify", "false"))) {
+        if ("false".equalsIgnoreCase(SysVar.envOrProp("LYNA_MAILING_SKIPVERIFY","lyna.mailing.skipverify", "false"))) {
             // Check if address is from PayPal
             if (!"service@paypal.de".equals(address.getAddress())
                     && !mailConf.originMails().contains(address.getAddress())) {

@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
 import de.chojo.jdautil.util.SnowflakeCreator;
+import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.util.JarUtil;
 import de.chojo.lyna.web.api.v1.download.Download;
@@ -93,7 +94,7 @@ public class Proxy {
                         .contentType(ContentType.APPLICATION_OCTET_STREAM)
                         .status(HttpStatus.OK);
 
-                if ("true".equalsIgnoreCase(System.getProperty("bot.jarsigning.skip"))) {
+                if ("true".equalsIgnoreCase(SysVar.envOrProp("LYNA_JARSIGNING_SKIP","lyna.jarsigning.skip", "false"))) {
                     ctx.result(complete);
                     return;
                 }
