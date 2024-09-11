@@ -98,7 +98,7 @@ public class MailingService {
     }
 
     private IMAPStore createImapStore(Session session) {
-        log.debug(LogNotify.STATUS, "Creating imap store");
+        log.debug("Creating imap store");
         IMAPStore imapStore = null;
         try {
             imapStore = (IMAPStore) session.getStore("imap");
@@ -110,7 +110,7 @@ public class MailingService {
     }
 
     private Session createSession() {
-        log.debug(LogNotify.STATUS, "Creating new mail session");
+        log.debug("Creating new mail session");
         Properties props = System.getProperties();
         Mailing mailing = configuration.config().mailing();
         props.put("mail.smtp.host", mailing.host());
@@ -162,7 +162,7 @@ public class MailingService {
                     });
 
             if (result.isPresent() && result.get()) {
-                log.debug(LogNotify.STATUS, "Mail stored");
+                log.debug("Mail stored");
             } else {
                 log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
             }
@@ -172,9 +172,9 @@ public class MailingService {
     }
 
     private boolean sendMessage(MimeMessage message) throws MessagingException {
-        log.info(LogNotify.STATUS, "Sending mail to {}", ((InternetAddress) message.getAllRecipients()[0]).getAddress());
+        log.info("Sending mail to {}", ((InternetAddress) message.getAllRecipients()[0]).getAddress());
         Transport.send(message, configuration.config().mailing().user(), configuration.config().mailing().password());
-        log.info(LogNotify.STATUS, "Mail sent.");
+        log.info("Mail sent.");
         return true;
     }
 
@@ -194,7 +194,7 @@ public class MailingService {
 
     private IMAPFolder getFolder(IMAPStore store, String name) {
         return Retry.retryAndReturn(3, () -> {
-            log.debug(LogNotify.STATUS, "Connecting to folder {}", name);
+            log.debug("Connecting to folder {}", name);
             IMAPFolder folder = (IMAPFolder) store.getFolder(name);
             folder.open(Folder.READ_WRITE);
             return folder;
