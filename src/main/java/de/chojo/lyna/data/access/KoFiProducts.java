@@ -36,7 +36,7 @@ public class KoFiProducts {
                 WHERE ? = link_code
                 """)
                 .single(call().bind(name))
-                .mapAs(Integer.class)
+                .map(row -> row.getInt(1))
                 .first();
 
         return id.flatMap(products::byId);
