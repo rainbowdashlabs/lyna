@@ -16,12 +16,12 @@ repositories {
 
 dependencies {
     //discord
-    implementation("de.chojo", "cjda-util", "2.10.2+jda-5.1.0") {
+    implementation("de.chojo", "cjda-util", "2.10.3+jda-5.1.0") {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.4")
+    implementation("org.postgresql", "postgresql", "42.7.5")
     implementation(libs.bundles.sadu)
 
     // Download api
@@ -29,7 +29,7 @@ dependencies {
 
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.3")
-    implementation("org.jsoup", "jsoup", "1.17.2")
+    implementation("org.jsoup", "jsoup", "1.18.3")
 
 
     // Logging
@@ -39,7 +39,7 @@ dependencies {
     }
 
     // unit testing
-    testImplementation(platform("org.junit:junit-bom:5.11.0"))
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter", "junit-jupiter")
     testImplementation("org.mockito", "mockito-core", "5.+")
 }
