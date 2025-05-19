@@ -6,12 +6,11 @@ import java.util.Map;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal"})
 public class Mailing {
-    private String host = "";
+    private MailSettings smtp = new MailSettings();
+    private MailSettings imap = new MailSettings();
     private String user = "";
     private String password = "";
     private List<String> originMail = java.util.List.of("");
-    private boolean sslSmtp = false;
-    private boolean sslImap = false;
     private int pollSeconds = 300;
     // While we do no use javamail, we use angus and both implement jakarta.mail
     // Most of the parameters of javamail can be applied here as well
@@ -21,10 +20,6 @@ public class Mailing {
 
     public int pollSeconds() {
         return pollSeconds;
-    }
-
-    public String host() {
-        return host;
     }
 
     public String user() {
@@ -39,12 +34,12 @@ public class Mailing {
         return originMail;
     }
 
-    public boolean sslSmtp() {
-        return sslSmtp;
+    public MailSettings smtp() {
+        return smtp;
     }
 
-    public boolean sslImap() {
-        return sslImap;
+    public MailSettings imap() {
+        return imap;
     }
 
     public Map<String, String> properties() {
