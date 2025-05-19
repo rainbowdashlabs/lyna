@@ -1,8 +1,11 @@
 package de.chojo.lyna.configuration.elements;
 
+import de.chojo.lyna.configuration.elements.mailing.MailSettings;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal"})
 public class Mailing {
@@ -42,7 +45,11 @@ public class Mailing {
         return imap;
     }
 
-    public Map<String, String> properties() {
-        return properties;
+    public Properties properties() {
+        Properties props = new Properties();
+        props.putAll(smtp().properties("smtp"));
+        props.putAll(imap().properties("imap"));
+        props.putAll(properties);
+        return props;
     }
 }

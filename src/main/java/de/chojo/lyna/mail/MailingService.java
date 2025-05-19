@@ -113,12 +113,6 @@ public class MailingService {
         log.debug("Creating new mail session");
         Properties props = System.getProperties();
         Mailing mailing = configuration.config().mailing();
-        props.put("mail.smtp.host", mailing.smtp().host());
-        props.put("mail.smtp.port", mailing.smtp().port());
-        props.put("mail.smtp.ssl.enable", mailing.smtp().ssl());
-        props.put("mail.imap.host", mailing.imap().host());
-        props.put("mail.imap.port", mailing.imap().port());
-        props.put("mail.imap.ssl.enable", mailing.imap().ssl());
         props.putAll(mailing.properties());
         return Session.getInstance(props, new Authenticator() {
             @Override
