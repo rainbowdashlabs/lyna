@@ -1,6 +1,7 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "github>rainbowdashlabs/rainbowdashlabs"
-    ]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "baseBranchPatterns": ["main"],
+  "extends": [
+    "github>rainbowdashlabs/rainbowdashlabs"
+  ]
 }
