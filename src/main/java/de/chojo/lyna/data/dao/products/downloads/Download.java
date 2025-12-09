@@ -129,6 +129,7 @@ public class Download implements Comparable<Download> {
     }
 
     public Optional<AssetXO> assetByVersion(String version) {
+        if("latest".equalsIgnoreCase(version)) return latestAssets().stream().findFirst();
         SearchRequest jar = product.nexus().v1().search().assets().search()
                 .repository(repository)
                 .mavenGroupId(groupId)
