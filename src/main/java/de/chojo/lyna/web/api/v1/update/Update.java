@@ -117,7 +117,7 @@ public class Update {
 
         // Find dev release with artifact
         return getDownload(product, ReleaseType.DEV, artifact)
-                .or(() -> product.downloads().byReleaseType(ReleaseType.DEV))
+                .or(() -> product.downloads().byReleaseType(ReleaseType.DEV).stream().findFirst())
                 .map(value -> evaluateDevAndSnapshotVersion(value, current, created))
                 .orElseGet(() -> new UpdateResponse(false, current.version(), 0));
 
@@ -183,7 +183,7 @@ public class Update {
 
     private Optional<Download> getDownload(Product product, ReleaseType type, @Nullable String artifact) {
         return product.downloads().byReleaseTypeAndArtifact(type, artifact)
-                .or(() -> product.downloads().byReleaseType(type));
+                .or(() -> product.downloads().byReleaseType(type).stream().findFirst());
     }
 
     private long assetAge(AssetXO assetXO) {

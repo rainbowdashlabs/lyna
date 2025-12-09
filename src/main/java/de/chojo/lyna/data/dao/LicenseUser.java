@@ -96,23 +96,23 @@ public class LicenseUser {
     }
 
     public List<Command.Choice> completeOwnProducts(String value) {
-        return query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
+        return query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(id()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();
     }
 
     public List<Command.Choice> completeDownloadableProducts(String value) {
-        List<Command.Choice> byLicense = query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
+        List<Command.Choice> byLicense = query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(id()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();
         List<Command.Choice> byRole =
-                query("SELECT product_id, name FROM role_access a LEFT JOIN product p ON a.product_id = p.id WHERE ARRAY[role_id] && ? AND name ILIKE (? || '%')")
+                query("SELECT product_id, name FROM role_access a LEFT JOIN product p ON a.product_id = p.id WHERE ARRAY[role_id] && ? AND name ILIKE ('%' || ? || '%')")
                         .single(call().bind(member.getRoles().stream().map(ISnowflake::getIdLong).toList(), PostgreSqlTypes.BIGINT).bind(value))
                         .map(row -> new Command.Choice(row.getString("name"), row.getInt("product_id")))
                         .all();
-        List<Command.Choice> free = query("SELECT id, name FROM product WHERE free AND guild_id = ? AND name ILIKE (? || '%')")
+        List<Command.Choice> free = query("SELECT id, name FROM product WHERE free AND guild_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();
@@ -124,7 +124,7 @@ public class LicenseUser {
     }
 
     public List<Command.Choice> completeAllProducts(String value) {
-        return query("SELECT id, name FROM user_products_all WHERE guild_id = ? AND user_id = ? AND name ILIKE (? || '%')")
+        return query("SELECT id, name FROM user_products_all WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(id()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();

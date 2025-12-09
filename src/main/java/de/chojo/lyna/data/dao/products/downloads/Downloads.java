@@ -98,7 +98,7 @@ public class Downloads {
                 .changed();
     }
 
-    public Optional<Download> byReleaseType(ReleaseType releaseType) {
+    public List<Download> byReleaseType(ReleaseType releaseType) {
         return query("""
                 SELECT
                     d.id,
@@ -115,6 +115,6 @@ public class Downloads {
                   AND release_type = ?::RELEASE_TYPE;""")
                 .single(call().bind(product.id()).bind(releaseType))
                 .map(row -> Download.build(product, row))
-                .first();
+                .all();
     }
 }
