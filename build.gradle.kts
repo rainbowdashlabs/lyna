@@ -28,7 +28,7 @@ dependencies {
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
 
     // Mailing
-    implementation("org.eclipse.angus", "angus-mail", "2.0.3")
+    implementation("org.eclipse.angus", "angus-mail", "2.0.5")
     implementation("org.jsoup", "jsoup", "1.17.2")
 
 
