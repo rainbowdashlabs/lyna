@@ -1,4 +1,4 @@
-FROM gradle:jdk21-alpine as build
+FROM gradle:jdk21 as build
 
 COPY src src
 COPY settings.gradle.kts build.gradle.kts ./

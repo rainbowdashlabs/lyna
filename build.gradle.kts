@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    alias(libs.plugins.shadow)
     java
 }
 
@@ -39,8 +39,9 @@ dependencies {
     }
 
     // unit testing
-    testImplementation(platform("org.junit:junit-bom:5.11.0"))
-    testImplementation("org.junit.jupiter", "junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.1")
     testImplementation("org.mockito", "mockito-core", "5.+")
 }
 
@@ -82,6 +83,7 @@ tasks {
     shadowJar {
         transform(Log4j2PluginsCacheFileTransformer::class.java)
         mergeServiceFiles()
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         manifest {
             attributes(mapOf("Main-Class" to "de.chojo.lyna.Lyna"))
         }
