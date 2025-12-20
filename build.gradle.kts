@@ -82,8 +82,8 @@ tasks {
 
     shadowJar {
         transform(Log4j2PluginsCacheFileTransformer::class.java)
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
         mergeServiceFiles()
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         manifest {
             attributes(mapOf("Main-Class" to "de.chojo.lyna.Lyna"))
         }
