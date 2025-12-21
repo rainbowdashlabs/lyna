@@ -83,7 +83,7 @@ public class WebService {
                     ctx.method() + " " + ctx.url(),
                     ctx.queryString(),
                     ctx.status(),
-                    Streams.stream(ctx.req().getHeaderNames().asIterator()).map(h -> "   " + h + ": " + ctx.res().getHeader(h))
+                    ctx.res().getHeaderNames().stream().map(h -> "   " + h + ": " + ctx.res().getHeader(h))
                             .collect(Collectors.joining("\n")),
                     ContentType.OCTET_STREAM.equals(ctx.contentType()) ? "Bytes"
                             : Objects.requireNonNullElse(ctx.result(), "")
