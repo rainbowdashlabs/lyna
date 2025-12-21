@@ -3,6 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCach
 plugins {
     alias(libs.plugins.shadow)
     java
+    id("org.openrewrite.rewrite") version "7.18.0"
 }
 
 group = "de.chojo"
@@ -16,7 +17,7 @@ repositories {
 
 dependencies {
     //discord
-    implementation("de.chojo", "cjda-util", "2.10.2+jda-5.1.0") {
+    implementation("de.chojo", "cjda-util", "2.12.0+jda-6.0.0") {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
@@ -26,6 +27,12 @@ dependencies {
 
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
+
+    val openapi = "6.7.0-2"
+
+    annotationProcessor("io.javalin.community.openapi:openapi-annotation-processor:$openapi")
+    implementation("io.javalin.community.openapi:javalin-openapi-plugin:$openapi") // for /openapi route with JSON scheme
+    implementation("io.javalin.community.openapi:javalin-swagger-plugin:$openapi") // for Swagger UI
 
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.3")

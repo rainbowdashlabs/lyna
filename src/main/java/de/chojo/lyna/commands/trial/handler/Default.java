@@ -16,6 +16,9 @@ import de.chojo.lyna.data.dao.settings.Trial;
 import de.chojo.lyna.util.Formatting;
 import de.chojo.nexus.entities.AssetXO;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -23,9 +26,6 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -88,9 +88,9 @@ public class Default implements SlashHandler {
 
     private Optional<MenuEntry<?, ?>> getDownloadTypeMenu(Member member, Product product) {
         StringSelectMenu.Builder buildType = StringSelectMenu.create("build_type")
-                .setMaxValues(1)
-                .setMinValues(1)
-                .setPlaceholder("Please choose a build type");
+                                                             .setMaxValues(1)
+                                                             .setMinValues(1)
+                                                             .setPlaceholder("Please choose a build type");
 
         List<Download> downloads = product.downloads().downloads().stream().filter(d -> d.type().releaseType() == ReleaseType.STABLE).toList();
 
