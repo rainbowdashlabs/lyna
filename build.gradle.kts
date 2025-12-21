@@ -22,7 +22,7 @@ dependencies {
     }
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.4")
+    implementation("org.postgresql", "postgresql", "42.7.8")
     implementation(libs.bundles.sadu)
 
     // Download api
