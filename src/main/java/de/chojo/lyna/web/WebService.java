@@ -9,6 +9,7 @@ import de.chojo.lyna.web.api.Api;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.http.staticfiles.MimeTypesConfig;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public class WebService {
                 staticFiles.hostedPath = "/";
                 staticFiles.directory = "/web";
                 staticFiles.location = Location.CLASSPATH;
-                staticFiles.precompress = true;
+                staticFiles.precompress = false;
             });
             config.useVirtualThreads = true;
             config.router.apiBuilder(this::routes);

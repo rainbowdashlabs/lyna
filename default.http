@@ -1,5 +1,5 @@
-### GET request to example server
-GET https://examples.http-client.intellij.net/get
-    ?generated-in=IntelliJ IDEA
+### GET request landing page
+GET https://lyna.eldoria.de
 
-###
+### GET request for update check
+GET https://lyna.eldoria.de/api/v1/update/check?id=1&version=2.7.8&artifact=schematicbrushreborn-paper&unix=1759238539

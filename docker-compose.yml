@@ -22,7 +22,7 @@ services:
     profiles:
       - dev
     ports:
-      - 8888:8080
+      - 8888:8888
   postgres:
     networks:
       - lyna
