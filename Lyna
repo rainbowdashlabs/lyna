@@ -1,0 +1,11 @@
+Error: Minified React error #185; visit https://reactjs.org/docs/error-decoder.html?invariant=185 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at nu (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3681926)
+    at tf (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3647282)
+    at https://app.uniswap.org/static/js/main.9b6f6d87.chunk.js:1:435065
+    at rs (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3672449)
+    at ku (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3692661)
+    at https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3691396
+    at Ou (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3691462)
+    at su (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3685181)
+    at qi (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3625645)
+    at ku (https://app.uniswap.org/static/js/6.72f8ad68.chunk.js:2:3692803)
