@@ -21,7 +21,7 @@ dependencyResolutionManagement {
             bundle("log4j", listOf("slf4j-api", "log4j-core", "log4j-slf4j2", "log4j-jsontemplate"))
 
             // plugins
-            plugin("spotless", "com.diffplug.spotless").version("6.25.0")
+            plugin("spotless", "com.diffplug.spotless").version("8.4.0")
             plugin("shadow", "com.gradleup.shadow").version("9.4.1")
 
         }
