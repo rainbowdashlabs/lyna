@@ -28,7 +28,7 @@ dependencies {
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
 
-    val openapi = "7.1.0"
+    val openapi = "7.2.0"
 
     annotationProcessor("io.javalin.community.openapi:openapi-annotation-processor:$openapi")
     implementation("io.javalin.community.openapi:javalin-openapi-plugin:$openapi") // for /openapi route with JSON scheme
