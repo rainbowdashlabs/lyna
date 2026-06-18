@@ -8,7 +8,7 @@ jobs:
     name: Gradle build
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: gradle/actions/wrapper-validation@v6
       - name: Set up JDK
         uses: actions/setup-java@v5
@@ -26,6 +26,6 @@ jobs:
     name: Docker build
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build as Docker image
         run: docker build .
