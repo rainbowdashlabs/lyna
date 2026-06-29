@@ -28,4 +28,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build as Docker image
-        run: docker build .
+        run: docker build -f docker/backend.Dockerfile .

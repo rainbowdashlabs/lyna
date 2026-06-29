@@ -35,6 +35,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: docker/backend.Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.sha }}
@@ -42,6 +43,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: docker/backend.Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.sha }}
@@ -51,6 +53,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: docker/backend.Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.sha }}

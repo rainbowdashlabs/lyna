@@ -1,7 +1,5 @@
-import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
-
 plugins {
-    alias(libs.plugins.shadow)
+    application
     java
     id("org.openrewrite.rewrite") version "7.18.0"
 }
@@ -60,6 +58,11 @@ java {
     withJavadocJar()
 }
 
+application {
+    mainClass.set("de.chojo.lyna.Lyna")
+    applicationName = "lyna"
+}
+
 tasks {
     processResources {
         from(sourceSets.main.get().resources.srcDirs) {
@@ -85,18 +88,5 @@ tasks {
         testLogging {
             events("passed", "skipped", "failed")
         }
-    }
-
-    shadowJar {
-        transform(Log4j2PluginsCacheFileTransformer::class.java)
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        mergeServiceFiles()
-        manifest {
-            attributes(mapOf("Main-Class" to "de.chojo.lyna.Lyna"))
-        }
-    }
-
-    build {
-        dependsOn(shadowJar)
     }
 }

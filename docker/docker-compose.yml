@@ -8,17 +8,19 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ./config/:/app/config/
+      - ../config/:/app/config/
     profiles:
       - prod
   app_dev:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
     networks:
       - lyna
     depends_on:
       - postgres
     volumes:
-      - ./config/:/app/config/
+      - ../config/:/app/config/
     profiles:
       - dev
     ports:
