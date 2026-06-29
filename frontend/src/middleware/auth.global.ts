@@ -2,7 +2,7 @@ import {useSession} from '~/composables/useSession'
 
 export default defineNuxtRouteMiddleware(async (to) => {
     if (typeof window === 'undefined') return
-    if (!to.path.startsWith('/account')) return
+    if (!to.path.startsWith('/account') && !to.path.startsWith('/admin')) return
     const {hydrate, account} = useSession()
     await hydrate()
     if (!account.value) {

@@ -6,8 +6,10 @@ import de.chojo.lyna.core.Data;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
 import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.V1;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import de.chojo.nexus.NexusRest;
 import org.slf4j.Logger;
 
@@ -21,6 +23,7 @@ public class Api {
     private final V1 v1;
     private final Auth auth;
     private final Account account;
+    private final Admin admin;
 
     private static final Logger log = getLogger(Api.class);
 
@@ -33,6 +36,7 @@ public class Api {
                 data.passwordHasher(), data.jwtService(), data.discordOAuthClient());
         account = new Account(auth, data.accounts(), data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
+        admin = new Admin(auth, configuration, data.accounts(), data.guilds());
     }
 
     public void init() {
@@ -40,7 +44,12 @@ public class Api {
             v1.init();
             auth.init();
             account.init();
+            admin.init();
         });
+    }
+
+    public void shardManager(ShardManager shardManager) {
+        admin.shardManager(shardManager);
     }
 
     public Configuration<ConfigFile> configuration() {

@@ -151,6 +151,10 @@ public class Data {
         mailings.shardManager(bot.shardManager());
     }
 
+    public void injectShard(Bot bot, de.chojo.lyna.web.api.Api api) {
+        api.shardManager(bot.shardManager());
+    }
+
     public KoFiProducts kofi() {
         return kofi;
     }
