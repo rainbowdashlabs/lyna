@@ -36,7 +36,7 @@ public class Api {
                 data.passwordHasher(), data.jwtService(), data.discordOAuthClient());
         account = new Account(auth, data.accounts(), data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
-        admin = new Admin(auth, configuration, data.accounts(), data.guilds());
+        admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings());
     }
 
     public void init() {

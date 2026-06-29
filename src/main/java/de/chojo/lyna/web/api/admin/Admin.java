@@ -7,6 +7,8 @@ import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.InstanceSettingsAccess;
+import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
@@ -28,6 +30,7 @@ import java.util.Set;
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
+import static io.javalin.apibuilder.ApiBuilder.put;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Admin {
@@ -37,14 +40,17 @@ public class Admin {
     private final Configuration<ConfigFile> configuration;
     private final Accounts accounts;
     private final Guilds guilds;
+    private final InstanceSettingsAccess instanceSettings;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private ShardManager shardManager;
 
-    public Admin(Auth auth, Configuration<ConfigFile> configuration, Accounts accounts, Guilds guilds) {
+    public Admin(Auth auth, Configuration<ConfigFile> configuration, Accounts accounts, Guilds guilds,
+                 InstanceSettingsAccess instanceSettings) {
         this.auth = auth;
         this.configuration = configuration;
         this.accounts = accounts;
         this.guilds = guilds;
+        this.instanceSettings = instanceSettings;
     }
 
     public void shardManager(ShardManager shardManager) {
@@ -60,6 +66,11 @@ public class Admin {
                 get("licenses", this::listLicenses);
                 post("licenses", this::createLicense);
                 get("registrations/{discordId}", this::registrationInfo);
+            });
+            path("instance", () -> {
+                get("system", this::instanceSystem);
+                get("appearance", this::instanceAppearance);
+                put("appearance", this::instanceUpdateAppearance);
             });
         });
     }
@@ -186,6 +197,53 @@ public class Admin {
         // /admin/registrations panel needs more than an existence check.
         Member member = resolved.guild().guild().getMemberById(discordId);
         ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null));
+    }
+
+    private void instanceSystem(Context ctx) {
+        if (!requireOperator(ctx)) return;
+        int guildCount = shardManager == null ? 0 : shardManager.getGuilds().size();
+        String version;
+        try (var in = getClass().getResourceAsStream("/version")) {
+            version = in == null ? "unknown" : new String(in.readAllBytes()).trim();
+        } catch (Exception e) {
+            version = "unknown";
+        }
+        ctx.json(new SystemInfo(version, guildCount));
+    }
+
+    private void instanceAppearance(Context ctx) {
+        if (!requireOperator(ctx)) return;
+        ctx.json(instanceSettings.get());
+    }
+
+    private void instanceUpdateAppearance(Context ctx) {
+        if (!requireOperator(ctx)) return;
+        InstanceSettings body;
+        try {
+            body = json.readValue(ctx.body(), InstanceSettings.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        instanceSettings.update(body);
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    private boolean requireOperator(Context ctx) {
+        Optional<JwtService.Verified> session = auth.currentSession(ctx);
+        if (session.isEmpty()) {
+            ctx.status(HttpStatus.UNAUTHORIZED);
+            return false;
+        }
+        Long discordId = resolveDiscordId(session.get());
+        if (!isOperator(discordId)) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return false;
+        }
+        return true;
+    }
+
+    public record SystemInfo(String version, int guildCount) {
     }
 
     private Resolved requireGuildAdmin(Context ctx) {

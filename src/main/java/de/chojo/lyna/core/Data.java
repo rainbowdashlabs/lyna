@@ -12,6 +12,7 @@ import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.Products;
@@ -43,6 +44,7 @@ public class Data {
     private AccountSessions accountSessions;
     private RevokedJtis revokedJtis;
     private DownloadLog downloadLog;
+    private InstanceSettingsAccess instanceSettings;
     private PasswordHasher passwordHasher;
     private JwtService jwtService;
     private DiscordOAuthClient discordOAuthClient;
@@ -108,6 +110,7 @@ public class Data {
         accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();
         downloadLog = new DownloadLog();
+        instanceSettings = new InstanceSettingsAccess();
         passwordHasher = new PasswordHasher();
         jwtService = new JwtService(configuration.config().auth());
         discordOAuthClient = new DiscordOAuthClient(configuration.config().discord().oauth());
@@ -181,6 +184,10 @@ public class Data {
 
     public DownloadLog downloadLog() {
         return downloadLog;
+    }
+
+    public InstanceSettingsAccess instanceSettings() {
+        return instanceSettings;
     }
 
     public PasswordHasher passwordHasher() {

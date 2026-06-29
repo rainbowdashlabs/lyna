@@ -15,8 +15,16 @@ const currentGuildId = computed(() => {
 })
 
 const currentGuild = computed(() => guilds.value.find(g => g.id === currentGuildId.value) ?? null)
+const isOperator = computed(() => guilds.value.some(g => g.role === 'operator'))
+const inInstance = computed(() => route.path.startsWith('/admin/instance'))
 
 const sections = computed(() => {
+  if (inInstance.value) {
+    return [
+      {to: '/admin/instance/system', label: 'System'},
+      {to: '/admin/instance/appearance', label: 'Appearance'},
+    ]
+  }
   if (!currentGuildId.value) return []
   const base = `/admin/g/${currentGuildId.value}`
   return [
@@ -74,6 +82,13 @@ function switchGuild(event: Event) {
           {{ item.label }}
         </NuxtLink>
       </nav>
+      <NuxtLink
+          v-if="isOperator"
+          to="/admin/instance/system"
+          class="mt-4 block rounded-theme border border-border-light dark:border-border-dark px-3 py-2 text-xs uppercase tracking-wider opacity-70 hover:opacity-100"
+      >
+        Instance area →
+      </NuxtLink>
     </aside>
     <main class="flex-1 min-w-0">
       <div v-if="currentGuild" class="mb-2 text-xs uppercase tracking-wider opacity-60">

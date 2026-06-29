@@ -75,3 +75,32 @@ export async function lookupRegistration(guildId: string, discordId: string): Pr
     const {data} = await client.get<RegistrationInfo>(`/api/admin/g/${guildId}/registrations/${discordId}`)
     return data
 }
+
+export interface InstanceAppearance {
+    defaultTheme: string
+    defaultFeel: string
+    lockFeel: boolean
+    allowUserTheme: boolean
+    allowUserFeel: boolean
+    enabledThemes: string[]
+    customThemeColorsJson: string | null
+}
+
+export interface SystemInfo {
+    version: string
+    guildCount: number
+}
+
+export async function getInstanceAppearance(): Promise<InstanceAppearance> {
+    const {data} = await client.get<InstanceAppearance>('/api/admin/instance/appearance')
+    return data
+}
+
+export async function updateInstanceAppearance(payload: InstanceAppearance): Promise<void> {
+    await client.put('/api/admin/instance/appearance', payload)
+}
+
+export async function getInstanceSystem(): Promise<SystemInfo> {
+    const {data} = await client.get<SystemInfo>('/api/admin/instance/system')
+    return data
+}
