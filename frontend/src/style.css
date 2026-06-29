@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-primary: #E92063;
+    --color-primary-accent: #AD1849;
+    --color-primary-text: #ffffff;
+    --color-primary-accent-text: #ffffff;
+
+    --color-secondary: #2CB0ED;
+    --color-secondary-accent: #446DF2;
+    --color-secondary-text: #ffffff;
+    --color-secondary-accent-text: #ffffff;
+
+    --color-info: #c8ab03;
+    --color-info-accent: #af7501;
+    --color-info-text: #1a1a1a;
+    --color-info-accent-text: #ffffff;
+
+    --color-success: #00C507;
+    --color-success-text: #ffffff;
+
+    --color-error: #ec2929;
+    --color-error-text: #ffffff;
+
+    --color-bg-light: #eceff4;
+    --color-bg-light-accent: #d8dee9;
+
+    --color-bg-dark: #1E2129;
+    --color-bg-dark-accent: #111317;
+
+    --color-text-light: #1a1a1a;
+    --color-text-dark: #eceff4;
+    --color-border-light: #cfcfcf;
+    --color-border-dark: #2a2d36;
+
+    --radius-theme: 0.5rem;
+}
+
+html {
+    background-color: var(--color-bg-light);
+    color: var(--color-text-light);
+}
+
+html.dark {
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-dark);
+}
+
+body {
+    min-height: 100vh;
+    font-family: 'Roboto', 'Helvetica Neue', system-ui, sans-serif;
+}
+
+.rounded-theme {
+    border-radius: var(--radius-theme);
+}

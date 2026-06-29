@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   app:
-    image: ghcr.io/rainbowdashlabs/lyna:latest
+    image: ghcr.io/rainbowdashlabs/lyna-backend:latest
     networks:
       - lyna
     depends_on:
@@ -25,6 +25,30 @@ services:
       - dev
     ports:
       - 8888:8888
+  frontend:
+    image: ghcr.io/rainbowdashlabs/lyna-frontend:latest
+    networks:
+      - lyna
+    depends_on:
+      - app
+    environment:
+      NUXT_BACKEND_URL: http://app:8888
+    profiles:
+      - prod
+  frontend_dev:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    networks:
+      - lyna
+    depends_on:
+      - app_dev
+    environment:
+      NUXT_BACKEND_URL: http://app_dev:8888
+    profiles:
+      - dev
+    ports:
+      - 3000:3000
   postgres:
     networks:
       - lyna

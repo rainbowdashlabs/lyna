@@ -1,0 +1,30 @@
+{
+  "common": {
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading…",
+    "back": "Back",
+    "close": "Close",
+    "search": "Search"
+  },
+  "kiosk": {
+    "title": "Lyna Download Center",
+    "subtitle": "Browse and download plugin releases.",
+    "search": "Search plugins…",
+    "empty": "No plugins match your search.",
+    "download": "Download",
+    "buy": "Buy on Ko-fi",
+    "projectPage": "project page"
+  },
+  "auth": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "loginWithDiscord": "Continue with Discord"
+  }
+}

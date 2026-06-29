@@ -6,6 +6,6 @@ gradle= pkgs.gradle.override { java = jdk; };
 in
 pkgs.mkShell
 {
-  packages = with pkgs; [jdk gradle];
+  packages = with pkgs; [jdk gradle nodejs_24];
 }
 
