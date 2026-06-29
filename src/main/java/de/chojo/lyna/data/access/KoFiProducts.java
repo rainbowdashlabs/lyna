@@ -5,6 +5,7 @@ import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
 import de.chojo.lyna.data.dao.products.Product;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
@@ -26,6 +27,22 @@ public class KoFiProducts {
                 """)
                 .single(call().bind(linkCode).bind(product.id()))
                 .insert();
+    }
+
+    public List<Mapping> listForGuild(long guildId) {
+        return query("""
+                SELECT kp.link_code, kp.product_id, p.name
+                FROM kofi_products kp
+                JOIN product p ON p.id = kp.product_id
+                WHERE p.guild_id = ?
+                ORDER BY p.name
+                """)
+                .single(call().bind(guildId))
+                .map(row -> new Mapping(row.getString("link_code"), row.getInt("product_id"), row.getString("name")))
+                .all();
+    }
+
+    public record Mapping(String linkCode, int productId, String productName) {
     }
 
     public Optional<Product> byCode(String name) {

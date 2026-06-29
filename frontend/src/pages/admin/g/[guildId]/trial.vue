@@ -1,0 +1,80 @@
+<script lang="ts" setup>
+import {onMounted, ref, watch} from 'vue'
+import {useRoute} from 'vue-router'
+import {getTrialInfo, type TrialInfo} from '~/api/admin'
+import Spinner from '~/components/feedback/Spinner.vue'
+
+definePageMeta({layout: 'admin'})
+
+const route = useRoute()
+const guildId = ref(String(route.params.guildId))
+
+const info = ref<TrialInfo | null>(null)
+const loading = ref(true)
+
+async function load() {
+  loading.value = true
+  try {
+    info.value = await getTrialInfo(guildId.value)
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(() => route.params.guildId, (next) => {
+  guildId.value = String(next)
+  load()
+})
+
+onMounted(load)
+
+function fmtMinutes(min: number): string {
+  if (min < 60) return `${min} min`
+  if (min < 60 * 24) return `${(min / 60).toFixed(1)} h`
+  return `${(min / (60 * 24)).toFixed(1)} d`
+}
+</script>
+
+<template>
+  <div>
+    <h1 class="mb-4 text-2xl font-bold">
+      Trial
+    </h1>
+    <div v-if="loading" class="flex justify-center py-12">
+      <Spinner size="lg" />
+    </div>
+    <template v-else-if="info">
+      <section class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4 text-sm">
+        <div class="text-xs uppercase tracking-wider opacity-60">
+          Active limits
+        </div>
+        <div class="mt-1">
+          <span class="opacity-70">Per server cooldown:</span> {{ fmtMinutes(info.serverMinutes) }}
+        </div>
+        <div>
+          <span class="opacity-70">Per account cooldown:</span> {{ fmtMinutes(info.accountMinutes) }}
+        </div>
+        <p class="mt-2 opacity-60">
+          Edit these limits under
+          <NuxtLink :to="`/admin/g/${guildId}/settings`" class="text-primary hover:underline">
+            Settings
+          </NuxtLink>.
+        </p>
+      </section>
+      <section>
+        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider opacity-70">
+          Products
+        </h2>
+        <ul v-if="info.products.length" class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark text-sm">
+          <li v-for="p in info.products" :key="p.id" class="p-3">
+            {{ p.name }}
+            <span class="ml-2 opacity-60">id {{ p.id }}</span>
+          </li>
+        </ul>
+        <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
+          No products.
+        </div>
+      </section>
+    </template>
+  </div>
+</template>

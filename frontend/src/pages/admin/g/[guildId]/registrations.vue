@@ -58,14 +58,44 @@ async function submit() {
     </div>
     <div
         v-if="result"
-        class="rounded-theme border border-border-light dark:border-border-dark p-4 text-sm"
+        class="space-y-4 rounded-theme border border-border-light dark:border-border-dark p-4 text-sm"
     >
       <div>
-        <span class="opacity-70">Discord id:</span> {{ result.discordId }}
+        <div>
+          <span class="opacity-70">Discord id:</span> {{ result.discordId }}
+        </div>
+        <div>
+          <span class="opacity-70">Member name:</span> {{ result.memberName ?? '— not in this guild —' }}
+        </div>
       </div>
-      <div>
-        <span class="opacity-70">Member name:</span> {{ result.memberName ?? '— not in this guild —' }}
-      </div>
+      <section>
+        <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider opacity-70">
+          Owned ({{ result.ownedLicenses.length }})
+        </h2>
+        <ul v-if="result.ownedLicenses.length" class="divide-y divide-border-light dark:divide-border-dark">
+          <li v-for="l in result.ownedLicenses" :key="l.id" class="py-1">
+            <span class="font-medium">{{ l.productName }}</span>
+            <span class="ml-2 opacity-60">id {{ l.id }} · {{ l.identifier }} · {{ l.shareeCount }} sharees</span>
+          </li>
+        </ul>
+        <div v-else class="opacity-60">
+          None.
+        </div>
+      </section>
+      <section>
+        <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider opacity-70">
+          Shared with ({{ result.sharedLicenses.length }})
+        </h2>
+        <ul v-if="result.sharedLicenses.length" class="divide-y divide-border-light dark:divide-border-dark">
+          <li v-for="l in result.sharedLicenses" :key="l.id" class="py-1">
+            <span class="font-medium">{{ l.productName }}</span>
+            <span class="ml-2 opacity-60">id {{ l.id }} · owner {{ l.owner }}</span>
+          </li>
+        </ul>
+        <div v-else class="opacity-60">
+          None.
+        </div>
+      </section>
     </div>
   </div>
 </template>

@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.util.JarUtil;
 import de.chojo.lyna.web.api.v1.download.Download;
 import io.javalin.http.ContentType;
@@ -53,9 +54,14 @@ public class Proxy {
                         
             """;
     private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
+    private DownloadLog downloadLog;
 
     public Proxy(Download download) {
         this.download = download;
+    }
+
+    public void downloadLog(DownloadLog downloadLog) {
+        this.downloadLog = downloadLog;
     }
 
     public void init() {
@@ -87,6 +93,24 @@ public class Proxy {
                 String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
 
                 download.postDownload().run();
+
+                if (downloadLog != null && download.productId() != null && download.downloadId() != null
+                        && download.version() != null && download.source() != null) {
+                    try {
+                        downloadLog.record(
+                                download.accountId(),
+                                download.discordId(),
+                                download.licenseId(),
+                                download.productId(),
+                                download.downloadId(),
+                                download.version(),
+                                download.source(),
+                                ctx.header("User-Agent"),
+                                ipHash(ctx.ip()));
+                    } catch (Exception e) {
+                        log.warn(LogNotify.NOTIFY_ADMIN, "Failed to record download log entry", e);
+                    }
+                }
 
                 var complete = asset.downloadStream().complete();
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
@@ -123,5 +147,10 @@ public class Proxy {
         var hashCode = Hashing.sha512().hashString(System.nanoTime() + assetDownload.assetId() + System.nanoTime(), StandardCharsets.UTF_8).toString();
         tokens.put(hashCode, assetDownload);
         return "%s/api/v1/download/proxy?token=%s".formatted(download.v1().api().configuration().config().api().url(), hashCode);
+    }
+
+    private static String ipHash(String ip) {
+        if (ip == null || ip.isBlank()) return null;
+        return Hashing.sha256().hashString(ip, StandardCharsets.UTF_8).toString();
     }
 }

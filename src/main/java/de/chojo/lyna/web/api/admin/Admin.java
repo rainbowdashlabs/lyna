@@ -8,6 +8,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
+import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.licenses.License;
@@ -27,6 +28,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import java.time.Duration;
+
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
@@ -41,16 +44,18 @@ public class Admin {
     private final Accounts accounts;
     private final Guilds guilds;
     private final InstanceSettingsAccess instanceSettings;
+    private final KoFiProducts kofi;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private ShardManager shardManager;
 
     public Admin(Auth auth, Configuration<ConfigFile> configuration, Accounts accounts, Guilds guilds,
-                 InstanceSettingsAccess instanceSettings) {
+                 InstanceSettingsAccess instanceSettings, KoFiProducts kofi) {
         this.auth = auth;
         this.configuration = configuration;
         this.accounts = accounts;
         this.guilds = guilds;
         this.instanceSettings = instanceSettings;
+        this.kofi = kofi;
     }
 
     public void shardManager(ShardManager shardManager) {
@@ -66,6 +71,12 @@ public class Admin {
                 get("licenses", this::listLicenses);
                 post("licenses", this::createLicense);
                 get("registrations/{discordId}", this::registrationInfo);
+                get("settings", this::getSettings);
+                put("settings", this::updateSettings);
+                get("kofi", this::listKofi);
+                post("kofi", this::createKofi);
+                get("trial", this::listTrialProducts);
+                get("mailing", this::listMailing);
             });
             path("instance", () -> {
                 get("system", this::instanceSystem);
@@ -130,26 +141,10 @@ public class Admin {
     private void listLicenses(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
-        List<Product> products = resolved.guild().products().all();
         List<LicenseSummary> out = new ArrayList<>();
-        for (Product p : products) {
-            // there is no Licenses#allForProduct in the existing DAO; fall back to a key/identifier search
-            // via the existing complete API on the LicenseGuild's licenses, which returns the full set
-            // for an empty query.
-            var choices = resolved.guild().licenses().completeIdentifier("");
-            for (var choice : choices) {
-                try {
-                    int id = Integer.parseInt(String.valueOf(choice.getAsLong()));
-                    resolved.guild().licenses().byId(id).ifPresent(l -> {
-                        if (l.product().id() == p.id()) {
-                            out.add(new LicenseSummary(l.id(), l.product().id(), l.product().name(),
-                                    l.userIdentifier(), l.owner(), l.subUsers().size()));
-                        }
-                    });
-                } catch (NumberFormatException ignored) {
-                    // choices are id-encoded longs; if a different shape sneaks in, skip
-                }
-            }
+        for (License l : resolved.guild().licenses().all()) {
+            out.add(new LicenseSummary(l.id(), l.product().id(), l.product().name(),
+                    l.userIdentifier(), l.owner(), l.subUsers().size()));
         }
         ctx.json(out);
     }
@@ -193,10 +188,108 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid discord id");
             return;
         }
-        // No DAO method for "all licenses owned by a Discord id" exists yet. Wire in once the
-        // /admin/registrations panel needs more than an existence check.
         Member member = resolved.guild().guild().getMemberById(discordId);
-        ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null));
+        var owned = resolved.guild().licenses().byOwner(discordId).stream()
+                .map(l -> new LicenseSummary(l.id(), l.product().id(), l.product().name(),
+                        l.userIdentifier(), l.owner(), l.subUsers().size()))
+                .toList();
+        var shared = resolved.guild().licenses().bySharee(discordId).stream()
+                .map(l -> new LicenseSummary(l.id(), l.product().id(), l.product().name(),
+                        l.userIdentifier(), l.owner(), l.subUsers().size()))
+                .toList();
+        ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null, owned, shared));
+    }
+
+    private void getSettings(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var s = resolved.guild().settings();
+        ctx.json(new GuildSettings(
+                s.license().shares(),
+                (int) s.trial().serverTime().toMinutes(),
+                (int) s.trial().accountTime().toMinutes()));
+    }
+
+    private void updateSettings(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        GuildSettings body;
+        try {
+            body = json.readValue(ctx.body(), GuildSettings.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        if (body.shares() < 0 || body.trialServerMinutes() < 0 || body.trialAccountMinutes() < 0) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Negative values not allowed");
+            return;
+        }
+        var s = resolved.guild().settings();
+        s.license().shares(body.shares());
+        s.trial().serverTime(Duration.ofMinutes(body.trialServerMinutes()));
+        s.trial().accountTime(Duration.ofMinutes(body.trialAccountMinutes()));
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    private void listKofi(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        ctx.json(kofi.listForGuild(resolved.guild().guildId()));
+    }
+
+    private void createKofi(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        KofiMapping body;
+        try {
+            body = json.readValue(ctx.body(), KofiMapping.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        if (body.linkCode() == null || body.linkCode().isBlank() || body.productId() == null) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("linkCode and productId required");
+            return;
+        }
+        var product = resolved.guild().products().byId(body.productId());
+        if (product.isEmpty()) {
+            ctx.status(HttpStatus.NOT_FOUND).result("Unknown product");
+            return;
+        }
+        kofi.create(product.get(), body.linkCode());
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    private void listTrialProducts(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var s = resolved.guild().settings().trial();
+        var products = resolved.guild().products().all().stream()
+                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role()))
+                .toList();
+        ctx.json(new TrialInfo((int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
+    }
+
+    private void listMailing(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var out = new ArrayList<MailingTemplate>();
+        for (Product p : resolved.guild().products().all()) {
+            p.mailings().get().ifPresent(m -> out.add(new MailingTemplate(m.id(), p.id(), p.name(), m.name())));
+        }
+        ctx.json(out);
+    }
+
+    public record GuildSettings(int shares, int trialServerMinutes, int trialAccountMinutes) {
+    }
+
+    public record KofiMapping(String linkCode, Integer productId, String productName) {
+    }
+
+    public record TrialInfo(int serverMinutes, int accountMinutes, List<ProductSummary> products) {
+    }
+
+    public record MailingTemplate(int id, int productId, String productName, String name) {
     }
 
     private void instanceSystem(Context ctx) {
@@ -330,7 +423,8 @@ public class Admin {
     public record CreateLicense(Integer productId, String identifier) {
     }
 
-    public record RegistrationInfo(long discordId, String memberName) {
+    public record RegistrationInfo(long discordId, String memberName, List<LicenseSummary> ownedLicenses,
+                                   List<LicenseSummary> sharedLicenses) {
     }
 
     private record Resolved(LicenseGuild guild, Long callerDiscordId, boolean operator) {

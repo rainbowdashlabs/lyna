@@ -31,6 +31,10 @@ const sections = computed(() => {
     {to: `${base}/products`, label: 'Products'},
     {to: `${base}/licenses`, label: 'Licenses'},
     {to: `${base}/registrations`, label: 'Registrations'},
+    {to: `${base}/trial`, label: 'Trial'},
+    {to: `${base}/kofi`, label: 'Ko-fi'},
+    {to: `${base}/mailing`, label: 'Mailing'},
+    {to: `${base}/settings`, label: 'Settings'},
   ]
 })
 

@@ -44,6 +44,8 @@ export interface LicenseDetail {
 export interface RegistrationInfo {
     discordId: number
     memberName: string | null
+    ownedLicenses: LicenseSummary[]
+    sharedLicenses: LicenseSummary[]
 }
 
 export async function listAdminGuilds(): Promise<AdminGuild[]> {
@@ -102,5 +104,58 @@ export async function updateInstanceAppearance(payload: InstanceAppearance): Pro
 
 export async function getInstanceSystem(): Promise<SystemInfo> {
     const {data} = await client.get<SystemInfo>('/api/admin/instance/system')
+    return data
+}
+
+export interface GuildSettings {
+    shares: number
+    trialServerMinutes: number
+    trialAccountMinutes: number
+}
+
+export interface KofiMapping {
+    linkCode: string
+    productId: number
+    productName: string
+}
+
+export interface TrialInfo {
+    serverMinutes: number
+    accountMinutes: number
+    products: ProductSummary[]
+}
+
+export interface MailingTemplate {
+    id: number
+    productId: number
+    productName: string
+    name: string
+}
+
+export async function getGuildSettings(guildId: string): Promise<GuildSettings> {
+    const {data} = await client.get<GuildSettings>(`/api/admin/g/${guildId}/settings`)
+    return data
+}
+
+export async function updateGuildSettings(guildId: string, payload: GuildSettings): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/settings`, payload)
+}
+
+export async function listKofi(guildId: string): Promise<KofiMapping[]> {
+    const {data} = await client.get<KofiMapping[]>(`/api/admin/g/${guildId}/kofi`)
+    return data
+}
+
+export async function createKofi(guildId: string, linkCode: string, productId: number): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/kofi`, {linkCode, productId})
+}
+
+export async function getTrialInfo(guildId: string): Promise<TrialInfo> {
+    const {data} = await client.get<TrialInfo>(`/api/admin/g/${guildId}/trial`)
+    return data
+}
+
+export async function listMailings(guildId: string): Promise<MailingTemplate[]> {
+    const {data} = await client.get<MailingTemplate[]>(`/api/admin/g/${guildId}/mailing`)
     return data
 }

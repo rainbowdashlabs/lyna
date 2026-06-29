@@ -7,6 +7,7 @@ import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.mail.MailingService;
@@ -21,9 +22,10 @@ public class V1 {
     private final de.chojo.lyna.web.api.v1.products.Products products;
     private final Releases releases;
 
-    public V1(Api api, Products products, MailingService mailingService, KoFiProducts koFiProducts) {
+    public V1(Api api, Products products, MailingService mailingService, KoFiProducts koFiProducts, DownloadLog downloadLog) {
         this.api = api;
         download = new Download(this, products);
+        download.proxy().downloadLog(downloadLog);
         update = new Update(this, products);
         kofi = new KoFiApi(this, koFiProducts, mailingService);
         this.products = new de.chojo.lyna.web.api.v1.products.Products(this, products);

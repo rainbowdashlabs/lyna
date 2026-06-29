@@ -21,6 +21,10 @@ public class Mailing {
         this.mailText = mailText;
     }
 
+    public int id() {
+        return id;
+    }
+
     public Product product() {
         return product;
     }

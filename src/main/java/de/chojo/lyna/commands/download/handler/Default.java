@@ -198,8 +198,15 @@ public class Default implements SlashHandler {
         AssetXO asset = assetVersion.asset();
         String url = api.v1().download().proxy()
                         .registerAsset(new AssetDownload(asset.id(),
-                                () -> assetVersion.download().downloaded(asset.maven2().version())
-                                , "%s(%s)".formatted(member.getUser().getName(), member.getId())));
+                                () -> assetVersion.download().downloaded(asset.maven2().version()),
+                                "%s(%s)".formatted(member.getUser().getName(), member.getId()),
+                                assetVersion.download().product().id(),
+                                assetVersion.download().id(),
+                                asset.maven2().version(),
+                                "license",
+                                null,
+                                member.getIdLong(),
+                                null));
         ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
         }));
         ctx.entry().hidden();
