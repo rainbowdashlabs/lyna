@@ -32,6 +32,10 @@ dependencies {
     implementation("io.javalin.community.openapi:javalin-openapi-plugin:$openapi") // for /openapi route with JSON scheme
     implementation("io.javalin.community.openapi:javalin-swagger-plugin:$openapi") // for Swagger UI
 
+    // Auth
+    implementation(libs.bcrypt)
+    implementation(libs.java.jwt)
+
     // Mailing
     implementation("org.eclipse.angus", "angus-mail", "2.0.3")
     implementation("org.jsoup", "jsoup", "1.17.2")

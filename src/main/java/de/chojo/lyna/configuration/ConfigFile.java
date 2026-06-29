@@ -1,8 +1,10 @@
 package de.chojo.lyna.configuration;
 
 import de.chojo.lyna.configuration.elements.Api;
+import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
+import de.chojo.lyna.configuration.elements.Discord;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
@@ -19,6 +21,8 @@ public class ConfigFile {
     private Api api = new Api();
     private Mailing mailing = new Mailing();
     private Kofi kofi = new Kofi();
+    private Auth auth = new Auth();
+    private Discord discord = new Discord();
 
     public BaseSettings baseSettings() {
         return baseSettings;
@@ -48,5 +52,13 @@ public class ConfigFile {
     }
     public Kofi kofi() {
         return kofi;
+    }
+
+    public Auth auth() {
+        return auth;
+    }
+
+    public Discord discord() {
+        return discord;
     }
 }

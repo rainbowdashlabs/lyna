@@ -3,12 +3,17 @@ package de.chojo.lyna.core;
 import com.zaxxer.hikari.HikariDataSource;
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.auth.DiscordOAuthClient;
+import de.chojo.lyna.auth.JwtService;
+import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.Products;
+import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.nexus.NexusRest;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
@@ -32,6 +37,11 @@ public class Data {
     private NexusRest nexus;
     private Mailings mailings;
     private KoFiProducts kofi;
+    private Accounts accounts;
+    private RevokedJtis revokedJtis;
+    private PasswordHasher passwordHasher;
+    private JwtService jwtService;
+    private DiscordOAuthClient discordOAuthClient;
 
     private Data(Threading threading, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -90,6 +100,11 @@ public class Data {
         products = new Products(this.guilds);
         mailings = new Mailings(this.guilds);
         kofi = new KoFiProducts(products);
+        accounts = new Accounts();
+        revokedJtis = new RevokedJtis();
+        passwordHasher = new PasswordHasher();
+        jwtService = new JwtService(configuration.config().auth());
+        discordOAuthClient = new DiscordOAuthClient(configuration.config().discord().oauth());
     }
 
     private HikariDataSource getConnectionPool() {
@@ -140,5 +155,25 @@ public class Data {
 
     public Mailings mailings() {
         return mailings;
+    }
+
+    public Accounts accounts() {
+        return accounts;
+    }
+
+    public RevokedJtis revokedJtis() {
+        return revokedJtis;
+    }
+
+    public PasswordHasher passwordHasher() {
+        return passwordHasher;
+    }
+
+    public JwtService jwtService() {
+        return jwtService;
+    }
+
+    public DiscordOAuthClient discordOAuthClient() {
+        return discordOAuthClient;
     }
 }
