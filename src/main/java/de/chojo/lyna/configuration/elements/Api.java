@@ -10,7 +10,7 @@ public class Api {
     private int port;
     private List<String> allowedOrigins = List.of();
     private List<String> iconHosts = List.of();
-    private boolean staticUi = true;
+    private boolean staticUi = false;
 
     public String hostname() {
         return hostname;
