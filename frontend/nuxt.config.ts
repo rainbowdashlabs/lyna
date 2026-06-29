@@ -9,6 +9,8 @@ export default defineNuxtConfig({
         '/': {ssr: true},
         '/login': {ssr: true},
         '/signup': {ssr: true},
+        '/forgot-password': {ssr: true},
+        '/reset-password': {ssr: true},
         '/account': {ssr: false},
         '/account/**': {ssr: false},
         '/admin': {ssr: false},

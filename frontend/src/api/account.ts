@@ -89,3 +89,11 @@ export async function listDownloads(limit = 25): Promise<DownloadRow[]> {
     const {data} = await client.get<DownloadRow[]>(`/api/account/downloads?limit=${limit}`)
     return data
 }
+
+export async function requestPasswordReset(email: string): Promise<void> {
+    await client.post('/api/auth/password/reset/request', {email})
+}
+
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+    await client.post('/api/auth/password/reset/confirm', {token, newPassword})
+}

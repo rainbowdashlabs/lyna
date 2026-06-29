@@ -7,9 +7,14 @@ public class Links {
     private String support = "";
     private String website = "https://rainbowdashlabs.github.io/lyna/";
     private String faq = "https://rainbowdashlabs.github.io/lyna/faq";
+    private String frontend = "http://localhost:3000";
 
     public String tos() {
         return tos;
+    }
+
+    public String frontend() {
+        return frontend;
     }
 
     public String invite() {

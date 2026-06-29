@@ -33,7 +33,8 @@ public class Api {
         this.nexus = data.nexus();
         v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog());
         auth = new Auth(configuration, data.accounts(), data.accountSessions(), data.revokedJtis(),
-                data.passwordHasher(), data.jwtService(), data.discordOAuthClient());
+                data.passwordResetTokens(), data.passwordHasher(), data.jwtService(),
+                data.discordOAuthClient(), mailingService);
         account = new Account(auth, data.accounts(), data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi());

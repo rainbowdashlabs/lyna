@@ -127,6 +127,10 @@ public class MailingService {
     }
 
 
+    public void send(String to, String subject, String body) {
+        sendMail(new Mail(to, subject, body));
+    }
+
     public void sendMail(Mail mail) {
         Session session = createSession();
         MimeMessage mimeMessage;

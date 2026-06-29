@@ -9,7 +9,9 @@ import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.RevokedJtis;
+import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.DiscordLink;
 import io.javalin.http.Context;
@@ -35,25 +37,31 @@ public class Auth {
     private final Accounts accounts;
     private final AccountSessions accountSessions;
     private final RevokedJtis revokedJtis;
+    private final PasswordResetTokens passwordResetTokens;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final DiscordOAuthClient oauthClient;
+    private final MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     public Auth(Configuration<ConfigFile> configuration,
                 Accounts accounts,
                 AccountSessions accountSessions,
                 RevokedJtis revokedJtis,
+                PasswordResetTokens passwordResetTokens,
                 PasswordHasher passwordHasher,
                 JwtService jwtService,
-                DiscordOAuthClient oauthClient) {
+                DiscordOAuthClient oauthClient,
+                MailingService mailingService) {
         this.configuration = configuration;
         this.accounts = accounts;
         this.accountSessions = accountSessions;
         this.revokedJtis = revokedJtis;
+        this.passwordResetTokens = passwordResetTokens;
         this.passwordHasher = passwordHasher;
         this.jwtService = jwtService;
         this.oauthClient = oauthClient;
+        this.mailingService = mailingService;
     }
 
     public void init() {
@@ -66,7 +74,69 @@ public class Auth {
                 get("start", this::discordStart);
                 get("callback", this::discordCallback);
             });
+            path("password/reset", () -> {
+                post("request", this::passwordResetRequest);
+                post("confirm", this::passwordResetConfirm);
+            });
         });
+    }
+
+    private void passwordResetRequest(Context ctx) {
+        ResetRequest body;
+        try {
+            body = json.readValue(ctx.body(), ResetRequest.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        // Always respond NO_CONTENT regardless of whether an account exists, to avoid leaking
+        // account presence via the response.
+        ctx.status(HttpStatus.NO_CONTENT);
+        if (body.email() == null || body.email().isBlank()) return;
+        var account = accounts.findByEmail(body.email());
+        if (account.isEmpty()) return;
+        var issued = passwordResetTokens.issue(account.get().id(),
+                java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+        String link = configuration.config().links().frontend() + "/reset-password?token=" + issued.token();
+        String subject = "Lyna password reset";
+        String htmlBody = """
+                <p>A password reset was requested for this email.</p>
+                <p>If this was you, follow the link below within the next hour:</p>
+                <p><a href="%s">%s</a></p>
+                <p>If you did not request this, you can ignore the message.</p>
+                """.formatted(link, link);
+        try {
+            mailingService.send(body.email(), subject, htmlBody);
+        } catch (Exception e) {
+            log.warn("Failed to send password reset mail", e);
+        }
+    }
+
+    private void passwordResetConfirm(Context ctx) {
+        ResetConfirm body;
+        try {
+            body = json.readValue(ctx.body(), ResetConfirm.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        if (body.token() == null || body.newPassword() == null || body.newPassword().length() < 8) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("token and an 8+ character newPassword are required");
+            return;
+        }
+        var accountId = passwordResetTokens.consume(body.token());
+        if (accountId.isEmpty()) {
+            ctx.status(HttpStatus.GONE).result("Token is invalid or expired");
+            return;
+        }
+        accounts.setPasswordHash(accountId.get(), passwordHasher.hash(body.newPassword()));
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    public record ResetRequest(String email) {
+    }
+
+    public record ResetConfirm(String token, String newPassword) {
     }
 
     private void signup(Context ctx) {

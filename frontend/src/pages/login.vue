@@ -76,6 +76,10 @@ async function submit() {
         No account? <NuxtLink to="/signup" class="text-primary hover:underline">
           Sign up
         </NuxtLink>
+        <span class="mx-2">·</span>
+        <NuxtLink to="/forgot-password" class="text-primary hover:underline">
+          Forgot password?
+        </NuxtLink>
       </p>
     </form>
   </main>
