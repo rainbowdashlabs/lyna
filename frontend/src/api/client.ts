@@ -18,4 +18,14 @@ client.interceptors.request.use((cfg: InternalAxiosRequestConfig) => {
     return cfg
 })
 
+client.interceptors.response.use(
+    (res) => res,
+    (err) => {
+        if (typeof localStorage !== 'undefined' && err?.response?.status === 401) {
+            localStorage.removeItem('auth')
+        }
+        return Promise.reject(err)
+    },
+)
+
 export default client

@@ -5,6 +5,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
+import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.nexus.NexusRest;
@@ -19,6 +20,7 @@ public class Api {
     private final NexusRest nexus;
     private final V1 v1;
     private final Auth auth;
+    private final Account account;
 
     private static final Logger log = getLogger(Api.class);
 
@@ -27,14 +29,17 @@ public class Api {
         this.configuration = configuration;
         this.nexus = data.nexus();
         v1 = new V1(this, data.products(), mailingService, data.kofi());
-        auth = new Auth(configuration, data.accounts(), data.revokedJtis(),
+        auth = new Auth(configuration, data.accounts(), data.accountSessions(), data.revokedJtis(),
                 data.passwordHasher(), data.jwtService(), data.discordOAuthClient());
+        account = new Account(auth, data.accounts(), data.accountSessions(), data.revokedJtis(),
+                data.downloadLog(), data.passwordHasher(), data.jwtService());
     }
 
     public void init() {
         path("api", () -> {
             v1.init();
             auth.init();
+            account.init();
         });
     }
 
@@ -52,5 +57,9 @@ public class Api {
 
     public Auth auth() {
         return auth;
+    }
+
+    public Account account() {
+        return account;
     }
 }

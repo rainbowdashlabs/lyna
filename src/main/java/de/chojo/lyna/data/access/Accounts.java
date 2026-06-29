@@ -127,6 +127,18 @@ public class Accounts {
                 .update();
     }
 
+    public void setPasswordHash(int accountId, String passwordHash) {
+        query("UPDATE account SET password_hash = ? WHERE id = ?")
+                .single(call().bind(passwordHash).bind(accountId))
+                .update();
+    }
+
+    public void delete(int accountId) {
+        query("DELETE FROM account WHERE id = ?")
+                .single(call().bind(accountId))
+                .delete();
+    }
+
     private static Instant toInstant(Timestamp ts) {
         return ts == null ? null : ts.toInstant();
     }

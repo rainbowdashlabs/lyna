@@ -7,6 +7,7 @@ import de.chojo.lyna.auth.DiscordOAuthClient;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.data.dao.account.Account;
@@ -32,6 +33,7 @@ public class Auth {
 
     private final Configuration<ConfigFile> configuration;
     private final Accounts accounts;
+    private final AccountSessions accountSessions;
     private final RevokedJtis revokedJtis;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
@@ -40,12 +42,14 @@ public class Auth {
 
     public Auth(Configuration<ConfigFile> configuration,
                 Accounts accounts,
+                AccountSessions accountSessions,
                 RevokedJtis revokedJtis,
                 PasswordHasher passwordHasher,
                 JwtService jwtService,
                 DiscordOAuthClient oauthClient) {
         this.configuration = configuration;
         this.accounts = accounts;
+        this.accountSessions = accountSessions;
         this.revokedJtis = revokedJtis;
         this.passwordHasher = passwordHasher;
         this.jwtService = jwtService;
@@ -168,6 +172,7 @@ public class Auth {
             accounts.touchLastLogin(account.id());
         }
         JwtService.Issued issued = jwtService.issue(account.id(), discordUser.id());
+        accountSessions.record(issued.jti(), account.id(), issued.expiresAt(), ctx.header("User-Agent"));
         writeBounceHtml(ctx, issued.token(), existing.isPresent() ? "/account/security?linked=1" : "/account");
     }
 
@@ -188,6 +193,7 @@ public class Auth {
 
     private void issueAndWrite(Context ctx, Account account, Long discordId, HttpStatus status) {
         JwtService.Issued issued = jwtService.issue(account.id(), discordId);
+        accountSessions.record(issued.jti(), account.id(), issued.expiresAt(), ctx.header("User-Agent"));
         ctx.status(status).json(new LoginResponse(
                 issued.token(),
                 issued.expiresAt().toString(),

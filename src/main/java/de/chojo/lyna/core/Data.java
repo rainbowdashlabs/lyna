@@ -8,7 +8,9 @@ import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
+import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Mailings;
@@ -38,7 +40,9 @@ public class Data {
     private Mailings mailings;
     private KoFiProducts kofi;
     private Accounts accounts;
+    private AccountSessions accountSessions;
     private RevokedJtis revokedJtis;
+    private DownloadLog downloadLog;
     private PasswordHasher passwordHasher;
     private JwtService jwtService;
     private DiscordOAuthClient discordOAuthClient;
@@ -101,7 +105,9 @@ public class Data {
         mailings = new Mailings(this.guilds);
         kofi = new KoFiProducts(products);
         accounts = new Accounts();
+        accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();
+        downloadLog = new DownloadLog();
         passwordHasher = new PasswordHasher();
         jwtService = new JwtService(configuration.config().auth());
         discordOAuthClient = new DiscordOAuthClient(configuration.config().discord().oauth());
@@ -161,8 +167,16 @@ public class Data {
         return accounts;
     }
 
+    public AccountSessions accountSessions() {
+        return accountSessions;
+    }
+
     public RevokedJtis revokedJtis() {
         return revokedJtis;
+    }
+
+    public DownloadLog downloadLog() {
+        return downloadLog;
     }
 
     public PasswordHasher passwordHasher() {
