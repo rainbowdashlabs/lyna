@@ -3,7 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCach
 plugins {
     alias(libs.plugins.shadow)
     java
-    id("org.openrewrite.rewrite") version "7.35.0"
+    id("org.openrewrite.rewrite") version "7.36.0"
 }
 
 group = "de.chojo"
