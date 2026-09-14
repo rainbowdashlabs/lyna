@@ -116,17 +116,17 @@ function fmt(iso: string | null): string {
 
 <template>
   <div class="space-y-6">
-    <h1 class="text-2xl font-bold">
+    <PageHeader>
       Security
-    </h1>
+    </PageHeader>
     <div v-if="loading" class="flex justify-center py-12">
       <Spinner size="lg" />
     </div>
     <template v-else-if="summary">
       <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
-        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider opacity-70">
+        <CardHeader>
           Password
-        </h2>
+        </CardHeader>
         <form class="space-y-3" @submit.prevent="doChangePassword">
           <label v-if="summary.account.hasPassword" class="block text-sm">
             <span>Current password</span>
@@ -170,9 +170,9 @@ function fmt(iso: string | null): string {
       </section>
 
       <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
-        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider opacity-70">
+        <CardHeader>
           Discord
-        </h2>
+        </CardHeader>
         <div v-if="summary.account.discordId" class="space-y-2 text-sm">
           <div>
             <span class="opacity-70">Linked id:</span> {{ summary.account.discordId }}
@@ -200,7 +200,7 @@ function fmt(iso: string | null): string {
       </section>
 
       <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
-        <h2 class="mb-3 flex items-center justify-between text-sm font-semibold uppercase tracking-wider opacity-70">
+        <CardHeader class="flex items-center justify-between">
           <span>Sessions</span>
           <button
               v-if="sessions.length > 1"
@@ -209,13 +209,13 @@ function fmt(iso: string | null): string {
           >
             End all other sessions
           </button>
-        </h2>
+        </CardHeader>
         <ul v-if="sessions.length" class="divide-y divide-border-light dark:divide-border-dark text-sm">
           <li v-for="s in sessions" :key="s.jti" class="flex items-center justify-between py-2">
             <div class="min-w-0">
               <div class="truncate font-medium">
                 {{ s.userAgent ?? 'Unknown client' }}
-                <span v-if="s.current" class="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">This device</span>
+                <PrimaryBadge v-if="s.current" class="ml-2">This device</PrimaryBadge>
               </div>
               <div class="text-xs opacity-60">
                 Started {{ fmt(s.issuedAt) }} · last seen {{ fmt(s.lastSeenAt) }}
@@ -236,9 +236,9 @@ function fmt(iso: string | null): string {
       </section>
 
       <section class="rounded-theme border border-error/40 p-4">
-        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-error">
+        <CardHeader tone="error">
           Delete account
-        </h2>
+        </CardHeader>
         <p class="mb-3 text-sm">
           Deleting your account removes your email and password. Any licenses tied to your linked Discord id stay in place;
           you can re-link them later.

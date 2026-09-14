@@ -37,9 +37,9 @@ function fmtMinutes(min: number): string {
 
 <template>
   <div>
-    <h1 class="mb-4 text-2xl font-bold">
+    <PageHeader class="mb-4">
       Trial
-    </h1>
+    </PageHeader>
     <div v-if="loading" class="flex justify-center py-12">
       <Spinner size="lg" />
     </div>
@@ -62,9 +62,9 @@ function fmtMinutes(min: number): string {
         </p>
       </section>
       <section>
-        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider opacity-70">
+        <CardHeader>
           Products
-        </h2>
+        </CardHeader>
         <ul v-if="info.products.length" class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark text-sm">
           <li v-for="p in info.products" :key="p.id" class="p-3">
             {{ p.name }}

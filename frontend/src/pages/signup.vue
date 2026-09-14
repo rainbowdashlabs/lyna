@@ -3,7 +3,6 @@ import {ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {signup} from '~/api/account'
 import {useSession} from '~/composables/useSession'
-import PrimaryButton from '~/components/button/PrimaryButton.vue'
 
 const router = useRouter()
 const {setToken, hydrate} = useSession()
@@ -47,59 +46,28 @@ async function submit() {
 
 <template>
   <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
-    <h1 class="mb-6 text-2xl font-bold">
+    <PageHeader class="mb-6">
       Sign up
-    </h1>
+    </PageHeader>
     <form class="space-y-4" @submit.prevent="submit">
-      <label class="block">
-        <span class="text-sm font-medium">Email</span>
-        <input
-            v-model="email"
-            type="email"
-            required
-            autocomplete="email"
-            class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-        />
-      </label>
-      <label class="block">
-        <span class="text-sm font-medium">Password</span>
-        <input
-            v-model="password"
-            type="password"
-            required
-            minlength="8"
-            autocomplete="new-password"
-            class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-        />
-      </label>
-      <label class="block">
-        <span class="text-sm font-medium">Confirm password</span>
-        <input
-            v-model="passwordConfirm"
-            type="password"
-            required
-            minlength="8"
-            autocomplete="new-password"
-            class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-        />
-      </label>
-      <div v-if="errorMessage" class="rounded-theme border border-error/40 bg-error/10 p-2 text-sm text-error">
-        {{ errorMessage }}
-      </div>
+      <LabelledField label="Email">
+        <EmailInput v-model="email" autocomplete="email" required/>
+      </LabelledField>
+      <LabelledField label="Password">
+        <PasswordInput v-model="password" autocomplete="new-password" minlength="8" required/>
+      </LabelledField>
+      <LabelledField label="Confirm password">
+        <PasswordInput v-model="passwordConfirm" autocomplete="new-password" minlength="8" required/>
+      </LabelledField>
+      <Alert v-if="errorMessage" variant="error">{{ errorMessage }}</Alert>
       <PrimaryButton :disabled="submitting" full-width @click="submit">
         {{ submitting ? 'Creating account…' : 'Sign up' }}
       </PrimaryButton>
-      <a
-          href="/api/auth/discord/start"
-          class="block w-full rounded-theme border border-border-light dark:border-border-dark py-2 text-center font-medium hover:bg-primary/10"
-      >
-        Continue with Discord
-      </a>
-      <p class="text-center text-sm opacity-70">
-        Already have an account? <NuxtLink to="/login" class="text-primary hover:underline">
-          Log in
-        </NuxtLink>
-      </p>
+      <DiscordLoginLink/>
+      <MutedText class="block text-center" size="sm" tag="p">
+        Already have an account?
+        <NuxtLink class="text-primary hover:underline" to="/login">Log in</NuxtLink>
+      </MutedText>
     </form>
   </main>
 </template>

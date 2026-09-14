@@ -8,9 +8,9 @@ onMounted(load)
 
 <template>
   <main class="mx-auto max-w-2xl p-6">
-    <h1 class="mb-4 text-2xl font-bold">
+    <PageHeader class="mb-4">
       Select a guild
-    </h1>
+    </PageHeader>
     <p class="mb-6 opacity-70">
       You administer more than one guild. Pick one to continue.
     </p>

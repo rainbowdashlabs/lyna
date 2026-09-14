@@ -32,9 +32,9 @@ function filtered(): KioskProduct[] {
   <main class="min-h-screen pb-12">
     <header class="border-b border-border-light dark:border-border-dark bg-primary py-6 text-primary-text">
       <div class="mx-auto max-w-6xl px-4">
-        <h1 class="text-2xl font-bold tracking-tight">
+        <PageHeader>
           Lyna Download Center
-        </h1>
+        </PageHeader>
         <p class="opacity-80">
           Browse and download plugin releases.
         </p>

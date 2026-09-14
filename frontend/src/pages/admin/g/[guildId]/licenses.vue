@@ -69,9 +69,9 @@ async function submitCreate() {
 <template>
   <div>
     <header class="mb-4 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">
+      <PageHeader>
         Licenses
-      </h1>
+      </PageHeader>
       <PrimaryButton @click="showCreate = !showCreate; issuedKey = null">
         {{ showCreate ? 'Cancel' : 'Issue license' }}
       </PrimaryButton>
@@ -81,9 +81,9 @@ async function submitCreate() {
         v-if="showCreate"
         class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4"
     >
-      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider opacity-70">
+      <CardHeader>
         Issue license
-      </h2>
+      </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block text-sm">
           <span>Product</span>

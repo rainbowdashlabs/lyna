@@ -23,9 +23,9 @@ onMounted(async () => {
 
 <template>
   <div>
-    <h1 class="mb-4 text-2xl font-bold">
+    <PageHeader class="mb-4">
       System
-    </h1>
+    </PageHeader>
     <div v-if="loading" class="flex justify-center py-12">
       <Spinner size="lg" />
     </div>

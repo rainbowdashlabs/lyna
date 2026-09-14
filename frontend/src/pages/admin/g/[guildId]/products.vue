@@ -76,9 +76,9 @@ async function submitCreate() {
 <template>
   <div>
     <header class="mb-4 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">
+      <PageHeader>
         Products
-      </h1>
+      </PageHeader>
       <PrimaryButton @click="showCreate = !showCreate">
         {{ showCreate ? 'Cancel' : 'New product' }}
       </PrimaryButton>
@@ -88,9 +88,9 @@ async function submitCreate() {
         v-if="showCreate"
         class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4"
     >
-      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider opacity-70">
+      <CardHeader>
         Create product
-      </h2>
+      </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block text-sm">
           <span>Name</span>
@@ -118,10 +118,10 @@ async function submitCreate() {
           />
         </label>
         <label class="flex items-center gap-2 text-sm">
-          <input v-model="createFree" type="checkbox" /> Free product
+          <CheckboxInput v-model="createFree"/> Free product
         </label>
         <label class="flex items-center gap-2 text-sm">
-          <input v-model="createTrial" type="checkbox" /> Trial available
+          <CheckboxInput v-model="createTrial"/> Trial available
         </label>
       </div>
       <div v-if="createError" class="mt-2 text-sm text-error">

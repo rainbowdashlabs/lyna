@@ -48,9 +48,9 @@ async function goToLogin() {
 
 <template>
   <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
-    <h1 class="mb-6 text-2xl font-bold">
+    <PageHeader class="mb-6">
       Set a new password
-    </h1>
+    </PageHeader>
     <template v-if="!done">
       <form class="space-y-4" @submit.prevent="submit">
         <label class="block">

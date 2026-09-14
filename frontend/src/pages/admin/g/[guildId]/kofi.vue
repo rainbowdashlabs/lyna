@@ -62,16 +62,16 @@ async function submit() {
 
 <template>
   <div>
-    <h1 class="mb-4 text-2xl font-bold">
+    <PageHeader class="mb-4">
       Ko-fi mappings
-    </h1>
+    </PageHeader>
     <p class="mb-4 text-sm opacity-70">
       Map Ko-fi direct-link codes to products. Used when a Ko-fi webhook arrives — the matching product issues a license.
     </p>
     <section class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4">
-      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider opacity-70">
+      <CardHeader>
         Add or update mapping
-      </h2>
+      </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block text-sm">
           <span>Link code</span>

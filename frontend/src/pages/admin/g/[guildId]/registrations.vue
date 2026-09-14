@@ -36,9 +36,9 @@ async function submit() {
 
 <template>
   <div>
-    <h1 class="mb-4 text-2xl font-bold">
+    <PageHeader class="mb-4">
       Registrations
-    </h1>
+    </PageHeader>
     <p class="mb-4 text-sm opacity-70">
       Look up a registration by Discord user id.
     </p>
@@ -69,9 +69,9 @@ async function submit() {
         </div>
       </div>
       <section>
-        <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider opacity-70">
+        <CardHeader>
           Owned ({{ result.ownedLicenses.length }})
-        </h2>
+        </CardHeader>
         <ul v-if="result.ownedLicenses.length" class="divide-y divide-border-light dark:divide-border-dark">
           <li v-for="l in result.ownedLicenses" :key="l.id" class="py-1">
             <span class="font-medium">{{ l.productName }}</span>
@@ -83,9 +83,9 @@ async function submit() {
         </div>
       </section>
       <section>
-        <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider opacity-70">
+        <CardHeader>
           Shared with ({{ result.sharedLicenses.length }})
-        </h2>
+        </CardHeader>
         <ul v-if="result.sharedLicenses.length" class="divide-y divide-border-light dark:divide-border-dark">
           <li v-for="l in result.sharedLicenses" :key="l.id" class="py-1">
             <span class="font-medium">{{ l.productName }}</span>

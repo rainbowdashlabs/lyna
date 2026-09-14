@@ -100,12 +100,10 @@ function formatPublished(seconds: number): string {
   >
     <div class="flex max-h-[90vh] w-full max-w-lg flex-col rounded-theme bg-bg-light dark:bg-bg-dark shadow-2xl">
       <header class="flex items-center justify-between border-b border-border-light dark:border-border-dark p-4">
-        <h3 class="text-lg font-semibold">
+        <SubHeader>
           {{ product.name }}
-        </h3>
-        <button class="opacity-70 hover:opacity-100" aria-label="Close" @click="close">
-          <font-awesome-icon :icon="['fas', 'xmark']" />
-        </button>
+        </SubHeader>
+        <IconButton :icon="['fas', 'xmark']" class="opacity-70 hover:opacity-100" label="Close" @click="close"/>
       </header>
 
       <nav class="px-4 pt-3 text-xs opacity-70">

@@ -35,17 +35,36 @@
     --color-border-light: #cfcfcf;
     --color-border-dark: #2a2d36;
 
+    /* Contrast-safe colours for badges and labels on page backgrounds; useTheme recomputes these per theme. */
+    --color-primary-badge: #AD1849;
+    --color-secondary-badge: #1a6fb5;
+    --color-info-badge: #af7501;
+    --color-success-badge: #00A006;
+    --color-error-badge: #ec2929;
+
     --radius-theme: 0.5rem;
 }
 
-html {
-    background-color: var(--color-bg-light);
-    color: var(--color-text-light);
+:root {
+    --bg: var(--color-bg-light);
+    --bg-accent: var(--color-bg-light-accent);
+    --text: var(--color-text-light);
+    --text-muted: #666666;
+    --border: var(--color-border-light);
+    --link: var(--color-primary);
 }
 
 html.dark {
-    background-color: var(--color-bg-dark);
-    color: var(--color-text-dark);
+    --bg: var(--color-bg-dark);
+    --bg-accent: var(--color-bg-dark-accent);
+    --text: var(--color-text-dark);
+    --text-muted: #9ca3af;
+    --border: var(--color-border-dark);
+}
+
+html {
+    background-color: var(--bg);
+    color: var(--text);
 }
 
 body {

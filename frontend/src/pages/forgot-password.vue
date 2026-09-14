@@ -20,9 +20,9 @@ async function submit() {
 
 <template>
   <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
-    <h1 class="mb-6 text-2xl font-bold">
+    <PageHeader class="mb-6">
       Reset password
-    </h1>
+    </PageHeader>
     <template v-if="!submitted">
       <p class="mb-4 text-sm opacity-70">
         Enter the email associated with your account. If we find a match we'll send a reset link valid for one hour.

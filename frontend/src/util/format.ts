@@ -41,20 +41,20 @@ export function formatTime(value?: string | null): string {
 }
 
 /**
- * Formats a moment or a calendar date as `dd.MM.yyyy`. Returns an empty string when the input is
+ * Formats a moment or a calendar date as `dd/MM/yyyy`. Returns an empty string when the input is
  * missing or is not a date at all.
  */
 export function formatDate(value?: string | null): string {
     if (!value) return ''
     const date = asDate(value)
     if (Number.isNaN(date.getTime())) return ''
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString('en-GB', {
         day: '2-digit', month: '2-digit', year: 'numeric',
     })
 }
 
 /**
- * Formats a moment or a calendar date with its weekday in front - `Montag, 12.10.2026` - for the
+ * Formats a moment or a calendar date with its weekday in front - `Monday, 12/10/2026` - for the
  * places that name a single day and want it recognised at a glance. Returns an empty string when
  * the input is missing.
  *
@@ -65,13 +65,13 @@ export function formatWeekdayDate(value?: string | null, weekday: 'long' | 'shor
     if (!value) return ''
     const date = asDate(value)
     if (Number.isNaN(date.getTime())) return ''
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString('en-GB', {
         weekday, day: '2-digit', month: '2-digit', year: 'numeric',
     })
 }
 
 /**
- * Formats a moment or a calendar date as `dd.MM.` for the narrow places, such as the deadline chip
+ * Formats a moment or a calendar date as `dd/MM` for the narrow places, such as the deadline chip
  * on a board card, where the year would take room the card has not got. Returns an empty string
  * when the input is missing.
  */
@@ -79,10 +79,10 @@ export function formatDayMonth(value?: string | null): string {
     if (!value) return ''
     const date = asDate(value)
     if (Number.isNaN(date.getTime())) return ''
-    return date.toLocaleDateString('de-DE', {day: '2-digit', month: '2-digit'})
+    return date.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit'})
 }
 
-const WEEKDAYS = ['', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+const WEEKDAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 /**
  * The name of a weekday given as a number the way the calendar counts them, 1 for Monday through
@@ -93,47 +93,47 @@ export function weekdayName(dayOfWeek: number): string {
 }
 
 /**
- * Formats a moment or a calendar date as a long German date - `27. Juli 2026` - for editorial
+ * Formats a moment or a calendar date as a long date - `27 July 2026` - for editorial
  * surfaces such as blog posts and release notes. Returns an empty string when the input is missing.
  */
 export function formatDateLong(value?: string | null): string {
     if (!value) return ''
     const date = asDate(value)
     if (Number.isNaN(date.getTime())) return ''
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString('en-GB', {
         year: 'numeric', month: 'long', day: 'numeric',
     })
 }
 
 /**
- * Formats a moment as `dd.MM.yyyy, HH:mm` in the reader's own time zone. Returns an empty string
+ * Formats a moment as `dd/MM/yyyy, HH:mm` in the reader's own time zone. Returns an empty string
  * when the input is missing. Mirrors the most common date and time display used across views.
  */
 export function formatDateTime(value?: string | null): string {
     if (!value) return ''
     const date = asDate(value)
     if (Number.isNaN(date.getTime())) return ''
-    return date.toLocaleString('de-DE', {
+    return date.toLocaleString('en-GB', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
     })
 }
 
 /**
- * Formats an ISO timestamp as a German relative time - "gerade eben", "vor 5 Min.",
- * "vor 3 Std.", "vor 2 Tagen" - falling back to the absolute date after 30 days.
+ * Formats an ISO timestamp as a relative time - "just now", "5 min ago", "3 hrs ago",
+ * "2 days ago" - falling back to the absolute date after 30 days.
  * Returns an empty string when the input is missing.
  */
 export function formatRelative(iso?: string | null): string {
     if (!iso) return ''
     const diffMs = Date.now() - new Date(iso).getTime()
     const diffMin = Math.floor(diffMs / 60000)
-    if (diffMin < 1) return 'gerade eben'
-    if (diffMin < 60) return `vor ${diffMin} Min.`
+    if (diffMin < 1) return 'just now'
+    if (diffMin < 60) return `${diffMin} min ago`
     const diffH = Math.floor(diffMin / 60)
-    if (diffH < 24) return `vor ${diffH} Std.`
+    if (diffH < 24) return `${diffH} hr${diffH > 1 ? 's' : ''} ago`
     const diffD = Math.floor(diffH / 24)
-    if (diffD <= 30) return `vor ${diffD} Tag${diffD > 1 ? 'en' : ''}`
+    if (diffD <= 30) return `${diffD} day${diffD > 1 ? 's' : ''} ago`
     return formatDate(iso)
 }
 

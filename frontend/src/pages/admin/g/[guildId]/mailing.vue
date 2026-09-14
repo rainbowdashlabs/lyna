@@ -31,9 +31,9 @@ onMounted(load)
 
 <template>
   <div>
-    <h1 class="mb-4 text-2xl font-bold">
+    <PageHeader class="mb-4">
       Mailing templates
-    </h1>
+    </PageHeader>
     <p class="mb-4 text-sm opacity-70">
       Templates currently configured per product. Edit body text with the
       <code class="font-mono">/mailing</code> slash command until the editor lands on the web.

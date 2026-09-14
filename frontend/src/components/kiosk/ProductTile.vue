@@ -19,9 +19,9 @@ const emit = defineEmits<{
     <header class="flex items-start gap-3">
       <ProductMonogram :name="product.name" />
       <div class="min-w-0 flex-1">
-        <h2 class="truncate text-lg font-semibold">
+        <SectionHeader class="truncate">
           {{ product.name }}
-        </h2>
+        </SectionHeader>
         <p v-if="product.url" class="truncate text-xs opacity-60">
           <a :href="product.url" target="_blank" rel="noopener noreferrer">project page →</a>
         </p>
