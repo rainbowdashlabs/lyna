@@ -3,50 +3,72 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {config, library, type IconDefinition} from '@fortawesome/fontawesome-svg-core'
+import {config, library} from '@fortawesome/fontawesome-svg-core'
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome'
 
-import {faArrowLeft} from '@fortawesome/free-solid-svg-icons/faArrowLeft'
-import {faArrowRight} from '@fortawesome/free-solid-svg-icons/faArrowRight'
-import {faCartShopping} from '@fortawesome/free-solid-svg-icons/faCartShopping'
-import {faCheck} from '@fortawesome/free-solid-svg-icons/faCheck'
-import {faCircleHalfStroke} from '@fortawesome/free-solid-svg-icons/faCircleHalfStroke'
-import {faCircleExclamation} from '@fortawesome/free-solid-svg-icons/faCircleExclamation'
-import {faCircleInfo} from '@fortawesome/free-solid-svg-icons/faCircleInfo'
-import {faCircleNotch} from '@fortawesome/free-solid-svg-icons/faCircleNotch'
-import {faCircleXmark} from '@fortawesome/free-solid-svg-icons/faCircleXmark'
-import {faDownload} from '@fortawesome/free-solid-svg-icons/faDownload'
-import {faMoon} from '@fortawesome/free-solid-svg-icons/faMoon'
-import {faSpinner} from '@fortawesome/free-solid-svg-icons/faSpinner'
-import {faSun} from '@fortawesome/free-solid-svg-icons/faSun'
-import {faTriangleExclamation} from '@fortawesome/free-solid-svg-icons/faTriangleExclamation'
-import {faXmark} from '@fortawesome/free-solid-svg-icons/faXmark'
-import {faGithub} from '@fortawesome/free-brands-svg-icons/faGithub'
-
-config.autoAddCss = false
-
-const icons: IconDefinition[] = [
+import {
     faArrowLeft,
     faArrowRight,
     faCartShopping,
     faCheck,
-    faCircleHalfStroke,
+    faChevronDown,
+    faChevronRight,
     faCircleExclamation,
+    faCircleHalfStroke,
     faCircleInfo,
     faCircleNotch,
     faCircleXmark,
     faDownload,
+    faMagnifyingGlass,
     faMoon,
+    faPen,
+    faPlus,
     faSpinner,
     faSun,
+    faTrash,
     faTriangleExclamation,
     faXmark,
-    faGithub,
-]
-for (const icon of icons) library.add(icon)
+} from '@fortawesome/free-solid-svg-icons'
+import {faGithub} from '@fortawesome/free-brands-svg-icons'
 
+config.autoAddCss = false
+
+/**
+ * Registers every icon the application is allowed to render.
+ *
+ * <p>One `library.add()` call per icon rather than one call carrying all of them: the bundled API
+ * declares a signature wide enough that building the overload union for twenty arguments at once
+ * overruns TypeScript's complexity budget.
+ */
+library.add(faArrowLeft)
+library.add(faArrowRight)
+library.add(faCartShopping)
+library.add(faCheck)
+library.add(faChevronDown)
+library.add(faChevronRight)
+library.add(faCircleExclamation)
+library.add(faCircleHalfStroke)
+library.add(faCircleInfo)
+library.add(faCircleNotch)
+library.add(faCircleXmark)
+library.add(faDownload)
+library.add(faMagnifyingGlass)
+library.add(faMoon)
+library.add(faPen)
+library.add(faPlus)
+library.add(faSpinner)
+library.add(faSun)
+library.add(faTrash)
+library.add(faTriangleExclamation)
+library.add(faXmark)
+library.add(faGithub)
+
+/**
+ * Registers the icon component globally.
+ *
+ * <p>`FontAwesomeIcon`'s own component type carries a deeply nested overload union that overruns
+ * TypeScript's complexity budget at the call site, so it is widened before being handed over.
+ */
 export default defineNuxtPlugin((nuxtApp) => {
-    // FontAwesomeIcon's component type contains a deeply nested overload union
-    // that overruns TS's complexity budget; cast keeps the call site sane.
     nuxtApp.vueApp.component('font-awesome-icon', FontAwesomeIcon as unknown as object)
 })

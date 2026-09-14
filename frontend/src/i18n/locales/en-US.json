@@ -8,7 +8,12 @@
     "loading": "Loading…",
     "back": "Back",
     "close": "Close",
-    "search": "Search"
+    "search": "Search",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "revoke": "Revoke",
+    "add": "Add",
+    "remove": "Remove"
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -26,5 +31,8 @@
     "email": "Email",
     "password": "Password",
     "loginWithDiscord": "Continue with Discord"
+  },
+  "tableFilter": {
+    "sortBy": "Sort by {column}"
   }
 }

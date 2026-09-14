@@ -5,6 +5,15 @@ export default defineNuxtConfig({
 
     css: ['~/style.css'],
 
+    modules: ['@nuxtjs/i18n'],
+
+    i18n: {
+        restructureDir: 'src/i18n',
+        defaultLocale: 'en-US',
+        strategy: 'no_prefix',
+        locales: [{code: 'en-US', language: 'en-US', file: 'en-US.json'}],
+    },
+
     routeRules: {
         '/': {ssr: true},
         '/login': {ssr: true},
