@@ -7,7 +7,19 @@
     "dev": "nuxi dev --host 0.0.0.0",
     "build": "nuxi build",
     "preview": "nuxi preview",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "lint:icons": "node scripts/lint-icons.mjs",
+    "lint:conventions": "node scripts/lint-conventions.mjs",
+    "lint:locales": "node scripts/lint-locales.mjs",
+    "lint:imports": "node scripts/lint-imports.mjs",
+    "lint:style": "node scripts/lint-style.mjs",
+    "lint:stacked-text": "node scripts/lint-stacked-text.mjs",
+    "lint:component-size": "node scripts/lint-component-size.mjs",
+    "lint:i18n-keys": "node scripts/lint-i18n-keys.mjs",
+    "lint:duplication": "node scripts/lint-duplication.mjs",
+    "lint:standalone": "node scripts/lint-standalone.mjs",
+    "lint": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent",
+    "lint:audit": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent && npm run lint:i18n-keys --silent && npm run lint:duplication --silent || true"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
