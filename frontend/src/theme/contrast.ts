@@ -28,3 +28,41 @@ export function contrastRatio(hex1: string, hex2: string): number {
 export function contrastTextColor(bgHex: string): string {
     return contrastRatio(bgHex, WHITE) >= contrastRatio(bgHex, DARK) ? WHITE : DARK
 }
+
+function hexToRgb(hex: string): [number, number, number] {
+    return [
+        parseInt(hex.slice(1, 3), 16),
+        parseInt(hex.slice(3, 5), 16),
+        parseInt(hex.slice(5, 7), 16),
+    ]
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+    return '#' + [r, g, b].map(c => Math.round(Math.max(0, Math.min(255, c))).toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Darkens or lightens a colour until it reads against the background it sits on.
+ *
+ * <p>A theme's accent is chosen to look right as a fill, and the same value as text on the page
+ * background is often unreadable. Badges and labels go through here so they stay legible in every
+ * theme without each theme having to name a second colour for them.
+ */
+export function ensureContrast(fgHex: string, bgHex: string, minRatio: number = 4.5): string {
+    if (contrastRatio(fgHex, bgHex) >= minRatio) return fgHex
+
+    const bgLum = relativeLuminance(bgHex)
+    const [r, g, b] = hexToRgb(fgHex)
+    const shouldDarken = bgLum > 0.5
+
+    for (let step = 1; step <= 30; step++) {
+        const factor = shouldDarken ? 1 - step * 0.03 : 1 + step * 0.05
+        const adjusted = rgbToHex(
+            shouldDarken ? r * factor : r + (255 - r) * (factor - 1),
+            shouldDarken ? g * factor : g + (255 - g) * (factor - 1),
+            shouldDarken ? b * factor : b + (255 - b) * (factor - 1),
+        )
+        if (contrastRatio(adjusted, bgHex) >= minRatio) return adjusted
+    }
+    return shouldDarken ? DARK : WHITE
+}

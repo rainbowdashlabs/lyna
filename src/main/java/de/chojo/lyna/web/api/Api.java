@@ -8,9 +8,10 @@ import de.chojo.lyna.web.WebService;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.auth.Auth;
+import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
-import net.dv8tion.jda.api.sharding.ShardManager;
 import de.chojo.nexus.NexusRest;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -23,6 +24,7 @@ public class Api {
     private final V1 v1;
     private final Auth auth;
     private final Account account;
+    private final Theme theme;
     private final Admin admin;
 
     private static final Logger log = getLogger(Api.class);
@@ -35,8 +37,10 @@ public class Api {
         auth = new Auth(configuration, data.accounts(), data.accountSessions(), data.revokedJtis(),
                 data.passwordResetTokens(), data.passwordHasher(), data.jwtService(),
                 data.discordOAuthClient(), mailingService);
-        account = new Account(auth, data.accounts(), data.accountLicenses(), data.accountSessions(), data.revokedJtis(),
+        account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(),
+                data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
+        theme = new Theme(data.instanceSettings());
         admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi());
     }
 
@@ -45,6 +49,7 @@ public class Api {
             v1.init();
             auth.init();
             account.init();
+            theme.init();
             admin.init();
         });
     }

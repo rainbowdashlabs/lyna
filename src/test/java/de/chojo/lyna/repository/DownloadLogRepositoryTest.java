@@ -1,5 +1,6 @@
 package de.chojo.lyna.repository;
 
+import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -106,6 +109,77 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
         accounts.delete(account.id());
 
         assertEquals(1, countRows("download_log"));
+    }
+
+    @Test
+    @DisplayName("Paging hands out one page at a time and counts the whole match")
+    void pagingCountsTheWholeMatch() {
+        for (int i = 1; i <= 7; i++) {
+            downloadLog.record(account.id(), null, null, productId, downloadId, "1.0." + i, "free", null, null);
+        }
+
+        assertEquals(3, downloadLog.page(account.id(), null, null, null, null, null, 3, 0).size());
+        assertEquals(1, downloadLog.page(account.id(), null, null, null, null, null, 3, 6).size());
+        assertEquals(7, downloadLog.count(account.id(), null, null, null, null, null));
+    }
+
+    @Test
+    @DisplayName("The source filter narrows to one entitlement path")
+    void sourceFilter() {
+        downloadLog.record(account.id(), null, null, productId, downloadId, "free-one", "free", null, null);
+        downloadLog.record(account.id(), null, null, productId, downloadId, "paid-one", "license", null, null);
+
+        List<DownloadLogEntry> paid = downloadLog.page(account.id(), null, null, "license", null, null, 25, 0);
+
+        assertEquals(List.of("paid-one"), paid.stream().map(DownloadLogEntry::version).toList());
+        assertEquals(1, downloadLog.count(account.id(), null, null, "license", null, null));
+    }
+
+    @Test
+    @DisplayName("The product filter narrows to one product")
+    void productFilter() {
+        downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.0", "free", null, null);
+
+        assertEquals(1, downloadLog.count(account.id(), null, productId, null, null, null));
+        assertEquals(0, downloadLog.count(account.id(), null, productId + 999, null, null, null));
+    }
+
+    @Test
+    @DisplayName("The date range leaves out what falls outside it")
+    void dateRangeFilter() {
+        downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.0", "free", null, null);
+
+        Instant now = Instant.now();
+        assertEquals(1, downloadLog.count(account.id(), null, null, null,
+                now.minus(Duration.ofDays(1)), now.plus(Duration.ofDays(1))));
+        assertEquals(0, downloadLog.count(account.id(), null, null, null,
+                now.plus(Duration.ofDays(1)), null));
+        assertEquals(0, downloadLog.count(account.id(), null, null, null,
+                null, now.minus(Duration.ofDays(1))));
+    }
+
+    @Test
+    @DisplayName("No filters at all means every row, which is what an owner reading a license gets")
+    void noAccountFilterMeansEveryRow() {
+        Account other = accounts.create("everyone@example.invalid", "hash");
+        downloadLog.record(account.id(), null, null, productId, downloadId, "mine", "free", null, null);
+        downloadLog.record(other.id(), null, null, productId, downloadId, "theirs", "free", null, null);
+
+        assertEquals(2, downloadLog.count(null, null, null, null, null, null));
+        assertEquals(1, downloadLog.count(account.id(), null, null, null, null, null));
+    }
+
+    @Test
+    @DisplayName("The product filter offers only what the account has actually downloaded")
+    void productOptionsFollowTheHistory() {
+        assertTrue(downloadLog.productsForAccount(account.id()).isEmpty());
+
+        downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.0", "free", null, null);
+        downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.1", "free", null, null);
+
+        List<DownloadLog.ProductOption> options = downloadLog.productsForAccount(account.id());
+        assertEquals(1, options.size());
+        assertEquals("Chatty", options.getFirst().name());
     }
 
     private static int countRows(String table) throws SQLException {

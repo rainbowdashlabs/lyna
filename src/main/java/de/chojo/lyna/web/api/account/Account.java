@@ -6,10 +6,12 @@ import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
+import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.data.dao.account.AccountLicense;
+import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.DiscordLink;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
@@ -19,11 +21,15 @@ import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
 import static io.javalin.apibuilder.ApiBuilder.get;
+import static io.javalin.apibuilder.ApiBuilder.patch;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -34,6 +40,7 @@ public class Account {
     private final Auth auth;
     private final Accounts accounts;
     private final AccountLicenses licenses;
+    private final InstanceSettingsAccess instanceSettings;
     private final AccountSessions sessions;
     private final RevokedJtis revokedJtis;
     private final DownloadLog downloadLog;
@@ -44,6 +51,7 @@ public class Account {
     public Account(Auth auth,
                    Accounts accounts,
                    AccountLicenses licenses,
+                   InstanceSettingsAccess instanceSettings,
                    AccountSessions sessions,
                    RevokedJtis revokedJtis,
                    DownloadLog downloadLog,
@@ -52,6 +60,7 @@ public class Account {
         this.auth = auth;
         this.accounts = accounts;
         this.licenses = licenses;
+        this.instanceSettings = instanceSettings;
         this.sessions = sessions;
         this.revokedJtis = revokedJtis;
         this.downloadLog = downloadLog;
@@ -64,6 +73,7 @@ public class Account {
             get(this::overview);
             delete(this::deleteAccount);
             post("password", this::changePassword);
+            patch("appearance", this::updateAppearance);
             get("sessions", this::listSessions);
             delete("sessions", this::endOtherSessions);
             delete("sessions/{jti}", this::revokeSession);
@@ -211,17 +221,125 @@ public class Account {
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
+    /**
+     * The account's downloads, narrowed by whatever the query names.
+     *
+     * <p>A license filter is honoured only for that license's owner. A sharee asking about the
+     * whole license is quietly narrowed to their own rows rather than refused, which tells them
+     * nothing either way about what the license has seen.
+     */
     private void listDownloads(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
-        int limit;
-        try {
-            limit = Math.min(Math.max(Integer.parseInt(ctx.queryParamAsClass("limit", String.class).getOrDefault("25")), 1), 200);
-        } catch (NumberFormatException e) {
-            limit = 25;
+        int accountId = session.get().accountId();
+        int pageSize = intParam(ctx, "pageSize", 25, 1, 200);
+        int page = Math.max(intParam(ctx, "page", 1, 1, Integer.MAX_VALUE), 1);
+
+        Integer licenseId = filterId(ctx, "license");
+        Integer scopedAccount = accountId;
+        if (licenseId != null) {
+            boolean owns = linkedDiscordId(accountId)
+                    .flatMap(discordId -> licenses.forHolder(licenseId, discordId))
+                    .filter(license -> license.role() == AccountLicense.Role.OWNER)
+                    .isPresent();
+            if (owns) scopedAccount = null;
         }
-        List<DownloadLogEntry> entries = downloadLog.recentForAccount(session.get().accountId(), limit);
-        ctx.json(entries);
+
+        Instant from = instantParam(ctx, "from");
+        Instant to = instantParam(ctx, "to");
+        Integer productId = filterId(ctx, "product");
+        String source = ctx.queryParam("source");
+
+        List<DownloadLogEntry> rows = downloadLog.page(
+                scopedAccount, licenseId, productId, source, from, to, pageSize, (page - 1) * pageSize);
+        int total = downloadLog.count(scopedAccount, licenseId, productId, source, from, to);
+        ctx.json(new DownloadPage(rows, total, page, pageSize,
+                downloadLog.productsForAccount(accountId)));
+    }
+
+    /**
+     * @return the query parameter as a number within the bounds, or the fallback when it is neither
+     */
+    private static int intParam(Context ctx, String name, int fallback, int min, int max) {
+        String raw = ctx.queryParam(name);
+        if (raw == null) return fallback;
+        try {
+            return Math.min(Math.max(Integer.parseInt(raw), min), max);
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    /**
+     * @return the query parameter as an id, or null when it is absent or not one
+     */
+    private static Integer filterId(Context ctx, String name) {
+        String raw = ctx.queryParam(name);
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return Integer.parseInt(raw);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return the query parameter as a moment, or null when it is absent or unreadable
+     */
+    private static Instant instantParam(Context ctx, String name) {
+        String raw = ctx.queryParam(name);
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return raw.length() == 10 ? LocalDate.parse(raw).atStartOfDay(ZoneOffset.UTC).toInstant() : Instant.parse(raw);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Stores what the account chose about how the application looks.
+     *
+     * <p>The operator's policy is applied here rather than only in the page: a theme the operator
+     * did not allow, or a choice they locked, is dropped whatever the request says. The page uses
+     * the same rules to grey the controls out, but a request that gets past them changes nothing.
+     */
+    private void updateAppearance(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        Appearance body;
+        try {
+            body = json.readValue(ctx.body(), Appearance.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
+            return;
+        }
+        var acc = accounts.findById(session.get().accountId());
+        if (acc.isEmpty()) {
+            ctx.status(HttpStatus.UNAUTHORIZED);
+            return;
+        }
+        InstanceSettings policy = instanceSettings.get();
+
+        String theme = acc.get().theme();
+        if (policy.allowUserTheme() && body.theme() != null) {
+            if (!policy.enabledThemes().isEmpty() && !policy.enabledThemes().contains(body.theme())) {
+                ctx.status(HttpStatus.BAD_REQUEST).result("That theme is not available here");
+                return;
+            }
+            theme = body.theme().isBlank() ? null : body.theme();
+        }
+
+        String feel = acc.get().feel();
+        if (policy.allowUserFeel() && !policy.lockFeel() && body.feel() != null) {
+            feel = body.feel().isBlank() ? null : body.feel();
+        }
+
+        String darkMode = body.darkMode() == null
+                ? acc.get().darkMode()
+                : body.darkMode().isBlank() ? null : body.darkMode();
+
+        accounts.setAppearance(acc.get().id(), theme, feel, darkMode);
+        ctx.json(new Appearance(theme, feel, darkMode));
     }
 
     /**
@@ -402,6 +520,13 @@ public class Account {
 
     public record LicenseDetail(LicenseView license, String key, List<String> sharees,
                                 List<DownloadLogEntry> recentDownloads) {
+    }
+
+    public record DownloadPage(List<DownloadLogEntry> rows, int totalRows, int page, int pageSize,
+                               List<DownloadLog.ProductOption> products) {
+    }
+
+    public record Appearance(String theme, String feel, String darkMode) {
     }
 
     public record Sharee(String subject) {

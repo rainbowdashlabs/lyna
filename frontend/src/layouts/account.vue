@@ -6,19 +6,22 @@ import {useSession} from '~/composables/useSession'
 const router = useRouter()
 const {clear, account} = useSession()
 
+/**
+ * Ends the session here whatever the backend answers: the token is gone from this browser either
+ * way, and a backend that could not be told is one the token expires out of on its own.
+ */
 async function doLogout() {
-  try {
-    await logout()
-  } catch {
-    /* ignore — token will still be cleared client-side */
-  }
+  await logout().catch(() => undefined)
   clear()
   await router.replace('/login')
 }
 
 const sidebar = [
   {to: '/account', label: 'Overview', exact: true},
+  {to: '/account/licenses', label: 'Licenses'},
+  {to: '/account/downloads', label: 'Downloads'},
   {to: '/account/security', label: 'Security'},
+  {to: '/account/appearance', label: 'Appearance'},
 ]
 </script>
 

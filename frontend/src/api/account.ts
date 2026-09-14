@@ -18,6 +18,9 @@ export interface AccountInfo {
 
 export interface DownloadRow {
     id: number
+    accountId: number | null
+    discordId: string | null
+    licenseId: number | null
     productId: number
     productName: string
     downloadId: number
@@ -85,8 +88,35 @@ export async function deleteAccount(confirmEmail: string): Promise<void> {
     await client.delete('/api/account', {data: {confirmEmail}})
 }
 
-export async function listDownloads(limit = 25): Promise<DownloadRow[]> {
-    const {data} = await client.get<DownloadRow[]>(`/api/account/downloads?limit=${limit}`)
+export interface ProductOption {
+    id: number
+    name: string
+}
+
+export interface DownloadPage {
+    rows: DownloadRow[]
+    totalRows: number
+    page: number
+    pageSize: number
+    products: ProductOption[]
+}
+
+export interface DownloadFilters {
+    from?: string
+    to?: string
+    product?: number | null
+    source?: string | null
+    license?: number | null
+    page?: number
+    pageSize?: number
+}
+
+export async function listDownloads(filters: DownloadFilters = {}): Promise<DownloadPage> {
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries(filters)) {
+        if (value !== null && value !== undefined && value !== '') params.set(key, String(value))
+    }
+    const {data} = await client.get<DownloadPage>(`/api/account/downloads?${params.toString()}`)
     return data
 }
 
@@ -96,4 +126,48 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
     await client.post('/api/auth/password/reset/confirm', {token, newPassword})
+}
+
+export interface LicenseView {
+    id: number
+    guildId: string
+    productId: number
+    productName: string
+    productUrl: string | null
+    userIdentifier: string
+    releaseTypes: string[]
+    role: 'owner' | 'sharee'
+    ownerDiscordId: string
+    shareesUsed: number
+    shareesCap: number
+}
+
+export interface LicenseList {
+    owned: LicenseView[]
+    shared: LicenseView[]
+}
+
+export interface LicenseDetail {
+    license: LicenseView
+    key: string | null
+    sharees: string[]
+    recentDownloads: DownloadRow[]
+}
+
+export async function listLicenses(): Promise<LicenseList> {
+    const {data} = await client.get<LicenseList>('/api/account/licenses')
+    return data
+}
+
+export async function licenseDetail(id: number): Promise<LicenseDetail> {
+    const {data} = await client.get<LicenseDetail>(`/api/account/licenses/${id}`)
+    return data
+}
+
+export async function addSharee(id: number, subject: string): Promise<void> {
+    await client.post(`/api/account/licenses/${id}/sharees`, {subject})
+}
+
+export async function removeSharee(id: number, discordId: string): Promise<void> {
+    await client.delete(`/api/account/licenses/${id}/sharees/${encodeURIComponent(discordId)}`)
 }

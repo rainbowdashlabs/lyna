@@ -133,6 +133,16 @@ public class Accounts {
                 .update();
     }
 
+    /**
+     * Stores the account's own appearance choices. A null leaves that choice to the operator's
+     * default rather than pinning it, which is what "use the default" means in this table.
+     */
+    public void setAppearance(int accountId, String theme, String feel, String darkMode) {
+        query("UPDATE account SET theme = ?, feel = ?, dark_mode = ? WHERE id = ?")
+                .single(call().bind(theme).bind(feel).bind(darkMode).bind(accountId))
+                .update();
+    }
+
     public void delete(int accountId) {
         query("DELETE FROM account WHERE id = ?")
                 .single(call().bind(accountId))

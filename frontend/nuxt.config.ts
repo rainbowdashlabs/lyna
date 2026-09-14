@@ -36,6 +36,7 @@ export default defineNuxtConfig({
         // Bundled into the server rather than left external, so the server and the browser share one
         // icon library. Kept apart, the registration the plugin performs reaches only one of them and
         // every icon renders empty on the first paint.
+        plugins: ['../server/plugins/theme-script.ts'],
         externals: {
             inline: [
                 '@fortawesome/fontawesome-svg-core',

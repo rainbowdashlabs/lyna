@@ -1,9 +1,18 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 <script lang="ts" setup>
 import {computed} from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   name: string
-}>()
+  /** `sm` for a row, the default for a storefront tile. */
+  size?: 'sm' | 'md'
+}>(), {
+  size: 'md',
+})
 
 const initials = computed(() => {
   const trimmed = props.name.trim()
@@ -16,8 +25,9 @@ const initials = computed(() => {
 
 <template>
   <div
-      class="flex h-16 w-16 items-center justify-center rounded-theme bg-primary text-primary-text text-2xl font-bold select-none"
+      :class="size === 'sm' ? 'h-10 w-10 text-base' : 'h-16 w-16 text-2xl'"
       aria-hidden="true"
+      class="flex items-center justify-center rounded-theme bg-primary font-bold text-primary-text select-none"
   >
     {{ initials }}
   </div>

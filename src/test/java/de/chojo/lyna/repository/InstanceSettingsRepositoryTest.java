@@ -15,11 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class InstanceSettingsRepositoryTest extends RepositoryTestBase {
 
     @Test
-    @DisplayName("A fresh instance already carries its single settings row")
+    @DisplayName("A fresh instance carries its settings row, defaulting to a theme the catalogue knows")
     void migrationSeedsTheRow() {
         InstanceSettings settings = instanceSettings.get();
 
-        assertNotNull(settings.defaultTheme());
+        assertEquals("lyna", settings.defaultTheme());
         assertNotNull(settings.defaultFeel());
         assertTrue(settings.allowUserTheme());
         assertTrue(settings.allowUserFeel());

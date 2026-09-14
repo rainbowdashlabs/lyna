@@ -70,11 +70,10 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("A license carries the release types it grants, stable before dev")
+    @DisplayName("A license carries its release types in the order the enum declares them")
     void releaseTypesAreListed() {
         AccountLicense chatty = accountLicenses.owned(OWNER).getFirst();
 
-        // The column is the RELEASE_TYPE enum, so it sorts the way the type declares its values.
         assertEquals(List.of("STABLE", "DEV"), chatty.releaseTypes());
     }
 

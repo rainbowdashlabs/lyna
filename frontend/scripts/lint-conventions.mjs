@@ -46,7 +46,7 @@ const CAT_DEAD_PROP = 'Dead prop'
 const INLINE_DATE_FORMAT = /\.toLocale(Date|Time)String\(|\.toLocaleString\([^)]*,/
 
 /** Components that are themselves a control, and so render the bare element the rule is about. */
-const BARE_BUTTON_PRIMITIVES = new Set(['Modal', 'TabBar', 'ThemeToggle'])
+const BARE_BUTTON_PRIMITIVES = new Set(['Modal', 'TabBar', 'ThemeSelector', 'ThemeToggle'])
 
 const vueFiles = walk(SRC, '.vue')
 

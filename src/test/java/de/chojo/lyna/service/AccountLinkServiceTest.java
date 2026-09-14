@@ -115,12 +115,16 @@ class AccountLinkServiceTest extends RepositoryTestBase {
         assertEquals(holder.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
     }
 
+    /**
+     * Linking an id another account already holds is refused by the unique constraint on the link
+     * table, which reaches the caller as a runtime exception.
+     */
     private static void assertThrowsOnLink(int accountId) {
         try {
             accounts.link(accountId, DISCORD_ID, DiscordLink.Verification.OAUTH);
             throw new AssertionError("Linking an already held Discord id should have been refused");
         } catch (RuntimeException expected) {
-            // the unique constraint on the link table is what refuses it
+            return;
         }
     }
 }
