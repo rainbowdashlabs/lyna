@@ -119,9 +119,17 @@ public class MailingService {
         return imapStore;
     }
 
+    /**
+     * Builds the mail session from the system properties with the configured mail settings over them.
+     *
+     * <p>The system properties are copied rather than written into. `System.getProperties()` hands
+     * back the live table, so adding the mail settings to it published host, port and protocol
+     * choice to the whole JVM and let anything else holding a session be reconfigured underneath it.
+     */
     private Session createSession() {
         log.debug("Creating new mail session");
-        Properties props = System.getProperties();
+        Properties props = new Properties();
+        props.putAll(System.getProperties());
         Mailing mailing = configuration.config().mailing();
         props.putAll(mailing.properties());
         return Session.getInstance(props, new Authenticator() {

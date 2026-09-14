@@ -67,6 +67,7 @@ class MailingServiceTest {
         Mockito.when(mailing.password()).thenReturn(PASSWORD);
         Mockito.when(mailing.properties()).thenReturn(properties);
         Mockito.when(mailing.pollSeconds()).thenReturn(300);
+        Mockito.when(mailing.enabled()).thenReturn(true);
 
         ConfigFile config = Mockito.mock(ConfigFile.class);
         Mockito.when(config.mailing()).thenReturn(mailing);
