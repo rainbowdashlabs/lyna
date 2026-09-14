@@ -35,7 +35,7 @@ public class Api {
         auth = new Auth(configuration, data.accounts(), data.accountSessions(), data.revokedJtis(),
                 data.passwordResetTokens(), data.passwordHasher(), data.jwtService(),
                 data.discordOAuthClient(), mailingService);
-        account = new Account(auth, data.accounts(), data.accountSessions(), data.revokedJtis(),
+        account = new Account(auth, data.accounts(), data.accountLicenses(), data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi());
     }

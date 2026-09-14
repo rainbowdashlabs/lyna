@@ -1,7 +1,9 @@
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
+import de.chojo.sadu.mapper.wrapper.Row;
 
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -43,18 +45,48 @@ public class DownloadLog {
                 LIMIT ?
                 """)
                 .single(call().bind(accountId).bind(limit))
-                .map(row -> new DownloadLogEntry(
-                        row.getLong("id"),
-                        (Integer) row.getObject("account_id"),
-                        (Long) row.getObject("discord_id"),
-                        (Integer) row.getObject("license_id"),
-                        row.getInt("product_id"),
-                        row.getString("product_name"),
-                        row.getInt("download_id"),
-                        row.getString("version"),
-                        row.getString("source"),
-                        toInstant(row.getTimestamp("downloaded_at"))))
+                .map(DownloadLog::readEntry)
                 .all();
+    }
+
+    /**
+     * What has been downloaded on one license.
+     *
+     * @param licenseId the license
+     * @param accountId when given, only that account's own downloads - which is what a sharee may
+     *                  see; the owner passes null and sees every holder's
+     * @param limit     how many rows at most
+     * @return the downloads, newest first
+     */
+    public List<DownloadLogEntry> recentForLicense(int licenseId, Integer accountId, int limit) {
+        return query("""
+                SELECT dl.id, dl.account_id, dl.discord_id, dl.license_id,
+                       dl.product_id, p.name AS product_name,
+                       dl.download_id, dl.version, dl.source, dl.downloaded_at
+                FROM download_log dl
+                LEFT JOIN product p ON p.id = dl.product_id
+                WHERE dl.license_id = ?
+                  AND (?::INTEGER IS NULL OR dl.account_id = ?::INTEGER)
+                ORDER BY dl.downloaded_at DESC
+                LIMIT ?
+                """)
+                .single(call().bind(licenseId).bind(accountId).bind(accountId).bind(limit))
+                .map(DownloadLog::readEntry)
+                .all();
+    }
+
+    private static DownloadLogEntry readEntry(Row row) throws SQLException {
+        return new DownloadLogEntry(
+                row.getLong("id"),
+                (Integer) row.getObject("account_id"),
+                (Long) row.getObject("discord_id"),
+                (Integer) row.getObject("license_id"),
+                row.getInt("product_id"),
+                row.getString("product_name"),
+                row.getInt("download_id"),
+                row.getString("version"),
+                row.getString("source"),
+                toInstant(row.getTimestamp("downloaded_at")));
     }
 
     private static Instant toInstant(Timestamp ts) {

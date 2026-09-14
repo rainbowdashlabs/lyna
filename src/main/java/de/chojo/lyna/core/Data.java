@@ -8,6 +8,7 @@ import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
+import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
@@ -42,6 +43,7 @@ public class Data {
     private Mailings mailings;
     private KoFiProducts kofi;
     private Accounts accounts;
+    private AccountLicenses accountLicenses;
     private AccountSessions accountSessions;
     private RevokedJtis revokedJtis;
     private DownloadLog downloadLog;
@@ -109,6 +111,7 @@ public class Data {
         mailings = new Mailings(this.guilds);
         kofi = new KoFiProducts(products);
         accounts = new Accounts();
+        accountLicenses = new AccountLicenses();
         accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();
         downloadLog = new DownloadLog();
@@ -175,6 +178,10 @@ public class Data {
 
     public Accounts accounts() {
         return accounts;
+    }
+
+    public AccountLicenses accountLicenses() {
+        return accountLicenses;
     }
 
     public AccountSessions accountSessions() {
