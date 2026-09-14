@@ -1,0 +1,2 @@
+ALTER TABLE lyna.product
+	ADD COLUMN IF NOT EXISTS icon_url TEXT NULL;

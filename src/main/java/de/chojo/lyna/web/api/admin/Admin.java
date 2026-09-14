@@ -8,6 +8,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
+import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.LicenseGuild;
@@ -45,17 +46,21 @@ public class Admin {
     private final Guilds guilds;
     private final InstanceSettingsAccess instanceSettings;
     private final KoFiProducts kofi;
+    private final KioskProducts kioskProducts;
+    private final IconUrls iconUrls = new IconUrls();
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private ShardManager shardManager;
 
     public Admin(Auth auth, Configuration<ConfigFile> configuration, Accounts accounts, Guilds guilds,
-                 InstanceSettingsAccess instanceSettings, KoFiProducts kofi) {
+                 InstanceSettingsAccess instanceSettings, KoFiProducts kofi,
+                 KioskProducts kioskProducts) {
         this.auth = auth;
         this.configuration = configuration;
         this.accounts = accounts;
         this.guilds = guilds;
         this.instanceSettings = instanceSettings;
         this.kofi = kofi;
+        this.kioskProducts = kioskProducts;
     }
 
     public void shardManager(ShardManager shardManager) {
@@ -68,6 +73,7 @@ public class Admin {
             path("g/{guildId}", () -> {
                 get("products", this::listProducts);
                 post("products", this::createProduct);
+                put("products/{productId}/icon", this::setProductIcon);
                 get("licenses", this::listLicenses);
                 post("licenses", this::createLicense);
                 get("registrations/{discordId}", this::registrationInfo);
@@ -100,10 +106,54 @@ public class Admin {
     private void listProducts(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
+        var icons = kioskProducts.all().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        de.chojo.lyna.data.dao.products.KioskProduct::id,
+                        product -> java.util.Optional.ofNullable(product.iconUrl())));
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream()
-                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role()))
+                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(),
+                        icons.getOrDefault(p.id(), java.util.Optional.empty()).orElse(null)))
                 .toList());
+    }
+
+    /**
+     * Points a product's tile at a hosted image, or takes the image away when the address is blank.
+     *
+     * <p>The address is checked before it is stored: an operator who mistypes it should be told so
+     * here rather than by a storefront tile that has quietly lost its icon.
+     */
+    private void setProductIcon(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        int productId;
+        try {
+            productId = Integer.parseInt(ctx.pathParam("productId"));
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return;
+        }
+        if (resolved.guild().products().byId(productId).isEmpty()) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return;
+        }
+        ProductIcon body;
+        try {
+            body = json.readValue(ctx.body(), ProductIcon.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        String url = body == null || body.iconUrl() == null ? "" : body.iconUrl().trim();
+        if (!url.isBlank()) {
+            var rejection = iconUrls.reject(url);
+            if (rejection.isPresent()) {
+                ctx.status(HttpStatus.BAD_REQUEST).result(rejection.get());
+                return;
+            }
+        }
+        kioskProducts.iconUrl(productId, url);
+        ctx.status(HttpStatus.NO_CONTENT);
     }
 
     private void createProduct(Context ctx) {
@@ -135,7 +185,7 @@ public class Admin {
             return;
         }
         var p = product.get();
-        ctx.status(HttpStatus.CREATED).json(new ProductSummary(p.id(), p.name(), p.url(), p.role()));
+        ctx.status(HttpStatus.CREATED).json(new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null));
     }
 
     private void listLicenses(Context ctx) {
@@ -265,7 +315,7 @@ public class Admin {
         if (resolved == null) return;
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
-                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role()))
+                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null))
                 .toList();
         ctx.json(new TrialInfo((int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
     }
@@ -406,7 +456,10 @@ public class Admin {
     public record AdminGuild(String id, String name, String iconUrl, String role) {
     }
 
-    public record ProductSummary(int id, String name, String url, long roleId) {
+    public record ProductSummary(int id, String name, String url, long roleId, boolean free, String iconUrl) {
+    }
+
+    public record ProductIcon(String iconUrl) {
     }
 
     public record CreateProduct(String name, String url, Long roleId, boolean free, boolean trial) {

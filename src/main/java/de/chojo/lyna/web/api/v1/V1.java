@@ -2,12 +2,16 @@ package de.chojo.lyna.web.api.v1;
 
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.web.api.Api;
+import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.DownloadLog;
+import de.chojo.lyna.data.access.AccountLicenses;
+import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.mail.MailingService;
@@ -22,13 +26,15 @@ public class V1 {
     private final de.chojo.lyna.web.api.v1.products.Products products;
     private final Releases releases;
 
-    public V1(Api api, Products products, MailingService mailingService, KoFiProducts koFiProducts, DownloadLog downloadLog) {
+    public V1(Api api, Products products, MailingService mailingService, KoFiProducts koFiProducts,
+              DownloadLog downloadLog, KioskProducts kioskProducts, Auth auth, Accounts accounts,
+              AccountLicenses accountLicenses) {
         this.api = api;
         download = new Download(this, products);
         download.proxy().downloadLog(downloadLog);
         update = new Update(this, products);
         kofi = new KoFiApi(this, koFiProducts, mailingService);
-        this.products = new de.chojo.lyna.web.api.v1.products.Products(this, products);
+        this.products = new de.chojo.lyna.web.api.v1.products.Products(this, kioskProducts, auth, accounts, accountLicenses);
         releases = new Releases(this, products);
     }
 

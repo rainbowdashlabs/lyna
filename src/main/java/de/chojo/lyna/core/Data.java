@@ -14,6 +14,7 @@ import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
+import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.PasswordResetTokens;
@@ -44,6 +45,7 @@ public class Data {
     private KoFiProducts kofi;
     private Accounts accounts;
     private AccountLicenses accountLicenses;
+    private KioskProducts kioskProducts;
     private AccountSessions accountSessions;
     private RevokedJtis revokedJtis;
     private DownloadLog downloadLog;
@@ -112,6 +114,7 @@ public class Data {
         kofi = new KoFiProducts(products);
         accounts = new Accounts();
         accountLicenses = new AccountLicenses();
+        kioskProducts = new KioskProducts();
         accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();
         downloadLog = new DownloadLog();
@@ -182,6 +185,10 @@ public class Data {
 
     public AccountLicenses accountLicenses() {
         return accountLicenses;
+    }
+
+    public KioskProducts kioskProducts() {
+        return kioskProducts;
     }
 
     public AccountSessions accountSessions() {

@@ -33,15 +33,16 @@ public class Api {
         this.web = web;
         this.configuration = configuration;
         this.nexus = data.nexus();
-        v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog());
         auth = new Auth(configuration, data.accounts(), data.accountSessions(), data.revokedJtis(),
                 data.passwordResetTokens(), data.passwordHasher(), data.jwtService(),
                 data.discordOAuthClient(), mailingService);
+        v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog(),
+                data.kioskProducts(), auth, data.accounts(), data.accountLicenses());
         account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(),
                 data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         theme = new Theme(data.instanceSettings());
-        admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi());
+        admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi(), data.kioskProducts());
     }
 
     public void init() {

@@ -7,6 +7,7 @@ import java.sql.Array;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -137,6 +138,27 @@ public class AccountLicenses {
                 .single(call().bind(licenseId))
                 .map(row -> row.getString("key"))
                 .first());
+    }
+
+    /**
+     * The products a Discord id may download, whether it owns the license or was shared one.
+     *
+     * <p>What the storefront needs to decide between a download button and a buy button, in one
+     * query rather than one per tile.
+     *
+     * @param discordId the Discord id the account is linked to
+     * @return the product ids that id is entitled to
+     */
+    public Set<Integer> entitledProductIds(long discordId) {
+        return Set.copyOf(query("""
+                SELECT DISTINCT l.product_id
+                FROM license l
+                WHERE EXISTS (SELECT 1 FROM user_license u WHERE u.license_id = l.id AND u.user_id = ?)
+                   OR EXISTS (SELECT 1 FROM user_sub_license s WHERE s.license_id = l.id AND s.user_id = ?)
+                """)
+                .single(call().bind(discordId).bind(discordId))
+                .map(row -> row.getInt("product_id"))
+                .all());
     }
 
     private static AccountLicense read(Row row, AccountLicense.Role role) throws SQLException {
