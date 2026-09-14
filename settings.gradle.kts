@@ -23,6 +23,21 @@ dependencyResolutionManagement {
             library("log4j-jsontemplate","org.apache.logging.log4j", "log4j-layout-template-json").versionRef("log4j")
             bundle("log4j", listOf("slf4j-api", "log4j-core", "log4j-slf4j2", "log4j-jsontemplate"))
 
+            // testing
+            version("junit", "6.0.1")
+            library("junit-jupiter", "org.junit.jupiter", "junit-jupiter").versionRef("junit")
+            library("junit-params", "org.junit.jupiter", "junit-jupiter-params").versionRef("junit")
+            library("junit-platform", "org.junit.platform:junit-platform-launcher:6.0.1")
+            bundle("junit", listOf("junit-jupiter", "junit-params"))
+            library("mockito", "org.mockito:mockito-core:5.+")
+            library("greenmail", "com.icegreen:greenmail:2.1.9")
+
+            version("testcontainers", "2.0.5")
+            library("testcontainers-core", "org.testcontainers", "testcontainers").versionRef("testcontainers")
+            library("testcontainers-junit", "org.testcontainers", "testcontainers-junit-jupiter").versionRef("testcontainers")
+            library("testcontainers-postgres", "org.testcontainers", "testcontainers-postgresql").versionRef("testcontainers")
+            bundle("testcontainers", listOf("testcontainers-core", "testcontainers-junit", "testcontainers-postgres"))
+
             // plugins
             plugin("spotless", "com.diffplug.spotless").version("6.25.0")
         }
