@@ -53,28 +53,12 @@ async function goToLogin() {
     </PageHeader>
     <template v-if="!done">
       <form class="space-y-4" @submit.prevent="submit">
-        <label class="block">
-          <span class="text-sm font-medium">New password</span>
-          <input
-              v-model="password"
-              type="password"
-              required
-              minlength="8"
-              autocomplete="new-password"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-          />
-        </label>
-        <label class="block">
-          <span class="text-sm font-medium">Confirm new password</span>
-          <input
-              v-model="confirm"
-              type="password"
-              required
-              minlength="8"
-              autocomplete="new-password"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-          />
-        </label>
+        <LabelledField label="New password">
+          <PasswordInput v-model="password" autocomplete="new-password" minlength="8" required/>
+        </LabelledField>
+        <LabelledField label="Confirm new password">
+          <PasswordInput v-model="confirm" autocomplete="new-password" minlength="8" required/>
+        </LabelledField>
         <div v-if="errorMessage" class="rounded-theme border border-error/40 bg-error/10 p-2 text-sm text-error">
           {{ errorMessage }}
         </div>

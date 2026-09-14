@@ -63,33 +63,15 @@ async function save() {
         class="space-y-4 rounded-theme border border-border-light dark:border-border-dark p-4"
         @submit.prevent="save"
     >
-      <label class="block text-sm">
-        <span>License sharee cap</span>
-        <input
-            v-model.number="data.shares"
-            type="number"
-            min="0"
-            class="mt-1 w-32 rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-        />
-      </label>
-      <label class="block text-sm">
-        <span>Trial server time (minutes)</span>
-        <input
-            v-model.number="data.trialServerMinutes"
-            type="number"
-            min="0"
-            class="mt-1 w-32 rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-        />
-      </label>
-      <label class="block text-sm">
-        <span>Trial account time (minutes)</span>
-        <input
-            v-model.number="data.trialAccountMinutes"
-            type="number"
-            min="0"
-            class="mt-1 w-32 rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-        />
-      </label>
+      <LabelledField label="License sharee cap">
+        <NumberInput v-model="data.shares" class="w-32" min="0"/>
+      </LabelledField>
+      <LabelledField label="Trial server time (minutes)">
+        <NumberInput v-model="data.trialServerMinutes" class="w-32" min="0"/>
+      </LabelledField>
+      <LabelledField label="Trial account time (minutes)">
+        <NumberInput v-model="data.trialAccountMinutes" class="w-32" min="0"/>
+      </LabelledField>
       <div v-if="message" class="text-sm" :class="isError ? 'text-error' : 'text-success'">
         {{ message }}
       </div>

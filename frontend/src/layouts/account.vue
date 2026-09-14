@@ -45,12 +45,7 @@ const sidebar = [
           {{ item.label }}
         </NuxtLink>
       </nav>
-      <button
-          class="mt-6 w-full rounded-theme border border-border-light dark:border-border-dark px-3 py-2 text-left text-sm hover:bg-error/10 hover:text-error"
-          @click="doLogout"
-      >
-        Log out
-      </button>
+      <SecondaryButton class="mt-6" full-width @click="doLogout">Log out</SecondaryButton>
     </aside>
     <main class="flex-1 min-w-0">
       <nav class="mb-4 flex gap-2 overflow-x-auto md:hidden">
@@ -63,12 +58,7 @@ const sidebar = [
         >
           {{ item.label }}
         </NuxtLink>
-        <button
-            class="ml-auto rounded-theme border border-border-light dark:border-border-dark px-3 py-1.5 text-sm hover:text-error"
-            @click="doLogout"
-        >
-          Log out
-        </button>
+        <SecondaryButton class="ml-auto" compact @click="doLogout">Log out</SecondaryButton>
       </nav>
       <slot />
     </main>

@@ -9,6 +9,7 @@ import BaseButton from './BaseButton.vue'
 defineProps<{
   disabled?: boolean
   fullWidth?: boolean
+  compact?: boolean
 }>()
 
 defineEmits<{
@@ -20,6 +21,7 @@ defineEmits<{
   <BaseButton
       :disabled="disabled"
       :full-width="fullWidth"
+      :compact="compact"
       class="bg-secondary text-secondary-text hover:bg-secondary-accent hover:text-secondary-accent-text"
       @click="$emit('click', $event)"
   >

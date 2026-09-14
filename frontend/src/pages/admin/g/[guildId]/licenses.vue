@@ -85,28 +85,15 @@ async function submitCreate() {
         Issue license
       </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label class="block text-sm">
-          <span>Product</span>
-          <select
-              v-model.number="createProductId"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          >
-            <option :value="null" disabled>
-              Choose…
-            </option>
-            <option v-for="p in products" :key="p.id" :value="p.id">
-              {{ p.name }}
-            </option>
-          </select>
-        </label>
-        <label class="block text-sm">
-          <span>Identifier (mail / order id)</span>
-          <input
-              v-model="createIdentifier"
-              required
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          />
-        </label>
+        <LabelledField label="Product">
+          <SelectInput v-model="createProductId">
+            <option :value="null" disabled>Choose…</option>
+            <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+          </SelectInput>
+        </LabelledField>
+        <LabelledField label="Identifier (mail / order id)">
+          <TextInput v-model="createIdentifier" required/>
+        </LabelledField>
       </div>
       <div v-if="createError" class="mt-2 text-sm text-error">
         {{ createError }}

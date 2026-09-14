@@ -43,12 +43,7 @@ async function submit() {
       Look up a registration by Discord user id.
     </p>
     <form class="mb-4 flex gap-2" @submit.prevent="submit">
-      <input
-          v-model="discordIdInput"
-          inputmode="numeric"
-          placeholder="Discord user id"
-          class="flex-1 rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-      />
+      <TextInput v-model="discordIdInput" class="flex-1" inputmode="numeric" placeholder="Discord user id"/>
       <PrimaryButton :disabled="busy" @click="submit">
         {{ busy ? 'Looking up…' : 'Look up' }}
       </PrimaryButton>

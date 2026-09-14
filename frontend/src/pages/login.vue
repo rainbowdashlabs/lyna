@@ -40,26 +40,12 @@ async function submit() {
       Log in
     </PageHeader>
     <form class="space-y-4" @submit.prevent="submit">
-      <label class="block">
-        <span class="text-sm font-medium">Email</span>
-        <input
-            v-model="email"
-            type="email"
-            required
-            autocomplete="email"
-            class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-        />
-      </label>
-      <label class="block">
-        <span class="text-sm font-medium">Password</span>
-        <input
-            v-model="password"
-            type="password"
-            required
-            autocomplete="current-password"
-            class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-        />
-      </label>
+      <LabelledField label="Email">
+        <EmailInput v-model="email" autocomplete="email" required/>
+      </LabelledField>
+      <LabelledField label="Password">
+        <PasswordInput v-model="password" autocomplete="current-password" required/>
+      </LabelledField>
       <div v-if="errorMessage" class="rounded-theme border border-error/40 bg-error/10 p-2 text-sm text-error">
         {{ errorMessage }}
       </div>

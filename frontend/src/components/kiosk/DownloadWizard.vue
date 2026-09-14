@@ -124,17 +124,7 @@ function formatPublished(seconds: number): string {
 
         <ul v-else-if="step === 'releaseType'" class="space-y-2">
           <li v-for="rt in releaseTypes" :key="rt.id">
-            <button
-                class="w-full rounded-theme border border-border-light dark:border-border-dark px-3 py-2 text-left transition-colors hover:bg-primary/10"
-                @click="pickReleaseType(rt)"
-            >
-              <div class="font-medium">
-                {{ rt.name }}
-              </div>
-              <div v-if="rt.description" class="text-xs opacity-70">
-                {{ rt.description }}
-              </div>
-            </button>
+            <ChoiceButton :detail="rt.description" :title="rt.name" @click="pickReleaseType(rt)"/>
           </li>
           <li v-if="releaseTypes.length === 0" class="text-sm opacity-70">
             No release types available.
@@ -143,17 +133,11 @@ function formatPublished(seconds: number): string {
 
         <ul v-else-if="step === 'version'" class="space-y-2">
           <li v-for="v in versions.slice(0, 25)" :key="v.version">
-            <button
-                class="w-full rounded-theme border border-border-light dark:border-border-dark px-3 py-2 text-left transition-colors hover:bg-primary/10"
+            <ChoiceButton
+                :detail="`Published: ${formatPublished(v.published)}`"
+                :title="v.version"
                 @click="pickVersion(v)"
-            >
-              <div class="font-medium">
-                {{ v.version }}
-              </div>
-              <div class="text-xs opacity-70">
-                Published: {{ formatPublished(v.published) }}
-              </div>
-            </button>
+            />
           </li>
         </ul>
 

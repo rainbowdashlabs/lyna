@@ -92,31 +92,15 @@ async function submitCreate() {
         Create product
       </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label class="block text-sm">
-          <span>Name</span>
-          <input
-              v-model="createName"
-              required
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          />
-        </label>
-        <label class="block text-sm">
-          <span>Role id</span>
-          <input
-              v-model="createRoleId"
-              inputmode="numeric"
-              required
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          />
-        </label>
-        <label class="block text-sm sm:col-span-2">
-          <span>Project URL (optional)</span>
-          <input
-              v-model="createUrl"
-              type="url"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          />
-        </label>
+        <LabelledField label="Name">
+          <TextInput v-model="createName" required/>
+        </LabelledField>
+        <LabelledField label="Role id">
+          <TextInput v-model="createRoleId" required/>
+        </LabelledField>
+        <LabelledField label="Project URL (optional)">
+          <TextInput v-model="createUrl" type="url"/>
+        </LabelledField>
         <label class="flex items-center gap-2 text-sm">
           <CheckboxInput v-model="createFree"/> Free product
         </label>

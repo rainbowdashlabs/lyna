@@ -54,23 +54,17 @@ function switchGuild(event: Event) {
         <div class="text-xs uppercase tracking-wider opacity-60">
           Administering
         </div>
-        <select
+        <SelectInput
             v-if="guilds.length > 0"
-            :value="currentGuildId ?? ''"
-            class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-2 py-2"
+            :model-value="currentGuildId ?? ''"
+            class="mt-1"
             @change="switchGuild"
         >
-          <option disabled value="">
-            Select a guild…
-          </option>
-          <option
-              v-for="g in guilds"
-              :key="g.id"
-              :value="g.id"
-          >
+          <option disabled value="">Select a guild…</option>
+          <option v-for="g in guilds" :key="g.id" :value="g.id">
             {{ g.name }}{{ g.role === 'operator' ? ' (operator)' : '' }}
           </option>
-        </select>
+        </SelectInput>
         <div v-else class="mt-1 text-sm opacity-70">
           No admin guilds available.
         </div>

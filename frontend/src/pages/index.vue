@@ -43,12 +43,7 @@ function filtered(): KioskProduct[] {
 
     <section class="mx-auto max-w-6xl px-4 py-6">
       <div class="mb-4">
-        <input
-            v-model="search"
-            type="search"
-            placeholder="Search plugins…"
-            class="w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 outline-none focus:border-primary"
-        />
+        <SearchInput v-model="search" placeholder="Search plugins…"/>
       </div>
 
       <div v-if="loading" class="flex justify-center py-12">

@@ -73,27 +73,15 @@ async function submit() {
         Add or update mapping
       </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label class="block text-sm">
-          <span>Link code</span>
-          <input
-              v-model="linkCode"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          />
-        </label>
-        <label class="block text-sm">
-          <span>Product</span>
-          <select
-              v-model.number="productId"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          >
-            <option :value="null" disabled>
-              Choose…
-            </option>
-            <option v-for="p in products" :key="p.id" :value="p.id">
-              {{ p.name }}
-            </option>
-          </select>
-        </label>
+        <LabelledField label="Link code">
+          <TextInput v-model="linkCode"/>
+        </LabelledField>
+        <LabelledField label="Product">
+          <SelectInput v-model="productId">
+            <option :value="null" disabled>Choose…</option>
+            <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+          </SelectInput>
+        </LabelledField>
       </div>
       <div v-if="message" class="mt-2 text-sm" :class="isError ? 'text-error' : 'text-success'">
         {{ message }}

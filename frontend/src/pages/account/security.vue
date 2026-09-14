@@ -128,35 +128,15 @@ function fmt(iso: string | null): string {
           Password
         </CardHeader>
         <form class="space-y-3" @submit.prevent="doChangePassword">
-          <label v-if="summary.account.hasPassword" class="block text-sm">
-            <span>Current password</span>
-            <input
-                v-model="currentPassword"
-                type="password"
-                required
-                class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-            />
-          </label>
-          <label class="block text-sm">
-            <span>New password</span>
-            <input
-                v-model="newPassword"
-                type="password"
-                required
-                minlength="8"
-                class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-            />
-          </label>
-          <label class="block text-sm">
-            <span>Confirm new password</span>
-            <input
-                v-model="confirmPassword"
-                type="password"
-                required
-                minlength="8"
-                class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-            />
-          </label>
+          <LabelledField v-if="summary.account.hasPassword" label="Current password">
+            <PasswordInput v-model="currentPassword" autocomplete="current-password" required/>
+          </LabelledField>
+          <LabelledField label="New password">
+            <PasswordInput v-model="newPassword" autocomplete="new-password" minlength="8" required/>
+          </LabelledField>
+          <LabelledField label="Confirm new password">
+            <PasswordInput v-model="confirmPassword" autocomplete="new-password" minlength="8" required/>
+          </LabelledField>
           <div v-if="passwordError" class="text-sm text-error">
             {{ passwordError }}
           </div>
@@ -185,12 +165,7 @@ function fmt(iso: string | null): string {
                 href="/api/auth/discord/start"
                 class="rounded-theme border border-border-light dark:border-border-dark px-3 py-1.5 text-sm hover:bg-primary/10"
             >Re-link</a>
-            <button
-                class="rounded-theme border border-error/40 px-3 py-1.5 text-sm text-error hover:bg-error/10"
-                @click="doUnlinkDiscord"
-            >
-              Unlink
-            </button>
+            <ErrorButton compact @click="doUnlinkDiscord">Unlink</ErrorButton>
           </div>
         </div>
         <div v-else class="text-sm">
@@ -202,13 +177,9 @@ function fmt(iso: string | null): string {
       <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
         <CardHeader class="flex items-center justify-between">
           <span>Sessions</span>
-          <button
-              v-if="sessions.length > 1"
-              class="text-xs font-normal normal-case opacity-70 hover:text-error"
-              @click="doEndOthers"
-          >
+          <LinkButton v-if="sessions.length > 1" class="text-xs font-normal normal-case" @click="doEndOthers">
             End all other sessions
-          </button>
+          </LinkButton>
         </CardHeader>
         <ul v-if="sessions.length" class="divide-y divide-border-light dark:divide-border-dark text-sm">
           <li v-for="s in sessions" :key="s.jti" class="flex items-center justify-between py-2">
@@ -221,13 +192,7 @@ function fmt(iso: string | null): string {
                 Started {{ fmt(s.issuedAt) }} · last seen {{ fmt(s.lastSeenAt) }}
               </div>
             </div>
-            <button
-                v-if="!s.current"
-                class="rounded-theme border border-border-light dark:border-border-dark px-2 py-1 text-xs hover:text-error"
-                @click="doRevokeSession(s.jti)"
-            >
-              End
-            </button>
+            <SecondaryButton v-if="!s.current" compact @click="doRevokeSession(s.jti)">End</SecondaryButton>
           </li>
         </ul>
         <div v-else class="text-sm opacity-70">
@@ -243,24 +208,17 @@ function fmt(iso: string | null): string {
           Deleting your account removes your email and password. Any licenses tied to your linked Discord id stay in place;
           you can re-link them later.
         </p>
-        <label class="mb-3 block text-sm">
-          <span>Type your email <strong>{{ summary.account.email ?? '(no email — type anything)' }}</strong> to confirm</span>
-          <input
-              v-model="deleteConfirm"
-              type="text"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2"
-          />
-        </label>
+        <LabelledField
+            :help="summary.account.email ?? 'This account has no email; type anything to confirm.'"
+            class="mb-3"
+            label="Type your email to confirm"
+        >
+          <TextInput v-model="deleteConfirm"/>
+        </LabelledField>
         <div v-if="deleteError" class="mb-2 text-sm text-error">
           {{ deleteError }}
         </div>
-        <button
-            :disabled="deleteBusy"
-            class="rounded-theme bg-error px-3 py-1.5 text-sm font-medium text-error-text hover:bg-error/80 disabled:opacity-50"
-            @click="doDeleteAccount"
-        >
-          Delete my account
-        </button>
+        <ErrorButton :disabled="deleteBusy" compact @click="doDeleteAccount">Delete my account</ErrorButton>
       </section>
     </template>
   </div>

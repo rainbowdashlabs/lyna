@@ -45,6 +45,9 @@ const CAT_DEAD_PROP = 'Dead prop'
  */
 const INLINE_DATE_FORMAT = /\.toLocale(Date|Time)String\(|\.toLocaleString\([^)]*,/
 
+/** Components that are themselves a control, and so render the bare element the rule is about. */
+const BARE_BUTTON_PRIMITIVES = new Set(['Modal', 'TabBar', 'ThemeToggle'])
+
 const vueFiles = walk(SRC, '.vue')
 
 const SIZE_AWARE_BUTTONS = new Set(vueFiles
@@ -60,10 +63,16 @@ for (const file of vueFiles) {
     const templateStartLine = content.substring(0, content.indexOf('<template>')).split('\n').length
 
     // ── Rule 1: No raw <button> outside components/button/ and components/input/ ──
+    //
+    // A handful of primitives elsewhere are an affordance in their own right - a tab strip, a theme
+    // toggle, a modal's close control - and carry the styling that says so. Wrapping them in a
+    // button component would layer a second set of paddings and states over their own, so they are
+    // named here rather than bent into one.
     if (!isInsideDir(file, 'button') && !isInsideDir(file, 'input')) {
         for (let i = 0; i < templateLines.length; i++) {
             const line = templateLines[i]
-            if (/<button[\s>]/i.test(line) && !line.trim().startsWith('<!--')) {
+            if (BARE_BUTTON_PRIMITIVES.has(basename(file, '.vue'))) break
+            if (/<button(?=[\s/>]|$)/i.test(line) && !line.trim().startsWith('<!--')) {
                 error(file, templateStartLine + i, `Raw <button> usage. Use a styled button component (PrimaryButton, SecondaryButton, IconButton, etc.)`, CAT_RAW_ELEMENTS)
             }
         }
@@ -74,13 +83,13 @@ for (const file of vueFiles) {
         for (let i = 0; i < templateLines.length; i++) {
             const line = templateLines[i]
             if (line.trim().startsWith('<!--')) continue
-            if (/<input[\s]/i.test(line) && !/type\s*=\s*["']file["']/i.test(line)) {
+            if (/<input(?=[\s/>]|$)/i.test(line) && !/type\s*=\s*["']file["']/i.test(line)) {
                 error(file, templateStartLine + i, `Raw <input> usage. Use TextInput, NumberInput, DateInput, etc.`, CAT_RAW_ELEMENTS)
             }
-            if (/<select[\s>]/i.test(line)) {
+            if (/<select(?=[\s/>]|$)/i.test(line)) {
                 error(file, templateStartLine + i, `Raw <select> usage. Use SelectInput.`, CAT_RAW_ELEMENTS)
             }
-            if (/<textarea[\s>]/i.test(line)) {
+            if (/<textarea(?=[\s/>]|$)/i.test(line)) {
                 error(file, templateStartLine + i, `Raw <textarea> usage. Use TextAreaInput.`, CAT_RAW_ELEMENTS)
             }
         }

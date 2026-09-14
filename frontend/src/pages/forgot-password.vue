@@ -28,16 +28,9 @@ async function submit() {
         Enter the email associated with your account. If we find a match we'll send a reset link valid for one hour.
       </p>
       <form class="space-y-4" @submit.prevent="submit">
-        <label class="block">
-          <span class="text-sm font-medium">Email</span>
-          <input
-              v-model="email"
-              type="email"
-              required
-              autocomplete="email"
-              class="mt-1 w-full rounded-theme border border-border-light dark:border-border-dark bg-transparent px-3 py-2 focus:border-primary focus:outline-none"
-          />
-        </label>
+        <LabelledField label="Email">
+          <EmailInput v-model="email" autocomplete="email" required/>
+        </LabelledField>
         <PrimaryButton :disabled="submitting" full-width @click="submit">
           {{ submitting ? 'Sending…' : 'Send reset link' }}
         </PrimaryButton>
