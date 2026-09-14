@@ -12,6 +12,8 @@ export interface ProductSummary {
     name: string
     url: string | null
     roleId: number
+    free: boolean
+    iconUrl: string | null
 }
 
 export interface CreateProductPayload {
@@ -56,6 +58,10 @@ export async function listAdminGuilds(): Promise<AdminGuild[]> {
 export async function listGuildProducts(guildId: string): Promise<ProductSummary[]> {
     const {data} = await client.get<ProductSummary[]>(`/api/admin/g/${guildId}/products`)
     return data
+}
+
+export async function setProductIcon(guildId: string, productId: number, iconUrl: string): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}/icon`, {iconUrl})
 }
 
 export async function createGuildProduct(guildId: string, payload: CreateProductPayload): Promise<ProductSummary> {

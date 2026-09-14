@@ -1,47 +1,69 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 <script lang="ts" setup>
-import PrimaryButton from '~/components/button/PrimaryButton.vue'
-import ProductMonogram from './ProductMonogram.vue'
-import type {KioskProduct} from '~/api/kiosk'
+import {computed} from 'vue'
+import {callToAction, type KioskProduct} from '~/api/kiosk'
 
-defineProps<{
-  product: KioskProduct
+const props = defineProps<{
+    product: KioskProduct
+    /** Whether anybody is signed in, which decides whether to offer the linking hint. */
+    signedIn: boolean
 }>()
 
-const emit = defineEmits<{
-  download: [product: KioskProduct]
+defineEmits<{
+    download: [product: KioskProduct]
 }>()
+
+const action = computed(() => callToAction(props.product))
 </script>
 
 <template>
   <article
-      class="flex h-full flex-col rounded-theme border border-border-light dark:border-border-dark bg-bg-light dark:bg-bg-dark p-4 transition-shadow hover:shadow-lg"
+      class="flex h-full flex-col rounded-theme border border-border-light bg-bg-light p-4 transition-shadow hover:shadow-lg dark:border-border-dark dark:bg-bg-dark"
   >
     <header class="flex items-start gap-3">
-      <ProductMonogram :name="product.name" />
+      <ProductIcon :icon-url="product.iconUrl" :name="product.name"/>
       <div class="min-w-0 flex-1">
-        <SectionHeader class="truncate">
-          {{ product.name }}
-        </SectionHeader>
-        <p v-if="product.url" class="truncate text-xs opacity-60">
-          <a :href="product.url" target="_blank" rel="noopener noreferrer">project page →</a>
-        </p>
+        <SectionHeader class="truncate">{{ product.name }}</SectionHeader>
+        <SuccessBadge v-if="product.free">Free</SuccessBadge>
+        <PrimaryBadge v-else-if="product.entitled">Owned</PrimaryBadge>
+        <SecondaryBadge v-else>Premium</SecondaryBadge>
       </div>
     </header>
+
     <footer class="mt-4 flex items-center justify-end gap-2">
       <a
           v-if="product.url"
           :href="product.url"
-          target="_blank"
+          :title="`Open the project page for ${product.name}`"
+          class="inline-flex items-center justify-center rounded-theme p-2 text-(--text-muted) transition-colors hover:text-(--text)"
           rel="noopener noreferrer"
-          class="inline-flex items-center rounded-theme bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-text hover:bg-secondary-accent"
+          target="_blank"
       >
-        <font-awesome-icon :icon="['fab', 'github']" class="mr-1" />
-        Project
+        <font-awesome-icon :icon="['fab', 'github']"/>
       </a>
-      <PrimaryButton @click="emit('download', product)">
-        <font-awesome-icon :icon="['fas', 'download']" class="mr-1" />
+      <PrimaryButton v-if="action === 'download'" @click="$emit('download', product)">
+        <font-awesome-icon :icon="['fas', 'download']" class="mr-1"/>
         Download
       </PrimaryButton>
+      <a
+          v-else-if="action === 'buy'"
+          :href="product.purchaseUrl!"
+          class="inline-flex items-center rounded-theme bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-text hover:bg-secondary-accent"
+          rel="noopener noreferrer"
+          target="_blank"
+      >
+        <font-awesome-icon :icon="['fas', 'cart-shopping']" class="mr-1"/>
+        Buy on Ko-fi
+      </a>
+      <MutedText v-else size="sm">Not for sale here</MutedText>
     </footer>
+    <MutedText v-if="action === 'buy' && signedIn" class="mt-2 block text-right" size="xs">
+      Already bought it?
+      <NuxtLink class="text-primary hover:underline" to="/account/security">Link your Discord</NuxtLink>
+    </MutedText>
   </article>
 </template>

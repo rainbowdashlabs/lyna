@@ -1,36 +1,58 @@
 <script lang="ts" setup>
-import {onMounted, ref} from 'vue'
-import {listProducts, type KioskProduct} from '~/api/kiosk'
-import ProductTile from '~/components/kiosk/ProductTile.vue'
-import DownloadWizard from '~/components/kiosk/DownloadWizard.vue'
-import Spinner from '~/components/feedback/Spinner.vue'
+import {computed, onMounted, ref} from 'vue'
+import {type KioskProduct, listProducts} from '~/api/kiosk'
+import {useSession} from '~/composables/useSession'
+
+const {account, hydrate} = useSession()
 
 const products = ref<KioskProduct[]>([])
 const loading = ref(true)
-const error = ref<string | null>(null)
+const errorMessage = ref<string | null>(null)
 const wizardProduct = ref<KioskProduct | null>(null)
 const search = ref('')
+const filter = ref('all')
 
-onMounted(async () => {
+const signedIn = computed(() => account.value !== null)
+
+/**
+ * Resolves who is looking before drawing the catalogue.
+ *
+ * <p>The session decides which chips the filter row offers and whether a premium tile suggests
+ * linking Discord, so it is settled first; the catalogue call carries the token either way, which
+ * is what makes a tile say `Owned`.
+ */
+async function load() {
   try {
+    await hydrate()
     products.value = await listProducts()
   } catch (e) {
-    error.value = (e as Error).message ?? 'Failed to load products'
+    errorMessage.value = (e as Error).message ?? 'Failed to load products'
   } finally {
     loading.value = false
   }
+}
+
+onMounted(load)
+
+const shown = computed(() => {
+  const term = search.value.trim().toLowerCase()
+  return products.value.filter(product => {
+    if (term && !product.name.toLowerCase().includes(term)) return false
+    if (filter.value === 'free') return product.free
+    if (filter.value === 'owned') return product.entitled
+    return true
+  })
 })
 
-function filtered(): KioskProduct[] {
-  const q = search.value.trim().toLowerCase()
-  if (!q) return products.value
-  return products.value.filter(p => p.name.toLowerCase().includes(q))
+function clearFilters() {
+  search.value = ''
+  filter.value = 'all'
 }
 </script>
 
 <template>
   <main class="min-h-screen pb-12">
-    <header class="border-b border-border-light dark:border-border-dark bg-primary py-6 text-primary-text">
+    <header class="border-b border-border-light bg-primary py-6 text-primary-text dark:border-border-dark">
       <div class="mx-auto max-w-6xl px-4">
         <PageHeader>
           Lyna Download Center
@@ -42,41 +64,34 @@ function filtered(): KioskProduct[] {
     </header>
 
     <section class="mx-auto max-w-6xl px-4 py-6">
-      <div class="mb-4">
-        <SearchInput v-model="search" placeholder="Search plugins…"/>
-      </div>
-
-      <div v-if="loading" class="flex justify-center py-12">
-        <Spinner size="lg" />
-      </div>
-
-      <div
-          v-else-if="error"
-          class="rounded-theme border border-error/30 bg-error/10 p-4 text-error"
+      <KioskFilters v-model:filter="filter" v-model:search="search" :signed-in="signedIn"/>
+      <AsyncSection
+          :empty="!loading && shown.length === 0"
+          :error="errorMessage ?? undefined"
+          :loading="loading"
       >
-        {{ error }}
-      </div>
-
-      <div
-          v-else-if="filtered().length === 0"
-          class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70"
-      >
-        <p>No plugins match your search.</p>
-      </div>
-
-      <div
-          v-else
-          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
-        <ProductTile
-            v-for="product in filtered()"
-            :key="product.id"
-            :product="product"
-            @download="(p) => wizardProduct = p"
-        />
-      </div>
+        <template #empty>
+          <EmptyState>
+            <p class="mb-3">No plugins match.</p>
+            <SecondaryButton compact @click="clearFilters">Clear filters</SecondaryButton>
+          </EmptyState>
+        </template>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ProductTile
+              v-for="product in shown"
+              :key="product.id"
+              :product="product"
+              :signed-in="signedIn"
+              @download="wizardProduct = $event"
+          />
+        </div>
+      </AsyncSection>
     </section>
 
-    <DownloadWizard :product="wizardProduct" @close="wizardProduct = null" />
+    <DownloadWizard
+        v-if="wizardProduct"
+        :product="wizardProduct"
+        @close="wizardProduct = null"
+    />
   </main>
 </template>

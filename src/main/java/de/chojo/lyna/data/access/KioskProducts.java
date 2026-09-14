@@ -41,6 +41,24 @@ public class KioskProducts {
     }
 
     /**
+     * Whether a product is free to everybody.
+     *
+     * <p>Read from the table rather than from a resolved product, so that whether a caller may have
+     * something is decided before anything needs the gateway. An unauthorised request is then
+     * refused as such, instead of failing on a bot that is not there.
+     *
+     * @param productId the product
+     * @return whether it is free, and false for a product that does not exist
+     */
+    public boolean isFree(int productId) {
+        return query("SELECT free FROM product WHERE id = ?")
+                .single(call().bind(productId))
+                .map(row -> row.getBoolean("free"))
+                .first()
+                .orElse(false);
+    }
+
+    /**
      * Records where a product's icon is hosted. A blank address takes the icon away again, which is
      * what leaves the tile on its generated monogram.
      */

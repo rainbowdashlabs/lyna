@@ -30,12 +30,12 @@ public class V1 {
               DownloadLog downloadLog, KioskProducts kioskProducts, Auth auth, Accounts accounts,
               AccountLicenses accountLicenses) {
         this.api = api;
-        download = new Download(this, products);
+        download = new Download(this, products, auth, accounts, accountLicenses, kioskProducts);
         download.proxy().downloadLog(downloadLog);
         update = new Update(this, products);
         kofi = new KoFiApi(this, koFiProducts, mailingService);
         this.products = new de.chojo.lyna.web.api.v1.products.Products(this, kioskProducts, auth, accounts, accountLicenses);
-        releases = new Releases(this, products);
+        releases = new Releases(this, products, auth, accounts, accountLicenses, kioskProducts);
     }
 
     public void init() {

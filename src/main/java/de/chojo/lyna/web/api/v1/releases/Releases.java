@@ -1,12 +1,19 @@
 package de.chojo.lyna.web.api.v1.releases;
 
+import de.chojo.lyna.data.access.AccountLicenses;
+import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.KioskProducts;
+import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.nexus.entities.AssetXO;
-import io.javalin.http.BadRequestResponse;
+import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.NotFoundResponse;
+import io.javalin.http.UnauthorizedResponse;
 
 import java.time.Instant;
 import java.util.List;
@@ -17,19 +24,47 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 public class Releases {
     private final V1 v1;
     private final de.chojo.lyna.data.access.Products products;
+    private final Auth auth;
+    private final Accounts accounts;
+    private final AccountLicenses licenses;
+    private final KioskProducts kiosk;
 
-    public Releases(V1 v1, de.chojo.lyna.data.access.Products products) {
+    public Releases(V1 v1, de.chojo.lyna.data.access.Products products, Auth auth, Accounts accounts,
+                    AccountLicenses licenses, KioskProducts kiosk) {
         this.v1 = v1;
         this.products = products;
+        this.auth = auth;
+        this.accounts = accounts;
+        this.licenses = licenses;
+        this.kiosk = kiosk;
+    }
+
+    /**
+     * Refuses a product this caller may not have.
+     *
+     * <p>A free product is everybody's. A premium one belongs to whoever holds a license covering
+     * it, which is the same rule the bot applies; the two answers are told apart so the storefront
+     * can offer a sign-in to one and a purchase to the other.
+     */
+    private void requireAccess(Context ctx, int productId) {
+        if (kiosk.isFree(productId)) return;
+        var session = auth.currentSession(ctx);
+        if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
+        boolean entitled = accounts.findLinkByAccountId(session.get().accountId())
+                .map(DiscordLink::discordUserId)
+                .map(licenses::entitledProductIds)
+                .filter(ids -> ids.contains(productId))
+                .isPresent();
+        if (!entitled) throw new ForbiddenResponse("You do not hold a license for this product");
     }
 
     public void init() {
         path("releases", () -> {
             get("{product}", ctx -> {
-                Product product = products.byId(Integer.parseInt(ctx.pathParam("product")))
+                int productId = Integer.parseInt(ctx.pathParam("product"));
+                requireAccess(ctx, productId);
+                Product product = products.byId(productId)
                         .orElseThrow(() -> new NotFoundResponse("Invalid product id"));
-
-                if (!product.free()) throw new BadRequestResponse("This product is not free");
 
                 List<SimpleType> downloads = product.downloads()
                         .downloads()
@@ -41,10 +76,10 @@ public class Releases {
             });
 
             get("{product}/{type}", ctx -> {
-                Product product = products.byId(Integer.parseInt(ctx.pathParam("product")))
+                int productId = Integer.parseInt(ctx.pathParam("product"));
+                requireAccess(ctx, productId);
+                Product product = products.byId(productId)
                         .orElseThrow(() -> new NotFoundResponse("Invalid product id"));
-
-                if (!product.free()) throw new BadRequestResponse("This product is not free");
 
                 Download download = product.downloads().byType(Integer.parseInt(ctx.pathParam("type")))
                         .orElseThrow(() -> new NotFoundResponse("Invalid type id"));

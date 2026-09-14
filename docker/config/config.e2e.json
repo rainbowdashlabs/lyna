@@ -31,11 +31,11 @@
     "password" : ""
   },
   "api" : {
-    "hostname" : "localhost:8899 localhost:3010 localhost",
-    "url" : "http://localhost:8899",
+    "hostname" : "localhost:8890 localhost:3011 localhost",
+    "url" : "http://localhost:8890",
     "host" : "0.0.0.0",
     "port" : 8888,
-    "allowedOrigins" : [ "http://localhost:3010" ],
+    "allowedOrigins" : [ "http://localhost:3011" ],
     "iconHosts" : [ ],
     "staticUi" : false
   },
@@ -68,7 +68,7 @@
     "oauth" : {
       "clientId" : "",
       "clientSecret" : "",
-      "redirectUri" : "http://localhost:8899/api/auth/discord/callback"
+      "redirectUri" : "http://localhost:8890/api/auth/discord/callback"
     }
   }
 }

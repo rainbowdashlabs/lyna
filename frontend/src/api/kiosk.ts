@@ -2,8 +2,22 @@ import client from './client'
 
 export interface KioskProduct {
     id: number
+    guildId: string
     name: string
     url: string | null
+    iconUrl: string | null
+    free: boolean
+    purchaseUrl: string | null
+    /** Whether this visitor already holds a license covering the product. */
+    entitled: boolean
+}
+
+/**
+ * What a tile offers this visitor: download it, buy it, or say where to buy it is not known.
+ */
+export function callToAction(product: KioskProduct): 'download' | 'buy' | 'unavailable' {
+    if (product.free || product.entitled) return 'download'
+    return product.purchaseUrl ? 'buy' : 'unavailable'
 }
 
 export interface ReleaseEntry {

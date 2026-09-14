@@ -125,15 +125,22 @@ async function submitCreate() {
       {{ errorMessage }}
     </div>
     <ul v-else-if="products.length" class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark">
-      <li v-for="p in products" :key="p.id" class="flex items-center justify-between p-3 text-sm">
-        <div>
-          <div class="font-medium">
-            {{ p.name }}
-          </div>
-          <div class="text-xs opacity-60">
-            id {{ p.id }} · role {{ p.roleId }}{{ p.url ? ` · ${p.url}` : '' }}
-          </div>
+      <li v-for="p in products" :key="p.id" class="space-y-2 p-3 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="font-medium">{{ p.name }}</span>
+          <SuccessBadge v-if="p.free">Free</SuccessBadge>
+          <SecondaryBadge v-else>Premium</SecondaryBadge>
         </div>
+        <MutedText tag="div">
+          id {{ p.id }} &middot; role {{ p.roleId }}{{ p.url ? ` · ${p.url}` : '' }}
+        </MutedText>
+        <ProductIconField
+            :guild-id="guildId"
+            :icon-url="p.iconUrl"
+            :product-id="p.id"
+            :product-name="p.name"
+            @saved="p.iconUrl = $event || null"
+        />
       </li>
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">

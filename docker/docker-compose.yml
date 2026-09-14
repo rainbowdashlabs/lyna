@@ -67,7 +67,30 @@ services:
     profiles:
       - e2e
     ports:
-      - 8899:8888
+      - 8890:8888
+  seed_e2e:
+    image: postgres:17
+    networks:
+      - lyna
+    depends_on:
+      - app_e2e
+    volumes:
+      - ./config/:/seed/
+    profiles:
+      - e2e
+    # The backend migrates the schema on startup, so the seed waits for a table it creates rather
+    # than for the container, which is up long before the tables are.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until psql -h postgres_e2e -U user -d lyna -c 'SELECT 1 FROM public.product LIMIT 1' >/dev/null 2>&1; do
+          sleep 2
+        done
+        psql -h postgres_e2e -U user -d lyna -v ON_ERROR_STOP=1 -f /seed/seed.e2e.sql
+    environment:
+      PGPASSWORD: "pw"
+    restart: "no"
   postgres_e2e:
     networks:
       - lyna

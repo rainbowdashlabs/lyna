@@ -14,12 +14,12 @@ import {defineConfig, devices} from '@playwright/test'
  * context with JavaScript switched off is the only way to assert that they really are rather than
  * being repaired by hydration.
  *
- * The stack runs on ports nobody works on - the backend on 8899, the Nuxt server on 3010 - so a run
- * never touches the dev stack a developer has open. Every address is a variable so a second checkout
- * can be pointed elsewhere.
+ * The stack runs on ports of its own - the backend on 8890, the Nuxt server on 3011 - so a run never
+ * touches the dev stack a developer has open. They are lyna's, not shared with any other project on
+ * the machine; every address is a variable so a second checkout can be pointed elsewhere.
  */
-const backendUrl = process.env.NUXT_BACKEND_URL || 'http://localhost:8899'
-const baseUrl = process.env.E2E_BASE_URL || 'http://localhost:3010'
+const backendUrl = process.env.NUXT_BACKEND_URL || 'http://localhost:8890'
+const baseUrl = process.env.E2E_BASE_URL || 'http://localhost:3011'
 const webPort = new URL(baseUrl).port || '3000'
 
 export default defineConfig({
