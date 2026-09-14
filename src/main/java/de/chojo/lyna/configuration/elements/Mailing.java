@@ -15,6 +15,7 @@ public class Mailing {
     private String password = "";
     private List<String> originMail = java.util.List.of("");
     private int pollSeconds = 300;
+    private boolean enabled = true;
     // While we do no use javamail, we use angus and both implement jakarta.mail
     // Most of the parameters of javamail can be applied here as well
     // https://www.tutorialspoint.com/javamail_api/javamail_api_imap_servers.htm
@@ -23,6 +24,18 @@ public class Mailing {
 
     public int pollSeconds() {
         return pollSeconds;
+    }
+
+    /**
+     * Whether mail is polled and sent at all.
+     *
+     * <p>Off, nothing connects to the mail server and nothing is sent. A deployment that grants its
+     * licenses through Ko-fi or the bot needs no mailbox, and the end-to-end stack has none.
+     *
+     * @return whether to reach the mail server
+     */
+    public boolean enabled() {
+        return enabled;
     }
 
     public String user() {

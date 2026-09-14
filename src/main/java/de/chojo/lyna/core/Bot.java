@@ -50,6 +50,10 @@ public class Bot {
     }
 
     private void init() {
+        if (!configuration.config().baseSettings().botEnabled()) {
+            log.info("Discord bot is disabled. Only the HTTP API is served.");
+            return;
+        }
         initShardManager();
         initServices();
         initInteractions();

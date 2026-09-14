@@ -47,16 +47,26 @@ public class MailingService {
         this.configuration = configuration;
     }
 
+    /**
+     * Builds the service and, where mail is configured, starts polling for it.
+     *
+     * <p>A failure to start the polling is reported and left at that rather than retried until it
+     * succeeds. Retrying here holds up the rest of the startup, so a mailbox that is briefly away
+     * used to take the bot and the HTTP API down with it; the scheduled poll recovers on its own
+     * once the mailbox answers again.
+     *
+     * @return the service, polling unless mail is switched off
+     */
     public static MailingService create(Threading threading, Data data, Configuration<ConfigFile> configuration) {
         MailingService mailingService = new MailingService(threading, data, configuration);
-        while (true) {
-            try {
-                mailingService.init();
-            } catch (MessagingException e) {
-                log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to mail", e);
-                continue;
-            }
-            break;
+        if (!configuration.config().mailing().enabled()) {
+            log.info("Mailing is disabled. No mail is polled or sent.");
+            return mailingService;
+        }
+        try {
+            mailingService.init();
+        } catch (MessagingException e) {
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to mail", e);
         }
         return mailingService;
     }
@@ -132,6 +142,10 @@ public class MailingService {
     }
 
     public void sendMail(Mail mail) {
+        if (!configuration.config().mailing().enabled()) {
+            log.info("Mailing is disabled. Dropping mail to {} with subject {}", mail.address(), mail.subject());
+            return;
+        }
         Session session = createSession();
         MimeMessage mimeMessage;
         try {

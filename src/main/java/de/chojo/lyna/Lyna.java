@@ -26,7 +26,9 @@ public class Lyna {
         MailingService mailingService = MailingService.create(threading, data, configuration);
         Web web = Web.create(configuration, data, mailingService);
         Bot bot = Bot.create(data, threading, configuration, web, mailingService);
-        data.inject(bot);
-        data.injectShard(bot, web.webService().api());
+        if (bot.shardManager() != null) {
+            data.inject(bot);
+            data.injectShard(bot, web.webService().api());
+        }
     }
 }
