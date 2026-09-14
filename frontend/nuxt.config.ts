@@ -5,6 +5,12 @@ export default defineNuxtConfig({
 
     css: ['~/style.css'],
 
+    runtimeConfig: {
+        // Where this server reaches the backend. Read per request by server/middleware/backend-proxy,
+        // so one built image serves whatever address its environment names.
+        backendUrl: process.env.NUXT_BACKEND_URL || 'http://localhost:8888',
+    },
+
     modules: ['@nuxtjs/i18n'],
 
     i18n: {
@@ -24,10 +30,20 @@ export default defineNuxtConfig({
         '/account/**': {ssr: false},
         '/admin': {ssr: false},
         '/admin/**': {ssr: false},
-        '/api/**': {proxy: `${process.env.NUXT_BACKEND_URL || 'http://localhost:8888'}/api/**`},
     },
 
     nitro: {
+        // Bundled into the server rather than left external, so the server and the browser share one
+        // icon library. Kept apart, the registration the plugin performs reaches only one of them and
+        // every icon renders empty on the first paint.
+        externals: {
+            inline: [
+                '@fortawesome/fontawesome-svg-core',
+                '@fortawesome/free-brands-svg-icons',
+                '@fortawesome/free-solid-svg-icons',
+                '@fortawesome/vue-fontawesome',
+            ],
+        },
         devProxy: {
             '/api': {target: process.env.NUXT_BACKEND_URL || 'http://localhost:8888', changeOrigin: true},
         },

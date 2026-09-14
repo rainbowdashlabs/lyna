@@ -19,7 +19,10 @@
     "lint:duplication": "node scripts/lint-duplication.mjs",
     "lint:standalone": "node scripts/lint-standalone.mjs",
     "lint": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent",
-    "lint:audit": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent && npm run lint:i18n-keys --silent && npm run lint:duplication --silent || true"
+    "lint:audit": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent && npm run lint:i18n-keys --silent && npm run lint:duplication --silent || true",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:dev": "E2E_DEV_SERVER=1 playwright test"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
@@ -36,6 +39,7 @@
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
+    "@playwright/test": "1.59.1",
     "@types/node": "^24.12.2",
     "typescript": "~6.0.2",
     "vue-tsc": "^3.2.7"

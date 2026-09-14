@@ -1,4 +1,7 @@
-version: '3.7'
+# Named so the stack cannot be mistaken for another project's. Compose otherwise derives the name
+# from this directory, which is `docker/` in more than one checkout on a developer's machine, and two
+# of them then share containers.
+name: lyna
 
 services:
   app:
@@ -49,10 +52,39 @@ services:
       - dev
     ports:
       - 3000:3000
+  app_e2e:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    networks:
+      - lyna
+    depends_on:
+      - postgres_e2e
+    volumes:
+      - ./config/:/app/config/
+    environment:
+      JAVA_OPTS: "-Dbot.config=config/config.e2e.json -Dlog4j.configurationFile=config/log4j2.xml"
+    profiles:
+      - e2e
+    ports:
+      - 8899:8888
+  postgres_e2e:
+    networks:
+      - lyna
+    image: postgres:17
+    profiles:
+      - e2e
+    environment:
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pw"
+      POSTGRES_DB: "lyna"
   postgres:
     networks:
       - lyna
     image: postgres:latest
+    profiles:
+      - dev
+      - prod
     expose:
       - 5432
     ports:
