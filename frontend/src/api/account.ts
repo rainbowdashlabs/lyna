@@ -8,6 +8,9 @@ export interface LoginPayload {
 export interface AccountInfo {
     id: number
     email: string | null
+    emailVerified: boolean
+    /** An address a confirmation link is outstanding for, which is not yet the account's. */
+    pendingEmail: string | null
     hasPassword: boolean
     discordId: string | null
     discordLinkedAt: string | null
@@ -170,4 +173,16 @@ export async function addSharee(id: number, subject: string): Promise<void> {
 
 export async function removeSharee(id: number, discordId: string): Promise<void> {
     await client.delete(`/api/account/licenses/${id}/sharees/${encodeURIComponent(discordId)}`)
+}
+
+export async function changeEmail(newEmail: string): Promise<void> {
+    await client.post('/api/account/email/change', {newEmail})
+}
+
+export async function resendVerification(): Promise<void> {
+    await client.post('/api/account/email/resend-verification')
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+    await client.post('/api/auth/email/verify', {token})
 }

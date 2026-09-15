@@ -3,6 +3,7 @@
     "licence-issued": "Your {product} licence",
     "reset-password": "Reset your {senderName} password",
     "licence-shared": "{owner} shared their {product} licence with you",
-    "licence-revoked": "Your shared {product} licence was withdrawn"
+    "licence-revoked": "Your shared {product} licence was withdrawn",
+    "verify-email": "Confirm your {senderName} email address"
   }
 }

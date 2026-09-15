@@ -34,11 +34,11 @@ public class Api {
         this.configuration = configuration;
         this.nexus = data.nexus();
         auth = new Auth(configuration, data.accounts(), data.accountSessions(), data.revokedJtis(),
-                data.passwordResetTokens(), data.passwordHasher(), data.jwtService(),
+                data.passwordResetTokens(), data.emailVerificationTokens(), data.passwordHasher(), data.jwtService(),
                 data.discordOAuthClient(), mailingService);
         v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog(),
                 data.kioskProducts(), auth, data.accounts(), data.accountLicenses());
-        account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(), mailingService,
+        account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(), mailingService, data.emailVerificationTokens(), configuration,
                 data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         theme = new Theme(data.instanceSettings());

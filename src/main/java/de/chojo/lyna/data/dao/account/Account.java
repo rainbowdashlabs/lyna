@@ -5,6 +5,7 @@ import java.time.Instant;
 public record Account(
         int id,
         String email,
+        boolean emailVerified,
         String passwordHash,
         String theme,
         String feel,

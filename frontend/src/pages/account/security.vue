@@ -175,6 +175,15 @@ function fmt(iso: string | null): string {
       </section>
 
       <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
+        <EmailCard
+            :email="summary.account.email"
+            :pending-email="summary.account.pendingEmail"
+            :verified="summary.account.emailVerified"
+            @changed="refresh"
+        />
+      </section>
+
+      <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
         <CardHeader class="flex items-center justify-between">
           <span>Sessions</span>
           <LinkButton v-if="sessions.length > 1" class="text-xs font-normal normal-case" @click="doEndOthers">

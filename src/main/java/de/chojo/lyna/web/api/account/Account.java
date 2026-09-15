@@ -6,6 +6,7 @@ import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
+import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
@@ -15,12 +16,15 @@ import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.DiscordLink;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
+import de.chojo.jdautil.configuration.Configuration;
+import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -43,6 +47,8 @@ public class Account {
     private final AccountLicenses licenses;
     private final InstanceSettingsAccess instanceSettings;
     private final MailingService mailingService;
+    private final EmailVerificationTokens emailTokens;
+    private final Configuration<ConfigFile> configuration;
     private final AccountSessions sessions;
     private final RevokedJtis revokedJtis;
     private final DownloadLog downloadLog;
@@ -55,6 +61,8 @@ public class Account {
                    AccountLicenses licenses,
                    InstanceSettingsAccess instanceSettings,
                    MailingService mailingService,
+                   EmailVerificationTokens emailTokens,
+                   Configuration<ConfigFile> configuration,
                    AccountSessions sessions,
                    RevokedJtis revokedJtis,
                    DownloadLog downloadLog,
@@ -65,6 +73,8 @@ public class Account {
         this.licenses = licenses;
         this.instanceSettings = instanceSettings;
         this.mailingService = mailingService;
+        this.emailTokens = emailTokens;
+        this.configuration = configuration;
         this.sessions = sessions;
         this.revokedJtis = revokedJtis;
         this.downloadLog = downloadLog;
@@ -78,6 +88,10 @@ public class Account {
             delete(this::deleteAccount);
             post("password", this::changePassword);
             patch("appearance", this::updateAppearance);
+            path("email", () -> {
+                post("change", this::changeEmail);
+                post("resend-verification", this::resendVerification);
+            });
             get("sessions", this::listSessions);
             delete("sessions", this::endOtherSessions);
             delete("sessions/{jti}", this::revokeSession);
@@ -117,6 +131,8 @@ public class Account {
                 new AccountInfo(
                         acc.get().id(),
                         acc.get().email(),
+                        acc.get().emailVerified(),
+                        emailTokens.pendingEmail(acc.get().id()).orElse(null),
                         acc.get().hasPassword(),
                         link.map(l -> Long.toString(l.discordUserId())).orElse(null),
                         link.map(DiscordLink::linkedAt).orElse(null),
@@ -297,6 +313,81 @@ public class Account {
             return raw.length() == 10 ? LocalDate.parse(raw).atStartOfDay(ZoneOffset.UTC).toInstant() : Instant.parse(raw);
         } catch (DateTimeParseException e) {
             return null;
+        }
+    }
+
+    /**
+     * Starts confirming an address.
+     *
+     * <p>The account keeps whatever address it has until the link is followed. That is the whole
+     * point of the step: typing an address here proves nothing about being able to read it, so
+     * nothing is taken away from the old one until something does.
+     */
+    private void changeEmail(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        EmailChange body;
+        try {
+            body = json.readValue(ctx.body(), EmailChange.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
+            return;
+        }
+        String email = body == null || body.newEmail() == null ? "" : body.newEmail().trim();
+        if (!email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("That is not an email address");
+            return;
+        }
+        var taken = accounts.findByEmail(email);
+        if (taken.isPresent() && taken.get().id() != session.get().accountId()) {
+            // Answered as though it had been sent. Saying "that address is taken" to somebody who is
+            // not its owner tells them who has an account here.
+            ctx.status(HttpStatus.ACCEPTED);
+            return;
+        }
+        sendVerification(session.get().accountId(), email);
+        ctx.status(HttpStatus.ACCEPTED);
+    }
+
+    /**
+     * Sends the confirmation again, for an address somebody never received it for.
+     */
+    private void resendVerification(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        var acc = accounts.findById(session.get().accountId());
+        if (acc.isEmpty()) {
+            ctx.status(HttpStatus.UNAUTHORIZED);
+            return;
+        }
+        String pending = emailTokens.pendingEmail(acc.get().id()).orElse(acc.get().email());
+        if (pending == null || acc.get().emailVerified() && emailTokens.pendingEmail(acc.get().id()).isEmpty()) {
+            ctx.status(HttpStatus.ACCEPTED);
+            return;
+        }
+        sendVerification(acc.get().id(), pending);
+        ctx.status(HttpStatus.ACCEPTED);
+    }
+
+    /**
+     * Issues a token for the address and mails the link.
+     *
+     * <p>Best effort on the sending: the token is written whatever the mail server does, so a resend
+     * reaches the same address rather than starting again.
+     */
+    private void sendVerification(int accountId, String email) {
+        var issued = emailTokens.issue(accountId, email, Instant.now().plus(Duration.ofDays(1)));
+        String link = configuration.config().links().frontend() + "/verify-email?token=" + issued.token();
+        try {
+            var renderer = mailingService.renderer();
+            var values = java.util.Map.<String, Object>of(
+                    "url", link,
+                    "senderName", "Lyna",
+                    "baseUrl", configuration.config().links().frontend());
+            mailingService.send(email, renderer.subject("verify-email", "en", values),
+                    renderer.render("verify-email", "en", values));
+        } catch (Exception e) {
+            log.warn("Could not send the verification mail for account {}", accountId, e);
         }
     }
 
@@ -527,7 +618,8 @@ public class Account {
                 license.shareesCap());
     }
 
-    public record AccountInfo(int id, String email, boolean hasPassword, String discordId, Instant discordLinkedAt,
+    public record AccountInfo(int id, String email, boolean emailVerified, String pendingEmail,
+                              boolean hasPassword, String discordId, Instant discordLinkedAt,
                               String theme, String feel, String darkMode) {
     }
 
@@ -557,6 +649,9 @@ public class Account {
 
     public record DownloadPage(List<DownloadLogEntry> rows, int totalRows, int page, int pageSize,
                                List<DownloadLog.ProductOption> products) {
+    }
+
+    public record EmailChange(String newEmail) {
     }
 
     public record Appearance(String theme, String feel, String darkMode) {

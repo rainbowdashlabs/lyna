@@ -16,12 +16,13 @@ public class Accounts {
         return query("""
                 INSERT INTO account (email, password_hash)
                 VALUES (?, ?)
-                RETURNING id, email, password_hash, theme, feel, dark_mode, created_at, last_login_at
+                RETURNING id, email, email_verified, password_hash, theme, feel, dark_mode, created_at, last_login_at
                 """)
                 .single(call().bind(email).bind(passwordHash))
                 .map(row -> new Account(
                         row.getInt("id"),
                         row.getString("email"),
+                        row.getBoolean("email_verified"),
                         row.getString("password_hash"),
                         row.getString("theme"),
                         row.getString("feel"),
@@ -34,13 +35,14 @@ public class Accounts {
 
     public Optional<Account> findById(int id) {
         return query("""
-                SELECT id, email, password_hash, theme, feel, dark_mode, created_at, last_login_at
+                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, created_at, last_login_at
                 FROM account WHERE id = ?
                 """)
                 .single(call().bind(id))
                 .map(row -> new Account(
                         row.getInt("id"),
                         row.getString("email"),
+                        row.getBoolean("email_verified"),
                         row.getString("password_hash"),
                         row.getString("theme"),
                         row.getString("feel"),
@@ -52,13 +54,14 @@ public class Accounts {
 
     public Optional<Account> findByEmail(String email) {
         return query("""
-                SELECT id, email, password_hash, theme, feel, dark_mode, created_at, last_login_at
+                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, created_at, last_login_at
                 FROM account WHERE LOWER(email) = LOWER(?)
                 """)
                 .single(call().bind(email))
                 .map(row -> new Account(
                         row.getInt("id"),
                         row.getString("email"),
+                        row.getBoolean("email_verified"),
                         row.getString("password_hash"),
                         row.getString("theme"),
                         row.getString("feel"),
@@ -70,7 +73,7 @@ public class Accounts {
 
     public Optional<Account> findByDiscordId(long discordUserId) {
         return query("""
-                SELECT a.id, a.email, a.password_hash, a.theme, a.feel, a.dark_mode, a.created_at, a.last_login_at
+                SELECT a.id, a.email, a.email_verified, a.password_hash, a.theme, a.feel, a.dark_mode, a.created_at, a.last_login_at
                 FROM account a
                 JOIN account_discord_link l ON l.account_id = a.id
                 WHERE l.discord_user_id = ?
@@ -79,6 +82,7 @@ public class Accounts {
                 .map(row -> new Account(
                         row.getInt("id"),
                         row.getString("email"),
+                        row.getBoolean("email_verified"),
                         row.getString("password_hash"),
                         row.getString("theme"),
                         row.getString("feel"),
@@ -130,6 +134,19 @@ public class Accounts {
     public void setPasswordHash(int accountId, String passwordHash) {
         query("UPDATE account SET password_hash = ? WHERE id = ?")
                 .single(call().bind(passwordHash).bind(accountId))
+                .update();
+    }
+
+    /**
+     * Records that an address has been confirmed, and makes it the account's.
+     *
+     * <p>One statement, because the two halves are the same fact: the address the account holds is
+     * the one somebody proved they could read. Setting the address without the flag, or the flag
+     * without the address, is how an account ends up marked verified for a mailbox nobody read.
+     */
+    public void confirmEmail(int accountId, String email) {
+        query("UPDATE account SET email = ?, email_verified = TRUE WHERE id = ?")
+                .single(call().bind(email).bind(accountId))
                 .update();
     }
 

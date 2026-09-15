@@ -9,6 +9,7 @@ import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.mail.MailingService;
@@ -38,6 +39,7 @@ public class Auth {
     private final AccountSessions accountSessions;
     private final RevokedJtis revokedJtis;
     private final PasswordResetTokens passwordResetTokens;
+    private final EmailVerificationTokens emailTokens;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final DiscordOAuthClient oauthClient;
@@ -49,6 +51,7 @@ public class Auth {
                 AccountSessions accountSessions,
                 RevokedJtis revokedJtis,
                 PasswordResetTokens passwordResetTokens,
+                EmailVerificationTokens emailTokens,
                 PasswordHasher passwordHasher,
                 JwtService jwtService,
                 DiscordOAuthClient oauthClient,
@@ -58,6 +61,7 @@ public class Auth {
         this.accountSessions = accountSessions;
         this.revokedJtis = revokedJtis;
         this.passwordResetTokens = passwordResetTokens;
+        this.emailTokens = emailTokens;
         this.passwordHasher = passwordHasher;
         this.jwtService = jwtService;
         this.oauthClient = oauthClient;
@@ -78,6 +82,7 @@ public class Auth {
                 post("request", this::passwordResetRequest);
                 post("confirm", this::passwordResetConfirm);
             });
+            path("email", () -> post("verify", this::verifyEmail));
         });
     }
 
@@ -110,6 +115,59 @@ public class Auth {
         } catch (Exception e) {
             log.warn("Failed to send password reset mail", e);
         }
+    }
+
+    /**
+     * Asks somebody to confirm the address they just signed up with.
+     *
+     * <p>Best effort, and the account exists either way: somebody who never receives this can ask
+     * for it again from their security page, and being unable to send mail is not a reason to refuse
+     * a signup.
+     */
+    private void sendVerification(int accountId, String email) {
+        var issued = emailTokens.issue(accountId, email, java.time.Instant.now().plus(java.time.Duration.ofDays(1)));
+        String link = configuration.config().links().frontend() + "/verify-email?token=" + issued.token();
+        try {
+            var values = java.util.Map.<String, Object>of(
+                    "url", link,
+                    "senderName", "Lyna",
+                    "baseUrl", configuration.config().links().frontend());
+            mailingService.send(email, mailingService.renderer().subject("verify-email", "en", values),
+                    mailingService.renderer().render("verify-email", "en", values));
+        } catch (Exception e) {
+            log.warn("Could not send the verification mail for account {}", accountId, e);
+        }
+    }
+
+    /**
+     * Confirms an address from the link in a mail.
+     *
+     * <p>Not behind a session: the link is followed from a mailbox, which may not be the browser the
+     * account is signed in on - and needing to sign in first would mean needing the address it is
+     * about to confirm. The token is the proof; a bad one says so and nothing else.
+     */
+    private void verifyEmail(Context ctx) {
+        VerifyEmail body;
+        try {
+            body = json.readValue(ctx.body(), VerifyEmail.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
+            return;
+        }
+        if (body == null || body.token() == null || body.token().isBlank()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Missing token");
+            return;
+        }
+        var confirmed = emailTokens.consume(body.token());
+        if (confirmed.isEmpty()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("That link has expired or has already been used");
+            return;
+        }
+        accounts.confirmEmail(confirmed.get().accountId(), confirmed.get().email());
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    public record VerifyEmail(String token) {
     }
 
     private void passwordResetConfirm(Context ctx) {
@@ -148,6 +206,7 @@ public class Auth {
             return;
         }
         Account account = accounts.create(creds.email(), passwordHasher.hash(creds.password()));
+        sendVerification(account.id(), creds.email());
         issueAndWrite(ctx, account, null, HttpStatus.CREATED);
     }
 
@@ -278,6 +337,7 @@ public class Auth {
         return new AccountResponse(
                 account.id(),
                 account.email(),
+                account.emailVerified(),
                 account.hasPassword(),
                 link == null ? null : Long.toString(link.discordUserId()),
                 account.theme(),
@@ -330,7 +390,7 @@ public class Auth {
     public record LoginResponse(String token, String expiresAt, Object account) {
     }
 
-    public record AccountResponse(int id, String email, boolean hasPassword, String discordId,
+    public record AccountResponse(int id, String email, boolean emailVerified, boolean hasPassword, String discordId,
                                   String theme, String feel, String darkMode) {
     }
 

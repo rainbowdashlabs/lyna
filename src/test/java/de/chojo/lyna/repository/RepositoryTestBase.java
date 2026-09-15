@@ -6,6 +6,7 @@ import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
+import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.KioskProducts;
@@ -67,6 +68,7 @@ public abstract class RepositoryTestBase {
     protected static InstanceOperators instanceOperators;
     protected static KioskProducts kioskProducts;
     protected static PasswordResetTokens passwordResetTokens;
+    protected static EmailVerificationTokens emailVerificationTokens;
 
     @BeforeAll
     static void setupDatabase() throws Exception {
@@ -106,6 +108,7 @@ public abstract class RepositoryTestBase {
         instanceOperators = new InstanceOperators();
         kioskProducts = new KioskProducts();
         passwordResetTokens = new PasswordResetTokens();
+        emailVerificationTokens = new EmailVerificationTokens();
     }
 
     /**

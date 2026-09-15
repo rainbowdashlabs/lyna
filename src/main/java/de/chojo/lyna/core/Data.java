@@ -13,6 +13,7 @@ import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.KioskProducts;
@@ -54,6 +55,7 @@ public class Data {
     private InstanceSettingsAccess instanceSettings;
     private InstanceOperators instanceOperators;
     private PasswordResetTokens passwordResetTokens;
+    private EmailVerificationTokens emailVerificationTokens;
     private PasswordHasher passwordHasher;
     private JwtService jwtService;
     private DiscordOAuthClient discordOAuthClient;
@@ -124,6 +126,7 @@ public class Data {
         instanceSettings = new InstanceSettingsAccess();
         instanceOperators = new InstanceOperators();
         passwordResetTokens = new PasswordResetTokens();
+        emailVerificationTokens = new EmailVerificationTokens();
         passwordHasher = new PasswordHasher();
         jwtService = new JwtService(configuration.config().auth());
         discordOAuthClient = new DiscordOAuthClient(configuration.config().discord().oauth());
@@ -222,6 +225,10 @@ public class Data {
 
     public PasswordResetTokens passwordResetTokens() {
         return passwordResetTokens;
+    }
+
+    public EmailVerificationTokens emailVerificationTokens() {
+        return emailVerificationTokens;
     }
 
     public PasswordHasher passwordHasher() {
