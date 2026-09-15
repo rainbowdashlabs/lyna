@@ -47,3 +47,17 @@ ON CONFLICT (license_id) DO NOTHING;
 INSERT INTO public.license_access (license_id, release_type)
 SELECT id, 'STABLE' FROM public.license WHERE key = 'E2E-LICENSE-KEY'
 ON CONFLICT (license_id, release_type) DO NOTHING;
+
+-- Something to actually download. The coordinates match what the Nexus stub serves, so the wizard
+-- can be walked from release type through to the file itself.
+
+INSERT INTO public.download_type (guild_id, name, description, release_type)
+SELECT 4242, 'Jar', 'The plain jar', 'STABLE'
+WHERE NOT EXISTS (SELECT 1 FROM public.download_type WHERE guild_id = 4242 AND name = 'Jar');
+
+INSERT INTO public.download (product_id, type_id, repository, group_id, artifact_id)
+SELECT p.id, t.id, 'releases', 'de.chojo', 'e2e-plugin'
+FROM public.product p, public.download_type t
+WHERE p.name = 'E2E Freebie'
+  AND t.guild_id = 4242 AND t.name = 'Jar'
+  AND NOT EXISTS (SELECT 1 FROM public.download d WHERE d.product_id = p.id AND d.type_id = t.id);

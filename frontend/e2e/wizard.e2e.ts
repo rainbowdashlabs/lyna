@@ -10,8 +10,8 @@ import {uniqueEmail} from './fixtures/unique'
 /**
  * The four questions the download wizard asks, from the outside.
  *
- * <p>This stack runs without the bot, which the wizard no longer needs: what these stories are
- * about is who is refused, who is not, and with which answer - the part a visitor actually meets.
+ * <p>The stack serves a catalogue of its own and a Nexus of its own, so these walk the whole way:
+ * which release types, which versions, and then the file itself.
  */
 const ENTITLED = {email: 'entitled@example.invalid', password: 'end-to-end-password'}
 
@@ -139,23 +139,144 @@ test.describe('Step four, the link', () => {
 })
 
 test.describe('The wizard on the page', () => {
-    test('a product with nothing published says so rather than failing', async ({page}) => {
+    test('opens straight on the versions, because there is only one release type to pick', async ({page}) => {
         await page.goto('/')
 
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('button', {name: 'Download'}).click()
 
-        await expect(page.getByText(/Nothing is published for you to download yet/i)).toBeVisible()
+        await expect(page.getByRole('button', {name: /1\.1\.0/})).toBeVisible()
+        await expect(page.getByRole('button', {name: /1\.0\.0/})).toBeVisible()
     })
 
-    test('the wizard closes again', async ({page}) => {
+    test('picking a version offers the file, named and sized', async ({page}) => {
         await page.goto('/')
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('button', {name: 'Download'}).click()
-        await expect(page.getByText(/Nothing is published for you to download yet/i)).toBeVisible()
 
+        await page.getByRole('button', {name: /1\.1\.0/}).click()
+
+        await expect(page.getByText('e2e-plugin-1.1.0.jar')).toBeVisible()
+        await expect(page.getByText(/one-time link/i)).toBeVisible()
+    })
+
+    test('the download type step is skipped, because the version has only one', async ({page}) => {
+        await page.goto('/')
+        await page.getByRole('article').filter({hasText: 'E2E Freebie'})
+            .getByRole('button', {name: 'Download'}).click()
+
+        await page.getByRole('button', {name: /1\.1\.0/}).click()
+
+        await expect(page.getByText('e2e-plugin-1.1.0.jar')).toBeVisible()
+        await expect(page.getByRole('button', {name: 'Jar', exact: true})).toHaveCount(0)
+    })
+
+    test('back returns to the versions, and closing ends it', async ({page}) => {
+        await page.goto('/')
+        await page.getByRole('article').filter({hasText: 'E2E Freebie'})
+            .getByRole('button', {name: 'Download'}).click()
+        await page.getByRole('button', {name: /1\.1\.0/}).click()
+        await expect(page.getByText('e2e-plugin-1.1.0.jar')).toBeVisible()
+
+        await page.getByRole('button', {name: 'Back'}).click()
+        await expect(page.getByRole('button', {name: /1\.0\.0/})).toBeVisible()
+
+        // One release type means the version list is where the wizard opened, so leaving starts here.
         await page.getByRole('button', {name: 'Close'}).click()
+        await expect(page.getByRole('button', {name: /1\.0\.0/})).toHaveCount(0)
+    })
+})
 
-        await expect(page.getByText(/Nothing is published for you to download yet/i)).toHaveCount(0)
+test.describe('All four steps, through to the file', () => {
+    test('an anonymous visitor walks a free product to a real download', async ({request}) => {
+        const id = await productId(request, 'E2E Freebie')
+
+        const releaseTypes = await (await request.get(`/api/v1/products/${id}/release-types`)).json() as
+            {id: string}[]
+        expect(releaseTypes.map(entry => entry.id)).toContain('STABLE')
+
+        const versions = await (await request.get(
+            `/api/v1/products/${id}/release-types/STABLE/versions`)).json() as
+            {version: string; downloadTypeIds: number[]}[]
+        expect(versions.length).toBeGreaterThan(1)
+        // Newest first, which is what lets somebody pick the current build without reading them all.
+        expect(versions[0]!.version).toBe('1.1.0')
+
+        const newest = versions[0]!
+        const issued = await request.post(
+            `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`)
+        expect(issued.status()).toBe(201)
+        const {url, filename, sizeBytes} = await issued.json()
+        expect(filename).toBe('e2e-plugin-1.1.0.jar')
+        expect(sizeBytes).toBeGreaterThan(0)
+
+        const file = await request.get(url)
+
+        expect(file.ok()).toBe(true)
+        expect(file.headers()['content-disposition']).toContain('e2e-plugin-1.1.0.jar')
+        // A jar is a zip, and a zip says so in its first two bytes.
+        expect((await file.body()).subarray(0, 2).toString('latin1')).toBe('PK')
+    })
+
+    test('the link is good once and once only', async ({request}) => {
+        const id = await productId(request, 'E2E Freebie')
+        const versions = await (await request.get(
+            `/api/v1/products/${id}/release-types/STABLE/versions`)).json() as
+            {version: string; downloadTypeIds: number[]}[]
+        const newest = versions[0]!
+        const {url} = await (await request.post(
+            `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`)).json()
+
+        expect((await request.get(url)).ok()).toBe(true)
+
+        const second = await request.get(url)
+        expect(second.ok()).toBe(false)
+    })
+
+    test('an older version can still be chosen', async ({request}) => {
+        const id = await productId(request, 'E2E Freebie')
+        const versions = await (await request.get(
+            `/api/v1/products/${id}/release-types/STABLE/versions`)).json() as
+            {version: string; downloadTypeIds: number[]}[]
+        const oldest = versions[versions.length - 1]!
+
+        const issued = await request.post(
+            `/api/v1/products/${id}/versions/${oldest.version}/downloads/${oldest.downloadTypeIds[0]}/issue`)
+
+        expect(issued.status()).toBe(201)
+        expect((await issued.json()).filename).toBe(`e2e-plugin-${oldest.version}.jar`)
+    })
+
+    test("a signed-in visitor's download shows up in their own history", async ({request}) => {
+        const signup = await request.post('/api/auth/signup', {
+            data: {email: uniqueEmail('wizard-history'), password: PASSWORD},
+        })
+        const {token} = await signup.json()
+        const authorized = {Authorization: `Bearer ${token}`}
+        const id = await productId(request, 'E2E Freebie')
+        const versions = await (await request.get(
+            `/api/v1/products/${id}/release-types/STABLE/versions`)).json() as
+            {version: string; downloadTypeIds: number[]}[]
+        const newest = versions[0]!
+
+        const {url} = await (await request.post(
+            `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`,
+            {headers: authorized})).json()
+        expect((await request.get(url)).ok()).toBe(true)
+
+        const history = await request.get('/api/account/downloads', {headers: authorized})
+
+        expect(history.ok()).toBe(true)
+        const {rows} = await history.json() as {rows: {version: string; source: string}[]}
+        expect(rows.map(row => row.version)).toContain('1.1.0')
+        expect(rows[0]!.source).toBe('free')
+    })
+
+    test('a version nobody published is not found', async ({request}) => {
+        const id = await productId(request, 'E2E Freebie')
+
+        const issued = await request.post(`/api/v1/products/${id}/versions/9.9.9/downloads/1/issue`)
+
+        expect(issued.status()).toBe(404)
     })
 })

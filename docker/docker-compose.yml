@@ -60,14 +60,34 @@ services:
       - lyna
     depends_on:
       - postgres_e2e
+      - nexus_e2e
     volumes:
       - ./config/:/app/config/
+      - ./nexus-stub/tls/:/app/nexus-tls/
     environment:
-      JAVA_OPTS: "-Dbot.config=config/config.e2e.json -Dlog4j.configurationFile=config/log4j2.xml"
+      JAVA_OPTS: >-
+        -Dbot.config=config/config.e2e.json
+        -Dlog4j.configurationFile=config/log4j2.xml
+        -Djavax.net.ssl.trustStore=/app/nexus-tls/truststore.jks
+        -Djavax.net.ssl.trustStorePassword=e2estub
     profiles:
       - e2e
     ports:
       - 8890:8888
+  nexus_e2e:
+    image: python:3.13-alpine
+    networks:
+      lyna:
+        aliases:
+          - nexus-e2e
+    volumes:
+      - ./nexus-stub/:/stub/
+      - ./nexus-stub/tls/:/tls/
+    profiles:
+      - e2e
+    # The client fixes the scheme at https and sends no port, so the stub answers TLS on 443 under a
+    # name the certificate covers. The backend is handed the matching truststore.
+    command: ["python3", "/stub/server.py"]
   seed_e2e:
     image: postgres:17
     networks:

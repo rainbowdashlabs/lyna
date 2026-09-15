@@ -142,11 +142,20 @@ async function pickDownloadType(downloadTypeId: number) {
     }
 }
 
+/**
+ * Whether going back from here leaves the wizard altogether.
+ *
+ * <p>Not simply "is this the first step": a product with one release type never shows that step, so
+ * the version list is where the wizard opens and where leaving it starts.
+ */
+const atStart = computed(() => step.value === 'releaseType'
+    || (step.value === 'version' && releaseTypes.value.length <= 1))
+
 function back() {
-    if (step.value === 'confirm') step.value = downloadTypes.value.length > 1 ? 'downloadType' : 'version'
+    if (atStart.value) emit('close')
+    else if (step.value === 'confirm') step.value = downloadTypes.value.length > 1 ? 'downloadType' : 'version'
     else if (step.value === 'downloadType') step.value = 'version'
-    else if (step.value === 'version' && releaseTypes.value.length > 1) step.value = 'releaseType'
-    else emit('close')
+    else step.value = 'releaseType'
 }
 </script>
 
@@ -212,7 +221,7 @@ function back() {
       <div class="flex justify-between">
         <SecondaryButton @click="back">
           <font-awesome-icon :icon="['fas', 'arrow-left']" class="mr-1"/>
-          {{ step === 'releaseType' ? 'Close' : 'Back' }}
+          {{ atStart ? 'Close' : 'Back' }}
         </SecondaryButton>
       </div>
     </div>
