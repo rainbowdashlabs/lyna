@@ -161,6 +161,28 @@ public class AccountLicenses {
                 .all());
     }
 
+    /**
+     * The release types a Discord id may download of one product.
+     *
+     * <p>Read from the licenses that id holds, which is the half of the bot's rule the web can
+     * answer. The other half - access granted by a Discord role - needs the gateway to know which
+     * roles somebody wears, so a web visitor sees what their licenses carry and nothing more.
+     *
+     * @param discordId the Discord id the account is linked to
+     * @param productId the product
+     * @return the release types, as the names the RELEASE_TYPE enum uses
+     */
+    public Set<String> releaseTypes(long discordId, int productId) {
+        return Set.copyOf(query("""
+                SELECT DISTINCT release_type::TEXT AS release_type
+                FROM user_product_access
+                WHERE user_id = ? AND product_id = ? AND release_type IS NOT NULL
+                """)
+                .single(call().bind(discordId).bind(productId))
+                .map(row -> row.getString("release_type"))
+                .all());
+    }
+
     private static AccountLicense read(Row row, AccountLicense.Role role) throws SQLException {
         return new AccountLicense(
                 row.getInt("id"),

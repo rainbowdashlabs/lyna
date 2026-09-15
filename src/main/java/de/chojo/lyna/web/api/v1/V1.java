@@ -25,6 +25,7 @@ public class V1 {
     private final KoFiApi kofi;
     private final de.chojo.lyna.web.api.v1.products.Products products;
     private final Releases releases;
+    private final de.chojo.lyna.web.api.v1.products.Wizard wizard;
 
     public V1(Api api, Products products, MailingService mailingService, KoFiProducts koFiProducts,
               DownloadLog downloadLog, KioskProducts kioskProducts, Auth auth, Accounts accounts,
@@ -36,6 +37,7 @@ public class V1 {
         kofi = new KoFiApi(this, koFiProducts, mailingService);
         this.products = new de.chojo.lyna.web.api.v1.products.Products(this, kioskProducts, auth, accounts, accountLicenses);
         releases = new Releases(this, products, auth, accounts, accountLicenses, kioskProducts);
+        wizard = new de.chojo.lyna.web.api.v1.products.Wizard(this, products, kioskProducts, auth, accounts, accountLicenses);
     }
 
     public void init() {
@@ -45,6 +47,7 @@ public class V1 {
             kofi.init();
             products.init();
             releases.init();
+            wizard.init();
         });
     }
 

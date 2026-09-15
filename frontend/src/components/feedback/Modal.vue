@@ -40,8 +40,13 @@ const sizeClass = computed(() => {
             @click="model = false"
         />
         <!-- Content -->
+        <!--
+          Capped and scrollable, because a dialog taller than the window otherwise runs off the
+          bottom of it: the page behind does not scroll while a modal is open, so whatever fell past
+          the edge - a long version list, the buttons under it - could not be reached at all.
+        -->
         <div
-            :class="['relative z-10 w-full mx-4 rounded-theme border border-bg-light-accent bg-bg-light p-6 shadow-xl dark:border-bg-dark-accent dark:bg-bg-dark', sizeClass]">
+            :class="['relative z-10 mx-4 max-h-[90vh] w-full overflow-y-auto rounded-theme border border-bg-light-accent bg-bg-light p-6 shadow-xl dark:border-bg-dark-accent dark:bg-bg-dark', sizeClass]">
           <button
               class="absolute top-3 right-3 p-1 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
               @click="model = false"

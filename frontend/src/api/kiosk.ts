@@ -20,16 +20,28 @@ export function callToAction(product: KioskProduct): 'download' | 'buy' | 'unava
     return product.purchaseUrl ? 'buy' : 'unavailable'
 }
 
-export interface ReleaseEntry {
-    id: number
-    name: string
-    description?: string
+export interface ReleaseTypeEntry {
+    id: string
+    description: string | null
 }
 
 export interface VersionEntry {
-    id: string
     version: string
-    published: number
+    publishedAt: string
+    downloadTypeIds: number[]
+}
+
+export interface DownloadTypeEntry {
+    id: number
+    name: string
+    description: string | null
+}
+
+export interface IssuedDownload {
+    url: string
+    filename: string
+    sizeBytes: number | null
+    expiresAt: string
 }
 
 export async function listProducts(): Promise<KioskProduct[]> {
@@ -37,16 +49,26 @@ export async function listProducts(): Promise<KioskProduct[]> {
     return data
 }
 
-export async function listReleaseTypes(productId: number): Promise<ReleaseEntry[]> {
-    const {data} = await client.get<ReleaseEntry[]>(`/api/v1/releases/${productId}`)
+export async function listReleaseTypes(productId: number): Promise<ReleaseTypeEntry[]> {
+    const {data} = await client.get<ReleaseTypeEntry[]>(`/api/v1/products/${productId}/release-types`)
     return data
 }
 
-export async function listVersions(productId: number, releaseTypeId: number): Promise<VersionEntry[]> {
-    const {data} = await client.get<VersionEntry[]>(`/api/v1/releases/${productId}/${releaseTypeId}`)
+export async function listVersions(productId: number, releaseType: string, limit = 25): Promise<VersionEntry[]> {
+    const {data} = await client.get<VersionEntry[]>(
+        `/api/v1/products/${productId}/release-types/${releaseType}/versions?limit=${limit}`)
     return data
 }
 
-export function directDownloadUrl(productId: number, releaseTypeId: number, version: string): string {
-    return `/api/v1/download/direct/${productId}/${releaseTypeId}/${version}`
+export async function listDownloadTypes(productId: number, version: string): Promise<DownloadTypeEntry[]> {
+    const {data} = await client.get<DownloadTypeEntry[]>(
+        `/api/v1/products/${productId}/versions/${encodeURIComponent(version)}/download-types`)
+    return data
+}
+
+export async function issueDownload(
+    productId: number, version: string, downloadTypeId: number): Promise<IssuedDownload> {
+    const {data} = await client.post<IssuedDownload>(
+        `/api/v1/products/${productId}/versions/${encodeURIComponent(version)}/downloads/${downloadTypeId}/issue`)
+    return data
 }
