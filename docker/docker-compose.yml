@@ -74,10 +74,15 @@ services:
         -Dlog4j.configurationFile=config/log4j2.xml
         -Djavax.net.ssl.trustStore=/app/nexus-tls/truststore.jks
         -Djavax.net.ssl.trustStorePassword=e2estub
+      # The one-time download links are built from this, so it has to name the port the stack
+      # actually publishes - which toolchain.sh derives per checkout.
+      LYNA_API_URL: "http://localhost:${LYNA_E2E_API_PORT:-8890}"
     profiles:
       - e2e
+    # Derived per checkout by toolchain.sh, so two checkouts never want the same port. The default
+    # is what a bare `docker compose` gets when nothing exported them.
     ports:
-      - 8890:8888
+      - "${LYNA_E2E_API_PORT:-8890}:8888"
   # Makes the certificate the stub serves and the truststore the backend is given to trust it with.
   # A run of its own, finishing before either of them starts, so neither has to wait on the other and
   # nothing has to be committed: a key that lives as long as the stack is a key nobody has to rotate.

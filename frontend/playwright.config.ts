@@ -14,9 +14,10 @@ import {defineConfig, devices} from '@playwright/test'
  * context with JavaScript switched off is the only way to assert that they really are rather than
  * being repaired by hydration.
  *
- * The stack runs on ports of its own - the backend on 8890, the Nuxt server on 3011 - so a run never
- * touches the dev stack a developer has open. They are lyna's, not shared with any other project on
- * the machine; every address is a variable so a second checkout can be pointed elsewhere.
+ * The stack runs on ports of its own, so a run never touches the dev stack a developer has open.
+ * `toolchain.sh` derives them from the checkout's path and exports them, which is what lets several
+ * checkouts run the suite at once without dividing the ports between them by hand; the defaults
+ * below are what a bare `npx playwright test` gets.
  */
 const backendUrl = process.env.NUXT_BACKEND_URL || 'http://localhost:8890'
 const baseUrl = process.env.E2E_BASE_URL || 'http://localhost:3011'

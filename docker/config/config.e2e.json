@@ -31,11 +31,11 @@
     "password" : ""
   },
   "api" : {
-    "hostname" : "localhost:8890 localhost:3011 localhost",
-    "url" : "http://localhost:8890",
+    "hostname" : "localhost",
+    "url" : "http://localhost:8888",
     "host" : "0.0.0.0",
     "port" : 8888,
-    "allowedOrigins" : [ "http://localhost:3011" ],
+    "allowedOrigins" : [ ],
     "iconHosts" : [ ],
     "staticUi" : false
   },
