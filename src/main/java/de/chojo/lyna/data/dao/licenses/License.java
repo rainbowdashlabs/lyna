@@ -92,12 +92,20 @@ public class License {
         return product;
     }
 
+    /**
+     * Takes the license away, and the product's role with it.
+     *
+     * <p>The owner's role goes unconditionally: the license granting it is about to stop existing,
+     * so there is nothing left to weigh it against.
+     *
+     * <p>Through {@link #owner()} rather than the field behind it, which is {@code -1} on a license
+     * read from the database until something asks - so this used to take the role from member -1.
+     */
     public boolean delete() {
         clearSubUsers();
-        Member complete = product.guild().retrieveMemberById(owner).complete();
-        if (complete != null) {
-            product.revoke(complete);
-        }
+        long owner = owner();
+        long guildId = product.products().licenseGuild().guildId();
+        product.products().licenseGuild().roles().revoke(guildId, owner, product);
         return query("DELETE FROM license WHERE id = ?")
                 .single(call().bind(id))
                 .delete()
@@ -139,17 +147,25 @@ public class License {
         return false;
     }
 
+    /**
+     * Ends every share of this license, and takes the product's role back from anybody it was the
+     * only thing granting.
+     *
+     * <p>The rows go first and the entitlement is weighed afterwards. Asked the other way round -
+     * which is how this used to read - every sharee still held the share being cleared, so every one
+     * of them answered "entitled" and nobody ever lost the role.
+     */
     public void clearSubUsers() {
-        for (Long subUser : subUsers()) {
-            Member complete = product.guild().retrieveMemberById(subUser).complete();
-            if (complete != null && !product.canAccess(complete)) {
-                product.revoke(complete);
-            }
-        }
+        List<Long> sharees = subUsers();
 
         query("DELETE FROM user_sub_license WHERE license_id = ?")
                 .single(call().bind(id()))
                 .delete();
+
+        long guildId = product.products().licenseGuild().guildId();
+        for (Long sharee : sharees) {
+            product.products().licenseGuild().roles().revokeIfUnentitled(guildId, sharee, product);
+        }
     }
 
     public boolean removeSubUser(Member member) {

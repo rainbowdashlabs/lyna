@@ -3,7 +3,6 @@ package de.chojo.lyna.web;
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.core.Data;
-import de.chojo.lyna.data.access.GatewayUnavailableException;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.Api;
 import io.javalin.Javalin;
@@ -54,9 +53,6 @@ public class WebService {
             config.router.apiBuilder(this::routes);
         });
 
-
-        javalin.exception(GatewayUnavailableException.class, (e, ctx) ->
-                ctx.status(HttpStatus.SERVICE_UNAVAILABLE).result(e.getMessage()));
 
         javalin.start(apiConfig.host(), apiConfig.port());
     }

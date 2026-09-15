@@ -20,6 +20,7 @@ import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.access.RevokedJtis;
+import de.chojo.lyna.data.roles.JdaRoleSync;
 import de.chojo.nexus.NexusRest;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
@@ -158,9 +159,14 @@ public class Data {
         return nexus;
     }
 
+    /**
+     * Hands the gateway to the parts that genuinely need it.
+     *
+     * <p>Only the role cleanup does, now: the tables are read through guild ids, so everything else
+     * answers whether or not the bot is connected.
+     */
     public void inject(Bot bot) {
-        products.shardManager(bot.shardManager());
-        mailings.shardManager(bot.shardManager());
+        guilds.roles(new JdaRoleSync(bot.shardManager()));
     }
 
     public void injectShard(Bot bot, de.chojo.lyna.web.api.Api api) {

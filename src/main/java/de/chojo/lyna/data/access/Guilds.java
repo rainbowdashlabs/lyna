@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 
@@ -16,16 +17,37 @@ public class Guilds {
     private final Cache<Long, LicenseGuild> guilds = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
     private final Configuration<ConfigFile> configuration;
 
+    /**
+     * How Discord roles are kept in step, once there is a gateway to keep them with.
+     *
+     * <p>Mutable and read at call time rather than handed to each {@link LicenseGuild} as it is
+     * built: the HTTP layer starts before the bot does, and a guild cached in that window would
+     * otherwise skip its role cleanup for as long as the cache holds it.
+     */
+    private volatile RoleSync roles = RoleSync.NOOP;
+
     public Guilds(NexusRest nexus, Configuration<ConfigFile> configuration) {
         this.nexus = nexus;
         this.configuration = configuration;
     }
 
     public LicenseGuild guild(Guild guild) {
+        return guild(guild.getIdLong());
+    }
+
+    public LicenseGuild guild(long guildId) {
         try {
-            return guilds.get(guild.getIdLong(), () -> new LicenseGuild(guild, nexus, configuration));
+            return guilds.get(guildId, () -> new LicenseGuild(guildId, nexus, configuration, this));
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public RoleSync roles() {
+        return roles;
+    }
+
+    public void roles(RoleSync roles) {
+        this.roles = roles;
     }
 }

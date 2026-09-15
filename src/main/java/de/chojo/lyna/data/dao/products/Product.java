@@ -150,10 +150,6 @@ public class Product {
         }
     }
 
-    public Guild guild() {
-        return products().guild();
-    }
-
     public NexusRest nexus() {
         return nexus;
     }

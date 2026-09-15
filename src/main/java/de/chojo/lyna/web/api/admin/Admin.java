@@ -174,7 +174,7 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("roleId required");
             return;
         }
-        var role = resolved.guild().guild().getRoleById(body.roleId());
+        var role = discordGuild(resolved.guild().guildId()).map(g -> g.getRoleById(body.roleId())).orElse(null);
         if (role == null) {
             ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
             return;
@@ -238,7 +238,7 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid discord id");
             return;
         }
-        Member member = resolved.guild().guild().getMemberById(discordId);
+        Member member = discordGuild(resolved.guild().guildId()).map(g -> g.getMemberById(discordId)).orElse(null);
         var owned = resolved.guild().licenses().byOwner(discordId).stream()
                 .map(l -> new LicenseSummary(l.id(), l.product().id(), l.product().name(),
                         l.userIdentifier(), l.owner(), l.subUsers().size()))
@@ -414,6 +414,16 @@ public class Admin {
             return null;
         }
         return new Resolved(guilds.guild(guild), discordId, operator);
+    }
+
+    /**
+     * The gateway's object for a guild, when there is a gateway.
+     *
+     * <p>Only the handful of admin operations that act on Discord itself - granting a role, naming a
+     * member - need this; the rest read the guild's own tables through its id.
+     */
+    private Optional<Guild> discordGuild(long guildId) {
+        return Optional.ofNullable(shardManager).map(manager -> manager.getGuildById(guildId));
     }
 
     private Long resolveDiscordId(JwtService.Verified verified) {

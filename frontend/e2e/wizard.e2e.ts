@@ -10,10 +10,8 @@ import {uniqueEmail} from './fixtures/unique'
 /**
  * The four questions the download wizard asks, from the outside.
  *
- * <p>This stack runs without the bot, and resolving a product's artifacts is the one part of the
- * API that needs it, so every authorised call ends in a 503. What these stories are about is the
- * decision made *before* that: who is refused, who is not, and with which answer - which is the
- * part a visitor actually meets.
+ * <p>This stack runs without the bot, which the wizard no longer needs: what these stories are
+ * about is who is refused, who is not, and with which answer - the part a visitor actually meets.
  */
 const ENTITLED = {email: 'entitled@example.invalid', password: 'end-to-end-password'}
 
@@ -66,7 +64,7 @@ test.describe('Step one, the release types', () => {
             headers: {Authorization: `Bearer ${token}`},
         })
 
-        expect(response.status()).toBe(503)
+        expect(response.ok()).toBe(true)
     })
 
     test('a free product asks nobody to sign in', async ({request}) => {
@@ -74,7 +72,7 @@ test.describe('Step one, the release types', () => {
 
         const response = await request.get(`/api/v1/products/${id}/release-types`)
 
-        expect(response.status()).toBe(503)
+        expect(response.ok()).toBe(true)
     })
 
     test('a product that does not exist is not found', async ({request}) => {
@@ -112,7 +110,7 @@ test.describe('Step two, the versions', () => {
             headers: {Authorization: `Bearer ${token}`},
         })
 
-        expect(response.status()).toBe(503)
+        expect(response.ok()).toBe(true)
     })
 })
 
@@ -141,23 +139,23 @@ test.describe('Step four, the link', () => {
 })
 
 test.describe('The wizard on the page', () => {
-    test('opening it on a free product explains why nothing can be downloaded here', async ({page}) => {
+    test('a product with nothing published says so rather than failing', async ({page}) => {
         await page.goto('/')
 
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('button', {name: 'Download'}).click()
 
-        await expect(page.getByText(/the Discord bot is not connected/i)).toBeVisible()
+        await expect(page.getByText(/Nothing is published for you to download yet/i)).toBeVisible()
     })
 
     test('the wizard closes again', async ({page}) => {
         await page.goto('/')
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('button', {name: 'Download'}).click()
-        await expect(page.getByText(/the Discord bot is not connected/i)).toBeVisible()
+        await expect(page.getByText(/Nothing is published for you to download yet/i)).toBeVisible()
 
         await page.getByRole('button', {name: 'Close'}).click()
 
-        await expect(page.getByText(/the Discord bot is not connected/i)).toHaveCount(0)
+        await expect(page.getByText(/Nothing is published for you to download yet/i)).toHaveCount(0)
     })
 })

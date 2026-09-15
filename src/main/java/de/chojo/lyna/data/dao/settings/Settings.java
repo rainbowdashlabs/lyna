@@ -1,7 +1,6 @@
 package de.chojo.lyna.data.dao.settings;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
-import net.dv8tion.jda.api.entities.Guild;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -22,10 +21,6 @@ public class Settings {
 
     public long guildId() {
         return licenseGuild.guildId();
-    }
-
-    public Guild guild() {
-        return licenseGuild.guild();
     }
 
     public License license() {

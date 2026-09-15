@@ -125,17 +125,13 @@ test.describe('The catalogue endpoint', () => {
         expect(response.status()).toBe(401)
     })
 
-    /**
-     * This stack runs without the bot, and resolving a product's downloads is the one part of the
-     * API that needs it. What matters is that it says so rather than failing as though broken.
-     */
-    test('a free product says the gateway is needed rather than failing as though broken', async ({request}) => {
+    test('a free product serves its releases to anyone, with no bot connected', async ({request}) => {
         const products = await (await request.get('/api/v1/products')).json() as {id: number; name: string}[]
         const free = products.find(product => product.name === 'E2E Freebie')!
 
         const response = await request.get(`/api/v1/releases/${free.id}`)
 
-        expect(response.status()).toBe(503)
+        expect(response.ok()).toBe(true)
     })
 
     test('a premium product refuses its releases to somebody holding no license', async ({request}) => {

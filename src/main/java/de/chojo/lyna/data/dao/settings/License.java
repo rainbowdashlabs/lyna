@@ -1,6 +1,5 @@
 package de.chojo.lyna.data.dao.settings;
 
-import net.dv8tion.jda.api.entities.Guild;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -40,7 +39,4 @@ public class License {
         return settings.guildId();
     }
 
-    public Guild guild() {
-        return settings.guild();
-    }
 }

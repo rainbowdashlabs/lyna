@@ -4,19 +4,27 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.downloadtype.DownloadTypes;
 import de.chojo.lyna.data.dao.licenses.Licenses;
 import de.chojo.lyna.data.dao.products.Products;
 import de.chojo.lyna.data.dao.settings.Settings;
+import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.nexus.NexusRest;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * One guild's half of the data: its products, licenses, settings and download types.
+ *
+ * <p>Holds the guild's id rather than the gateway's object for it. Everything below reads the id,
+ * and the few operations that genuinely need Discord take the member or role they act on as an
+ * argument - so this whole subtree answers on an instance running without the bot.
+ */
 public class LicenseGuild {
-    private final Guild guild;
+    private final long guildId;
     private final NexusRest nexus;
 
     /**
@@ -38,8 +46,11 @@ public class LicenseGuild {
      */
     Cache<Long, LicenseUser> users = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
-    public LicenseGuild(Guild guild, NexusRest nexus, Configuration<ConfigFile> configuration) {
-        this.guild = guild;
+    private final Guilds guilds;
+
+    public LicenseGuild(long guildId, NexusRest nexus, Configuration<ConfigFile> configuration, Guilds guilds) {
+        this.guildId = guildId;
+        this.guilds = guilds;
         this.nexus = nexus;
         this.products = new Products(this, nexus);
         this.configuration = configuration;
@@ -61,11 +72,15 @@ public class LicenseGuild {
     }
 
     public long guildId() {
-        return guild.getIdLong();
+        return guildId;
     }
 
-    public Guild guild() {
-        return guild;
+    /**
+     * How this guild's Discord roles are kept in step. Read at call time, never stored: a guild can
+     * be cached here before the gateway has connected.
+     */
+    public RoleSync roles() {
+        return guilds.roles();
     }
 
     public DownloadTypes downloadTypes() {

@@ -3,7 +3,6 @@ package de.chojo.lyna.data.dao;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -132,10 +131,6 @@ public class LicenseUser {
 
     public long guildId() {
         return licenseGuild.guildId();
-    }
-
-    public Guild guild() {
-        return licenseGuild.guild();
     }
 
     public List<Product> products() {
