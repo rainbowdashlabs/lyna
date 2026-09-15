@@ -23,6 +23,7 @@ const sections = computed(() => {
     return [
       {to: '/admin/instance/system', label: 'System'},
       {to: '/admin/instance/appearance', label: 'Appearance'},
+      {to: '/admin/instance/operators', label: 'Operators'},
     ]
   }
   if (!currentGuildId.value) return []

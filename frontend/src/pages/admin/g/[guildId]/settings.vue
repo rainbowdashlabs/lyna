@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {onMounted, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {getGuildSettings, updateGuildSettings, type GuildSettings} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
@@ -11,6 +11,17 @@ const route = useRoute()
 const guildId = ref(String(route.params.guildId))
 
 const data = ref<GuildSettings | null>(null)
+
+/**
+ * The role id as the field holds it. Kept apart from the payload so that clearing the box means
+ * "no role" rather than a role whose id is the empty string.
+ */
+const adminRoleId = computed({
+  get: () => data.value?.adminRoleId ?? '',
+  set: (value: string) => {
+    if (data.value) data.value.adminRoleId = value.trim() ? value.trim() : null
+  },
+})
 const loading = ref(true)
 const saving = ref(false)
 const message = ref<string | null>(null)
@@ -71,6 +82,12 @@ async function save() {
       </LabelledField>
       <LabelledField label="Trial account time (minutes)">
         <NumberInput v-model="data.trialAccountMinutes" class="w-32" min="0"/>
+      </LabelledField>
+      <LabelledField
+          help="Members of this role administer this guild here. Leave empty so only Manage Server does."
+          label="Admin role id (optional)"
+      >
+        <TextInput v-model="adminRoleId" inputmode="numeric" placeholder="e.g. 1065674230362017813"/>
       </LabelledField>
       <div v-if="message" class="text-sm" :class="isError ? 'text-error' : 'text-success'">
         {{ message }}

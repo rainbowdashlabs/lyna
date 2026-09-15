@@ -30,6 +30,18 @@ public class BaseSettings {
         return botOwner.contains(id);
     }
 
+    /**
+     * The ids that administer the instance by configuration.
+     *
+     * <p>The root set: they are listed here rather than granted through the web, so nothing done
+     * there can take the instance away from them.
+     *
+     * @return the configured operator ids
+     */
+    public List<Long> owners() {
+        return List.copyOf(botOwner);
+    }
+
     public long botGuild() {
         return botGuild;
     }

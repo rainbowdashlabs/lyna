@@ -13,6 +13,7 @@ import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
@@ -51,6 +52,7 @@ public class Data {
     private RevokedJtis revokedJtis;
     private DownloadLog downloadLog;
     private InstanceSettingsAccess instanceSettings;
+    private InstanceOperators instanceOperators;
     private PasswordResetTokens passwordResetTokens;
     private PasswordHasher passwordHasher;
     private JwtService jwtService;
@@ -120,6 +122,7 @@ public class Data {
         revokedJtis = new RevokedJtis();
         downloadLog = new DownloadLog();
         instanceSettings = new InstanceSettingsAccess();
+        instanceOperators = new InstanceOperators();
         passwordResetTokens = new PasswordResetTokens();
         passwordHasher = new PasswordHasher();
         jwtService = new JwtService(configuration.config().auth());
@@ -211,6 +214,10 @@ public class Data {
 
     public InstanceSettingsAccess instanceSettings() {
         return instanceSettings;
+    }
+
+    public InstanceOperators instanceOperators() {
+        return instanceOperators;
     }
 
     public PasswordResetTokens passwordResetTokens() {

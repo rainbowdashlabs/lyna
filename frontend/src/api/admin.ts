@@ -117,6 +117,16 @@ export interface GuildSettings {
     shares: number
     trialServerMinutes: number
     trialAccountMinutes: number
+    /** The role whose members administer this guild, or null when only MANAGE_SERVER does. */
+    adminRoleId: string | null
+}
+
+export interface InstanceOperator {
+    discordId: string
+    addedBy: string | null
+    addedAt: string | null
+    /** Set in the config file rather than granted here, so it cannot be withdrawn here. */
+    configured: boolean
 }
 
 export interface KofiMapping {
@@ -164,4 +174,18 @@ export async function getTrialInfo(guildId: string): Promise<TrialInfo> {
 export async function listMailings(guildId: string): Promise<MailingTemplate[]> {
     const {data} = await client.get<MailingTemplate[]>(`/api/admin/g/${guildId}/mailing`)
     return data
+}
+
+export async function listOperators(): Promise<InstanceOperator[]> {
+    const {data} = await client.get<InstanceOperator[]>('/api/admin/instance/operators')
+    return data
+}
+
+export async function addOperator(discordId: string): Promise<InstanceOperator> {
+    const {data} = await client.post<InstanceOperator>('/api/admin/instance/operators', {discordId})
+    return data
+}
+
+export async function removeOperator(discordId: string): Promise<void> {
+    await client.delete(`/api/admin/instance/operators/${encodeURIComponent(discordId)}`)
 }
