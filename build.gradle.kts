@@ -37,6 +37,7 @@ dependencies {
     implementation(libs.java.jwt)
 
     // Mailing
+    implementation(libs.pebble)
     implementation("org.eclipse.angus", "angus-mail", "2.0.3")
     implementation("org.jsoup", "jsoup", "1.17.2")
 

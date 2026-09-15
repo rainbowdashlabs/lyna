@@ -40,6 +40,7 @@ public class MailingService {
     private final Configuration<ConfigFile> configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
+    private final MailTemplateRenderer renderer = new MailTemplateRenderer();
 
     public MailingService(Threading threading, Data data, Configuration<ConfigFile> configuration) {
         this.threading = threading;
@@ -138,6 +139,14 @@ public class MailingService {
                 return new PasswordAuthentication(mailing.user(), mailing.password());
             }
         });
+    }
+
+    /**
+     * The renderer every mail goes through, so that a caller building one never has to know where
+     * the templates are.
+     */
+    public MailTemplateRenderer renderer() {
+        return renderer;
     }
 
     public void registerMessageListener(ThrowingConsumer<Message, Exception> listener) {

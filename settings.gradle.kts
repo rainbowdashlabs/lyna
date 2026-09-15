@@ -14,6 +14,7 @@ dependencyResolutionManagement {
 
             version("log4j", "2.25.3")
 
+            library("pebble", "io.pebbletemplates:pebble:4.1.2")
             library("bcrypt", "at.favre.lib:bcrypt:0.10.2")
             library("java-jwt", "com.auth0:java-jwt:4.5.0")
 

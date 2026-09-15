@@ -15,6 +15,7 @@ import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.DiscordLink;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
+import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -41,6 +42,7 @@ public class Account {
     private final Accounts accounts;
     private final AccountLicenses licenses;
     private final InstanceSettingsAccess instanceSettings;
+    private final MailingService mailingService;
     private final AccountSessions sessions;
     private final RevokedJtis revokedJtis;
     private final DownloadLog downloadLog;
@@ -52,6 +54,7 @@ public class Account {
                    Accounts accounts,
                    AccountLicenses licenses,
                    InstanceSettingsAccess instanceSettings,
+                   MailingService mailingService,
                    AccountSessions sessions,
                    RevokedJtis revokedJtis,
                    DownloadLog downloadLog,
@@ -61,6 +64,7 @@ public class Account {
         this.accounts = accounts;
         this.licenses = licenses;
         this.instanceSettings = instanceSettings;
+        this.mailingService = mailingService;
         this.sessions = sessions;
         this.revokedJtis = revokedJtis;
         this.downloadLog = downloadLog;
@@ -416,6 +420,7 @@ public class Account {
             return;
         }
         licenses.addSharee(owned.id(), subject);
+        tellSharee("licence-shared", subject, owned);
         ctx.status(HttpStatus.CREATED).json(new ShareeView(Long.toString(subject)));
     }
 
@@ -428,7 +433,35 @@ public class Account {
             return;
         }
         licenses.removeSharee(owned.id(), subject);
+        tellSharee("licence-revoked", subject, owned);
         ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Tells somebody a licence was shared with them, or taken back.
+     *
+     * <p>Only reaches an id that has linked an account and given it an address - a Discord id on its
+     * own is not somewhere a mail can go. The owner is named by their Discord id, which is what the
+     * licences page already shows; their email is theirs and is never passed on.
+     *
+     * <p>Best effort on purpose. The share is a database row and has already been written; a mail
+     * server that will not take the message is not a reason to tell the caller their share failed.
+     */
+    private void tellSharee(String template, long shareeDiscordId, AccountLicense license) {
+        try {
+            var sharee = accounts.findByDiscordId(shareeDiscordId);
+            if (sharee.isEmpty() || sharee.get().email() == null) return;
+            var renderer = mailingService.renderer();
+            var values = java.util.Map.<String, Object>of(
+                    "owner", Long.toString(license.ownerDiscordId()),
+                    "product", license.productName(),
+                    "senderName", "Lyna");
+            mailingService.send(sharee.get().email(),
+                    renderer.subject(template, "en", values),
+                    renderer.render(template, "en", values));
+        } catch (Exception e) {
+            log.warn("Could not tell {} about the licence for {}", shareeDiscordId, license.productName(), e);
+        }
     }
 
     /**

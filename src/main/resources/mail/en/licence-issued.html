@@ -1,0 +1,11 @@
+{% extends '_layout.html' %}
+{% block body %}
+      <h2>Thank you for your purchase</h2>
+      <p>Hi {{ name }}, here is your licence for <strong>{{ product }}</strong>.</p>
+      <p class="key-label" style="color:#888;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px;text-align:center;">Your licence key</p>
+      <code class="key" style="display:block;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:14px 16px;margin:20px 0;font-family:'Courier New',Courier,monospace;font-size:16px;color:#1a1a1a;word-break:break-all;text-align:center;">{{ key }}</code>
+      {% if downloadUrl %}
+      <div class="btn-wrap" style="text-align:center;margin:24px 0;"><a class="btn" style="display:inline-block;background:#E92063;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;" href="{{ downloadUrl }}">Download {{ product }}</a></div>
+      {% endif %}
+      <p class="hint" style="color:#888;font-size:13px;">Keep this key to yourself. It is what proves the licence is yours.</p>
+{% endblock %}

@@ -60,7 +60,8 @@ public class Send implements SlashHandler {
         license.get().grantAccess(ReleaseType.STABLE);
 
         Mailing mailing = optMailing.get();
-        Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), name, address);
+        Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
+                license.get().key(), name, address, null);
 
         mailingService.sendMail(mail);
         event.reply("Email sent").setEphemeral(true).queue();

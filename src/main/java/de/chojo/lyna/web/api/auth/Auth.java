@@ -98,15 +98,15 @@ public class Auth {
         var issued = passwordResetTokens.issue(account.get().id(),
                 java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
         String link = configuration.config().links().frontend() + "/reset-password?token=" + issued.token();
-        String subject = "Lyna password reset";
-        String htmlBody = """
-                <p>A password reset was requested for this email.</p>
-                <p>If this was you, follow the link below within the next hour:</p>
-                <p><a href="%s">%s</a></p>
-                <p>If you did not request this, you can ignore the message.</p>
-                """.formatted(link, link);
+        var renderer = mailingService.renderer();
+        var values = java.util.Map.<String, Object>of(
+                "url", link,
+                "senderName", "Lyna",
+                "baseUrl", configuration.config().links().frontend());
         try {
-            mailingService.send(body.email(), subject, htmlBody);
+            mailingService.send(body.email(),
+                    renderer.subject("reset-password", "en", values),
+                    renderer.render("reset-password", "en", values));
         } catch (Exception e) {
             log.warn("Failed to send password reset mail", e);
         }

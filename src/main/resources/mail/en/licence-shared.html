@@ -1,0 +1,10 @@
+{% extends '_layout.html' %}
+{% block body %}
+      <h2>A licence was shared with you</h2>
+      <p>{{ owner }} has shared their licence for <strong>{{ product }}</strong> with you.</p>
+      <p>It is on your licences page, and you can download {{ product }} from the storefront.</p>
+      {% if licencesUrl %}
+      <div class="btn-wrap" style="text-align:center;margin:24px 0;"><a class="btn" style="display:inline-block;background:#E92063;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;" href="{{ licencesUrl }}">Open your licences</a></div>
+      {% endif %}
+      <p class="hint" style="color:#888;font-size:13px;">The licence stays theirs, and they can see when you download.</p>
+{% endblock %}

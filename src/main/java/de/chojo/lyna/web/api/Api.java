@@ -38,7 +38,7 @@ public class Api {
                 data.discordOAuthClient(), mailingService);
         v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog(),
                 data.kioskProducts(), auth, data.accounts(), data.accountLicenses());
-        account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(),
+        account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(), mailingService,
                 data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         theme = new Theme(data.instanceSettings());

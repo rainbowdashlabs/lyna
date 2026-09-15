@@ -66,7 +66,8 @@ public class KoFiApi {
                         Optional<License> license = product.createLicense("kofi:%s".formatted(post.email()));
                         if (license.isEmpty()) continue;
                         license.get().grantAccess(ReleaseType.STABLE);
-                        var mail = MailCreator.createLicenseMessage(productMail, license.get().key(), post.from(), post.email());
+                        var mail = MailCreator.createLicenseMessage(mailing.renderer(), productMail,
+                                license.get().key(), post.from(), post.email(), null);
                         mailing.sendMail(mail);
                     }
                 } else {
