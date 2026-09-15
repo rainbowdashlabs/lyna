@@ -18,7 +18,7 @@ public class Mailings {
 
     public Optional<Mailing> byName(String name) {
         return query("""
-                SELECT mp.id, guild_id, product_id, mp.name, mail_text
+                SELECT mp.id, guild_id, product_id, mp.name, mail_text, mp.blocks
                 FROM mail_products mp
                          LEFT JOIN product p ON mp.product_id = p.id
                 WHERE ? ILIKE ('%' || mp.name || '%')
@@ -27,7 +27,8 @@ public class Mailings {
                 .map(row -> {
                     LicenseGuild licenseGuild = guilds.guild(row.getLong("guild_id"));
                     Product product = licenseGuild.products().byId(row.getInt("product_id")).get();
-                    return new Mailing(row.getInt("id"), product, row.getString("name"), row.getString("mail_text"));
+                    return new Mailing(row.getInt("id"), product, row.getString("name"),
+                            row.getString("mail_text"), row.getString("blocks"));
                 }).first();
     }
 

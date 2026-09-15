@@ -14,6 +14,9 @@ import java.util.Map;
  * rather than from a sentence built here.
  */
 public final class MailCreator {
+    private static final de.chojo.lyna.mail.blocks.MailBlockRenderer BLOCKS =
+            new de.chojo.lyna.mail.blocks.MailBlockRenderer();
+
     /** What a per-product template may refer to. */
     private static final String[] PLACEHOLDERS = {"name", "key", "product", "downloadUrl"};
 
@@ -38,11 +41,25 @@ public final class MailCreator {
         values.put("downloadUrl", downloadUrl);
 
         Map<String, Object> context = new HashMap<>(values);
-        context.put("body", substitute(mailing.mailText(), values));
+        context.put("body", body(mailing, values));
 
         return new Mail(address,
                 renderer.subject("licence-issued", "en", values),
                 renderer.render("licence-custom", "en", context));
+    }
+
+    /**
+     * The body of the mail: what the operator composed, however they composed it.
+     *
+     * <p>A product whose mail was written before blocks existed still has only its HTML, and it is
+     * carried across as it was. One composed since renders from its blocks, where the escaping is
+     * decided per block rather than left to whoever typed it.
+     */
+    private static String body(Mailing mailing, Map<String, Object> values) {
+        if (mailing.blocks() != null && !mailing.blocks().isBlank()) {
+            return BLOCKS.render(mailing.blocks(), values);
+        }
+        return substitute(mailing.mailText(), values);
     }
 
     /**

@@ -129,6 +129,44 @@ export interface InstanceOperator {
     configured: boolean
 }
 
+export type MailBlock =
+    | {type: 'heading'; text: string}
+    | {type: 'paragraph'; text: string}
+    | {type: 'key'; label: string}
+    | {type: 'button'; label: string; url: string}
+    | {type: 'list'; items: string[]}
+    | {type: 'divider'}
+    | {type: 'raw'; html: string}
+
+export interface MailingTemplate {
+    id: number
+    productId: number
+    productName: string
+    name: string
+    /** The mail as its operator composed it, or null for one written before blocks existed. */
+    blocks: string | null
+    mailText: string | null
+}
+
+export async function listMailings(guildId: string): Promise<MailingTemplate[]> {
+    const {data} = await client.get<MailingTemplate[]>(`/api/admin/g/${guildId}/mailing`)
+    return data
+}
+
+export async function saveMailingBlocks(guildId: string, id: number, blocks: MailBlock[]): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/mailing/${id}`, {blocks: JSON.stringify(blocks)})
+}
+
+export async function previewMailing(guildId: string, id: number, blocks: MailBlock[]): Promise<string> {
+    const {data} = await client.post<string>(
+        `/api/admin/g/${guildId}/mailing/${id}/preview`, {blocks: JSON.stringify(blocks)})
+    return data
+}
+
+export async function sendTestMail(guildId: string, id: number, address: string): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/mailing/${id}/test`, {address})
+}
+
 export interface KofiMapping {
     linkCode: string
     productId: number
@@ -139,13 +177,6 @@ export interface TrialInfo {
     serverMinutes: number
     accountMinutes: number
     products: ProductSummary[]
-}
-
-export interface MailingTemplate {
-    id: number
-    productId: number
-    productName: string
-    name: string
 }
 
 export async function getGuildSettings(guildId: string): Promise<GuildSettings> {
@@ -168,11 +199,6 @@ export async function createKofi(guildId: string, linkCode: string, productId: n
 
 export async function getTrialInfo(guildId: string): Promise<TrialInfo> {
     const {data} = await client.get<TrialInfo>(`/api/admin/g/${guildId}/trial`)
-    return data
-}
-
-export async function listMailings(guildId: string): Promise<MailingTemplate[]> {
-    const {data} = await client.get<MailingTemplate[]>(`/api/admin/g/${guildId}/mailing`)
     return data
 }
 

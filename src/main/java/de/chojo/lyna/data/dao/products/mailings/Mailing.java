@@ -13,12 +13,18 @@ public class Mailing {
     private final Product product;
     private String name;
     private String mailText;
+    private String blocks;
 
     public Mailing(int id, Product product, String name, String mailText) {
+        this(id, product, name, mailText, null);
+    }
+
+    public Mailing(int id, Product product, String name, String mailText, String blocks) {
         this.id = id;
         this.product = product;
         this.name = name;
         this.mailText = mailText;
+        this.blocks = blocks;
     }
 
     public int id() {
@@ -53,6 +59,25 @@ public class Mailing {
                 .single(consumer.apply(call()).bind(id))
                 .update()
                 .changed();
+    }
+
+    /**
+     * The mail as its operator composed it, or nothing for one written before blocks existed.
+     *
+     * @return the block document, as JSON
+     */
+    public String blocks() {
+        return blocks;
+    }
+
+    public void blocks(String blocks) {
+        if (query("""
+                UPDATE mail_products SET blocks = ?::JSONB WHERE id = ?""")
+                .single(call().bind(blocks).bind(id))
+                .update()
+                .changed()) {
+            this.blocks = blocks;
+        }
     }
 
     public void mailText(String mailText) {

@@ -26,10 +26,11 @@ public class Mailings {
 
     public Optional<Mailing> get() {
         return query("""
-                SELECT id, product_id, name, mail_text FROM mail_products WHERE product_id = ?
+                SELECT id, product_id, name, mail_text, blocks FROM mail_products WHERE product_id = ?
                 """)
                 .single(call().bind(product.id()))
-                .map(row -> new Mailing(row.getInt("id"), product, row.getString("name"), row.getString("mail_text")))
+                .map(row -> new Mailing(row.getInt("id"), product, row.getString("name"),
+                        row.getString("mail_text"), row.getString("blocks")))
                 .first();
     }
 }

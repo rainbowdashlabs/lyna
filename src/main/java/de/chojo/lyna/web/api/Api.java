@@ -43,7 +43,7 @@ public class Api {
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         theme = new Theme(data.instanceSettings());
         admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi(), data.kioskProducts(),
-                data.instanceOperators());
+                data.instanceOperators(), mailingService);
     }
 
     public void init() {

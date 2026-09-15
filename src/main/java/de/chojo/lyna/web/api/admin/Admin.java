@@ -53,12 +53,16 @@ public class Admin {
     private final KioskProducts kioskProducts;
     private final InstanceOperators operators;
     private final IconUrls iconUrls = new IconUrls();
+    private final de.chojo.lyna.mail.blocks.MailBlockRenderer blockRenderer =
+            new de.chojo.lyna.mail.blocks.MailBlockRenderer();
+    private final de.chojo.lyna.mail.MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private ShardManager shardManager;
 
     public Admin(Auth auth, Configuration<ConfigFile> configuration, Accounts accounts, Guilds guilds,
                  InstanceSettingsAccess instanceSettings, KoFiProducts kofi,
-                 KioskProducts kioskProducts, InstanceOperators operators) {
+                 KioskProducts kioskProducts, InstanceOperators operators,
+                 de.chojo.lyna.mail.MailingService mailingService) {
         this.auth = auth;
         this.configuration = configuration;
         this.accounts = accounts;
@@ -67,6 +71,7 @@ public class Admin {
         this.kofi = kofi;
         this.kioskProducts = kioskProducts;
         this.operators = operators;
+        this.mailingService = mailingService;
     }
 
     public void shardManager(ShardManager shardManager) {
@@ -89,6 +94,9 @@ public class Admin {
                 post("kofi", this::createKofi);
                 get("trial", this::listTrialProducts);
                 get("mailing", this::listMailing);
+                put("mailing/{mailingId}", this::updateMailing);
+                post("mailing/{mailingId}/preview", this::previewMailing);
+                post("mailing/{mailingId}/test", this::testMailing);
             });
             path("instance", () -> {
                 get("system", this::instanceSystem);
@@ -124,6 +132,111 @@ public class Admin {
                 .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(),
                         icons.getOrDefault(p.id(), java.util.Optional.empty()).orElse(null)))
                 .toList());
+    }
+
+    /**
+     * The product whose mail the path names, within the guild being administered.
+     *
+     * <p>Looked up through the guild rather than by id alone, so a mailing belonging to another
+     * guild cannot be reached by guessing its number.
+     */
+    private de.chojo.lyna.data.dao.products.mailings.Mailing requireMailing(Context ctx, Resolved resolved) {
+        int mailingId;
+        try {
+            mailingId = Integer.parseInt(ctx.pathParam("mailingId"));
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return null;
+        }
+        for (Product product : resolved.guild().products().all()) {
+            var mailing = product.mailings().get();
+            if (mailing.isPresent() && mailing.get().id() == mailingId) return mailing.get();
+        }
+        ctx.status(HttpStatus.NOT_FOUND);
+        return null;
+    }
+
+    private void updateMailing(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var mailing = requireMailing(ctx, resolved);
+        if (mailing == null) return;
+        MailingBlocks body;
+        try {
+            body = json.readValue(ctx.body(), MailingBlocks.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        String blocks = body == null ? null : body.blocks();
+        try {
+            blockRenderer.render(blocks, de.chojo.lyna.mail.blocks.MailBlockRenderer
+                    .sampleValues(mailing.product().name()));
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
+            return;
+        }
+        mailing.blocks(blocks);
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Renders what the editor is holding, so the page can show the mail rather than an impression of
+     * it. The blocks come from the request rather than from the database, so a preview shows what
+     * has not been saved yet.
+     */
+    private void previewMailing(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var mailing = requireMailing(ctx, resolved);
+        if (mailing == null) return;
+        MailingBlocks body;
+        try {
+            body = json.readValue(ctx.body(), MailingBlocks.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        var values = de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(mailing.product().name());
+        String rendered;
+        try {
+            rendered = body == null || body.blocks() == null
+                    ? blockRenderer.render(mailing.blocks(), values)
+                    : blockRenderer.render(body.blocks(), values);
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
+            return;
+        }
+        var context = new java.util.HashMap<String, Object>(values);
+        context.put("body", rendered);
+        ctx.contentType("text/html").result(mailingService.renderer().render("licence-custom", "en", context));
+    }
+
+    /**
+     * Sends the mail to one address, which is the only way to see what a mail client makes of it.
+     */
+    private void testMailing(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var mailing = requireMailing(ctx, resolved);
+        if (mailing == null) return;
+        MailingTest body;
+        try {
+            body = json.readValue(ctx.body(), MailingTest.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        String address = body == null || body.address() == null ? "" : body.address().trim();
+        if (!address.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("That is not an email address");
+            return;
+        }
+        var sample = de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(mailing.product().name());
+        var mail = de.chojo.lyna.mail.MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
+                sample.get("key").toString(), sample.get("name").toString(), address, null);
+        mailingService.sendMail(mail);
+        ctx.status(HttpStatus.ACCEPTED);
     }
 
     /**
@@ -345,7 +458,8 @@ public class Admin {
         if (resolved == null) return;
         var out = new ArrayList<MailingTemplate>();
         for (Product p : resolved.guild().products().all()) {
-            p.mailings().get().ifPresent(m -> out.add(new MailingTemplate(m.id(), p.id(), p.name(), m.name())));
+            p.mailings().get().ifPresent(m -> out.add(
+                    new MailingTemplate(m.id(), p.id(), p.name(), m.name(), m.blocks(), m.mailText())));
         }
         ctx.json(out);
     }
@@ -362,7 +476,12 @@ public class Admin {
     public record TrialInfo(int serverMinutes, int accountMinutes, List<ProductSummary> products) {
     }
 
-    public record MailingTemplate(int id, int productId, String productName, String name) {
+    /**
+     * @param blocks   the mail as its operator composed it, or nothing for one written before
+     * @param mailText the HTML a mail written before blocks still carries
+     */
+    public record MailingTemplate(int id, int productId, String productName, String name, String blocks,
+                                  String mailText) {
     }
 
     private void instanceSystem(Context ctx) {
@@ -604,6 +723,12 @@ public class Admin {
     }
 
     public record OperatorRequest(String discordId) {
+    }
+
+    public record MailingBlocks(String blocks) {
+    }
+
+    public record MailingTest(String address) {
     }
 
     public record ProductIcon(String iconUrl) {
