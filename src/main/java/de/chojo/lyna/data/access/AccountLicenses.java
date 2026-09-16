@@ -36,7 +36,9 @@ public class AccountLicenses {
                                WHERE la.license_id = l.id
                                ORDER BY la.release_type), ARRAY[]::TEXT[]) AS release_types,
                 COALESCE(ul.account_id, 0)                                AS owner_id,
-                (SELECT count(*) FROM user_sub_license s WHERE s.license_id = l.id) AS sharees_used,
+                ((SELECT count(*) FROM user_sub_license s WHERE s.license_id = l.id)
+                 + (SELECT count(*) FROM license_invite v
+                    WHERE v.license_id = l.id AND v.expires_at > now()))    AS sharees_used,
                 COALESCE(ls.shares, 0)                                    AS sharees_cap
             FROM license l
                 JOIN product p ON p.id = l.product_id
@@ -94,6 +96,10 @@ public class AccountLicenses {
     }
 
     /**
+     * <p>A place held by an invite nobody has answered counts as used. An owner who could invite
+     * without spending a place could invite the world, and the cap would mean nothing until the
+     * replies came in.
+     *
      * @param licenseId the license
      * @return the accounts the license is shared with
      */

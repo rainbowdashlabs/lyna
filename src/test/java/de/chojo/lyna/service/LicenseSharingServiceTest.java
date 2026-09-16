@@ -38,7 +38,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void seed() throws SQLException {
-        clear("download_log", "user_sub_license", "user_license", "license_access", "license",
+        clear("download_log", "license_invite", "user_sub_license", "user_license", "license_access", "license",
                 "license_settings", "download", "download_type", "product",
                 "account_identity", "account");
 
@@ -234,5 +234,114 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         accounts.delete(sharee.id());
 
         assertEquals(0, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
+    }
+
+    @Test
+    @DisplayName("An address nobody has an account for can be invited, and waits")
+    void inviteWaitsForAnAccount() {
+        assertTrue(licenseInvites.invite(licenseId, "newcomer@example.invalid"));
+
+        assertEquals(1, licenseInvites.standing(licenseId).size());
+        assertEquals("newcomer@example.invalid", licenseInvites.standing(licenseId).getFirst().email());
+    }
+
+    @Test
+    @DisplayName("Verifying the invited address hands the licence over")
+    void verifyingBindsTheInvite() {
+        licenseInvites.invite(licenseId, "newcomer@example.invalid");
+        Account newcomer = accounts.create("newcomer@example.invalid", "hash");
+
+        assertTrue(accountLicenses.shared(newcomer.id()).isEmpty());
+
+        List<Integer> bound = accounts.confirmEmail(newcomer.id(), "newcomer@example.invalid");
+
+        assertEquals(List.of(licenseId), bound);
+        assertEquals(1, accountLicenses.shared(newcomer.id()).size());
+        assertEquals("KEY-1", accountLicenses.keyForHolder(licenseId, newcomer.id()).orElseThrow());
+        assertTrue(licenseInvites.standing(licenseId).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Merely registering the address is not enough: it has to be proved")
+    void registeringDoesNotBind() {
+        licenseInvites.invite(licenseId, "unproven@example.invalid");
+        Account unproven = accounts.create("unproven@example.invalid", "hash");
+
+        assertTrue(accountLicenses.shared(unproven.id()).isEmpty());
+        assertEquals(1, licenseInvites.standing(licenseId).size());
+    }
+
+    @Test
+    @DisplayName("Verifying a different address does not collect somebody else's invite")
+    void bindingIsPerAddress() {
+        licenseInvites.invite(licenseId, "invited@example.invalid");
+        Account other = accounts.create("other@example.invalid", "hash");
+
+        assertEquals(List.of(), accounts.confirmEmail(other.id(), "other@example.invalid"));
+        assertTrue(accountLicenses.shared(other.id()).isEmpty());
+        assertEquals(1, licenseInvites.standing(licenseId).size());
+    }
+
+    @Test
+    @DisplayName("The address is matched however it was capitalised")
+    void bindingIgnoresCase() {
+        licenseInvites.invite(licenseId, "Mixed.Case@Example.invalid");
+        Account newcomer = accounts.create("mixed.case@example.invalid", "hash");
+
+        assertEquals(List.of(licenseId),
+                accounts.confirmEmail(newcomer.id(), "mixed.case@example.invalid"));
+    }
+
+    @Test
+    @DisplayName("A standing invite holds a place under the cap, so the world cannot be invited")
+    void invitesCountAgainstTheCap() {
+        accountLicenses.addSharee(licenseId, sharee.id());
+        licenseInvites.invite(licenseId, "waiting@example.invalid");
+
+        AccountLicense license = accountLicenses.owned(owner.id()).getFirst();
+        assertEquals(2, license.shareesUsed());
+        assertEquals(2, license.shareesCap());
+    }
+
+    @Test
+    @DisplayName("Withdrawing an invite frees the place it held")
+    void withdrawingFreesThePlace() {
+        licenseInvites.invite(licenseId, "waiting@example.invalid");
+        assertEquals(1, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
+
+        assertTrue(licenseInvites.withdraw(licenseId, "WAITING@example.invalid"));
+
+        assertEquals(0, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
+    }
+
+    @Test
+    @DisplayName("Inviting the same address again renews it rather than taking a second place")
+    void reinvitingRenews() {
+        assertTrue(licenseInvites.invite(licenseId, "waiting@example.invalid"));
+        assertFalse(licenseInvites.invite(licenseId, "waiting@example.invalid"));
+
+        assertEquals(1, licenseInvites.standing(licenseId).size());
+        assertEquals(1, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
+    }
+
+    @Test
+    @DisplayName("An invite that ran out holds no place and hands over nothing")
+    void expiredInvitesAreIgnored() {
+        licenseInvites.invite(licenseId, "late@example.invalid");
+        expireInvites();
+
+        assertEquals(0, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
+        assertTrue(licenseInvites.standing(licenseId).isEmpty());
+
+        Account late = accounts.create("late@example.invalid", "hash");
+        assertEquals(List.of(), accounts.confirmEmail(late.id(), "late@example.invalid"));
+        assertTrue(accountLicenses.shared(late.id()).isEmpty());
+    }
+
+    private static void expireInvites() {
+        de.chojo.sadu.queries.api.query.Query
+                .query("UPDATE license_invite SET expires_at = now() - INTERVAL '1 day'")
+                .single(de.chojo.sadu.queries.api.call.Call.call())
+                .update();
     }
 }

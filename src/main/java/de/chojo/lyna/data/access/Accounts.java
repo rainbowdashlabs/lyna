@@ -23,6 +23,8 @@ import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Accounts {
+    private final LicenseInvites invites = new LicenseInvites();
+
 
     public Account create(String email, String passwordHash) {
         return query("""
@@ -492,10 +494,19 @@ public class Accounts {
      * the one somebody proved they could read. Setting the address without the flag, or the flag
      * without the address, is how an account ends up marked verified for a mailbox nobody read.
      */
-    public void confirmEmail(int accountId, String email) {
+    /**
+     * Records that an account has proved an address is theirs.
+     *
+     * <p>Any licence invited to that address is bound here rather than at the call site, so that
+     * every way of verifying an address lets somebody onto the licences waiting for them.
+     *
+     * @return the licences the account was let onto by invites standing for that address
+     */
+    public List<Integer> confirmEmail(int accountId, String email) {
         query("UPDATE account SET email = ?, email_verified = TRUE WHERE id = ?")
                 .single(call().bind(email).bind(accountId))
                 .update();
+        return invites.bind(accountId, email);
     }
 
     /**

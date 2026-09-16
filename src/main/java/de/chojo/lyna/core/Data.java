@@ -9,6 +9,7 @@ import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.data.access.AccountLicenses;
+import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DemoArtifacts;
@@ -49,6 +50,7 @@ public class Data {
     private KoFiProducts kofi;
     private Accounts accounts;
     private AccountLicenses accountLicenses;
+    private LicenseInvites licenseInvites;
     private KioskProducts kioskProducts;
     private AccountSessions accountSessions;
     private RevokedJtis revokedJtis;
@@ -121,6 +123,7 @@ public class Data {
         kofi = new KoFiProducts(products);
         accounts = new Accounts();
         accountLicenses = new AccountLicenses();
+        licenseInvites = new LicenseInvites();
         kioskProducts = new KioskProducts();
         accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();
@@ -196,6 +199,10 @@ public class Data {
 
     public Accounts accounts() {
         return accounts;
+    }
+
+    public LicenseInvites licenseInvites() {
+        return licenseInvites;
     }
 
     public AccountLicenses accountLicenses() {
