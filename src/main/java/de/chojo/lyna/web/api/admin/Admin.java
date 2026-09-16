@@ -21,7 +21,7 @@ import io.javalin.http.HttpStatus;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.sharding.ShardManager;
+import de.chojo.lyna.gateway.Gateway;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class Admin {
             new de.chojo.lyna.mail.blocks.MailBlockRenderer();
     private final de.chojo.lyna.mail.MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    private ShardManager shardManager;
+    private Gateway gateway = Gateway.NONE;
 
     public Admin(Auth auth, Conf configuration, Accounts accounts, Guilds guilds,
                  InstanceSettingsAccess instanceSettings, KoFiProducts kofi,
@@ -74,8 +74,8 @@ public class Admin {
         this.mailingService = mailingService;
     }
 
-    public void shardManager(ShardManager shardManager) {
-        this.shardManager = shardManager;
+    public void gateway(Gateway gateway) {
+        this.gateway = gateway;
     }
 
     public void init() {
@@ -487,7 +487,7 @@ public class Admin {
 
     private void instanceSystem(Context ctx) {
         if (!requireOperator(ctx)) return;
-        int guildCount = shardManager == null ? 0 : shardManager.getGuilds().size();
+        int guildCount = gateway.guilds().size();
         String version;
         try (var in = getClass().getResourceAsStream("/version")) {
             version = in == null ? "unknown" : new String(in.readAllBytes()).trim();
@@ -545,7 +545,7 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid guild id");
             return null;
         }
-        Guild guild = shardManager == null ? null : shardManager.getGuildById(guildId);
+        Guild guild = gateway.guild(guildId).orElse(null);
         if (guild == null) {
             ctx.status(HttpStatus.NOT_FOUND);
             return null;
@@ -566,7 +566,7 @@ public class Admin {
      * member - need this; the rest read the guild's own tables through its id.
      */
     private Optional<Guild> discordGuild(long guildId) {
-        return Optional.ofNullable(shardManager).map(manager -> manager.getGuildById(guildId));
+        return gateway.guild(guildId);
     }
 
     private Long resolveDiscordId(JwtService.Verified verified) {
@@ -696,10 +696,10 @@ public class Admin {
     }
 
     private List<AdminGuild> adminGuilds(Long discordId, boolean operator) {
-        if (shardManager == null) return List.of();
+        if (!gateway.connected()) return List.of();
         Set<Long> seen = new HashSet<>();
         List<AdminGuild> result = new ArrayList<>();
-        for (Guild g : shardManager.getGuilds()) {
+        for (Guild g : gateway.guilds()) {
             if (!seen.add(g.getIdLong())) continue;
             if (operator) {
                 result.add(new AdminGuild(Long.toString(g.getIdLong()), g.getName(), g.getIconUrl(), "operator"));

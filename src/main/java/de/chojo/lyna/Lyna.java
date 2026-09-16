@@ -10,6 +10,8 @@ import de.chojo.lyna.core.Web;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.inject.LynaModule;
 import de.chojo.lyna.demo.DemoService;
+import de.chojo.lyna.gateway.Gateway;
+import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
 
 import java.io.IOException;
@@ -33,10 +35,12 @@ public class Lyna {
         DemoService demoService = new DemoService(data, configuration);
         Web web = Web.create(configuration, data, mailingService, demoService);
         Bot bot = Bot.create(data, threading, configuration, web, mailingService);
-        if (bot.shardManager() != null) {
-            data.inject(bot);
-            data.injectShard(bot, web.webService().api());
-            demoService.shardManager(bot.shardManager());
+        Gateway gateway = bot.shardManager() == null
+                ? Gateway.NONE
+                : new JdaGateway(bot::shardManager);
+        data.inject(gateway, web.webService().api());
+        demoService.gateway(gateway);
+        if (gateway.connected()) {
             DemoSchedule.start(threading, demoService, configuration);
         }
     }

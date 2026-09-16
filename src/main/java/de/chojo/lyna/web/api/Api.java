@@ -10,7 +10,7 @@ import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.nexus.NexusRest;
-import net.dv8tion.jda.api.sharding.ShardManager;
+import de.chojo.lyna.gateway.Gateway;
 import org.slf4j.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -57,8 +57,8 @@ public class Api {
         });
     }
 
-    public void shardManager(ShardManager shardManager) {
-        admin.shardManager(shardManager);
+    public void gateway(Gateway gateway) {
+        admin.gateway(gateway);
     }
 
     public Conf configuration() {

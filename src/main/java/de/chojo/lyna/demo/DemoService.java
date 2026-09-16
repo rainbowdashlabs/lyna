@@ -13,7 +13,7 @@ import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.sharding.ShardManager;
+import de.chojo.lyna.gateway.Gateway;
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -45,7 +45,7 @@ public class DemoService {
     private final Conf configuration;
     private final DemoArtifacts artifacts;
     private final PasswordHasher passwordHasher = new PasswordHasher();
-    private ShardManager shardManager;
+    private Gateway gateway = Gateway.NONE;
 
     public DemoService(Data data, Conf configuration) {
         this.data = data;
@@ -53,8 +53,8 @@ public class DemoService {
         this.artifacts = data.demoArtifacts();
     }
 
-    public void shardManager(ShardManager shardManager) {
-        this.shardManager = shardManager;
+    public void gateway(Gateway gateway) {
+        this.gateway = gateway;
     }
 
     public boolean enabled() {
@@ -114,7 +114,7 @@ public class DemoService {
             log.warn("[demo] no guild to seed: baseSettings.botGuild names one the bot is not in");
             return Optional.empty();
         }
-        Guild guild = shardManager.getGuildById(licenseGuild.get().guildId());
+        Guild guild = gateway.guild(licenseGuild.get().guildId()).orElseThrow();
         List<Member> members = guild.getMembers().stream().filter(member -> !member.getUser().isBot()).toList();
         if (members.size() < 2) {
             log.warn("[demo] the guild has {} member(s) to seed a cast from, and two are needed",
@@ -271,7 +271,7 @@ public class DemoService {
 
     private Optional<LicenseGuild> licenseGuild() {
         long guildId = configuration.main().baseSettings().botGuild();
-        if (shardManager == null || guildId == 0 || shardManager.getGuildById(guildId) == null) {
+        if (guildId == 0 || gateway.guild(guildId).isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(data.guilds().guild(guildId));
