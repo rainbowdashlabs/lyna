@@ -4,7 +4,6 @@ import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetup;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.mail.MailingService;
@@ -18,7 +17,6 @@ import org.mockito.Mockito;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -75,17 +75,6 @@ public class LicenseInvites {
     }
 
     /**
-     * @return how many invites on that licence are still standing, which count against the cap
-     */
-    public int standingCount(int licenseId) {
-        return query("SELECT count(*) AS standing FROM license_invite WHERE license_id = ? AND expires_at > now()")
-                .single(call().bind(licenseId))
-                .map(row -> row.getInt("standing"))
-                .first()
-                .orElse(0);
-    }
-
-    /**
      * Turns every standing invite for a verified address into a real share.
      *
      * <p>Called when an account proves an address is theirs, and only then. An invite that would put
@@ -118,19 +107,6 @@ public class LicenseInvites {
                 .single(call().bind(email.trim()))
                 .delete();
         return licenses;
-    }
-
-    /**
-     * Forgets invites nobody answered. Nothing depends on this having run - every read already
-     * ignores an expired invite - so it is housekeeping rather than correctness.
-     *
-     * @return how many were forgotten
-     */
-    public int forgetExpired() {
-        return query("DELETE FROM license_invite WHERE expires_at <= now()")
-                .single(call())
-                .delete()
-                .rows();
     }
 
     private static LicenseInvite read(Row row) throws SQLException {

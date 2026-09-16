@@ -26,15 +26,6 @@ public class Products {
                 .first();
     }
 
-    public List<Product> freeProducts() {
-        return query("""
-                SELECT id, guild_id, name, url, role, free FROM product WHERE free
-                """)
-                .single()
-                .map(this::map)
-                .all();
-    }
-
     private Product map(Row row) throws SQLException {
         return guilds.guild(row.getLong("guild_id")).products().byId(row.getInt("id")).orElse(null);
     }

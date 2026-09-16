@@ -1,6 +1,5 @@
 package de.chojo.lyna.service;
 
-import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;

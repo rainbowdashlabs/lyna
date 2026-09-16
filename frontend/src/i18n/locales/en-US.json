@@ -5,25 +5,15 @@
     "delete": "Delete",
     "cancel": "Cancel",
     "confirm": "Confirm",
-    "loading": "Loading…",
-    "back": "Back",
-    "close": "Close",
-    "search": "Search",
     "saving": "Saving…",
     "saved": "Saved",
     "revoke": "Revoke",
-    "add": "Add",
     "remove": "Remove",
     "download": "Download",
     "product": "Product"
   },
   "kiosk": {
     "title": "Lyna Download Center",
-    "subtitle": "Browse and download plugin releases.",
-    "search": "Search plugins…",
-    "empty": "No plugins match your search.",
-    "buy": "Buy on Ko-fi",
-    "projectPage": "project page",
     "yourAccount": "Your account",
     "signIn": "Sign in"
   },
@@ -218,7 +208,6 @@
   },
   "layout": {
     "account": {
-      "signedInAs": "Signed in as",
       "overview": "Overview",
       "licenses": "Licenses",
       "downloads": "Downloads",
