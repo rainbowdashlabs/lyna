@@ -7,9 +7,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -280,5 +282,120 @@ class AccountsRepositoryTest extends RepositoryTestBase {
 
         assertEquals(first.id(), accounts.findByIdentity(AccountIdentity.DISCORD, "5301").orElseThrow().id());
         assertEquals(second.id(), accounts.findByIdentity("github", "5301").orElseThrow().id());
+    }
+
+    @Test
+    @DisplayName("Somebody unlinked picks a name and is given four digits with it")
+    void chosenNameGetsDiscriminator() {
+        Account account = accounts.create("named@example.invalid", "hash");
+
+        String discriminator = accounts.setUsername(account.id(), "ada");
+
+        assertTrue(discriminator.matches("[0-9]{4}"));
+        Account named = accounts.findById(account.id()).orElseThrow();
+        assertEquals("ada", named.username());
+        assertEquals(discriminator, named.discriminator());
+        assertEquals("ada#" + discriminator, named.displayName());
+    }
+
+    @Test
+    @DisplayName("Two people may both be ada, and are told apart by their digits")
+    void twoPeopleShareAName() {
+        Account first = accounts.create("ada-a@example.invalid", "hash");
+        Account second = accounts.create("ada-b@example.invalid", "hash");
+
+        String one = accounts.setUsername(first.id(), "ada");
+        String two = accounts.setUsername(second.id(), "ada");
+
+        assertNotEquals(one, two);
+        assertEquals(first.id(), accounts.findByUsername("ada#" + one).orElseThrow().id());
+        assertEquals(second.id(), accounts.findByUsername("ada#" + two).orElseThrow().id());
+    }
+
+    @Test
+    @DisplayName("A name that is nearly full still resolves rather than giving up at random")
+    void allocationFallsBackToScanning() {
+        for (int taken = 1; taken <= 9998; taken++) {
+            Account filler = accounts.create("filler-%d@example.invalid".formatted(taken), "hash");
+            writeName(filler.id(), "crowded", "%04d".formatted(taken));
+        }
+        Account late = accounts.create("late@example.invalid", "hash");
+
+        String discriminator = accounts.setUsername(late.id(), "crowded");
+
+        assertEquals("9999", discriminator);
+    }
+
+    @Test
+    @DisplayName("A Discord-linked account is named by Discord and cannot be renamed by hand")
+    void linkedAccountsAreNamedByDiscord() {
+        Account account = accounts.create("linked-name@example.invalid", "hash");
+        accounts.link(account.id(), 6001L, AccountIdentity.Verification.OAUTH, "ada");
+
+        Account named = accounts.findById(account.id()).orElseThrow();
+        assertEquals("ada", named.username());
+        assertNull(named.discriminator());
+        assertEquals("ada", named.displayName());
+
+        assertThrows(IllegalStateException.class, () -> accounts.setUsername(account.id(), "someoneelse"));
+    }
+
+    @Test
+    @DisplayName("A Discord rename carries through to the account's name")
+    void discordRenameFollowsThrough() {
+        Account account = accounts.create("renamed-name@example.invalid", "hash");
+        accounts.link(account.id(), 6002L, AccountIdentity.Verification.OAUTH, "ada");
+
+        accounts.rememberHandle(6002L, "ada.lovelace");
+
+        assertEquals("ada.lovelace", accounts.findById(account.id()).orElseThrow().username());
+    }
+
+    @Test
+    @DisplayName("Unlinking keeps the name and gives it digits of its own")
+    void unlinkingKeepsTheNameWithDigits() {
+        Account account = accounts.create("detach@example.invalid", "hash");
+        accounts.link(account.id(), 6003L, AccountIdentity.Verification.OAUTH, "ada");
+
+        accounts.unlink(account.id());
+
+        Account detached = accounts.findById(account.id()).orElseThrow();
+        assertEquals("ada", detached.username());
+        assertNotNull(detached.discriminator());
+        assertTrue(detached.displayName().startsWith("ada#"));
+    }
+
+    @Test
+    @DisplayName("A Discord name is found without digits, and a chosen one needs them")
+    void lookupDistinguishesTheTwoKinds() {
+        Account linked = accounts.create("lookup-linked@example.invalid", "hash");
+        accounts.link(linked.id(), 6004L, AccountIdentity.Verification.OAUTH, "grace");
+        Account chosen = accounts.create("lookup-chosen@example.invalid", "hash");
+        String discriminator = accounts.setUsername(chosen.id(), "grace");
+
+        assertEquals(linked.id(), accounts.findByUsername("grace").orElseThrow().id());
+        assertEquals(chosen.id(), accounts.findByUsername("grace#" + discriminator).orElseThrow().id());
+        assertTrue(accounts.findByUsername("grace#0000").isEmpty());
+        assertTrue(accounts.findByUsername("nobody").isEmpty());
+    }
+
+    @Test
+    @DisplayName("A name nobody may take is refused rather than trimmed into something else")
+    void badNamesAreRefused() {
+        Account account = accounts.create("badname@example.invalid", "hash");
+
+        for (String bad : List.of("ab", "a b", "ada!", ".ada", "ada.", "", "   ",
+                "a".repeat(33))) {
+            assertThrows(IllegalArgumentException.class, () -> accounts.setUsername(account.id(), bad),
+                    "should have refused " + bad);
+        }
+    }
+
+    private static void writeName(int accountId, String username, String discriminator) {
+        de.chojo.sadu.queries.api.query.Query
+                .query("UPDATE account SET username = ?, discriminator = ? WHERE id = ?")
+                .single(de.chojo.sadu.queries.api.call.Call.call()
+                        .bind(username).bind(discriminator).bind(accountId))
+                .update();
     }
 }

@@ -9,11 +9,15 @@ import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -24,7 +28,7 @@ public class Accounts {
         return query("""
                 INSERT INTO account (email, password_hash)
                 VALUES (?, ?)
-                RETURNING id, email, email_verified, password_hash, theme, feel, dark_mode, created_at, last_login_at
+                RETURNING id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
                 """)
                 .single(call().bind(email).bind(passwordHash))
                 .map(row -> new Account(
@@ -35,6 +39,8 @@ public class Accounts {
                         row.getString("theme"),
                         row.getString("feel"),
                         row.getString("dark_mode"),
+                        row.getString("username"),
+                        row.getString("discriminator"),
                         toInstant(row.getTimestamp("created_at")),
                         toInstant(row.getTimestamp("last_login_at"))))
                 .first()
@@ -43,7 +49,7 @@ public class Accounts {
 
     public Optional<Account> findById(int id) {
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, created_at, last_login_at
+                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
                 FROM account WHERE id = ?
                 """)
                 .single(call().bind(id))
@@ -55,6 +61,8 @@ public class Accounts {
                         row.getString("theme"),
                         row.getString("feel"),
                         row.getString("dark_mode"),
+                        row.getString("username"),
+                        row.getString("discriminator"),
                         toInstant(row.getTimestamp("created_at")),
                         toInstant(row.getTimestamp("last_login_at"))))
                 .first();
@@ -62,7 +70,7 @@ public class Accounts {
 
     public Optional<Account> findByEmail(String email) {
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, created_at, last_login_at
+                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
                 FROM account WHERE LOWER(email) = LOWER(?)
                 """)
                 .single(call().bind(email))
@@ -74,6 +82,8 @@ public class Accounts {
                         row.getString("theme"),
                         row.getString("feel"),
                         row.getString("dark_mode"),
+                        row.getString("username"),
+                        row.getString("discriminator"),
                         toInstant(row.getTimestamp("created_at")),
                         toInstant(row.getTimestamp("last_login_at"))))
                 .first();
@@ -90,7 +100,7 @@ public class Accounts {
      */
     public Optional<Account> findByIdentity(String provider, String externalId) {
         return query("""
-                SELECT a.id, a.email, a.email_verified, a.password_hash, a.theme, a.feel, a.dark_mode, a.created_at, a.last_login_at
+                SELECT a.id, a.email, a.email_verified, a.password_hash, a.theme, a.feel, a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
                 FROM account a
                 JOIN account_identity i ON i.account_id = a.id
                 WHERE i.provider = ? AND i.external_id = ?
@@ -176,6 +186,9 @@ public class Accounts {
                 .single(call().bind(provider).bind(externalId).bind(accountId).bind(via.dbValue())
                         .bind(handle).bind(handle))
                 .insert();
+        if (AccountIdentity.DISCORD.equals(provider)) {
+            syncUsernameFromHandle(accountId, handle);
+        }
     }
 
     public boolean rememberHandle(long discordUserId, String handle) {
@@ -192,13 +205,18 @@ public class Accounts {
      */
     public boolean rememberHandle(String provider, String externalId, String handle) {
         if (handle == null || handle.isBlank()) return false;
-        return query("""
+        boolean changed = query("""
                 UPDATE account_identity SET handle = ?, handle_seen_at = now()
                 WHERE provider = ? AND external_id = ? AND handle IS DISTINCT FROM ?
                 """)
                 .single(call().bind(handle).bind(provider).bind(externalId).bind(handle))
                 .update()
                 .changed();
+        if (changed && AccountIdentity.DISCORD.equals(provider)) {
+            findByIdentity(provider, externalId)
+                    .ifPresent(account -> syncUsernameFromHandle(account.id(), handle));
+        }
+        return changed;
     }
 
     /**
@@ -241,6 +259,9 @@ public class Accounts {
         query("DELETE FROM account_identity WHERE account_id = ? AND provider = ?")
                 .single(call().bind(accountId).bind(provider))
                 .delete();
+        if (AccountIdentity.DISCORD.equals(provider)) {
+            detachUsername(accountId);
+        }
     }
 
     /**
@@ -287,6 +308,146 @@ public class Accounts {
         return resolved;
     }
 
+    /**
+     * What somebody may call themselves, before the digits are added.
+     *
+     * <p>Letters, digits, and the three separators people expect in a handle. No spaces and no
+     * punctuation that could make one name read as another.
+     */
+    private static final Pattern USERNAME = Pattern.compile("^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30})[A-Za-z0-9]$");
+
+    private static final int DISCRIMINATOR_ATTEMPTS = 12;
+
+    /**
+     * Gives an account a name of its own choosing.
+     *
+     * <p>Refused while a Discord identity is linked: that name is Discord's to change, and letting
+     * both sides write it would mean the next sign-in quietly undid whatever was typed here.
+     *
+     * <p>The four digits are allocated here rather than asked for, so two people may both be "ada"
+     * without either of them finding out what the other picked.
+     *
+     * @param accountId the account to name
+     * @param username  the name, without digits
+     * @return the discriminator it was given
+     * @throws IllegalArgumentException if the name is not one somebody may take
+     * @throws IllegalStateException    if the account is linked, or the name has no free digits left
+     */
+    public String setUsername(int accountId, String username) {
+        String trimmed = username == null ? "" : username.trim();
+        if (!USERNAME.matcher(trimmed).matches()) {
+            throw new IllegalArgumentException(
+                    "A username is 3 to 32 characters of letters, digits, dots, dashes or underscores");
+        }
+        if (findLinkByAccountId(accountId).isPresent()) {
+            throw new IllegalStateException("This account is named by Discord. Unlink it to choose a name.");
+        }
+        for (int attempt = 0; attempt < DISCRIMINATOR_ATTEMPTS; attempt++) {
+            String discriminator = "%04d".formatted(ThreadLocalRandom.current().nextInt(1, 10_000));
+            if (writeUsername(accountId, trimmed, discriminator)) return discriminator;
+        }
+        for (String discriminator : freeDiscriminators(trimmed)) {
+            if (writeUsername(accountId, trimmed, discriminator)) return discriminator;
+        }
+        throw new IllegalStateException("Every discriminator for that username is taken. Pick another.");
+    }
+
+    /**
+     * @return false when those four digits are already taken for that name
+     */
+    private boolean writeUsername(int accountId, String username, String discriminator) {
+        try {
+            query("UPDATE account SET username = ?, discriminator = ? WHERE id = ?")
+                    .single(call().bind(username).bind(discriminator).bind(accountId))
+                    .update();
+            return true;
+        } catch (Exception e) {
+            if (isUsernameClash(e)) return false;
+            throw e;
+        }
+    }
+
+    private static boolean isUsernameClash(Throwable e) {
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            String message = cause.getMessage();
+            if (message != null && message.contains("account_username_unique")) return true;
+        }
+        return false;
+    }
+
+    /**
+     * @return the digits nobody holds for that name, so a name that is nearly full still resolves
+     */
+    private List<String> freeDiscriminators(String username) {
+        Set<String> taken = Set.copyOf(query("""
+                SELECT discriminator FROM account
+                WHERE lower(username) = lower(?) AND discriminator IS NOT NULL
+                """)
+                .single(call().bind(username))
+                .map(row -> row.getString("discriminator"))
+                .all());
+        List<String> free = new ArrayList<>();
+        for (int candidate = 1; candidate < 10_000; candidate++) {
+            String discriminator = "%04d".formatted(candidate);
+            if (!taken.contains(discriminator)) free.add(discriminator);
+        }
+        return free;
+    }
+
+    /**
+     * Takes the account's name from the provider that owns it.
+     *
+     * <p>The digits go: a handle is unique where it comes from, and keeping stale digits beside it
+     * would show a name that exists nowhere.
+     */
+    public void syncUsernameFromHandle(int accountId, String handle) {
+        if (handle == null || handle.isBlank()) return;
+        query("UPDATE account SET username = ?, discriminator = NULL WHERE id = ?")
+                .single(call().bind(handle.trim()).bind(accountId))
+                .update();
+    }
+
+    /**
+     * Gives an account's name digits of its own, for when the provider that guaranteed it was unique
+     * is no longer linked.
+     *
+     * <p>The name itself is left alone. Somebody who has been "ada" to their sharees stays "ada",
+     * and only gains the digits that keep them apart from the next one.
+     */
+    public void detachUsername(int accountId) {
+        Optional<Account> account = findById(accountId);
+        if (account.isEmpty()) return;
+        String username = account.get().username();
+        if (username == null || username.isBlank() || account.get().discriminator() != null) return;
+        for (int attempt = 0; attempt < DISCRIMINATOR_ATTEMPTS; attempt++) {
+            String discriminator = "%04d".formatted(ThreadLocalRandom.current().nextInt(1, 10_000));
+            if (writeUsername(accountId, username, discriminator)) return;
+        }
+        for (String discriminator : freeDiscriminators(username)) {
+            if (writeUsername(accountId, username, discriminator)) return;
+        }
+    }
+
+    /**
+     * @param displayName a name as it is shown, with or without its digits
+     * @return the account of that name, if somebody holds it
+     */
+    public Optional<Account> findByUsername(String displayName) {
+        String trimmed = displayName == null ? "" : displayName.trim();
+        int hash = trimmed.lastIndexOf('#');
+        String username = hash < 0 ? trimmed : trimmed.substring(0, hash);
+        String discriminator = hash < 0 ? null : trimmed.substring(hash + 1);
+        if (username.isBlank()) return Optional.empty();
+        return query("""
+                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
+                FROM account
+                WHERE lower(username) = lower(?) AND discriminator IS NOT DISTINCT FROM ?
+                """)
+                .single(call().bind(username).bind(discriminator))
+                .map(Accounts::readAccount)
+                .first();
+    }
+
     private static AccountIdentity readIdentity(Row row) throws SQLException {
         return new AccountIdentity(
                 row.getInt("account_id"),
@@ -306,6 +467,8 @@ public class Accounts {
                 row.getString("theme"),
                 row.getString("feel"),
                 row.getString("dark_mode"),
+                row.getString("username"),
+                row.getString("discriminator"),
                 toInstant(row.getTimestamp("created_at")),
                 toInstant(row.getTimestamp("last_login_at")));
     }
