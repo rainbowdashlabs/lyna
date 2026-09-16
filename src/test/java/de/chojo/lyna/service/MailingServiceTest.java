@@ -5,7 +5,7 @@ import com.icegreen.greenmail.util.ServerSetup;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.configuration.elements.Mailing;
-import de.chojo.lyna.core.Data;
+import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.mail.MailingService;
 import jakarta.mail.Message;
@@ -46,7 +46,7 @@ class MailingServiceTest {
         greenMail.start();
         greenMail.setUser(USER, USER, PASSWORD);
 
-        service = new MailingService(Mockito.mock(Threading.class), Mockito.mock(Data.class), configuration());
+        service = new MailingService(Mockito.mock(Threading.class), Mockito.mock(Mailings.class), configuration());
     }
 
     @AfterEach

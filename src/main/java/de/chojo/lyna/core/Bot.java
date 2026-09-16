@@ -1,5 +1,6 @@
 package de.chojo.lyna.core;
 
+import de.chojo.lyna.data.access.Guilds;
 import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
@@ -21,7 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class Bot {
     private static final Logger log = getLogger(Bot.class);
-    private final Data data;
+    private final Guilds guilds;
     private final Threading threading;
     private final Conf configuration;
     private final Set<SlashProvider<Slash>> commands;
@@ -29,9 +30,9 @@ public class Bot {
     private ShardManager shardManager;
 
     @Inject
-    public Bot(Data data, Threading threading, Conf configuration, Set<SlashProvider<Slash>> commands,
+    public Bot(Guilds guilds, Threading threading, Conf configuration, Set<SlashProvider<Slash>> commands,
                MailingService mailingService) {
-        this.data = data;
+        this.guilds = guilds;
         this.threading = threading;
         this.configuration = configuration;
         this.commands = commands;
@@ -65,7 +66,7 @@ public class Bot {
                 .setEnableShutdownHook(false)
                 .setThreadFactory(Threading.createThreadFactory(threading.jdaGroup()))
                 .setEventPool(threading.jdaWorker())
-                .addEventListeners(new RoleListener(data.guilds()))
+                .addEventListeners(new RoleListener(guilds))
                 .build();
     }
 

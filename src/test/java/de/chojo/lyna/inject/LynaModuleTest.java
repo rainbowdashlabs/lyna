@@ -170,8 +170,6 @@ class LynaModuleTest {
         Data data = injector.getInstance(Data.class);
 
         assertNotNull(data);
-        assertSame(data.accounts(), injector.getInstance(Accounts.class));
-        assertSame(data.guilds(), injector.getInstance(Guilds.class));
     }
 
     /**

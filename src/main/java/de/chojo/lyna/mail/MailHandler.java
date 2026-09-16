@@ -3,10 +3,9 @@ package de.chojo.lyna.mail;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
-import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.core.Data;
+import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
@@ -28,8 +27,8 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
 
     private final Cache<String, String> cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
-    public MailHandler(Data data, MailingService mailingService, Conf configuration) {
-        this.mailings = data.mailings();
+    public MailHandler(Mailings mailings, MailingService mailingService, Conf configuration) {
+        this.mailings = mailings;
         this.mailingService = mailingService;
         this.configuration = configuration;
     }
@@ -38,7 +37,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     public void accept(Message message) throws Exception {
         de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.main().mailing();
         InternetAddress address = (InternetAddress) message.getFrom()[0];
-        if ("false".equalsIgnoreCase(SysVar.envOrProp("LYNA_MAILING_SKIPVERIFY","lyna.mailing.skipverify", "false"))) {
+        if (!mailConf.skipVerify()) {
             // Check if address is from PayPal
             if (!"service@paypal.de".equals(address.getAddress())
                     && !mailConf.originMails().contains(address.getAddress())) {

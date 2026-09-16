@@ -4,12 +4,12 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
 import de.chojo.jdautil.util.SnowflakeCreator;
-import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.util.JarUtil;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.elements.Api;
+import de.chojo.lyna.configuration.elements.Downloads;
 import de.chojo.nexus.NexusRest;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpStatus;
@@ -58,12 +58,14 @@ public class Proxy {
             """;
     private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
     private final DownloadLog downloadLog;
+    private final Downloads downloads;
 
     @Inject
-    public Proxy(NexusRest nexus, Api apiSettings, DownloadLog downloadLog) {
+    public Proxy(NexusRest nexus, Api apiSettings, DownloadLog downloadLog, Downloads downloads) {
         this.nexus = nexus;
         this.apiSettings = apiSettings;
         this.downloadLog = downloadLog;
+        this.downloads = downloads;
     }
 
 
@@ -121,7 +123,7 @@ public class Proxy {
                         .contentType(ContentType.APPLICATION_OCTET_STREAM)
                         .status(HttpStatus.OK);
 
-                if ("true".equalsIgnoreCase(SysVar.envOrProp("LYNA_JARSIGNING_SKIP","lyna.jarsigning.skip", "false"))) {
+                if (downloads.skipJarSigning()) {
                     ctx.result(complete);
                     return;
                 }

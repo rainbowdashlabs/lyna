@@ -23,6 +23,15 @@ public class Mailing {
     private String password = "";
     @Overwrite(env = @Env, prop = @Prop)
     private List<String> originMail = java.util.List.of("");
+    /**
+     * Takes any sender's mail as a payment receipt instead of only the addresses that are trusted.
+     *
+     * <p>For working on the mail handlers locally, where a receipt is something you send yourself.
+     * An instance doing this in earnest would act on a receipt anybody could forge.
+     */
+    @Overwrite(env = @Env, prop = @Prop)
+    private boolean skipVerify = false;
+
     @Overwrite(env = @Env, prop = @Prop)
     private int pollSeconds = 300;
     @Overwrite(env = @Env, prop = @Prop)
@@ -33,6 +42,10 @@ public class Mailing {
     // https://www.tutorialspoint.com/javamail_api/javamail_api_smtp_servers.htm
     @Overwrite(env = @Env, prop = @Prop)
     private Map<String, String> properties = Collections.emptyMap();
+
+    public boolean skipVerify() {
+        return skipVerify;
+    }
 
     public int pollSeconds() {
         return pollSeconds;

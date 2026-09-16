@@ -3,7 +3,13 @@ package de.chojo.lyna.demo;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.core.Data;
+import de.chojo.lyna.data.access.AccountLicenses;
+import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.DemoArtifacts;
+import de.chojo.lyna.data.access.DownloadLog;
+import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.InstanceOperators;
+import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.account.Account;
@@ -42,18 +48,31 @@ public class DemoService {
     /** What every seeded account signs in with, when a password is used at all. */
     public static final String PASSWORD = "demo";
 
-    private final Data data;
+    private final Guilds guilds;
+    private final Accounts accounts;
+    private final AccountLicenses accountLicenses;
+    private final LicenseInvites licenseInvites;
+    private final DownloadLog downloadLog;
+    private final InstanceOperators instanceOperators;
     private final Conf configuration;
     private final DemoArtifacts artifacts;
     private final PasswordHasher passwordHasher = new PasswordHasher();
     private final Gateway gateway;
 
     @Inject
-    public DemoService(Data data, Conf configuration, Gateway gateway) {
-        this.data = data;
+    public DemoService(Conf configuration, Gateway gateway, Guilds guilds, Accounts accounts,
+                       AccountLicenses accountLicenses, LicenseInvites licenseInvites,
+                       DownloadLog downloadLog, DemoArtifacts artifacts,
+                       InstanceOperators instanceOperators) {
         this.configuration = configuration;
         this.gateway = gateway;
-        this.artifacts = data.demoArtifacts();
+        this.guilds = guilds;
+        this.accounts = accounts;
+        this.accountLicenses = accountLicenses;
+        this.licenseInvites = licenseInvites;
+        this.downloadLog = downloadLog;
+        this.artifacts = artifacts;
+        this.instanceOperators = instanceOperators;
     }
 
     public boolean enabled() {
@@ -78,7 +97,7 @@ public class DemoService {
      */
     public synchronized void reset() {
         for (String id : artifacts.of(DemoArtifacts.ACCOUNT)) {
-            data.accounts().delete(Integer.parseInt(id));
+            accounts.delete(Integer.parseInt(id));
         }
         Optional<LicenseGuild> guild = licenseGuild();
         if (guild.isPresent()) {
@@ -99,7 +118,7 @@ public class DemoService {
     public List<DemoAccount> accounts() {
         List<DemoAccount> out = new ArrayList<>();
         for (String id : artifacts.of(DemoArtifacts.ACCOUNT)) {
-            data.accounts().findById(Integer.parseInt(id)).ifPresent(account -> out.add(new DemoAccount(
+            accounts.findById(Integer.parseInt(id)).ifPresent(account -> out.add(new DemoAccount(
                     account.email(),
                     roleOf(out.size()),
                     describe(out.size()))));
@@ -185,19 +204,19 @@ public class DemoService {
      * sharee with no Discord is a case the pages have to handle and cannot otherwise be seen.
      */
     private List<Account> seedAccounts(List<Member> members) {
-        List<Account> accounts = new ArrayList<>();
+        List<Account> cast = new ArrayList<>();
         for (int i = 0; i < Math.min(ROLES.length, members.size()); i++) {
-            Account account = data.accounts().create(
+            Account account = accounts.create(
                     "demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
-            data.accounts().confirmEmail(account.id(), account.email());
-            data.accounts().link(account.id(), members.get(i).getIdLong(), AccountIdentity.Verification.OAUTH,
+            accounts.confirmEmail(account.id(), account.email());
+            accounts.link(account.id(), members.get(i).getIdLong(), AccountIdentity.Verification.OAUTH,
                     members.get(i).getUser().getName());
             artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
-            accounts.add(account);
+            cast.add(account);
         }
-        data.instanceOperators().add(members.getFirst().getIdLong(), null);
-        accounts.add(seedWebOnlyAccount());
-        return accounts;
+        instanceOperators.add(members.getFirst().getIdLong(), null);
+        cast.add(seedWebOnlyAccount());
+        return cast;
     }
 
     /**
@@ -205,11 +224,11 @@ public class DemoService {
      * account gets a name when no provider is supplying one.
      */
     private Account seedWebOnlyAccount() {
-        Account account = data.accounts().create("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
-        data.accounts().confirmEmail(account.id(), account.email());
-        data.accounts().setUsername(account.id(), "webonly");
+        Account account = accounts.create("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
+        accounts.confirmEmail(account.id(), account.email());
+        accounts.setUsername(account.id(), "webonly");
         artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
-        return data.accounts().findById(account.id()).orElse(account);
+        return accounts.findById(account.id()).orElse(account);
     }
 
     /**
@@ -225,13 +244,13 @@ public class DemoService {
             Optional<License> licence = product.createLicense("demo-owner@example.invalid");
             if (licence.isEmpty()) continue;
             licence.get().grantAccess(ReleaseType.STABLE);
-            data.accountLicenses().addSharee(licence.get().id(),
+            accountLicenses.addSharee(licence.get().id(),
                     de.chojo.lyna.data.access.Accounts.accountIdForDiscord(sharee));
             seeded.accounts().stream()
                     .filter(account -> "demo-web-only@example.invalid".equals(account.email()))
                     .findFirst()
-                    .ifPresent(webOnly -> data.accountLicenses().addSharee(licence.get().id(), webOnly.id()));
-            data.licenseInvites().invite(licence.get().id(), "demo-invited@example.invalid");
+                    .ifPresent(webOnly -> accountLicenses.addSharee(licence.get().id(), webOnly.id()));
+            licenseInvites.invite(licence.get().id(), "demo-invited@example.invalid");
             claim(licence.get(), owner);
             seedDownloads(product, seeded, licence.get());
         }
@@ -257,7 +276,7 @@ public class DemoService {
         int downloadId = downloads.getFirst().id();
         for (int i = 0; i < 8; i++) {
             Account account = seeded.accounts().get(i % seeded.accounts().size());
-            data.downloadLog().record(account.id(), null, licence.id(), product.id(), downloadId,
+            downloadLog.record(account.id(), null, licence.id(), product.id(), downloadId,
                     "1.%d.0".formatted(i), i % 2 == 0 ? "license" : "sub_license", "Demo seed", null);
         }
     }
@@ -273,7 +292,7 @@ public class DemoService {
         if (guildId == 0 || gateway.guild(guildId).isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(data.guilds().guild(guildId));
+        return Optional.of(guilds.guild(guildId));
     }
 
     private static final String[] ROLES = {"operator", "owner", "sharee", "newcomer"};

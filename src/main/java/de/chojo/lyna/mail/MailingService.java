@@ -5,7 +5,7 @@ import com.google.inject.Inject;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
-import de.chojo.lyna.core.Data;
+import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
@@ -36,16 +36,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class MailingService {
     private final Threading threading;
-    private final Data data;
+    private final Mailings mailings;
     private final Conf configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
     private final MailTemplateRenderer renderer = new MailTemplateRenderer();
 
     @Inject
-    public MailingService(Threading threading, Data data, Conf configuration) {
+    public MailingService(Threading threading, Mailings mailings, Conf configuration) {
         this.threading = threading;
-        this.data = data;
+        this.mailings = mailings;
         this.configuration = configuration;
     }
 
@@ -73,7 +73,7 @@ public class MailingService {
 
     private void init() throws MessagingException {
         threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.main().mailing().pollSeconds(), TimeUnit.SECONDS);
-        registerMessageListener(new MailHandler(data, this, configuration));
+        registerMessageListener(new MailHandler(mailings, this, configuration));
     }
 
     private void loop() {

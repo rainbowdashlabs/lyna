@@ -6,7 +6,6 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
-import de.chojo.lyna.commands.downloads.Downloads;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.kofi.KoFi;
 import de.chojo.lyna.commands.register.Register;
@@ -25,6 +24,7 @@ import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.Demo;
+import de.chojo.lyna.configuration.elements.Downloads;
 import de.chojo.lyna.configuration.elements.Discord;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
@@ -143,6 +143,8 @@ public class LynaModule extends AbstractModule {
 
     @Provides @Singleton Demo demo(ConfigFile config) { return config.demo(); }
 
+    @Provides @Singleton Downloads downloads(ConfigFile config) { return config.downloads(); }
+
     /**
      * The data-access objects.
      *
@@ -168,7 +170,7 @@ public class LynaModule extends AbstractModule {
         commands.addBinding().to(Registrations.class);
         commands.addBinding().to(Settings.class);
         commands.addBinding().to(Info.class);
-        commands.addBinding().to(Downloads.class);
+        commands.addBinding().to(de.chojo.lyna.commands.downloads.Downloads.class);
         commands.addBinding().to(de.chojo.lyna.commands.download.Download.class);
         commands.addBinding().to(Trial.class);
         commands.addBinding().to(de.chojo.lyna.commands.mailing.Mailing.class);
