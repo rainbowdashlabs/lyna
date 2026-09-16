@@ -3,8 +3,14 @@ package de.chojo.lyna.data.access;
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.DiscordLink;
 
+import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
+
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
@@ -94,7 +100,7 @@ public class Accounts {
 
     public Optional<DiscordLink> findLinkByAccountId(int accountId) {
         return query("""
-                SELECT account_id, discord_user_id, linked_at, verified_via
+                SELECT account_id, discord_user_id, linked_at, verified_via, handle
                 FROM account_discord_link WHERE account_id = ?
                 """)
                 .single(call().bind(accountId))
@@ -102,21 +108,73 @@ public class Accounts {
                         row.getInt("account_id"),
                         row.getLong("discord_user_id"),
                         toInstant(row.getTimestamp("linked_at")),
-                        row.getString("verified_via")))
+                        row.getString("verified_via"),
+                        row.getString("handle")))
                 .first();
     }
 
     public void link(int accountId, long discordUserId, DiscordLink.Verification via) {
+        link(accountId, discordUserId, via, null);
+    }
+
+    /**
+     * Links an account to a Discord id, and records what that id is called if we were told.
+     *
+     * <p>A link made without a handle keeps whatever one was recorded before rather than clearing
+     * it: the bot-DM path never learns a name, and losing the one the OAuth round trip found would
+     * put the pages back to showing numbers.
+     */
+    public void link(int accountId, long discordUserId, DiscordLink.Verification via, String handle) {
         query("""
-                INSERT INTO account_discord_link (account_id, discord_user_id, verified_via)
-                VALUES (?, ?, ?)
+                INSERT INTO account_discord_link (account_id, discord_user_id, verified_via, handle, handle_seen_at)
+                VALUES (?, ?, ?, ?, CASE WHEN ?::TEXT IS NULL THEN NULL ELSE now() END)
                 ON CONFLICT (account_id) DO UPDATE SET
                     discord_user_id = EXCLUDED.discord_user_id,
                     linked_at       = now(),
-                    verified_via    = EXCLUDED.verified_via
+                    verified_via    = EXCLUDED.verified_via,
+                    handle          = COALESCE(EXCLUDED.handle, account_discord_link.handle),
+                    handle_seen_at  = COALESCE(EXCLUDED.handle_seen_at, account_discord_link.handle_seen_at)
                 """)
-                .single(call().bind(accountId).bind(discordUserId).bind(via.dbValue()))
+                .single(call().bind(accountId).bind(discordUserId).bind(via.dbValue()).bind(handle).bind(handle))
                 .insert();
+    }
+
+    /**
+     * Records what a Discord id is called, wherever we happen to learn it.
+     *
+     * <p>Keyed by the id rather than the account, because the bot meets people by id and does not
+     * know which account, if any, they hold.
+     *
+     * @return whether a link for that id was there to update
+     */
+    public boolean rememberHandle(long discordUserId, String handle) {
+        if (handle == null || handle.isBlank()) return false;
+        return query("""
+                UPDATE account_discord_link SET handle = ?, handle_seen_at = now()
+                WHERE discord_user_id = ? AND (handle IS DISTINCT FROM ?)
+                """)
+                .single(call().bind(handle).bind(discordUserId).bind(handle))
+                .update()
+                .changed();
+    }
+
+    /**
+     * What a set of Discord ids are called, for a page naming several people at once.
+     *
+     * @param discordIds the ids to name
+     * @return the handles that are known, by id; an id nobody has linked is simply absent
+     */
+    public Map<Long, String> handles(Collection<Long> discordIds) {
+        if (discordIds.isEmpty()) return Map.of();
+        var result = new HashMap<Long, String>();
+        query("""
+                SELECT discord_user_id, handle FROM account_discord_link
+                WHERE handle IS NOT NULL AND ARRAY[discord_user_id] && ?
+                """)
+                .single(call().bind(List.copyOf(discordIds), PostgreSqlTypes.BIGINT))
+                .map(row -> result.put(row.getLong("discord_user_id"), row.getString("handle")))
+                .all();
+        return result;
     }
 
     public void unlink(int accountId) {

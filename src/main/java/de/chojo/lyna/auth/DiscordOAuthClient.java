@@ -87,7 +87,20 @@ public class DiscordOAuthClient {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
+    /**
+     * @param username   the unique handle, which is what an account is named after
+     * @param globalName the display name, used only when an account predates unique handles and has
+     *                   none
+     */
     public record DiscordUser(long id, String username, String globalName) {
+        /**
+         * @return what to call this person, preferring the handle they are addressed by
+         */
+        public String handle() {
+            if (username != null && !username.isBlank()) return username;
+            return globalName == null || globalName.isBlank() ? null : globalName;
+        }
+
     }
 
     public static class OAuthException extends Exception {

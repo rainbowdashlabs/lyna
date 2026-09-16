@@ -283,21 +283,20 @@ public class Auth {
         Optional<JwtService.Verified> existing = currentSession(ctx);
         Account account;
         if (existing.isPresent()) {
-            // Logged-in flow: link this Discord id to the calling account.
             Optional<Account> me = accounts.findById(existing.get().accountId());
             if (me.isEmpty()) {
                 ctx.status(HttpStatus.UNAUTHORIZED);
                 return;
             }
             account = me.get();
-            accounts.link(account.id(), discordUser.id(), DiscordLink.Verification.OAUTH);
+            accounts.link(account.id(), discordUser.id(), DiscordLink.Verification.OAUTH, discordUser.handle());
         } else {
-            // Anonymous flow: existing link → login; otherwise create a password-less account.
             account = accounts.findByDiscordId(discordUser.id()).orElseGet(() -> {
                 Account created = accounts.create(null, null);
-                accounts.link(created.id(), discordUser.id(), DiscordLink.Verification.OAUTH);
+                accounts.link(created.id(), discordUser.id(), DiscordLink.Verification.OAUTH, discordUser.handle());
                 return created;
             });
+            accounts.rememberHandle(discordUser.id(), discordUser.handle());
             accounts.touchLastLogin(account.id());
         }
         JwtService.Issued issued = jwtService.issue(account.id(), discordUser.id());

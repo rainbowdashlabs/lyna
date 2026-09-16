@@ -190,7 +190,8 @@ public class DemoService {
             Account account = data.accounts().create(
                     "demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
             data.accounts().confirmEmail(account.id(), account.email());
-            data.accounts().link(account.id(), members.get(i).getIdLong(), DiscordLink.Verification.OAUTH);
+            data.accounts().link(account.id(), members.get(i).getIdLong(), DiscordLink.Verification.OAUTH,
+                    members.get(i).getUser().getName());
             artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
             accounts.add(account);
         }

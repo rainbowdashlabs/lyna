@@ -149,4 +149,79 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         assertTrue(accounts.findById(created.id()).isEmpty());
         assertTrue(accounts.findByDiscordId(555L).isEmpty());
     }
+
+    @Test
+    @DisplayName("The handle the OAuth round trip saw is kept with the link")
+    void linkRecordsTheHandle() {
+        Account account = accounts.create("handle@example.invalid", "hash");
+        accounts.link(account.id(), 4001L, DiscordLink.Verification.OAUTH, "ada");
+
+        DiscordLink link = accounts.findLinkByAccountId(account.id()).orElseThrow();
+        assertEquals("ada", link.handle());
+        assertEquals("ada", link.display());
+    }
+
+    @Test
+    @DisplayName("A link made without a handle shows the id, which is all there is to show")
+    void linkWithoutHandleDisplaysTheId() {
+        Account account = accounts.create("nohandle@example.invalid", "hash");
+        accounts.link(account.id(), 4002L, DiscordLink.Verification.BOT_DM_CODE);
+
+        DiscordLink link = accounts.findLinkByAccountId(account.id()).orElseThrow();
+        assertNull(link.handle());
+        assertEquals("4002", link.display());
+    }
+
+    @Test
+    @DisplayName("Relinking without a handle keeps the one already known")
+    void relinkingKeepsAKnownHandle() {
+        Account account = accounts.create("keep@example.invalid", "hash");
+        accounts.link(account.id(), 4003L, DiscordLink.Verification.OAUTH, "ada");
+        accounts.link(account.id(), 4003L, DiscordLink.Verification.BOT_DM_CODE);
+
+        assertEquals("ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+    }
+
+    @Test
+    @DisplayName("Signing in again under a new handle records the new one")
+    void relinkingUpdatesTheHandle() {
+        Account account = accounts.create("renamed@example.invalid", "hash");
+        accounts.link(account.id(), 4004L, DiscordLink.Verification.OAUTH, "ada");
+        accounts.link(account.id(), 4004L, DiscordLink.Verification.OAUTH, "ada.lovelace");
+
+        assertEquals("ada.lovelace", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+    }
+
+    @Test
+    @DisplayName("A handle learned elsewhere is recorded against the id, and only when it changed")
+    void rememberHandleUpdatesByDiscordId() {
+        Account account = accounts.create("remember@example.invalid", "hash");
+        accounts.link(account.id(), 4005L, DiscordLink.Verification.BOT_DM_CODE);
+
+        assertTrue(accounts.rememberHandle(4005L, "ada"));
+        assertFalse(accounts.rememberHandle(4005L, "ada"));
+        assertFalse(accounts.rememberHandle(4005L, "  "));
+        assertFalse(accounts.rememberHandle(9999L, "nobody"));
+
+        assertEquals("ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+    }
+
+    @Test
+    @DisplayName("Several ids are named in one go, and an unknown one is simply absent")
+    void handlesAreLookedUpInBulk() {
+        Account first = accounts.create("bulk-a@example.invalid", "hash");
+        Account second = accounts.create("bulk-b@example.invalid", "hash");
+        Account third = accounts.create("bulk-c@example.invalid", "hash");
+        accounts.link(first.id(), 4101L, DiscordLink.Verification.OAUTH, "ada");
+        accounts.link(second.id(), 4102L, DiscordLink.Verification.OAUTH, "grace");
+        accounts.link(third.id(), 4103L, DiscordLink.Verification.BOT_DM_CODE);
+
+        var handles = accounts.handles(java.util.List.of(4101L, 4102L, 4103L, 4104L));
+
+        assertEquals(2, handles.size());
+        assertEquals("ada", handles.get(4101L));
+        assertEquals("grace", handles.get(4102L));
+        assertNull(handles.get(4103L));
+        assertTrue(accounts.handles(java.util.List.of()).isEmpty());
+    }
 }
