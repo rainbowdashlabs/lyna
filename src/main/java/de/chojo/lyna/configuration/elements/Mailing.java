@@ -1,5 +1,10 @@
 package de.chojo.lyna.configuration.elements;
 
+import dev.chojo.ocular.override.Env;
+import dev.chojo.ocular.override.Overwrite;
+import dev.chojo.ocular.override.Prop;
+import dev.chojo.ocular.override.OverwritePrefix;
+
 import de.chojo.lyna.configuration.elements.mailing.MailSettings;
 
 import java.util.Collections;
@@ -8,18 +13,25 @@ import java.util.Map;
 import java.util.Properties;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal"})
+@OverwritePrefix("MAIL")
 public class Mailing {
     private MailSettings smtp = new MailSettings();
     private MailSettings imap = new MailSettings();
+    @Overwrite(env = @Env, prop = @Prop)
     private String user = "";
+    @Overwrite(env = @Env, prop = @Prop)
     private String password = "";
+    @Overwrite(env = @Env, prop = @Prop)
     private List<String> originMail = java.util.List.of("");
+    @Overwrite(env = @Env, prop = @Prop)
     private int pollSeconds = 300;
+    @Overwrite(env = @Env, prop = @Prop)
     private boolean enabled = true;
     // While we do no use javamail, we use angus and both implement jakarta.mail
     // Most of the parameters of javamail can be applied here as well
     // https://www.tutorialspoint.com/javamail_api/javamail_api_imap_servers.htm
     // https://www.tutorialspoint.com/javamail_api/javamail_api_smtp_servers.htm
+    @Overwrite(env = @Env, prop = @Prop)
     private Map<String, String> properties = Collections.emptyMap();
 
     public int pollSeconds() {

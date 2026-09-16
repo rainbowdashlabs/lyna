@@ -1,5 +1,10 @@
 package de.chojo.lyna.configuration.elements;
 
+import dev.chojo.ocular.override.Env;
+import dev.chojo.ocular.override.Overwrite;
+import dev.chojo.ocular.override.Prop;
+import dev.chojo.ocular.override.OverwritePrefix;
+
 import de.chojo.jdautil.util.SysVar;
 
 /**
@@ -14,8 +19,11 @@ import de.chojo.jdautil.util.SysVar;
  * password, and the reset deletes what the seed made.
  */
 @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+@OverwritePrefix("DEMO")
 public class Demo {
+    @Overwrite(env = @Env, prop = @Prop)
     private boolean enabled = false;
+    @Overwrite(env = @Env, prop = @Prop)
     private int resetIntervalMinutes = 60;
 
     public boolean enabled() {

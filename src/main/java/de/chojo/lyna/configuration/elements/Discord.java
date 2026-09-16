@@ -1,28 +1,18 @@
 package de.chojo.lyna.configuration.elements;
 
+import de.chojo.lyna.configuration.elements.discord.OAuth;
+import dev.chojo.ocular.override.Env;
+import dev.chojo.ocular.override.Overwrite;
+import dev.chojo.ocular.override.OverwritePrefix;
+import dev.chojo.ocular.override.Prop;
+
 @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+@OverwritePrefix("DISCORD")
 public class Discord {
+    @Overwrite(env = @Env, prop = @Prop)
     private OAuth oauth = new OAuth();
 
     public OAuth oauth() {
         return oauth;
-    }
-
-    public static class OAuth {
-        private String clientId = "";
-        private String clientSecret = "";
-        private String redirectUri = "";
-
-        public String clientId() {
-            return clientId;
-        }
-
-        public String clientSecret() {
-            return clientSecret;
-        }
-
-        public String redirectUri() {
-            return redirectUri;
-        }
     }
 }

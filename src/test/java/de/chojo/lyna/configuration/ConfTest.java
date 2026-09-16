@@ -25,7 +25,6 @@ class ConfTest {
     @DisplayName("An empty directory yields the defaults, and writes them down")
     void emptyDirectoryWritesDefaults(@TempDir Path directory) {
         Conf conf = new Conf(directory);
-        conf.save();
 
         assertEquals(5, conf.main().database().poolSize());
         assertTrue(Files.exists(directory.resolve("config.yaml")));
@@ -117,5 +116,80 @@ class ConfTest {
         new Conf(directory);
 
         assertFalse(Files.exists(directory.resolve("config.json")));
+    }
+
+    @Test
+    @DisplayName("A property beats what the file says, which is how a secret stays out of the file")
+    void propertyOverridesTheFile(@TempDir Path directory) throws IOException {
+        Files.writeString(directory.resolve("config.yaml"), """
+                database:
+                  host: "from-the-file"
+                  password: "in-the-file"
+                """);
+
+        System.setProperty("db.password", "from-the-environment");
+        try {
+            Conf conf = new Conf(directory);
+
+            assertEquals("from-the-environment", conf.main().database().password());
+            assertEquals("from-the-file", conf.main().database().host());
+        } finally {
+            System.clearProperty("db.password");
+        }
+    }
+
+    @Test
+    @DisplayName("An override reaches a nested element under its own prefix")
+    void nestedElementsHaveTheirOwnPrefix(@TempDir Path directory) {
+        System.setProperty("discord.oauth.clientSecret", "not-in-any-file");
+        try {
+            Conf conf = new Conf(directory);
+
+            assertEquals("not-in-any-file", conf.main().discord().oauth().clientSecret());
+        } finally {
+            System.clearProperty("discord.oauth.clientSecret");
+        }
+    }
+
+    /**
+     * The guarantee that makes overrides worth having: a value supplied from outside is used but not
+     * recorded. Ocular writes the file before it applies the overrides, so this holds as long as
+     * nothing calls {@link Conf#save()} afterwards - which is why nothing does.
+     */
+    @Test
+    @DisplayName("A value supplied from outside is used but never written into the file")
+    void overridesAreNotWrittenBack(@TempDir Path directory) throws IOException {
+        System.setProperty("db.password", "never-write-me-down");
+        try {
+            Conf conf = new Conf(directory);
+
+            assertEquals("never-write-me-down", conf.main().database().password());
+        } finally {
+            System.clearProperty("db.password");
+        }
+
+        String written = Files.readString(directory.resolve("config.yaml"));
+        assertTrue(written.contains("password"), "the file should still carry the key");
+        assertFalse(written.contains("never-write-me-down"),
+                "a secret supplied from outside the file must not be saved into it");
+    }
+
+    @Test
+    @DisplayName("Adopting the old JSON does not write an override into the new file either")
+    void adoptionDoesNotCarryAnOverrideIntoTheFile(@TempDir Path directory) throws IOException {
+        Files.writeString(directory.resolve("config.json"), """
+                {"database" : {"password" : "was-in-the-old-file"}}
+                """);
+
+        System.setProperty("db.password", "supplied-from-outside");
+        try {
+            Conf conf = new Conf(directory);
+
+            assertEquals("supplied-from-outside", conf.main().database().password());
+        } finally {
+            System.clearProperty("db.password");
+        }
+
+        assertFalse(Files.readString(directory.resolve("config.yaml")).contains("supplied-from-outside"));
     }
 }

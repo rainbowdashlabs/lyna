@@ -1,10 +1,16 @@
 package de.chojo.lyna.configuration.elements;
 
+import dev.chojo.ocular.override.Env;
+import dev.chojo.ocular.override.Overwrite;
+import dev.chojo.ocular.override.Prop;
+import dev.chojo.ocular.override.OverwritePrefix;
+
 import java.util.UUID;
 
 /**
  * Ko-fi's webhook settings.
  */
+@OverwritePrefix("KOFI")
 public class Kofi {
     /**
      * The token Ko-fi sends with every webhook, which is the only thing saying the call is theirs.
@@ -13,6 +19,7 @@ public class Kofi {
      * that happens to be shaped like one today. A random default means an instance nobody has
      * configured refuses every call rather than accepting a blank one.
      */
+    @Overwrite(env = @Env, prop = @Prop)
     private String verificationToken = UUID.randomUUID().toString();
 
     public String verificationToken() {

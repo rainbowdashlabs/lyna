@@ -2,7 +2,7 @@ package de.chojo.lyna.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.chojo.lyna.configuration.elements.Discord;
+import de.chojo.lyna.configuration.elements.discord.OAuth;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -18,11 +18,11 @@ public class DiscordOAuthClient {
     private static final String USER_URL = "https://discord.com/api/users/@me";
     private static final String SCOPE = "identify";
 
-    private final Discord.OAuth config;
+    private final OAuth config;
     private final HttpClient http;
     private final ObjectMapper json = new ObjectMapper();
 
-    public DiscordOAuthClient(Discord.OAuth config) {
+    public DiscordOAuthClient(OAuth config) {
         this.config = config;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     }

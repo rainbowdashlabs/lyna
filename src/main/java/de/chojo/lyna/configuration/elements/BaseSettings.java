@@ -1,13 +1,23 @@
 package de.chojo.lyna.configuration.elements;
 
+import dev.chojo.ocular.override.Env;
+import dev.chojo.ocular.override.Overwrite;
+import dev.chojo.ocular.override.Prop;
+import dev.chojo.ocular.override.OverwritePrefix;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal", "MismatchedQueryAndUpdateOfCollection"})
+@OverwritePrefix("BOT")
 public class BaseSettings {
+    @Overwrite(env = @Env, prop = @Prop)
     private String token = "";
+    @Overwrite(env = @Env, prop = @Prop)
     private boolean botEnabled = true;
+    @Overwrite(env = @Env, prop = @Prop)
     private List<Long> botOwner = new ArrayList<>();
+    @Overwrite(env = @Env, prop = @Prop)
     private long botGuild = 0L;
 
     public String token() {
