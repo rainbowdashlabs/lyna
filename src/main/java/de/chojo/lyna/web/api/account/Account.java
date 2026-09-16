@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.data.access.AccountLicenses;
+import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
@@ -37,6 +38,7 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.patch;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
+import static io.javalin.apibuilder.ApiBuilder.put;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Account {
@@ -45,6 +47,7 @@ public class Account {
     private final Auth auth;
     private final Accounts accounts;
     private final AccountLicenses licenses;
+    private final LicenseInvites invites;
     private final InstanceSettingsAccess instanceSettings;
     private final MailingService mailingService;
     private final EmailVerificationTokens emailTokens;
@@ -59,6 +62,7 @@ public class Account {
     public Account(Auth auth,
                    Accounts accounts,
                    AccountLicenses licenses,
+                   LicenseInvites invites,
                    InstanceSettingsAccess instanceSettings,
                    MailingService mailingService,
                    EmailVerificationTokens emailTokens,
@@ -71,6 +75,7 @@ public class Account {
         this.auth = auth;
         this.accounts = accounts;
         this.licenses = licenses;
+        this.invites = invites;
         this.instanceSettings = instanceSettings;
         this.mailingService = mailingService;
         this.emailTokens = emailTokens;
@@ -88,6 +93,7 @@ public class Account {
             delete(this::deleteAccount);
             post("password", this::changePassword);
             patch("appearance", this::updateAppearance);
+            put("username", this::setUsername);
             path("email", () -> {
                 post("change", this::changeEmail);
                 post("resend-verification", this::resendVerification);
@@ -103,7 +109,7 @@ public class Account {
                 get(this::listLicenses);
                 get("{id}", this::licenseDetail);
                 post("{id}/sharees", this::addSharee);
-                delete("{id}/sharees/{discordId}", this::removeSharee);
+                delete("{id}/sharees/{ref}", this::removeSharee);
             });
         });
     }
@@ -136,6 +142,8 @@ public class Account {
                         acc.get().hasPassword(),
                         link.map(AccountIdentity::externalId).orElse(null),
                         link.map(AccountIdentity::linkedAt).orElse(null),
+                        acc.get().displayName(),
+                        link.isEmpty(),
                         acc.get().theme(),
                         acc.get().feel(),
                         acc.get().darkMode()),
@@ -445,6 +453,35 @@ public class Account {
                 licenses.shared(accountId).stream().map(Account::toView).toList()));
     }
 
+    /**
+     * Lets somebody choose what they are called.
+     *
+     * <p>Refused while Discord supplies the name: two writers on one field means the next sign-in
+     * silently undoes whatever was typed here, and the page says so rather than letting it happen.
+     */
+    private void setUsername(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        Username body;
+        try {
+            body = json.readValue(ctx.body(), Username.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
+            return;
+        }
+        try {
+            accounts.setUsername(session.get().accountId(), body == null ? null : body.username());
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
+            return;
+        } catch (IllegalStateException e) {
+            ctx.status(HttpStatus.CONFLICT).result(e.getMessage());
+            return;
+        }
+        accounts.findById(session.get().accountId())
+                .ifPresent(account -> ctx.json(new Username(account.displayName())));
+    }
+
     private void licenseDetail(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
@@ -455,8 +492,8 @@ public class Account {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        List<String> sharees = license.get().role() == AccountLicense.Role.OWNER
-                ? licenses.sharees(licenseId).stream().map(Object::toString).toList()
+        List<ShareeView> sharees = license.get().role() == AccountLicense.Role.OWNER
+                ? shareesOf(licenseId)
                 : List.of();
         ctx.json(new LicenseDetail(
                 toView(license.get()),
@@ -467,6 +504,31 @@ public class Account {
                         : session.get().accountId(), 10)));
     }
 
+    /**
+     * The people a licence is shared with, named rather than numbered.
+     *
+     * <p>An account that has never been named shows as its opaque ref, which is the only thing about
+     * it that is safe to print. Addresses appear only for invites, which the owner typed themselves.
+     */
+    private List<ShareeView> shareesOf(int licenseId) {
+        List<ShareeView> views = new java.util.ArrayList<>();
+        for (int shareeId : licenses.sharees(licenseId)) {
+            String name = accounts.findById(shareeId).map(de.chojo.lyna.data.dao.account.Account::displayName).orElse(null);
+            views.add(new ShareeView("a" + shareeId, name == null ? "a" + shareeId : name, false));
+        }
+        for (var invite : invites.standing(licenseId)) {
+            views.add(new ShareeView("e" + invite.email(), invite.email(), true));
+        }
+        return views;
+    }
+
+    /**
+     * Shares a licence with somebody named by username, or invites an address.
+     *
+     * <p>An address that already has an account is shared with straight away; one that does not is
+     * invited and waits for that address to be proved. Either way the owner is told which happened,
+     * because "shared" and "invited" are different promises.
+     */
     private void addSharee(Context ctx) {
         var owned = requireOwned(ctx);
         if (owned == null) return;
@@ -477,34 +539,75 @@ public class Account {
             ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
             return;
         }
-        Long subject = parseDiscordId(body == null ? null : body.subject());
-        if (subject == null) {
-            ctx.status(HttpStatus.NOT_FOUND).result("That is not a Discord id");
-            return;
-        }
-        if (Accounts.accountIdForDiscord(subject) == owned.ownerAccountId()) {
-            ctx.status(HttpStatus.CONFLICT).result("The owner already holds this license");
+        String subject = body == null || body.subject() == null ? "" : body.subject().trim();
+        if (subject.isEmpty()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Name somebody by username, or give an address");
             return;
         }
         if (owned.shareesCap() > 0 && owned.shareesUsed() >= owned.shareesCap()) {
             ctx.status(HttpStatus.CONFLICT).result("Cap reached. Revoke a sharee first.");
             return;
         }
-        licenses.addSharee(owned.id(), Accounts.accountIdForDiscord(subject));
-        tellSharee("licence-shared", subject, owned);
-        ctx.status(HttpStatus.CREATED).json(new ShareeView(Long.toString(subject)));
+
+        Optional<de.chojo.lyna.data.dao.account.Account> target = subject.contains("@")
+                ? accounts.findByEmail(subject)
+                : accounts.findByUsername(subject);
+
+        if (target.isEmpty() && !subject.contains("@")) {
+            ctx.status(HttpStatus.NOT_FOUND).result("Nobody here goes by that name");
+            return;
+        }
+        if (target.isEmpty()) {
+            invites.invite(owned.id(), subject);
+            ctx.status(HttpStatus.CREATED).json(new ShareeView("e" + subject, subject, true));
+            return;
+        }
+        int shareeId = target.get().id();
+        if (shareeId == owned.ownerAccountId()) {
+            ctx.status(HttpStatus.CONFLICT).result("The owner already holds this license");
+            return;
+        }
+        if (!licenses.addSharee(owned.id(), shareeId)) {
+            ctx.status(HttpStatus.CONFLICT).result("They already hold this license");
+            return;
+        }
+        tellSharee("licence-shared", target.get(), owned);
+        String name = target.get().displayName();
+        ctx.status(HttpStatus.CREATED)
+                .json(new ShareeView("a" + shareeId, name == null ? "a" + shareeId : name, false));
     }
 
+    /**
+     * Takes a share back, whether it was accepted or is still an invite waiting to be.
+     *
+     * <p>The ref says which: {@code a} for an account, {@code e} for an invited address. The owner
+     * never handles an account id or a snowflake, so nothing about one sharee leaks through the page
+     * another one is looking at.
+     */
     private void removeSharee(Context ctx) {
         var owned = requireOwned(ctx);
         if (owned == null) return;
-        Long subject = parseDiscordId(ctx.pathParam("discordId"));
-        if (subject == null) {
+        String ref = ctx.pathParam("ref");
+        if (ref.length() < 2) {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        licenses.removeSharee(owned.id(), Accounts.accountIdForDiscord(subject));
-        tellSharee("licence-revoked", subject, owned);
+        String rest = ref.substring(1);
+        if (ref.charAt(0) == 'e') {
+            invites.withdraw(owned.id(), rest);
+            ctx.status(HttpStatus.NO_CONTENT);
+            return;
+        }
+        int shareeId;
+        try {
+            shareeId = Integer.parseInt(rest);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return;
+        }
+        var sharee = accounts.findById(shareeId);
+        licenses.removeSharee(owned.id(), shareeId);
+        sharee.ifPresent(account -> tellSharee("licence-revoked", account, owned));
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -518,20 +621,22 @@ public class Account {
      * <p>Best effort on purpose. The share is a database row and has already been written; a mail
      * server that will not take the message is not a reason to tell the caller their share failed.
      */
-    private void tellSharee(String template, long shareeDiscordId, AccountLicense license) {
+    private void tellSharee(String template, de.chojo.lyna.data.dao.account.Account sharee, AccountLicense license) {
         try {
-            var sharee = accounts.findByDiscordId(shareeDiscordId);
-            if (sharee.isEmpty() || sharee.get().email() == null) return;
+            if (sharee.email() == null) return;
+            String owner = accounts.findById(license.ownerAccountId())
+                    .map(de.chojo.lyna.data.dao.account.Account::displayName)
+                    .orElse("the owner");
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of(
-                    "owner", Integer.toString(license.ownerAccountId()),
+                    "owner", owner == null ? "the owner" : owner,
                     "product", license.productName(),
                     "senderName", "Lyna");
-            mailingService.send(sharee.get().email(),
+            mailingService.send(sharee.email(),
                     renderer.subject(template, "en", values),
                     renderer.render(template, "en", values));
         } catch (Exception e) {
-            log.warn("Could not tell {} about the licence for {}", shareeDiscordId, license.productName(), e);
+            log.warn("Could not tell account {} about the licence for {}", sharee.id(), license.productName(), e);
         }
     }
 
@@ -568,16 +673,6 @@ public class Account {
         }
     }
 
-    /**
-     * @return the Discord id, or null when the text is not one
-     */
-    private static Long parseDiscordId(String raw) {
-        if (raw == null) return null;
-        String trimmed = raw.trim();
-        if (!trimmed.matches("\\d{5,20}")) return null;
-        return Long.parseLong(trimmed);
-    }
-
     private static LicenseView toView(AccountLicense license) {
         return new LicenseView(
                 license.id(),
@@ -593,9 +688,18 @@ public class Account {
                 license.shareesCap());
     }
 
+    /**
+     * @param username    the name as it is shown, digits and all
+     * @param nameIsTheirs whether this account may change its own name, which it may not while a
+     *                     provider is the one supplying it
+     */
     public record AccountInfo(int id, String email, boolean emailVerified, String pendingEmail,
                               boolean hasPassword, String discordId, Instant discordLinkedAt,
+                              String username, boolean nameIsTheirs,
                               String theme, String feel, String darkMode) {
+    }
+
+    public record Username(String username) {
     }
 
     public record Overview(AccountInfo account, int activeSessions, Instant lastSignInAt, List<DownloadLogEntry> recentDownloads) {
@@ -618,7 +722,7 @@ public class Account {
     public record LicenseList(List<LicenseView> owned, List<LicenseView> shared) {
     }
 
-    public record LicenseDetail(LicenseView license, String key, List<String> sharees,
+    public record LicenseDetail(LicenseView license, String key, List<ShareeView> sharees,
                                 List<DownloadLogEntry> recentDownloads) {
     }
 
@@ -632,9 +736,17 @@ public class Account {
     public record Appearance(String theme, String feel, String darkMode) {
     }
 
+    /**
+     * @param subject a username, with or without its digits, or an email address
+     */
     public record Sharee(String subject) {
     }
 
-    public record ShareeView(String discordId) {
+    /**
+     * @param ref     how to address this sharee when revoking, opaque to the page
+     * @param name    what to show: a username, or the address of an invite the owner typed
+     * @param pending whether this is an invite still waiting to be answered
+     */
+    public record ShareeView(String ref, String name, boolean pending) {
     }
 }

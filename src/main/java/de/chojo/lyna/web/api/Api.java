@@ -40,7 +40,7 @@ public class Api {
         v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog(),
                 data.kioskProducts(), auth, data.accounts(), data.accountLicenses(),
                 data.accountSessions(), data.jwtService(), demoService);
-        account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(), mailingService, data.emailVerificationTokens(), configuration,
+        account = new Account(auth, data.accounts(), data.accountLicenses(), data.licenseInvites(), data.instanceSettings(), mailingService, data.emailVerificationTokens(), configuration,
                 data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         theme = new Theme(data.instanceSettings());
