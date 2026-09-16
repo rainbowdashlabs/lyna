@@ -105,10 +105,6 @@ public class Account {
                 post("{address}/primary", this::makeEmailPrimary);
                 delete("{address}", this::removeEmail);
             });
-            path("email", () -> {
-                post("change", this::changeEmail);
-                post("resend-verification", this::resendVerification);
-            });
             get("sessions", this::listSessions);
             delete("sessions", this::endOtherSessions);
             delete("sessions/{jti}", this::revokeSession);
@@ -149,7 +145,6 @@ public class Account {
                         acc.get().id(),
                         acc.get().email(),
                         acc.get().emailVerified(),
-                        emailTokens.pendingEmail(acc.get().id()).orElse(null),
                         acc.get().hasPassword(),
                         link.map(AccountIdentity::externalId).orElse(null),
                         link.map(AccountIdentity::linkedAt).orElse(null),
@@ -357,14 +352,14 @@ public class Account {
     private void addEmail(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
-        EmailChange body;
+        NewEmail body;
         try {
-            body = json.readValue(ctx.body(), EmailChange.class);
+            body = json.readValue(ctx.body(), NewEmail.class);
         } catch (Exception e) {
             ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
             return;
         }
-        String email = body == null || body.newEmail() == null ? "" : body.newEmail().trim();
+        String email = body == null || body.address() == null ? "" : body.address().trim();
         if (!email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not an email address");
             return;
@@ -398,52 +393,6 @@ public class Account {
             return;
         }
         ctx.status(HttpStatus.NO_CONTENT);
-    }
-
-    private void changeEmail(Context ctx) {
-        var session = require(ctx);
-        if (session.isEmpty()) return;
-        EmailChange body;
-        try {
-            body = json.readValue(ctx.body(), EmailChange.class);
-        } catch (Exception e) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
-            return;
-        }
-        String email = body == null || body.newEmail() == null ? "" : body.newEmail().trim();
-        if (!email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("That is not an email address");
-            return;
-        }
-        var taken = accounts.findByEmail(email);
-        if (taken.isPresent() && taken.get().id() != session.get().accountId()) {
-            // Answered as though it had been sent. Saying "that address is taken" to somebody who is
-            // not its owner tells them who has an account here.
-            ctx.status(HttpStatus.ACCEPTED);
-            return;
-        }
-        sendVerification(session.get().accountId(), email);
-        ctx.status(HttpStatus.ACCEPTED);
-    }
-
-    /**
-     * Sends the confirmation again, for an address somebody never received it for.
-     */
-    private void resendVerification(Context ctx) {
-        var session = require(ctx);
-        if (session.isEmpty()) return;
-        var acc = accounts.findById(session.get().accountId());
-        if (acc.isEmpty()) {
-            ctx.status(HttpStatus.UNAUTHORIZED);
-            return;
-        }
-        String pending = emailTokens.pendingEmail(acc.get().id()).orElse(acc.get().email());
-        if (pending == null || acc.get().emailVerified() && emailTokens.pendingEmail(acc.get().id()).isEmpty()) {
-            ctx.status(HttpStatus.ACCEPTED);
-            return;
-        }
-        sendVerification(acc.get().id(), pending);
-        ctx.status(HttpStatus.ACCEPTED);
     }
 
     /**
@@ -760,12 +709,15 @@ public class Account {
     public record EmailView(String address, boolean verified, boolean primary) {
     }
 
+    public record NewEmail(String address) {
+    }
+
     /**
      * @param username    the name as it is shown, digits and all
      * @param nameIsTheirs whether this account may change its own name, which it may not while a
      *                     provider is the one supplying it
      */
-    public record AccountInfo(int id, String email, boolean emailVerified, String pendingEmail,
+    public record AccountInfo(int id, String email, boolean emailVerified,
                               boolean hasPassword, String discordId, Instant discordLinkedAt,
                               String username, boolean nameIsTheirs,
                               String theme, String darkMode) {
@@ -800,9 +752,6 @@ public class Account {
 
     public record DownloadPage(List<DownloadLogEntry> rows, int totalRows, int page, int pageSize,
                                List<DownloadLog.ProductOption> products) {
-    }
-
-    public record EmailChange(String newEmail) {
     }
 
     public record Appearance(String theme, String darkMode) {

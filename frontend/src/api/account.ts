@@ -9,8 +9,6 @@ export interface AccountInfo {
     id: number
     email: string | null
     emailVerified: boolean
-    /** An address a confirmation link is outstanding for, which is not yet the account's. */
-    pendingEmail: string | null
     hasPassword: boolean
     discordId: string | null
     discordLinkedAt: string | null
@@ -207,9 +205,10 @@ export async function listEmails(): Promise<AccountEmail[]> {
     return data
 }
 
-/** Claims another address and sends the link that would prove it. */
-export async function addEmail(newEmail: string): Promise<void> {
-    await client.post('/api/account/emails', {newEmail})
+/** Claims another address and sends the link that would prove it. Sending an address the account
+ *  already claims simply sends the link again. */
+export async function addEmail(address: string): Promise<void> {
+    await client.post('/api/account/emails', {address})
 }
 
 export async function makeEmailPrimary(address: string): Promise<void> {
@@ -218,14 +217,6 @@ export async function makeEmailPrimary(address: string): Promise<void> {
 
 export async function removeEmail(address: string): Promise<void> {
     await client.delete(`/api/account/emails/${encodeURIComponent(address)}`)
-}
-
-export async function changeEmail(newEmail: string): Promise<void> {
-    await client.post('/api/account/email/change', {newEmail})
-}
-
-export async function resendVerification(): Promise<void> {
-    await client.post('/api/account/email/resend-verification')
 }
 
 export async function verifyEmail(token: string): Promise<void> {

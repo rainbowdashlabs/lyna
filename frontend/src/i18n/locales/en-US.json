@@ -272,14 +272,6 @@
       "source": "Source",
       "license": "License"
     },
-    "emailCard": {
-      "confirmed": "Confirmed",
-      "notConfirmed": "Not confirmed",
-      "sendTheLinkAgain": "Send the link again",
-      "nothingChangesUntilTheNewAddress": "Nothing changes until the new address is confirmed from the mail sent to it.",
-      "newEmail": "New email",
-      "sentCheckTheInboxAndThe": "Sent. Check the inbox, and the spam folder."
-    },
     "linkedAccountsCard": {
       "discord": "Discord",
       "linkNow": "link now",

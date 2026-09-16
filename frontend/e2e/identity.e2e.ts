@@ -122,7 +122,7 @@ test.describe('Account identity', () => {
         const {headers} = await signUpFor(request, 'two-addresses')
         const second = uniqueEmail('second')
 
-        expect((await request.post('/api/account/emails', {headers, data: {newEmail: second}})).status()).toBe(202)
+        expect((await request.post('/api/account/emails', {headers, data: {address: second}})).status()).toBe(202)
 
         const addresses = await (await request.get('/api/account/emails', {headers})).json()
         expect(addresses).toHaveLength(2)
@@ -136,7 +136,7 @@ test.describe('Account identity', () => {
     test('the address the account is written to is held down', async ({request}) => {
         const {email, headers} = await signUpFor(request, 'primary-held')
         const second = uniqueEmail('cannot-be-primary')
-        await request.post('/api/account/emails', {headers, data: {newEmail: second}})
+        await request.post('/api/account/emails', {headers, data: {address: second}})
 
         const removePrimary = await request.delete(`/api/account/emails/${encodeURIComponent(email)}`, {headers})
         const promoteUnproved = await request.post(
@@ -149,7 +149,7 @@ test.describe('Account identity', () => {
     test('a claimed address can be given up again', async ({request}) => {
         const {headers} = await signUpFor(request, 'gives-up')
         const second = uniqueEmail('given-up')
-        await request.post('/api/account/emails', {headers, data: {newEmail: second}})
+        await request.post('/api/account/emails', {headers, data: {address: second}})
 
         expect((await request.delete(`/api/account/emails/${encodeURIComponent(second)}`, {headers})).status()).toBe(204)
 
@@ -158,6 +158,6 @@ test.describe('Account identity', () => {
 
     test('the addresses are shut to a visitor who is not signed in', async ({request}) => {
         expect((await request.get('/api/account/emails')).status()).toBe(401)
-        expect((await request.post('/api/account/emails', {data: {newEmail: 'x@example.invalid'}})).status()).toBe(401)
+        expect((await request.post('/api/account/emails', {data: {address: 'x@example.invalid'}})).status()).toBe(401)
     })
 })

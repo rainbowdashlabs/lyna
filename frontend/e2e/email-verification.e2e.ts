@@ -9,8 +9,9 @@ import {uniqueEmail} from './fixtures/unique'
 
 /**
  * Confirming an address. The stack sends no mail, so the link itself cannot be followed here - what
- * these pin is everything around it: that a fresh address counts as unconfirmed, that a change does
- * not take effect on its own, and that a bad token is refused rather than accepted.
+ * these pin is everything around it: that a claimed address counts for nothing until it is confirmed,
+ * that claiming one somebody else holds is answered as though it had been sent, and that a bad token
+ * is refused rather than accepted.
  */
 test.describe('Email verification', () => {
     test('a fresh account reads as unconfirmed', async ({request}) => {
@@ -25,22 +26,25 @@ test.describe('Email verification', () => {
         expect(account.emailVerified).toBe(false)
     })
 
-    test('asking to change the address does not change it', async ({request}) => {
+    test('claiming another address leaves the one the account is written to alone', async ({request}) => {
         const original = uniqueEmail('keeps-address')
         const signup = await request.post('/api/auth/signup', {data: {email: original, password: PASSWORD}})
         const {token} = await signup.json()
         const authorized = {Authorization: `Bearer ${token}`}
 
-        const change = await request.post('/api/account/email/change', {
+        const claim = await request.post('/api/account/emails', {
             headers: authorized,
-            data: {newEmail: uniqueEmail('not-yet-mine')},
+            data: {address: uniqueEmail('not-yet-mine')},
         })
-        expect(change.status()).toBe(202)
+        expect(claim.status()).toBe(202)
 
         const {account} = await (await request.get('/api/account', {headers: authorized})).json()
         expect(account.email).toBe(original)
         expect(account.emailVerified).toBe(false)
-        expect(account.pendingEmail).not.toBe(original)
+
+        const addresses = await (await request.get('/api/account/emails', {headers: authorized})).json()
+        expect(addresses).toHaveLength(2)
+        expect(addresses.every((a: {verified: boolean}) => !a.verified)).toBe(true)
     })
 
     test('an address that is not one is refused', async ({request}) => {
@@ -49,12 +53,12 @@ test.describe('Email verification', () => {
         })
         const {token} = await signup.json()
 
-        const change = await request.post('/api/account/email/change', {
+        const claim = await request.post('/api/account/emails', {
             headers: {Authorization: `Bearer ${token}`},
-            data: {newEmail: 'not an address'},
+            data: {address: 'not an address'},
         })
 
-        expect(change.status()).toBe(400)
+        expect(claim.status()).toBe(400)
     })
 
     test('an address somebody else holds is answered as though it had been sent', async ({request}) => {
@@ -66,24 +70,38 @@ test.describe('Email verification', () => {
         const {token} = await signup.json()
         const authorized = {Authorization: `Bearer ${token}`}
 
-        const change = await request.post('/api/account/email/change', {
+        const claim = await request.post('/api/account/emails', {
             headers: authorized,
-            data: {newEmail: taken},
+            data: {address: taken},
         })
 
         // Accepted rather than refused: saying "that one is taken" tells a stranger who has an
-        // account here.
-        expect(change.status()).toBe(202)
-        // Signup issued a link for the account's own address, so something is pending either way -
-        // what matters is that it is not the address somebody else holds.
-        const {account} = await (await request.get('/api/account', {headers: authorized})).json()
-        expect(account.pendingEmail).not.toBe(taken)
+        // account here. What it must not do is give the address away.
+        expect(claim.status()).toBe(202)
+        const addresses = await (await request.get('/api/account/emails', {headers: authorized})).json()
+        expect(addresses.some((a: {address: string}) => a.address === taken)).toBe(false)
     })
 
-    test('the change and resend endpoints are shut to a visitor without a session', async ({request}) => {
-        expect((await request.post('/api/account/email/change',
-            {data: {newEmail: uniqueEmail('anon')}})).status()).toBe(401)
-        expect((await request.post('/api/account/email/resend-verification')).status()).toBe(401)
+    test('claiming an address is shut to a visitor without a session', async ({request}) => {
+        expect((await request.post('/api/account/emails',
+            {data: {address: uniqueEmail('anon')}})).status()).toBe(401)
+    })
+
+    /**
+     * There is no separate way to ask for the link again: claiming an address the account already
+     * claims sends it once more, which is the same act.
+     */
+    test('claiming an address the account already claims sends the link again', async ({request}) => {
+        const address = uniqueEmail('again')
+        const signup = await request.post('/api/auth/signup', {data: {email: address, password: PASSWORD}})
+        const {token} = await signup.json()
+        const authorized = {Authorization: `Bearer ${token}`}
+
+        expect((await request.post('/api/account/emails',
+            {headers: authorized, data: {address}})).status()).toBe(202)
+
+        const addresses = await (await request.get('/api/account/emails', {headers: authorized})).json()
+        expect(addresses).toHaveLength(1)
     })
 
     test('a token nobody issued is refused', async ({request}) => {
