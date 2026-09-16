@@ -1,5 +1,6 @@
 package de.chojo.lyna.commands.license;
 
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Group;
 import de.chojo.jdautil.interactions.slash.Slash;
@@ -17,6 +18,7 @@ public class License implements SlashProvider<Slash> {
     private final Guilds guilds;
     private final Conf configuration;
 
+    @Inject
     public License(Guilds guilds, Conf configuration) {
         this.guilds = guilds;
         this.configuration = configuration;

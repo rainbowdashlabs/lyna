@@ -1,5 +1,6 @@
 package de.chojo.lyna.commands.downloads;
 
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Group;
 import de.chojo.jdautil.interactions.slash.Slash;
@@ -17,6 +18,7 @@ import de.chojo.lyna.data.access.Guilds;
 import de.chojo.nexus.NexusRest;
 
 public class Downloads extends SlashCommand {
+    @Inject
     public Downloads(Guilds guilds, NexusRest nexusRest) {
         super(Slash.of("downloads", "Manage downloads")
                 .guildOnly()

@@ -1,20 +1,8 @@
 package de.chojo.lyna.core;
 
-import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.commands.download.Download;
-import de.chojo.lyna.commands.downloads.Downloads;
-import de.chojo.lyna.commands.info.Info;
-import de.chojo.lyna.commands.kofi.KoFi;
-import de.chojo.lyna.commands.license.License;
-import de.chojo.lyna.commands.mailing.Mailing;
-import de.chojo.lyna.commands.products.Products;
-import de.chojo.lyna.commands.register.Register;
-import de.chojo.lyna.commands.registrations.Registrations;
-import de.chojo.lyna.commands.settings.Settings;
-import de.chojo.lyna.commands.trial.Trial;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.services.RoleListener;
@@ -23,7 +11,11 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 
+import de.chojo.jdautil.interactions.slash.Slash;
+import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
+
 import java.util.Collections;
+import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -32,16 +24,17 @@ public class Bot {
     private final Data data;
     private final Threading threading;
     private final Conf configuration;
-    private final Proxy proxy;
+    private final Set<SlashProvider<Slash>> commands;
     private final MailingService mailingService;
     private ShardManager shardManager;
 
     @Inject
-    public Bot(Data data, Threading threading, Conf configuration, Proxy proxy, MailingService mailingService) {
+    public Bot(Data data, Threading threading, Conf configuration, Set<SlashProvider<Slash>> commands,
+               MailingService mailingService) {
         this.data = data;
         this.threading = threading;
         this.configuration = configuration;
-        this.proxy = proxy;
+        this.commands = commands;
         this.mailingService = mailingService;
     }
 
@@ -89,19 +82,7 @@ public class Bot {
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
                 .withDefaultModalService()
-                .withCommands(
-                        new Products(data.guilds()),
-                        new License(data.guilds(), configuration),
-                        new Register(data.guilds()),
-                        new Registrations(data.guilds()),
-                        new Settings(data.guilds()),
-                        Info.create(configuration),
-                        new Downloads(data.guilds(), data.nexus()),
-                        new Download(data.guilds(), proxy),
-                        new Trial(data.guilds(), proxy),
-                        new Mailing(data.guilds(), configuration, mailingService),
-                        new KoFi(data.guilds(), data.kofi())
-                )
+                .withCommands(commands.toArray(SlashProvider[]::new))
                 .build();
     }
 

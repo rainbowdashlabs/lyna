@@ -2,6 +2,17 @@ package de.chojo.lyna.inject;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.Multibinder;
+import de.chojo.jdautil.interactions.slash.Slash;
+import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
+import de.chojo.lyna.commands.downloads.Downloads;
+import de.chojo.lyna.commands.info.Info;
+import de.chojo.lyna.commands.kofi.KoFi;
+import de.chojo.lyna.commands.register.Register;
+import de.chojo.lyna.commands.registrations.Registrations;
+import de.chojo.lyna.commands.settings.Settings;
+import de.chojo.lyna.commands.trial.Trial;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.Conf;
@@ -148,6 +159,21 @@ public class LynaModule extends AbstractModule {
      */
     @Override
     protected void configure() {
+        Multibinder<SlashProvider<Slash>> commands =
+                Multibinder.newSetBinder(binder(), new TypeLiteral<SlashProvider<Slash>>() {
+                });
+        commands.addBinding().to(de.chojo.lyna.commands.products.Products.class);
+        commands.addBinding().to(de.chojo.lyna.commands.license.License.class);
+        commands.addBinding().to(Register.class);
+        commands.addBinding().to(Registrations.class);
+        commands.addBinding().to(Settings.class);
+        commands.addBinding().to(Info.class);
+        commands.addBinding().to(Downloads.class);
+        commands.addBinding().to(de.chojo.lyna.commands.download.Download.class);
+        commands.addBinding().to(Trial.class);
+        commands.addBinding().to(de.chojo.lyna.commands.mailing.Mailing.class);
+        commands.addBinding().to(KoFi.class);
+
         bind(Threading.class).in(Singleton.class);
         bind(Data.class).in(Singleton.class);
         bind(MailingService.class).in(Singleton.class);
@@ -234,6 +260,16 @@ public class LynaModule extends AbstractModule {
     @Provides @Singleton Mailings mailings(Guilds guilds) { return new Mailings(guilds); }
 
     @Provides @Singleton KoFiProducts koFiProducts(Products products) { return new KoFiProducts(products); }
+
+    /**
+     * <p>Built by its own factory, which reads the version off the classpath - something a
+     * constructor cannot do without being handed the answer.
+     */
+    @Provides
+    @Singleton
+    Info info(Conf conf) {
+        return Info.create(conf);
+    }
 
     @Provides @Singleton JwtService jwtService(Auth auth) { return new JwtService(auth); }
 

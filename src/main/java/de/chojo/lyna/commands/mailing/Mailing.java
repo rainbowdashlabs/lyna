@@ -1,5 +1,6 @@
 package de.chojo.lyna.commands.mailing;
 
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
@@ -12,6 +13,7 @@ import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.mail.MailingService;
 
 public class Mailing extends SlashCommand {
+    @Inject
     public Mailing(Guilds guilds, Conf configuration, MailingService mailingService) {
         super(Slash.of("mailing", "Configure mailing")
                 .unlocalized()

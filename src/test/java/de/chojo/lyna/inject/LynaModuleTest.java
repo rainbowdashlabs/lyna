@@ -2,6 +2,10 @@ package de.chojo.lyna.inject;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import de.chojo.jdautil.interactions.slash.Slash;
+import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.TestConf;
@@ -50,9 +54,11 @@ import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.access.RevokedJtis;
 
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -247,5 +253,23 @@ class LynaModuleTest {
         Injector injector = injector();
 
         assertSame(injector.getInstance(Proxy.class), injector.getInstance(Proxy.class));
+    }
+
+    /**
+     * {@code Bot#initInteractions} used to name every command in a list it built by hand. Collecting
+     * them means a command is registered by being bound, and a new one cannot be written and then
+     * forgotten - but it also means nothing names them out loud any more, so this counts them.
+     */
+    @Test
+    @DisplayName("Every slash command is collected, and each is a distinct one")
+    void commandsAreCollected() {
+        Injector injector = injector();
+
+        Set<SlashProvider<Slash>> commands =
+                injector.getInstance(Key.get(new TypeLiteral<Set<SlashProvider<Slash>>>() {
+                }));
+
+        assertEquals(11, commands.size());
+        assertEquals(11, commands.stream().map(c -> c.getClass().getName()).distinct().count());
     }
 }
