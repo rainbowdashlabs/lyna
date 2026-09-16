@@ -1,6 +1,7 @@
 package de.chojo.lyna.inject;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.Conf;
@@ -36,7 +37,16 @@ import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.access.RevokedJtis;
+import de.chojo.lyna.core.Bot;
+import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
+import de.chojo.lyna.core.Web;
+import de.chojo.lyna.data.roles.JdaRoleSync;
+import de.chojo.lyna.data.roles.RoleSync;
+import de.chojo.lyna.demo.DemoService;
+import de.chojo.lyna.gateway.Gateway;
+import de.chojo.lyna.gateway.JdaGateway;
+import de.chojo.lyna.mail.MailingService;
 import de.chojo.nexus.NexusRest;
 
 /**
@@ -114,6 +124,11 @@ public class LynaModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Threading.class).in(Singleton.class);
+        bind(Data.class).in(Singleton.class);
+        bind(MailingService.class).in(Singleton.class);
+        bind(DemoService.class).in(Singleton.class);
+        bind(Web.class).in(Singleton.class);
+        bind(Bot.class).in(Singleton.class);
 
         bind(Accounts.class).in(Singleton.class);
         bind(AccountLicenses.class).in(Singleton.class);
@@ -138,7 +153,39 @@ public class LynaModule extends AbstractModule {
                 .build();
     }
 
-    @Provides @Singleton Guilds guilds(NexusRest nexus, Conf conf) { return new Guilds(nexus, conf); }
+    /**
+     * The gateway, which only answers once the bot has connected.
+     *
+     * <p>Takes a {@link Provider} rather than the bot itself, and that is the whole trick: the bot
+     * needs the commands, the commands need the data access, and the data access needs a gateway to
+     * take roles back through. Asking for the bot lazily makes that a sequence rather than a circle -
+     * nothing calls {@code get()} until somebody actually asks Discord a question, by which time the
+     * bot is there.
+     */
+    @Provides
+    @Singleton
+    Gateway gateway(BaseSettings settings, Provider<Bot> bot) {
+        if (!settings.botEnabled()) return Gateway.NONE;
+        return new JdaGateway(() -> bot.get().shardManager());
+    }
+
+    @Provides
+    @Singleton
+    RoleSync roleSync(BaseSettings settings, Gateway gateway) {
+        return settings.botEnabled() ? new JdaRoleSync(gateway) : RoleSync.NOOP;
+    }
+
+    /**
+     * <p>Given what keeps its roles in step here rather than being told afterwards, which is what
+     * {@code Data#inject} used to do once the bot had connected.
+     */
+    @Provides
+    @Singleton
+    Guilds guilds(NexusRest nexus, Conf conf, RoleSync roleSync) {
+        Guilds guilds = new Guilds(nexus, conf);
+        guilds.roles(roleSync);
+        return guilds;
+    }
 
     @Provides @Singleton Products products(Guilds guilds) { return new Products(guilds); }
 

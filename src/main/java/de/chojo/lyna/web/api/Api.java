@@ -29,7 +29,7 @@ public class Api {
     private static final Logger log = getLogger(Api.class);
 
     public Api(WebService web, Conf configuration, Data data, MailingService mailingService,
-               de.chojo.lyna.demo.DemoService demoService) {
+               de.chojo.lyna.demo.DemoService demoService, Gateway gateway) {
         this.web = web;
         this.configuration = configuration;
         this.nexus = data.nexus();
@@ -44,7 +44,7 @@ public class Api {
                 data.downloadLog(), data.passwordHasher(), data.jwtService());
         theme = new Theme(data.instanceSettings());
         admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi(), data.kioskProducts(),
-                data.instanceOperators(), mailingService);
+                data.instanceOperators(), mailingService, gateway);
     }
 
     public void init() {
@@ -57,9 +57,6 @@ public class Api {
         });
     }
 
-    public void gateway(Gateway gateway) {
-        admin.gateway(gateway);
-    }
 
     public Conf configuration() {
         return configuration;

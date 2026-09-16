@@ -1,6 +1,7 @@
 package de.chojo.lyna.web;
 
 import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.Api;
@@ -25,15 +26,15 @@ public class WebService {
     private static final Logger log = getLogger(WebService.class);
     private Javalin javalin;
 
-    private WebService(Conf configuration, Data data, MailingService mailingService,
+    private WebService(Gateway gateway, Conf configuration, Data data, MailingService mailingService,
                        de.chojo.lyna.demo.DemoService demoService) {
         this.configuration = configuration;
-        api = new Api(this, configuration, data, mailingService, demoService);
+        api = new Api(this, configuration, data, mailingService, demoService, gateway);
     }
 
-    public static WebService create(Conf configuration, Data data, MailingService mailingService,
+    public static WebService create(Gateway gateway, Conf configuration, Data data, MailingService mailingService,
                                     de.chojo.lyna.demo.DemoService demoService) {
-        WebService web = new WebService(configuration, data, mailingService, demoService);
+        WebService web = new WebService(gateway, configuration, data, mailingService, demoService);
         web.init();
         return web;
     }

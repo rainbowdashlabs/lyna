@@ -1,5 +1,6 @@
 package de.chojo.lyna.core;
 
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.commands.download.Download;
@@ -34,7 +35,8 @@ public class Bot {
     private final MailingService mailingService;
     private ShardManager shardManager;
 
-    private Bot(Data data, Threading threading, Conf configuration, Web web, MailingService mailingService) {
+    @Inject
+    public Bot(Data data, Threading threading, Conf configuration, Web web, MailingService mailingService) {
         this.data = data;
         this.threading = threading;
         this.configuration = configuration;
@@ -42,13 +44,14 @@ public class Bot {
         this.mailingService = mailingService;
     }
 
-    public static Bot create(Data data, Threading threading, Conf configuration, Web web, MailingService mailingService) {
-        Bot bot = new Bot(data, threading, configuration, web, mailingService);
-        bot.init();
-        return bot;
-    }
-
-    private void init() {
+    /**
+     * Connects to Discord and registers the commands, unless this deployment has no bot.
+     *
+     * <p>Separate from construction: opening a gateway is not something to do while an injector is
+     * still assembling the object graph, and everything that asks the bot questions goes through
+     * {@link de.chojo.lyna.gateway.Gateway}, which answers empty until this has run.
+     */
+    public void start() {
         if (!configuration.main().baseSettings().botEnabled()) {
             log.info("Discord bot is disabled. Only the HTTP API is served.");
             return;

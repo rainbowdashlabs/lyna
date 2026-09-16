@@ -11,7 +11,14 @@ import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.Demo;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
+import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
+import de.chojo.lyna.core.Web;
+import de.chojo.lyna.data.roles.RoleSync;
+import de.chojo.lyna.demo.DemoSchedule;
+import de.chojo.lyna.demo.DemoService;
+import de.chojo.lyna.gateway.Gateway;
+import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
@@ -35,6 +42,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
@@ -48,14 +56,21 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class LynaModuleTest {
 
     /**
-     * The least a real instance is configured with. {@code JwtService} refuses to exist without a
-     * signing secret, which is the right thing for it to do and means a configuration of pure
-     * defaults cannot build the graph.
+     * An instance serving the HTTP API and nothing else, which is what the end-to-end stack is.
+     *
+     * <p>{@code botEnabled} is stated rather than left out: it defaults to on, so a configuration
+     * that says nothing is a configuration with a bot.
+     *
+     * <p>The signing secret is stated for a different reason - {@code JwtService} refuses to exist
+     * without one, which is right of it and means a configuration of pure defaults cannot build the
+     * graph at all.
      */
     private static Conf configured() {
         return TestConf.from("""
                 auth:
                   jwtSecret: "a-secret-long-enough-to-sign-with-000000"
+                baseSettings:
+                  botEnabled: false
                 """);
     }
 
@@ -139,5 +154,60 @@ class LynaModuleTest {
         assertNotNull(data);
         assertSame(data.accounts(), injector.getInstance(Accounts.class));
         assertSame(data.guilds(), injector.getInstance(Guilds.class));
+    }
+
+    /**
+     * The graph has a circle in it - the bot needs the commands, the commands need the data access,
+     * and the data access needs a gateway that only the bot can give. A lazy {@code Provider} is what
+     * makes that a sequence instead, and this is what says it still does.
+     */
+    @Test
+    @DisplayName("Every core can be built, bot and all, without the circle closing")
+    void coresAreBuildable() {
+        Injector injector = injector();
+
+        assertNotNull(injector.getInstance(Data.class));
+        assertNotNull(injector.getInstance(MailingService.class));
+        assertNotNull(injector.getInstance(DemoService.class));
+        assertNotNull(injector.getInstance(Web.class));
+        assertNotNull(injector.getInstance(Bot.class));
+        assertNotNull(injector.getInstance(DemoSchedule.class));
+    }
+
+    @Test
+    @DisplayName("With the bot switched off the gateway is nobody, and the roles are left alone")
+    void withoutABotTheGatewayIsNone() {
+        Injector injector = injector();
+
+        assertSame(Gateway.NONE, injector.getInstance(Gateway.class));
+        assertSame(RoleSync.NOOP, injector.getInstance(RoleSync.class));
+    }
+
+    @Test
+    @DisplayName("With the bot switched on the gateway is a real one, built without connecting")
+    void withABotTheGatewayIsReal() {
+        Injector injector = Guice.createInjector(new LynaModule(TestConf.from("""
+                auth:
+                  jwtSecret: "a-secret-long-enough-to-sign-with-000000"
+                baseSettings:
+                  botEnabled: true
+                """)));
+
+        Gateway gateway = injector.getInstance(Gateway.class);
+
+        assertNotSame(Gateway.NONE, gateway);
+        assertNotSame(RoleSync.NOOP, injector.getInstance(RoleSync.class));
+    }
+
+    /**
+     * What {@code Data#inject} used to do once the bot had connected. Asking the graph for it instead
+     * means it cannot be forgotten, and cannot happen twice.
+     */
+    @Test
+    @DisplayName("Guilds is told what keeps its roles in step, without anybody telling it afterwards")
+    void guildsKnowsItsRoleSync() {
+        Injector injector = injector();
+
+        assertSame(injector.getInstance(RoleSync.class), injector.getInstance(Guilds.class).roles());
     }
 }

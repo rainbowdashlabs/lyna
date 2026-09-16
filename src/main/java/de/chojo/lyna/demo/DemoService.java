@@ -1,5 +1,6 @@
 package de.chojo.lyna.demo;
 
+import com.google.inject.Inject;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Data;
@@ -45,16 +46,14 @@ public class DemoService {
     private final Conf configuration;
     private final DemoArtifacts artifacts;
     private final PasswordHasher passwordHasher = new PasswordHasher();
-    private Gateway gateway = Gateway.NONE;
+    private final Gateway gateway;
 
-    public DemoService(Data data, Conf configuration) {
+    @Inject
+    public DemoService(Data data, Conf configuration, Gateway gateway) {
         this.data = data;
         this.configuration = configuration;
-        this.artifacts = data.demoArtifacts();
-    }
-
-    public void gateway(Gateway gateway) {
         this.gateway = gateway;
+        this.artifacts = data.demoArtifacts();
     }
 
     public boolean enabled() {

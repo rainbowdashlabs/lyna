@@ -57,12 +57,13 @@ public class Admin {
             new de.chojo.lyna.mail.blocks.MailBlockRenderer();
     private final de.chojo.lyna.mail.MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    private Gateway gateway = Gateway.NONE;
+    private final Gateway gateway;
 
     public Admin(Auth auth, Conf configuration, Accounts accounts, Guilds guilds,
                  InstanceSettingsAccess instanceSettings, KoFiProducts kofi,
                  KioskProducts kioskProducts, InstanceOperators operators,
-                 de.chojo.lyna.mail.MailingService mailingService) {
+                 de.chojo.lyna.mail.MailingService mailingService, Gateway gateway) {
+        this.gateway = gateway;
         this.auth = auth;
         this.configuration = configuration;
         this.accounts = accounts;
@@ -74,9 +75,6 @@ public class Admin {
         this.mailingService = mailingService;
     }
 
-    public void gateway(Gateway gateway) {
-        this.gateway = gateway;
-    }
 
     public void init() {
         path("admin", () -> {

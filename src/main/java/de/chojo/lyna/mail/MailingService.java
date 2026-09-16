@@ -1,6 +1,7 @@
 package de.chojo.lyna.mail;
 
 import de.chojo.jdautil.consumer.ThrowingConsumer;
+import com.google.inject.Inject;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
@@ -41,6 +42,7 @@ public class MailingService {
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
     private final MailTemplateRenderer renderer = new MailTemplateRenderer();
 
+    @Inject
     public MailingService(Threading threading, Data data, Conf configuration) {
         this.threading = threading;
         this.data = data;
@@ -57,18 +59,16 @@ public class MailingService {
      *
      * @return the service, polling unless mail is switched off
      */
-    public static MailingService create(Threading threading, Data data, Conf configuration) {
-        MailingService mailingService = new MailingService(threading, data, configuration);
+    public void start() {
         if (!configuration.main().mailing().enabled()) {
             log.info("Mailing is disabled. No mail is polled or sent.");
-            return mailingService;
+            return;
         }
         try {
-            mailingService.init();
+            init();
         } catch (MessagingException e) {
             log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to mail", e);
         }
-        return mailingService;
     }
 
     private void init() throws MessagingException {

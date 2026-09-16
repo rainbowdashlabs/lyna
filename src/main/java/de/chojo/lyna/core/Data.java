@@ -24,8 +24,6 @@ import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.access.RevokedJtis;
-import de.chojo.lyna.data.roles.JdaRoleSync;
-import de.chojo.lyna.gateway.Gateway;
 import de.chojo.nexus.NexusRest;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
@@ -199,16 +197,6 @@ public class Data {
         return nexus;
     }
 
-    /**
-     * Hands the gateway to the parts that ask Discord questions.
-     *
-     * <p>Still a hand-off rather than something each part asks for, because the gateway only exists
-     * once the bot has connected and most of this was built before that.
-     */
-    public void inject(Gateway gateway, de.chojo.lyna.web.api.Api api) {
-        guilds.roles(new JdaRoleSync(gateway));
-        api.gateway(gateway);
-    }
 
     public KoFiProducts kofi() {
         return kofi;
