@@ -5,7 +5,6 @@ import dev.chojo.ocular.override.Overwrite;
 import dev.chojo.ocular.override.Prop;
 import dev.chojo.ocular.override.OverwritePrefix;
 
-import de.chojo.jdautil.util.SysVar;
 
 /**
  * Demo mode: an instance that seeds itself with something to look at, and lets anybody sign in as

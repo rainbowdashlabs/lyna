@@ -1,8 +1,6 @@
 package de.chojo.lyna.web.api;
 
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.core.Data;
-import de.chojo.lyna.mail.MailingService;
 import com.google.inject.Inject;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.admin.Admin;
@@ -10,7 +8,6 @@ import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.nexus.NexusRest;
-import de.chojo.lyna.gateway.Gateway;
 import org.slf4j.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.path;

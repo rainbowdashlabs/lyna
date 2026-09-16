@@ -2,12 +2,8 @@ package de.chojo.lyna.web;
 
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.gateway.Gateway;
-import de.chojo.lyna.core.Data;
-import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.Api;
 import io.javalin.Javalin;
-import io.javalin.http.HttpStatus;
 import io.javalin.http.ContentType;
 import io.javalin.http.staticfiles.Location;
 import org.slf4j.Logger;

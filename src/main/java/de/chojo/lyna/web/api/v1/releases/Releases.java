@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.products.Product;
