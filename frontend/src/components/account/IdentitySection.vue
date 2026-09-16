@@ -29,12 +29,7 @@ defineEmits<{
     </section>
 
     <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
-      <EmailCard
-          :email="account.email"
-          :pending-email="account.pendingEmail"
-          :verified="account.emailVerified"
-          @changed="$emit('changed')"
-      />
+      <EmailList/>
     </section>
 
     <section class="rounded-theme border border-border-light dark:border-border-dark p-4">

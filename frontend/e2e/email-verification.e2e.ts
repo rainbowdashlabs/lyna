@@ -98,14 +98,15 @@ test.describe('Email verification', () => {
         await expect(page.getByText(/expired or has already been used/i)).toBeVisible()
     })
 
-    test('the security page shows the address and whether it is confirmed', async ({page}) => {
+    test('the security page lists the addresses and says which are confirmed', async ({page}) => {
         const account = await signUp(page, 'email-card')
 
         await page.goto('/account/security')
 
-        // Scoped to the content: the layout names the signed-in account in its sidebar as well.
+        // Scoped to the content: the status bar names the signed-in account as well.
         await expect(page.getByRole('main').getByText(account.email).first()).toBeVisible()
-        await expect(page.getByText('Not confirmed')).toBeVisible()
-        await expect(page.getByRole('button', {name: 'Change email'})).toBeVisible()
+        await expect(page.getByText('not confirmed').first()).toBeVisible()
+        await expect(page.getByText('written to').first()).toBeVisible()
+        await expect(page.getByRole('button', {name: 'Add an address'})).toBeVisible()
     })
 })

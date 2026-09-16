@@ -413,6 +413,20 @@
       "send": "Send",
       "whatTheMailLooksLike": "What the mail looks like",
       "address": "Address"
+    },
+    "emailList": {
+      "title": "Email addresses",
+      "explain": "An account can hold several. A licence bought with any address you have confirmed is handed to you automatically.",
+      "confirmed": "confirmed",
+      "unconfirmed": "not confirmed",
+      "writtenTo": "written to",
+      "makePrimary": "Write to this one",
+      "addAnother": "Add an address",
+      "newAddress": "New address",
+      "sending": "Sending…",
+      "sent": "Confirm it from the mail sent there. Nothing changes until you do.",
+      "couldNotAdd": "Could not add that address.",
+      "cannotRemovePrimary": "This is the address the account is written to. Choose another one first."
     }
   }
 }

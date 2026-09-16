@@ -194,6 +194,32 @@ export async function setUsername(username: string): Promise<string | null> {
     return data.username
 }
 
+export interface AccountEmail {
+    address: string
+    /** Whether a link sent to it was followed. Everything an address is good for hangs off this. */
+    verified: boolean
+    /** The one the application writes to. */
+    primary: boolean
+}
+
+export async function listEmails(): Promise<AccountEmail[]> {
+    const {data} = await client.get<AccountEmail[]>('/api/account/emails')
+    return data
+}
+
+/** Claims another address and sends the link that would prove it. */
+export async function addEmail(newEmail: string): Promise<void> {
+    await client.post('/api/account/emails', {newEmail})
+}
+
+export async function makeEmailPrimary(address: string): Promise<void> {
+    await client.post(`/api/account/emails/${encodeURIComponent(address)}/primary`)
+}
+
+export async function removeEmail(address: string): Promise<void> {
+    await client.delete(`/api/account/emails/${encodeURIComponent(address)}`)
+}
+
 export async function changeEmail(newEmail: string): Promise<void> {
     await client.post('/api/account/email/change', {newEmail})
 }
