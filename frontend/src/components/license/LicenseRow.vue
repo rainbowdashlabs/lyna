@@ -23,7 +23,7 @@ defineProps<{
     <div class="min-w-0 flex-1">
       <div class="truncate font-medium">{{ license.productName }}</div>
       <div class="flex flex-wrap items-center gap-1.5">
-        <PrimaryBadge v-for="type in license.releaseTypes" :key="type">{{ type }}</PrimaryBadge>
+        <SecondaryBadge v-for="type in license.releaseTypes" :key="type">{{ type }}</SecondaryBadge>
         <MutedText v-if="license.role === 'owner'">
           {{ license.shareesUsed }} / {{ license.shareesCap }} sharees
         </MutedText>

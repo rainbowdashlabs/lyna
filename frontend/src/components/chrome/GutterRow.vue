@@ -14,7 +14,7 @@ defineProps<{
 
 <template>
   <div
-      :class="pending ? 'bg-primary/12 shadow-[inset_3px_0_0_var(--color-primary)]' : ''"
+      :class="pending ? 'pending-row bg-primary/12 shadow-[inset_3px_0_0_var(--color-primary)]' : ''"
       class="grid grid-cols-[2rem_1fr_auto] items-center gap-3 border-b border-border-light py-2 pr-2 dark:border-border-dark"
   >
     <span class="font-data pr-1 text-right text-[11px] text-(--text-muted) select-none">{{ marker }}</span>
@@ -22,3 +22,13 @@ defineProps<{
     <div><slot name="trailing"/></div>
   </div>
 </template>
+
+<style scoped>
+/*
+ * A hairline border disappears into the pink wash, which left the control on the row that needs
+ * attention as the least visible one on the page. It takes the marker's own colour instead.
+ */
+.pending-row :deep(button) {
+  border-color: var(--color-primary);
+}
+</style>

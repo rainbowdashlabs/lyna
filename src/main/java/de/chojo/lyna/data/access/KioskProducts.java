@@ -19,13 +19,18 @@ public class KioskProducts {
     private static final String KOFI_SHOP_URL = "https://ko-fi.com/s/";
 
     /**
+     * A product may carry more than one Ko-fi code, so the join takes the first by code rather than
+     * a row per mapping - otherwise the same product reaches the storefront as several tiles.
+     *
      * @return every product, free and premium alike, by name
      */
     public List<KioskProduct> all() {
         return query("""
                 SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, kp.link_code
                 FROM product p
-                LEFT JOIN kofi_products kp ON kp.product_id = p.id
+                LEFT JOIN LATERAL (
+                    SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
+                ) kp ON TRUE
                 ORDER BY p.name
                 """)
                 .single()

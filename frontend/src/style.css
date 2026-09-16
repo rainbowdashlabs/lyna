@@ -4,44 +4,49 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --color-primary: #E92063;
-    --color-primary-accent: #AD1849;
-    --color-primary-text: #ffffff;
-    --color-primary-accent-text: #ffffff;
+    /*
+     * Transistor, in light. These are what the page is painted with before any script runs, so they
+     * are the default scheme rather than a neutral stand-in - a first paint in some other palette is
+     * a flash of a different application.
+     */
+    --color-primary: #eb9db2;
+    --color-primary-accent: #d97e96;
+    --color-primary-text: #1a1a1a;
+    --color-primary-accent-text: #1a1a1a;
 
-    --color-secondary: #2CB0ED;
-    --color-secondary-accent: #446DF2;
-    --color-secondary-text: #ffffff;
-    --color-secondary-accent-text: #ffffff;
+    --color-secondary: #7cc4e4;
+    --color-secondary-accent: #57a9ce;
+    --color-secondary-text: #1a1a1a;
+    --color-secondary-accent-text: #1a1a1a;
 
-    --color-info: #c8ab03;
-    --color-info-accent: #af7501;
+    --color-info: #c9a227;
+    --color-info-accent: #a5811a;
     --color-info-text: #1a1a1a;
-    --color-info-accent-text: #ffffff;
+    --color-info-accent-text: #1a1a1a;
 
-    --color-success: #00C507;
-    --color-success-text: #ffffff;
+    --color-success: #3f9d6b;
+    --color-success-text: #1a1a1a;
 
-    --color-error: #ec2929;
-    --color-error-text: #ffffff;
+    --color-error: #d95c5c;
+    --color-error-text: #1a1a1a;
 
-    --color-bg-light: #eceff4;
-    --color-bg-light-accent: #d8dee9;
+    --color-bg-light: #f5f8fa;
+    --color-bg-light-accent: #dde5ec;
 
-    --color-bg-dark: #1E2129;
-    --color-bg-dark-accent: #111317;
+    --color-bg-dark: #12171d;
+    --color-bg-dark-accent: #0c1015;
 
     --color-text-light: #1a1a1a;
     --color-text-dark: #eceff4;
-    --color-border-light: #cfcfcf;
-    --color-border-dark: #2a2d36;
+    --color-border-light: #c6d2dc;
+    --color-border-dark: #242c35;
 
     /* Contrast-safe colours for badges and labels on page backgrounds; useTheme recomputes these per theme. */
-    --color-primary-badge: #AD1849;
-    --color-secondary-badge: #1a6fb5;
-    --color-info-badge: #af7501;
-    --color-success-badge: #00A006;
-    --color-error-badge: #ec2929;
+    --color-primary-badge: #b4566f;
+    --color-secondary-badge: #2f7fa3;
+    --color-info-badge: #a5811a;
+    --color-success-badge: #2f7d4f;
+    --color-error-badge: #c14444;
 
     --radius-theme: 0;
 

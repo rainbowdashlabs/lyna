@@ -46,7 +46,16 @@ const status = computed<StatusItem[]>(() => [
 
 <template>
   <div class="flex min-h-screen flex-col">
-    <TabStrip :action="t('auth.logout')" :tabs="tabs" @action="doLogout"/>
+    <TabStrip :action="t('auth.logout')" :tabs="tabs" @action="doLogout">
+      <template #end>
+        <NuxtLink
+            class="font-data border-l border-border-light px-4 py-2.5 text-xs whitespace-nowrap text-(--text-muted) hover:text-(--text) dark:border-border-dark"
+            to="/"
+        >
+          {{ t('layout.account.storefront') }}
+        </NuxtLink>
+      </template>
+    </TabStrip>
 
     <main class="mx-auto w-full max-w-6xl flex-1 p-6">
       <slot/>

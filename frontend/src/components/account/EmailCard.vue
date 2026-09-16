@@ -71,8 +71,8 @@ async function doResend() {
     <div class="space-y-2 text-sm">
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-medium">{{ email ?? 'No address' }}</span>
-        <SuccessBadge v-if="verified">{{ t('ui.emailCard.confirmed') }}</SuccessBadge>
-        <SecondaryBadge v-else-if="email">{{ t('ui.emailCard.notConfirmed') }}</SecondaryBadge>
+        <SecondaryBadge v-if="verified">{{ t('ui.emailCard.confirmed') }}</SecondaryBadge>
+        <PrimaryBadge v-else-if="email">{{ t('ui.emailCard.notConfirmed') }}</PrimaryBadge>
       </div>
       <MutedText v-if="pendingEmail" tag="div">
         Waiting on {{ pendingEmail }} to be confirmed. This account keeps {{ email ?? 'no address' }} until it is.

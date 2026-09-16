@@ -94,7 +94,7 @@ test.describe('The public theme', () => {
 
         expect(response.ok()).toBe(true)
         const payload = await response.json()
-        expect(payload.defaultTheme).toBe('lyna')
+        expect(payload.defaultTheme).toBe('transistor')
         expect(payload.allowUserTheme).toBe(true)
     })
 

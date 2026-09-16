@@ -11,11 +11,11 @@ defineProps<{
 
 <template>
   <p :class="{
-    'text-primary': color === 'primary' || !color,
+    'text-primary': color === 'primary',
     'text-success': color === 'success',
     'text-error': color === 'error',
     'text-(--text-muted)': color === 'muted',
-  }" class="text-2xl font-bold">
+  }" class="font-data text-2xl font-bold">
     <slot/>
   </p>
 </template>

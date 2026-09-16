@@ -88,6 +88,20 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A product with several Ko-fi codes is still one entry, offered at one of them")
+    void severalKofiCodesStayOneProduct() throws SQLException {
+        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+            statement.execute("INSERT INTO %s.kofi_products (link_code, product_id) VALUES ('zzz999', %d)"
+                    .formatted(schemaName, premiumProduct));
+        }
+
+        List<KioskProduct> all = kioskProducts.all();
+
+        assertEquals(List.of("Freebie", "Premium"), all.stream().map(KioskProduct::name).toList());
+        assertEquals("https://ko-fi.com/s/abc123", all.getLast().purchaseUrl());
+    }
+
+    @Test
     @DisplayName("A product nobody mapped a Ko-fi code to has nowhere to buy it")
     void productWithoutKofiHasNoPurchaseUrl() {
         assertNull(kioskProducts.all().getFirst().purchaseUrl());

@@ -1,9 +1,11 @@
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.InstanceSettings;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,12 +16,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InstanceSettingsRepositoryTest extends RepositoryTestBase {
 
+    /**
+     * There is one settings row and every test in here writes to it, so without this the tests read
+     * each other's leavings - which is how the one below passed for as long as the value it asserted
+     * happened to be the value another test wrote.
+     */
+    @BeforeEach
+    void freshRow() throws SQLException {
+        try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
+            statement.execute("DELETE FROM %s.instance_settings".formatted(schemaName));
+            statement.execute("INSERT INTO %s.instance_settings (id) VALUES (1)".formatted(schemaName));
+        }
+    }
+
     @Test
-    @DisplayName("A fresh instance carries its settings row, defaulting to a theme the catalogue knows")
+    @DisplayName("A fresh instance defaults to the scheme the interface is drawn around")
     void migrationSeedsTheRow() {
         InstanceSettings settings = instanceSettings.get();
 
-        assertEquals("lyna", settings.defaultTheme());
+        assertEquals("transistor", settings.defaultTheme());
         assertTrue(settings.allowUserTheme());
         assertTrue(settings.enabledThemes().isEmpty());
         assertNull(settings.customThemeColorsJson());

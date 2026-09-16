@@ -27,7 +27,7 @@ const initials = computed(() => {
   <div
       :class="size === 'sm' ? 'h-10 w-10 text-base' : 'h-16 w-16 text-2xl'"
       aria-hidden="true"
-      class="flex items-center justify-center rounded-theme bg-primary font-bold text-primary-text select-none"
+      class="font-data rounded-theme flex items-center justify-center border border-(--border) bg-(--bg-accent) font-bold text-(--text-muted) select-none"
   >
     {{ initials }}
   </div>

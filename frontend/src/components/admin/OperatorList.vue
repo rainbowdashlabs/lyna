@@ -30,7 +30,7 @@ defineEmits<{
     <TRow v-for="operator in operators" :key="operator.discordId">
       <Td>
         <KeyBadge>{{ operator.discordId }}</KeyBadge>
-        <SecondaryBadge v-if="operator.configured" class="ml-2">{{ t('ui.operatorList.fromTheConfig') }}</SecondaryBadge>
+        <NeutralBadge v-if="operator.configured" class="ml-2">{{ t('ui.operatorList.fromTheConfig') }}</NeutralBadge>
       </Td>
       <Td muted>{{ operator.addedBy ?? '—' }}</Td>
       <Td muted>{{ operator.addedAt ? formatDateTime(operator.addedAt) : '—' }}</Td>

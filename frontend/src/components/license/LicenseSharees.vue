@@ -30,19 +30,27 @@ const capReached = computed(() =>
   <section>
     <CardHeader class="flex items-center justify-between">
       <span>{{ t('ui.licenseSharees.sharees') }}</span>
-      <MutedText>{{ license.shareesUsed }} / {{ license.shareesCap }} used</MutedText>
+      <MutedText class="font-data">{{ license.shareesUsed }} / {{ license.shareesCap }}</MutedText>
     </CardHeader>
-    <ul v-if="sharees.length" class="mb-3 space-y-2 text-sm">
-      <li v-for="sharee in sharees" :key="sharee.ref" class="flex items-center justify-between gap-2">
+    <div v-if="sharees.length" class="mb-3 text-sm">
+      <GutterRow
+          v-for="(sharee, index) in sharees"
+          :key="sharee.ref"
+          :marker="index + 1"
+          :pending="sharee.pending"
+      >
         <span class="flex min-w-0 items-center gap-2">
           <KeyBadge class="truncate">{{ sharee.name }}</KeyBadge>
-          <MutedText v-if="sharee.pending" size="sm">{{ t('ui.licenseSharees.invited') }}</MutedText>
+          <PrimaryBadge v-if="sharee.pending">{{ t('ui.licenseSharees.invited') }}</PrimaryBadge>
+          <SecondaryBadge v-else>{{ t('ui.licenseSharees.granted') }}</SecondaryBadge>
         </span>
-        <SecondaryButton compact @click="$emit('revoke', sharee)">
-          {{ sharee.pending ? 'Withdraw' : 'Revoke' }}
-        </SecondaryButton>
-      </li>
-    </ul>
+        <template #trailing>
+          <SecondaryButton compact @click="$emit('revoke', sharee)">
+            {{ sharee.pending ? t('ui.licenseSharees.withdraw') : t('common.revoke') }}
+          </SecondaryButton>
+        </template>
+      </GutterRow>
+    </div>
     <EmptyHint v-else class="mb-3">{{ t('ui.licenseSharees.youHaveNotSharedThisLicense') }}</EmptyHint>
     <PrimaryButton :disabled="capReached" compact @click="$emit('add')">{{ t('ui.licenseSharees.addSharee') }}</PrimaryButton>
     <MutedText v-if="capReached" class="mt-2 block" size="sm">

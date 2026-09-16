@@ -4,6 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {config, library} from '@fortawesome/fontawesome-svg-core'
+// Turning autoAddCss off stops the library injecting a <style> at runtime, which is the right call -
+// but the rules it would have injected are what give an icon its size. Without them every icon
+// renders as an SVG with no dimensions, which is to say invisibly.
+import '@fortawesome/fontawesome-svg-core/styles.css'
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome'
 
 import {

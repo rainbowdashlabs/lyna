@@ -23,7 +23,9 @@
     "search": "Search plugins…",
     "empty": "No plugins match your search.",
     "buy": "Buy on Ko-fi",
-    "projectPage": "project page"
+    "projectPage": "project page",
+    "yourAccount": "Your account",
+    "signIn": "Sign in"
   },
   "auth": {
     "login": "Log in",
@@ -223,7 +225,8 @@
       "security": "Security",
       "appearance": "Appearance",
       "anonymous": "Anonymous",
-      "notLinked": "no Discord"
+      "notLinked": "no Discord",
+      "storefront": "Storefront"
     },
     "admin": {
       "administering": "Administering",
@@ -373,7 +376,9 @@
       "youHaveNotSharedThisLicense": "You have not shared this license with anyone.",
       "addSharee": "Add sharee",
       "capReachedRevokeAShareeFirst": "Cap reached. Revoke a sharee first, or ask the guild admin to raise the limit.",
-      "shareByUsernameOrByEmail": "Share by username, or by email address. Somebody with no Discord account still gets downloads, but not the server roles the license grants."
+      "shareByUsernameOrByEmail": "Share by username, or by email address. Somebody with no Discord account still gets downloads, but not the server roles the license grants.",
+      "granted": "granted",
+      "withdraw": "Withdraw"
     },
     "licenseUpdaterLink": {
       "directLinkUpdaters": "Direct-link updaters",

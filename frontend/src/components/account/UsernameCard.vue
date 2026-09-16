@@ -54,7 +54,7 @@ async function submit() {
     <div class="space-y-2 text-sm">
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-medium">{{ props.username ?? 'No name yet' }}</span>
-        <SecondaryBadge v-if="!props.nameIsTheirs">{{ t('ui.usernameCard.fromDiscord') }}</SecondaryBadge>
+        <NeutralBadge v-if="!props.nameIsTheirs">{{ t('ui.usernameCard.fromDiscord') }}</NeutralBadge>
       </div>
 
       <MutedText tag="div">

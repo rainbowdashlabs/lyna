@@ -55,15 +55,20 @@ function clearFilters() {
 
 <template>
   <main class="min-h-screen pb-12">
-    <header class="border-b border-border-light bg-primary py-6 text-primary-text dark:border-border-dark">
-      <div class="mx-auto max-w-6xl px-4">
-        <PageHeader>
-          {{ t('kiosk.title') }}
-        </PageHeader>
-        <p class="opacity-80">
-          {{ t('page.home.browseAndDownloadPluginReleases') }}
-        </p>
-      </div>
+    <TabStrip :tabs="[{to: '/', label: t('kiosk.title'), exact: true}]">
+      <template #end>
+        <NuxtLink
+            :to="signedIn ? '/account' : '/login'"
+            class="font-data px-4 py-2.5 text-xs whitespace-nowrap text-(--text-muted) hover:text-(--text)"
+        >
+          {{ signedIn ? t('kiosk.yourAccount') : t('kiosk.signIn') }}
+        </NuxtLink>
+      </template>
+    </TabStrip>
+
+    <header class="mx-auto max-w-6xl px-4 pt-6">
+      <PageHeader>{{ t('kiosk.title') }}</PageHeader>
+      <MutedText tag="p">{{ t('page.home.browseAndDownloadPluginReleases') }}</MutedText>
     </header>
 
     <section class="mx-auto max-w-6xl px-4 py-6">

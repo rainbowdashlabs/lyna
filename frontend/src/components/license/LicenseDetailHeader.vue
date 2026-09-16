@@ -28,7 +28,7 @@ defineEmits<{
     <div class="min-w-0 flex-1">
       <PageHeader>{{ license.productName }}</PageHeader>
       <div class="mt-1 flex flex-wrap items-center gap-1.5">
-        <PrimaryBadge v-for="type in license.releaseTypes" :key="type">{{ type }}</PrimaryBadge>
+        <SecondaryBadge v-for="type in license.releaseTypes" :key="type">{{ type }}</SecondaryBadge>
         <MutedText>Issued to {{ license.userIdentifier }}</MutedText>
       </div>
     </div>

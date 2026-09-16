@@ -31,9 +31,9 @@ const action = computed(() => callToAction(props.product))
       <ProductIcon :icon-url="product.iconUrl" :name="product.name"/>
       <div class="min-w-0 flex-1">
         <SectionHeader class="truncate">{{ product.name }}</SectionHeader>
-        <SuccessBadge v-if="product.free">{{ t('ui.productTile.free') }}</SuccessBadge>
-        <PrimaryBadge v-else-if="product.entitled">{{ t('ui.productTile.owned') }}</PrimaryBadge>
-        <SecondaryBadge v-else>{{ t('ui.productTile.premium') }}</SecondaryBadge>
+        <NeutralBadge v-if="product.free">{{ t('ui.productTile.free') }}</NeutralBadge>
+        <SecondaryBadge v-else-if="product.entitled">{{ t('ui.productTile.owned') }}</SecondaryBadge>
+        <NeutralBadge v-else>{{ t('ui.productTile.premium') }}</NeutralBadge>
       </div>
     </header>
 
@@ -55,7 +55,7 @@ const action = computed(() => callToAction(props.product))
       <a
           v-else-if="action === 'buy'"
           :href="product.purchaseUrl!"
-          class="inline-flex items-center rounded-theme bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-text hover:bg-secondary-accent"
+          class="rounded-theme inline-flex items-center border border-(--border) px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:border-secondary hover:bg-secondary/12"
           rel="noopener noreferrer"
           target="_blank"
       >

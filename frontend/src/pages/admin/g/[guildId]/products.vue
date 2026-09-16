@@ -131,8 +131,8 @@ async function submitCreate() {
       <li v-for="p in products" :key="p.id" class="space-y-2 p-3 text-sm">
         <div class="flex items-center gap-2">
           <span class="font-medium">{{ p.name }}</span>
-          <SuccessBadge v-if="p.free">{{ t('page.admin.g.guildId.products.free') }}</SuccessBadge>
-          <SecondaryBadge v-else>{{ t('page.admin.g.guildId.products.premium') }}</SecondaryBadge>
+          <NeutralBadge v-if="p.free">{{ t('page.admin.g.guildId.products.free') }}</NeutralBadge>
+          <NeutralBadge v-else>{{ t('page.admin.g.guildId.products.premium') }}</NeutralBadge>
         </div>
         <MutedText tag="div">
           id {{ p.id }} &middot; role {{ p.roleId }}{{ p.url ? ` · ${p.url}` : '' }}
