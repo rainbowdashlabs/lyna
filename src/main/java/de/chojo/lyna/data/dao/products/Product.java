@@ -2,6 +2,7 @@ package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.lyna.data.dao.products.mailings.Mailings;
@@ -264,5 +265,9 @@ public class Product {
 
     public Optional<License> createLicense(String identifier) {
         return products().licenseGuild().licenses().create(this, identifier);
+    }
+
+    public Optional<License> createLicense(String identifier, LicenseSource source) {
+        return products().licenseGuild().licenses().create(this, identifier, source);
     }
 }

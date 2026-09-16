@@ -31,9 +31,15 @@ ON CONFLICT (link_code) DO NOTHING;
 
 -- The username is set here as well as the handle. The application keeps the two in step whenever a
 -- link is made through it, but these rows go straight into the table and miss that.
-INSERT INTO public.account (id, email, password_hash, username)
-SELECT 999000, 'entitled@example.invalid', '$2a$12$Y07xJ9n/YRmyONFQMdyq8uTeNmFH1utmmqrbAQmDqmMQ43QvaRuPi', 'entitled'
+INSERT INTO public.account (id, password_hash, username)
+SELECT 999000, '$2a$12$Y07xJ9n/YRmyONFQMdyq8uTeNmFH1utmmqrbAQmDqmMQ43QvaRuPi', 'entitled'
 WHERE NOT EXISTS (SELECT 1 FROM public.account WHERE id = 999000);
+
+-- An account holds its addresses in their own table. This one is proved, because the stories sign in
+-- with it and a claimed address names nobody.
+INSERT INTO public.account_email (account_id, email, verified_at, is_primary)
+SELECT 999000, 'entitled@example.invalid', now(), TRUE
+WHERE NOT EXISTS (SELECT 1 FROM public.account_email WHERE account_id = 999000);
 
 INSERT INTO public.account_identity (provider, external_id, account_id, verified_via, handle)
 SELECT 'discord', '4242424242', 999000, 'oauth', 'entitled'

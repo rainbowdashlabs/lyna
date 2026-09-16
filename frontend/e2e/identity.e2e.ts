@@ -104,4 +104,60 @@ test.describe('Account identity', () => {
             {data: {subject: 'someone'}})).status()).toBe(401)
         expect((await request.delete('/api/account/licenses/1/sharees/a1')).status()).toBe(401)
     })
+
+    test('an account lists the addresses it holds', async ({request}) => {
+        const {email, headers} = await signUpFor(request, 'one-address')
+
+        const response = await request.get('/api/account/emails', {headers})
+
+        expect(response.ok()).toBe(true)
+        const addresses = await response.json()
+        expect(addresses).toHaveLength(1)
+        expect(addresses[0].address).toBe(email)
+        expect(addresses[0].primary).toBe(true)
+        expect(addresses[0].verified).toBe(false)
+    })
+
+    test('another address can be claimed, and arrives unproved', async ({request}) => {
+        const {headers} = await signUpFor(request, 'two-addresses')
+        const second = uniqueEmail('second')
+
+        expect((await request.post('/api/account/emails', {headers, data: {newEmail: second}})).status()).toBe(202)
+
+        const addresses = await (await request.get('/api/account/emails', {headers})).json()
+        expect(addresses).toHaveLength(2)
+        expect(addresses.find((a: {address: string}) => a.address === second).verified).toBe(false)
+    })
+
+    /**
+     * The address an account is written to is where a password reset is sent, so it cannot be given
+     * up and cannot be replaced by one nobody has proved.
+     */
+    test('the address the account is written to is held down', async ({request}) => {
+        const {email, headers} = await signUpFor(request, 'primary-held')
+        const second = uniqueEmail('cannot-be-primary')
+        await request.post('/api/account/emails', {headers, data: {newEmail: second}})
+
+        const removePrimary = await request.delete(`/api/account/emails/${encodeURIComponent(email)}`, {headers})
+        const promoteUnproved = await request.post(
+            `/api/account/emails/${encodeURIComponent(second)}/primary`, {headers})
+
+        expect(removePrimary.status()).toBe(409)
+        expect(promoteUnproved.status()).toBe(409)
+    })
+
+    test('a claimed address can be given up again', async ({request}) => {
+        const {headers} = await signUpFor(request, 'gives-up')
+        const second = uniqueEmail('given-up')
+        await request.post('/api/account/emails', {headers, data: {newEmail: second}})
+
+        expect((await request.delete(`/api/account/emails/${encodeURIComponent(second)}`, {headers})).status()).toBe(204)
+
+        expect(await (await request.get('/api/account/emails', {headers})).json()).toHaveLength(1)
+    })
+
+    test('the addresses are shut to a visitor who is not signed in', async ({request}) => {
+        expect((await request.get('/api/account/emails')).status()).toBe(401)
+        expect((await request.post('/api/account/emails', {data: {newEmail: 'x@example.invalid'}})).status()).toBe(401)
+    })
 })

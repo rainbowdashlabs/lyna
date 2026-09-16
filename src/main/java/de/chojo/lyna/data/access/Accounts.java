@@ -2,6 +2,7 @@ package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
@@ -24,34 +25,40 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Accounts {
     private final LicenseInvites invites = new LicenseInvites();
+    private final AccountEmails emails = new AccountEmails();
 
 
+    /**
+     * Creates an account, claiming an address for it if one was given.
+     *
+     * <p>The address arrives unverified: creating an account is not proof that somebody reads the
+     * inbox they typed.
+     *
+     * @throws IllegalStateException if the address already belongs to somebody
+     */
     public Account create(String email, String passwordHash) {
-        return query("""
-                INSERT INTO account (email, password_hash)
-                VALUES (?, ?)
-                RETURNING id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
-                """)
-                .single(call().bind(email).bind(passwordHash))
-                .map(row -> new Account(
-                        row.getInt("id"),
-                        row.getString("email"),
-                        row.getBoolean("email_verified"),
-                        row.getString("password_hash"),
-                        row.getString("theme"),
-                        row.getString("dark_mode"),
-                        row.getString("username"),
-                        row.getString("discriminator"),
-                        toInstant(row.getTimestamp("created_at")),
-                        toInstant(row.getTimestamp("last_login_at"))))
+        int id = query("INSERT INTO account (password_hash) VALUES (?) RETURNING id")
+                .single(call().bind(passwordHash))
+                .map(row -> row.getInt("id"))
                 .first()
                 .orElseThrow(() -> new IllegalStateException("Failed to insert account"));
+        if (email != null && !email.isBlank()) {
+            try {
+                emails.add(id, email);
+            } catch (RuntimeException e) {
+                delete(id);
+                throw e;
+            }
+        }
+        return findById(id).orElseThrow(() -> new IllegalStateException("Failed to read the new account"));
     }
 
     public Optional<Account> findById(int id) {
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
-                FROM account WHERE id = ?
+                SELECT a.id, e.email, (e.verified_at IS NOT NULL) AS email_verified, a.password_hash, a.theme,
+                       a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
+                FROM account a LEFT JOIN account_email e ON e.account_id = a.id AND e.is_primary
+                WHERE a.id = ?
                 """)
                 .single(call().bind(id))
                 .map(row -> new Account(
@@ -68,10 +75,22 @@ public class Accounts {
                 .first();
     }
 
+    /**
+     * The account somebody signs in as with that address.
+     *
+     * <p>Any of the account's proved addresses, or the one it is written to - the two that are
+     * exclusive. A merely claimed address is not: two people may both have typed it, so it names
+     * nobody until one of them proves it.
+     */
     public Optional<Account> findByEmail(String email) {
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
-                FROM account WHERE LOWER(email) = LOWER(?)
+                SELECT a.id, e.email, (e.verified_at IS NOT NULL) AS email_verified, a.password_hash, a.theme,
+                       a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
+                FROM account a LEFT JOIN account_email e ON e.account_id = a.id AND e.is_primary
+                WHERE EXISTS (SELECT 1 FROM account_email m
+                              WHERE m.account_id = a.id
+                                AND LOWER(m.email) = LOWER(?)
+                                AND (m.verified_at IS NOT NULL OR m.is_primary))
                 """)
                 .single(call().bind(email))
                 .map(row -> new Account(
@@ -99,8 +118,9 @@ public class Accounts {
      */
     public Optional<Account> findByIdentity(String provider, String externalId) {
         return query("""
-                SELECT a.id, a.email, a.email_verified, a.password_hash, a.theme, a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
-                FROM account a
+                SELECT a.id, e.email, (e.verified_at IS NOT NULL) AS email_verified, a.password_hash, a.theme,
+                       a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
+                FROM account a LEFT JOIN account_email e ON e.account_id = a.id AND e.is_primary
                 JOIN account_identity i ON i.account_id = a.id
                 WHERE i.provider = ? AND i.external_id = ?
                 """)
@@ -284,7 +304,7 @@ public class Accounts {
                 .first();
         if (existing.isPresent()) return existing.get();
 
-        int accountId = query("INSERT INTO account (email, password_hash) VALUES (NULL, NULL) RETURNING id")
+        int accountId = query("INSERT INTO account (password_hash) VALUES (NULL) RETURNING id")
                 .single(call())
                 .map(row -> row.getInt("id"))
                 .first()
@@ -438,9 +458,10 @@ public class Accounts {
         String discriminator = hash < 0 ? null : trimmed.substring(hash + 1);
         if (username.isBlank()) return Optional.empty();
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
-                FROM account
-                WHERE lower(username) = lower(?) AND discriminator IS NOT DISTINCT FROM ?
+                SELECT a.id, e.email, (e.verified_at IS NOT NULL) AS email_verified, a.password_hash, a.theme,
+                       a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
+                FROM account a LEFT JOIN account_email e ON e.account_id = a.id AND e.is_primary
+                WHERE lower(a.username) = lower(?) AND a.discriminator IS NOT DISTINCT FROM ?
                 """)
                 .single(call().bind(username).bind(discriminator))
                 .map(Accounts::readAccount)
@@ -499,10 +520,49 @@ public class Accounts {
      * @return the licences the account was let onto by invites standing for that address
      */
     public List<Integer> confirmEmail(int accountId, String email) {
-        query("UPDATE account SET email = ?, email_verified = TRUE WHERE id = ?")
-                .single(call().bind(email).bind(accountId))
-                .update();
-        return invites.bind(accountId, email);
+        emails.add(accountId, email);
+        emails.verify(accountId, email);
+        if (emails.primary(accountId).isEmpty()) {
+            emails.makePrimary(accountId, email);
+        }
+        return collect(accountId, email);
+    }
+
+    /**
+     * Hands the account what was waiting on that address.
+     *
+     * <p>Two things arrive this way: a licence somebody invited the address onto, and a licence bought
+     * with it in the shop. The second is the point of an account holding more than one address at all
+     * - somebody who paid from one address and signed up with another otherwise has to carry the key
+     * across by hand.
+     *
+     * <p>Only a licence nobody holds. One that has already been claimed stays with whoever claimed it:
+     * proving an address is a way to find a purchase, not a way to take one.
+     *
+     * @return the licences the account now holds because of this address
+     */
+    private List<Integer> collect(int accountId, String email) {
+        List<Integer> collected = new java.util.ArrayList<>(invites.bind(accountId, email));
+        List<Integer> bought = query("""
+                SELECT l.id
+                FROM license l
+                WHERE l.source = ?
+                  AND LOWER(l.user_identifier) = LOWER(?)
+                  AND NOT EXISTS (SELECT 1 FROM user_license u WHERE u.license_id = l.id)
+                """)
+                .single(call().bind(LicenseSource.KOFI.name()).bind(email.trim()))
+                .map(row -> row.getInt("id"))
+                .all();
+        for (int licenseId : bought) {
+            query("""
+                    INSERT INTO user_license (account_id, license_id) VALUES (?, ?)
+                    ON CONFLICT (license_id) DO NOTHING
+                    """)
+                    .single(call().bind(accountId).bind(licenseId))
+                    .insert();
+            collected.add(licenseId);
+        }
+        return collected;
     }
 
     /**

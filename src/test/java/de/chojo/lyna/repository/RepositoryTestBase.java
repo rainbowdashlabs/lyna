@@ -2,6 +2,7 @@ package de.chojo.lyna.repository;
 
 import com.zaxxer.hikari.HikariDataSource;
 import de.chojo.lyna.TestContainers;
+import de.chojo.lyna.data.access.AccountEmails;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.AccountSessions;
@@ -63,6 +64,7 @@ public abstract class RepositoryTestBase {
 
     protected static Accounts accounts;
     protected static AccountLicenses accountLicenses;
+    protected static AccountEmails accountEmails;
     protected static LicenseInvites licenseInvites;
     protected static AccountSessions accountSessions;
     protected static RevokedJtis revokedJtis;
@@ -105,6 +107,7 @@ public abstract class RepositoryTestBase {
 
         accounts = new Accounts();
         accountLicenses = new AccountLicenses();
+        accountEmails = new AccountEmails();
         licenseInvites = new LicenseInvites();
         accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();

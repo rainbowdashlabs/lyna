@@ -32,6 +32,7 @@ import de.chojo.lyna.configuration.elements.Links;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
+import de.chojo.lyna.data.access.AccountEmails;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
@@ -201,6 +202,7 @@ public class LynaModule extends AbstractModule {
         bind(Bot.class).in(Singleton.class);
 
         bind(Accounts.class).in(Singleton.class);
+        bind(AccountEmails.class).in(Singleton.class);
         bind(AccountLicenses.class).in(Singleton.class);
         bind(LicenseInvites.class).in(Singleton.class);
         bind(AccountSessions.class).in(Singleton.class);

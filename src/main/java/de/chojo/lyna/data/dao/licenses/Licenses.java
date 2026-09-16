@@ -27,10 +27,20 @@ public class Licenses {
     }
 
     public Optional<License> create(Product product, String identifier) {
+        return create(product, identifier, LicenseSource.MANUAL);
+    }
+
+    /**
+     * @param identifier who bought it - an address, or whatever an operator typed
+     * @param source     where it came from, which is a fact about the licence rather than part of who
+     *                   holds it
+     */
+    public Optional<License> create(Product product, String identifier, LicenseSource source) {
         String key = LicenseCreator.create(licenseGuild.configuration().main().license().baseSeed(), product, identifier);
-        log.info(LogNotify.STATUS, "Creating license key for {} purchased by {}", product.name(), identifier);
-        return query("INSERT INTO license(product_id, user_identifier, key) VALUES(?,?,?) ON CONFLICT DO NOTHING RETURNING id")
-                .single(call().bind(product.id()).bind(identifier).bind(key))
+        log.info(LogNotify.STATUS, "Creating license key for {} purchased by {} via {}",
+                product.name(), identifier, source);
+        return query("INSERT INTO license(product_id, user_identifier, key, source) VALUES(?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
+                .single(call().bind(product.id()).bind(identifier).bind(key).bind(source.name()))
                 .map(row -> new License(product, identifier, row.getInt("id"), key))
                 .first()
                 .or(() -> byKey(key));

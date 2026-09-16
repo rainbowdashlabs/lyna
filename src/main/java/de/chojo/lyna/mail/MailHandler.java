@@ -9,6 +9,7 @@ import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import jakarta.mail.Message;
 import jakarta.mail.internet.InternetAddress;
@@ -96,7 +97,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         }
 
         Mailing mailing = optMailing.get();
-        Optional<License> license = mailing.product().createLicense(parsed.mail().get());
+        Optional<License> license = mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
         license.get().grantAccess(ReleaseType.STABLE);
         Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
                 license.get().key(), parsed.name().get(), parsed.mail().get(), null);

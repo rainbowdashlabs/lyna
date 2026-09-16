@@ -15,20 +15,25 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Confirming that somebody can read the address they gave.
  *
- * <p>The account keeps the address it had until the link is followed, which is the whole point:
- * typing an address proves nothing about being able to read it.
+ * <p>Typing an address proves nothing about being able to read it, so nothing an address is good for
+ * happens until the link sent to it is followed.
+ *
+ * <p>An account holds several. Confirming a second one <em>adds</em> it rather than replacing the
+ * first - which is what lets somebody who paid from one address and signed up with another be one
+ * person.
  */
 class EmailVerificationServiceTest extends RepositoryTestBase {
     private Account account;
 
     @BeforeEach
     void freshAccount() throws SQLException {
-        clear("email_verification_token", "account_identity", "account");
+        clear("email_verification_token", "account_email", "account_identity", "account");
         account = accounts.create("first@example.invalid", "hash");
     }
 
@@ -66,16 +71,36 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("A change takes effect only once the new address is confirmed")
-    void changeTakesEffectOnConfirmation() {
-        String token = issueFor("second@example.invalid").orElseThrow();
+    @DisplayName("Confirming a second address adds it, and the account keeps the one it is written to")
+    void confirmingASecondAddressAddsIt() {
+        confirm(issueFor("first@example.invalid").orElseThrow());
 
-        assertEquals("first@example.invalid", reload().email(), "the old address stands until confirmed");
+        confirm(issueFor("second@example.invalid").orElseThrow());
 
-        confirm(token);
+        assertEquals("first@example.invalid", reload().email(), "the address it is written to is unchanged");
+        assertEquals(2, accountEmails.of(account.id()).size());
+        assertTrue(accountEmails.byAddress("second@example.invalid").orElseThrow().verified());
+    }
 
-        assertEquals("second@example.invalid", reload().email());
-        assertTrue(reload().emailVerified());
+    @Test
+    @DisplayName("An account with no address yet is written to the first one it confirms")
+    void theFirstConfirmedAddressBecomesThePrimary() {
+        Account bare = accounts.create(null, "hash");
+
+        accounts.confirmEmail(bare.id(), "only@example.invalid");
+
+        assertEquals("only@example.invalid", accounts.findById(bare.id()).orElseThrow().email());
+        assertTrue(accountEmails.primary(bare.id()).orElseThrow().verified());
+    }
+
+    @Test
+    @DisplayName("An address another account holds cannot be taken by confirming it")
+    void anAddressBelongsToOneAccount() {
+        Account other = accounts.create("taken@example.invalid", "hash");
+        assertTrue(other.id() != account.id());
+
+        assertThrows(IllegalStateException.class,
+                () -> accounts.confirmEmail(account.id(), "taken@example.invalid"));
     }
 
     @Test

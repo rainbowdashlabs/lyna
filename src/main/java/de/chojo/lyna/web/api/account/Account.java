@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
+import de.chojo.lyna.data.access.AccountEmails;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.AccountSessions;
@@ -47,6 +48,7 @@ public class Account {
     private final Auth auth;
     private final Accounts accounts;
     private final AccountLicenses licenses;
+    private final AccountEmails accountEmails;
     private final LicenseInvites invites;
     private final InstanceSettingsAccess instanceSettings;
     private final MailingService mailingService;
@@ -63,6 +65,7 @@ public class Account {
     public Account(Auth auth,
                    Accounts accounts,
                    AccountLicenses licenses,
+                   AccountEmails accountEmails,
                    LicenseInvites invites,
                    InstanceSettingsAccess instanceSettings,
                    MailingService mailingService,
@@ -76,6 +79,7 @@ public class Account {
         this.auth = auth;
         this.accounts = accounts;
         this.licenses = licenses;
+        this.accountEmails = accountEmails;
         this.invites = invites;
         this.instanceSettings = instanceSettings;
         this.mailingService = mailingService;
@@ -95,6 +99,12 @@ public class Account {
             post("password", this::changePassword);
             patch("appearance", this::updateAppearance);
             put("username", this::setUsername);
+            path("emails", () -> {
+                get(this::listEmails);
+                post(this::addEmail);
+                post("{address}/primary", this::makeEmailPrimary);
+                delete("{address}", this::removeEmail);
+            });
             path("email", () -> {
                 post("change", this::changeEmail);
                 post("resend-verification", this::resendVerification);
@@ -330,6 +340,66 @@ public class Account {
      * point of the step: typing an address here proves nothing about being able to read it, so
      * nothing is taken away from the old one until something does.
      */
+    private void listEmails(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        ctx.json(accountEmails.of(session.get().accountId()).stream()
+                .map(e -> new EmailView(e.email(), e.verified(), e.primary()))
+                .toList());
+    }
+
+    /**
+     * Claims another address and sends the link that would prove it.
+     *
+     * <p>Answered the same way whether or not somebody else holds it: saying "that one is taken" to
+     * a person who is not its owner tells them who has an account here.
+     */
+    private void addEmail(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        EmailChange body;
+        try {
+            body = json.readValue(ctx.body(), EmailChange.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
+            return;
+        }
+        String email = body == null || body.newEmail() == null ? "" : body.newEmail().trim();
+        if (!email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("That is not an email address");
+            return;
+        }
+        try {
+            accountEmails.add(session.get().accountId(), email);
+        } catch (IllegalStateException e) {
+            ctx.status(HttpStatus.ACCEPTED);
+            return;
+        }
+        sendVerification(session.get().accountId(), email);
+        ctx.status(HttpStatus.ACCEPTED);
+    }
+
+    private void makeEmailPrimary(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        if (!accountEmails.makePrimary(session.get().accountId(), ctx.pathParam("address"))) {
+            ctx.status(HttpStatus.CONFLICT).result("Confirm that address before writing to it");
+            return;
+        }
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    private void removeEmail(Context ctx) {
+        var session = require(ctx);
+        if (session.isEmpty()) return;
+        if (!accountEmails.remove(session.get().accountId(), ctx.pathParam("address"))) {
+            ctx.status(HttpStatus.CONFLICT)
+                    .result("That is the address this account is written to. Make another one primary first.");
+            return;
+        }
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
     private void changeEmail(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
@@ -681,6 +751,13 @@ public class Account {
                 Integer.toString(license.ownerAccountId()),
                 license.shareesUsed(),
                 license.shareesCap());
+    }
+
+    /**
+     * @param verified whether a link sent to it was followed. Everything an address is good for hangs
+     *                 off this.
+     */
+    public record EmailView(String address, boolean verified, boolean primary) {
     }
 
     /**
