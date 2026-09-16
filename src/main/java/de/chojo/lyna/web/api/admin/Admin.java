@@ -317,7 +317,7 @@ public class Admin {
         List<LicenseSummary> out = new ArrayList<>();
         for (License l : resolved.guild().licenses().all()) {
             out.add(new LicenseSummary(l.id(), l.product().id(), l.product().name(),
-                    l.userIdentifier(), l.owner(), l.subUsers().size()));
+                    l.userIdentifier(), l.owner(), l.shareCount()));
         }
         ctx.json(out);
     }
@@ -348,7 +348,8 @@ public class Admin {
         }
         var l = license.get();
         ctx.status(HttpStatus.CREATED).json(new LicenseDetail(l.id(), l.product().id(), l.product().name(),
-                l.userIdentifier(), l.key(), l.owner(), l.subUsers()));
+                l.userIdentifier(), l.key(), l.owner(),
+                l.sharees().stream().map(License.Sharee::name).toList()));
     }
 
     private void registrationInfo(Context ctx) {
@@ -364,11 +365,11 @@ public class Admin {
         Member member = discordGuild(resolved.guild().guildId()).map(g -> g.getMemberById(discordId)).orElse(null);
         var owned = resolved.guild().licenses().byOwner(discordId).stream()
                 .map(l -> new LicenseSummary(l.id(), l.product().id(), l.product().name(),
-                        l.userIdentifier(), l.owner(), l.subUsers().size()))
+                        l.userIdentifier(), l.owner(), l.shareCount()))
                 .toList();
         var shared = resolved.guild().licenses().bySharee(discordId).stream()
                 .map(l -> new LicenseSummary(l.id(), l.product().id(), l.product().name(),
-                        l.userIdentifier(), l.owner(), l.subUsers().size()))
+                        l.userIdentifier(), l.owner(), l.shareCount()))
                 .toList();
         ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null, owned, shared));
     }
@@ -738,12 +739,20 @@ public class Admin {
     public record CreateProduct(String name, String url, Long roleId, boolean free, boolean trial) {
     }
 
+    /**
+     * @param shareeCount everybody holding a place on the licence, including invites nobody has
+     *                    answered and sharees who have no Discord id
+     */
     public record LicenseSummary(int id, int productId, String productName, String identifier, long owner,
                                  int shareeCount) {
     }
 
+    /**
+     * @param shareeCount everybody holding a place on the licence, including invites nobody has
+     *                    answered and sharees who have no Discord id
+     */
     public record LicenseDetail(int id, int productId, String productName, String identifier, String key,
-                                long owner, List<Long> sharees) {
+                                long owner, List<String> sharees) {
     }
 
     public record CreateLicense(Integer productId, String identifier) {

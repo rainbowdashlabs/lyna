@@ -89,6 +89,73 @@ public class License {
                 .all();
     }
 
+    /**
+     * Everybody the licence is shared with, named.
+     *
+     * <p>Unlike {@link #subUsers()}, which answers only for the ones Discord can be told about, this
+     * counts the people who hold the licence through the web and have no Discord id at all. The role
+     * logic wants the former; anything that reports to a person wants this, or it quietly says a
+     * licence is shared with fewer people than it is.
+     *
+     * @return the sharees, those with a Discord id first
+     */
+    public List<Sharee> sharees() {
+        return query("""
+                SELECT i.external_id AS discord_id,
+                       a.username,
+                       a.discriminator,
+                       u.account_id
+                FROM user_sub_license u
+                    JOIN account a ON a.id = u.account_id
+                    LEFT JOIN account_identity i
+                        ON i.account_id = u.account_id AND i.provider = 'discord'
+                WHERE u.license_id = ?
+                ORDER BY (i.external_id IS NULL), u.account_id
+                """)
+                .single(call().bind(id))
+                .map(row -> {
+                    String discordId = row.getString("discord_id");
+                    String username = row.getString("username");
+                    String discriminator = row.getString("discriminator");
+                    String name = username == null || username.isBlank()
+                            ? "account " + row.getInt("account_id")
+                            : discriminator == null ? username : username + "#" + discriminator;
+                    return new Sharee(discordId == null ? null : Long.parseLong(discordId), name);
+                })
+                .all();
+    }
+
+    /**
+     * What the guild's share cap is measured against.
+     *
+     * <p>An invite nobody has answered holds a place: counting only accepted shares would let
+     * somebody invite the world and hand out places as the replies arrived.
+     *
+     * @return sharees plus invites still standing
+     */
+    public int shareCount() {
+        return query("""
+                SELECT (SELECT count(*) FROM user_sub_license WHERE license_id = ?)
+                     + (SELECT count(*) FROM license_invite
+                        WHERE license_id = ? AND expires_at > now()) AS used
+                """)
+                .single(call().bind(id).bind(id))
+                .map(row -> row.getInt("used"))
+                .first()
+                .orElse(0);
+    }
+
+    /**
+     * @param discordId the sharee's Discord id, or null for somebody who holds this through the web
+     *                  alone and can therefore be given no Discord role
+     * @param name      what to call them
+     */
+    public record Sharee(Long discordId, String name) {
+        public String display() {
+            return discordId == null ? name : "<@%d> (%s)".formatted(discordId, name);
+        }
+    }
+
     public String userIdentifier() {
         return userIdentifier;
     }

@@ -68,7 +68,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void seed() throws SQLException {
-        clear("user_sub_license", "user_license", "license_access", "license", "product",
+        clear("license_invite", "user_sub_license", "user_license", "license_access", "license", "product",
                 "account_identity", "account");
         roles = new RecordingRoleSync();
 
@@ -178,5 +178,49 @@ class RoleSyncServiceTest extends RepositoryTestBase {
 
         assertEquals(0, countRows("license"));
         assertTrue(roles.calls.isEmpty());
+    }
+
+    @Test
+    @DisplayName("A sharee with no Discord is listed too, so nothing under-reports the shares")
+    void shareesIncludeWebOnlyHolders() {
+        var webOnly = accounts.create("web-only@example.invalid", "hash");
+        accounts.setUsername(webOnly.id(), "ada");
+        accountLicenses.addSharee(licenseId, webOnly.id());
+
+        var sharees = license().sharees();
+
+        assertEquals(2, sharees.size());
+        assertEquals(1, license().subUsers().size());
+        assertTrue(sharees.stream().anyMatch(s -> s.discordId() != null && s.discordId() == SHAREE));
+        var web = sharees.stream().filter(s -> s.discordId() == null).findFirst().orElseThrow();
+        assertTrue(web.name().startsWith("ada#"));
+        assertEquals(web.name(), web.display());
+    }
+
+    @Test
+    @DisplayName("The cap counts web-only sharees and standing invites, not just Discord ones")
+    void shareCountCoversEverybody() {
+        assertEquals(1, license().shareCount());
+
+        var webOnly = accounts.create("counted@example.invalid", "hash");
+        accountLicenses.addSharee(licenseId, webOnly.id());
+        assertEquals(2, license().shareCount());
+
+        licenseInvites.invite(licenseId, "waiting@example.invalid");
+        assertEquals(3, license().shareCount());
+
+        licenseInvites.withdraw(licenseId, "waiting@example.invalid");
+        assertEquals(2, license().shareCount());
+    }
+
+    @Test
+    @DisplayName("A sharee nobody has named is listed by something, rather than by nothing")
+    void unnamedShareeStillListed() {
+        var unnamed = accounts.create("unnamed@example.invalid", "hash");
+        accountLicenses.addSharee(licenseId, unnamed.id());
+
+        var web = license().sharees().stream().filter(s -> s.discordId() == null).findFirst().orElseThrow();
+
+        assertEquals("account " + unnamed.id(), web.name());
     }
 }

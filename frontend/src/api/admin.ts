@@ -40,7 +40,7 @@ export interface LicenseDetail {
     identifier: string
     key: string
     owner: number
-    sharees: number[]
+    sharees: string[]
 }
 
 export interface RegistrationInfo {

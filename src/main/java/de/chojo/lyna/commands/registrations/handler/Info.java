@@ -48,11 +48,11 @@ public class Info implements SlashHandler {
                     .setColor(Colors.Pastel.DARK_PINK)
                     .addField("Key", "|| %s ||".formatted(license.key()), true);
 
-            List<Long> subUsers = license.subUsers();
-            if (!subUsers.isEmpty()) {
-                var shared = subUsers.stream()
-                                     .map(id -> "%s (%s)".formatted(MentionUtil.user(id), id))
-                                     .collect(Collectors.joining("\n"));
+            List<License.Sharee> sharees = license.sharees();
+            if (!sharees.isEmpty()) {
+                var shared = sharees.stream()
+                                    .map(License.Sharee::display)
+                                    .collect(Collectors.joining("\n"));
                 builder.addField("Shared with:", shared, true);
             }
             event.replyEmbeds(builder.build()).setEphemeral(true).queue();
