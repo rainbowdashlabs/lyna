@@ -1,5 +1,6 @@
 package de.chojo.lyna.core;
 
+import com.google.inject.Inject;
 import com.zaxxer.hikari.HikariDataSource;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.auth.DiscordOAuthClient;
@@ -43,46 +44,80 @@ public class Data {
     private final Threading threading;
     private final Conf configuration;
     private HikariDataSource dataSource;
-    private Guilds guilds;
-    private Products products;
-    private NexusRest nexus;
-    private Mailings mailings;
-    private KoFiProducts kofi;
-    private Accounts accounts;
-    private AccountLicenses accountLicenses;
-    private LicenseInvites licenseInvites;
-    private KioskProducts kioskProducts;
-    private AccountSessions accountSessions;
-    private RevokedJtis revokedJtis;
-    private DownloadLog downloadLog;
-    private DemoArtifacts demoArtifacts;
-    private InstanceSettingsAccess instanceSettings;
-    private InstanceOperators instanceOperators;
-    private PasswordResetTokens passwordResetTokens;
-    private EmailVerificationTokens emailVerificationTokens;
-    private PasswordHasher passwordHasher;
-    private JwtService jwtService;
-    private DiscordOAuthClient discordOAuthClient;
+    private final Guilds guilds;
+    private final Products products;
+    private final NexusRest nexus;
+    private final Mailings mailings;
+    private final KoFiProducts kofi;
+    private final Accounts accounts;
+    private final AccountLicenses accountLicenses;
+    private final LicenseInvites licenseInvites;
+    private final KioskProducts kioskProducts;
+    private final AccountSessions accountSessions;
+    private final RevokedJtis revokedJtis;
+    private final DownloadLog downloadLog;
+    private final DemoArtifacts demoArtifacts;
+    private final InstanceSettingsAccess instanceSettings;
+    private final InstanceOperators instanceOperators;
+    private final PasswordResetTokens passwordResetTokens;
+    private final EmailVerificationTokens emailVerificationTokens;
+    private final PasswordHasher passwordHasher;
+    private final JwtService jwtService;
+    private final DiscordOAuthClient discordOAuthClient;
 
-    private Data(Threading threading, Conf configuration) {
+    /**
+     * <p>Wide on purpose, and temporarily. Everything here used to be built by {@code initDao} and
+     * handed out through a getter, so the rest of the application reaches its data access by way of
+     * this class. As each consumer starts asking for what it needs directly, these fall away.
+     */
+    @Inject
+    public Data(Threading threading, Conf configuration, Guilds guilds, Products products,
+                NexusRest nexus, Mailings mailings, KoFiProducts kofi, Accounts accounts,
+                AccountLicenses accountLicenses, LicenseInvites licenseInvites,
+                KioskProducts kioskProducts, AccountSessions accountSessions, RevokedJtis revokedJtis,
+                DownloadLog downloadLog, DemoArtifacts demoArtifacts,
+                InstanceSettingsAccess instanceSettings, InstanceOperators instanceOperators,
+                PasswordResetTokens passwordResetTokens,
+                EmailVerificationTokens emailVerificationTokens, PasswordHasher passwordHasher,
+                JwtService jwtService, DiscordOAuthClient discordOAuthClient) {
         this.threading = threading;
         this.configuration = configuration;
+        this.guilds = guilds;
+        this.products = products;
+        this.nexus = nexus;
+        this.mailings = mailings;
+        this.kofi = kofi;
+        this.accounts = accounts;
+        this.accountLicenses = accountLicenses;
+        this.licenseInvites = licenseInvites;
+        this.kioskProducts = kioskProducts;
+        this.accountSessions = accountSessions;
+        this.revokedJtis = revokedJtis;
+        this.downloadLog = downloadLog;
+        this.demoArtifacts = demoArtifacts;
+        this.instanceSettings = instanceSettings;
+        this.instanceOperators = instanceOperators;
+        this.passwordResetTokens = passwordResetTokens;
+        this.emailVerificationTokens = emailVerificationTokens;
+        this.passwordHasher = passwordHasher;
+        this.jwtService = jwtService;
+        this.discordOAuthClient = discordOAuthClient;
     }
 
     /** How long to wait before asking the database again. */
     private static final Duration CONNECT_RETRY_DELAY = Duration.ofSeconds(10);
 
-    public static Data create(Threading threading, Conf configuration) throws SQLException, IOException, InterruptedException {
-        var data = new Data(threading, configuration);
-        data.init();
-        return data;
-    }
-
-    public void init() throws SQLException, IOException, InterruptedException {
+    /**
+     * Opens the database and makes it usable, which construction deliberately does not.
+     *
+     * <p>Waiting for a database, migrating a schema and installing a global query configuration are
+     * not things to do while an injector is building an object graph. Everything built above this
+     * can be constructed before the database exists; nothing may be <em>used</em> before this has run.
+     */
+    public void start() throws SQLException, IOException, InterruptedException {
         initConnection();
         configure();
         updateDatabase();
-        initDao();
     }
 
     /**
@@ -129,32 +164,6 @@ public class Data {
                 .build());
     }
 
-    private void initDao() {
-        log.info("Creating DAOs");
-        Nexus nexus = configuration.main().nexus();
-        this.nexus = NexusRest.builder(nexus.host())
-                .setPasswordAuth(nexus.username(), nexus.password())
-                .build();
-        guilds = new Guilds(this.nexus, configuration);
-        products = new Products(this.guilds);
-        mailings = new Mailings(this.guilds);
-        kofi = new KoFiProducts(products);
-        accounts = new Accounts();
-        accountLicenses = new AccountLicenses();
-        licenseInvites = new LicenseInvites();
-        kioskProducts = new KioskProducts();
-        accountSessions = new AccountSessions();
-        revokedJtis = new RevokedJtis();
-        downloadLog = new DownloadLog();
-        demoArtifacts = new DemoArtifacts();
-        instanceSettings = new InstanceSettingsAccess();
-        instanceOperators = new InstanceOperators();
-        passwordResetTokens = new PasswordResetTokens();
-        emailVerificationTokens = new EmailVerificationTokens();
-        passwordHasher = new PasswordHasher();
-        jwtService = new JwtService(configuration.main().auth());
-        discordOAuthClient = new DiscordOAuthClient(configuration.main().discord().oauth());
-    }
 
     private HikariDataSource getConnectionPool() {
         log.info("Creating connection pool.");
