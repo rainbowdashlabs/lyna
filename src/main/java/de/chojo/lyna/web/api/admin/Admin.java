@@ -532,6 +532,17 @@ public class Admin {
     public record SystemInfo(String version, int guildCount) {
     }
 
+    /**
+     * The guild the path names, and only for somebody entitled to administer it.
+     *
+     * <p>Two ways in. With a gateway, holding MANAGE_SERVER on the guild is the floor, and an
+     * operator passes regardless. Without one there is no membership to check, so an operator is the
+     * only way in - which is what lets an instance running no bot still be administered.
+     *
+     * <p>An operator is still identified by a Discord id, so an account that never linked Discord
+     * cannot administer anything even bot-less. That is a limit of how operators are named, not of
+     * this check.
+     */
     private Resolved requireGuildAdmin(Context ctx) {
         Optional<JwtService.Verified> session = auth.currentSession(ctx);
         if (session.isEmpty()) {
@@ -545,13 +556,20 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid guild id");
             return null;
         }
-        Guild guild = gateway.guild(guildId).orElse(null);
-        if (guild == null) {
-            ctx.status(HttpStatus.NOT_FOUND);
-            return null;
-        }
         Long discordId = resolveDiscordId(session.get());
         boolean operator = isOperator(discordId);
+        Guild guild = gateway.guild(guildId).orElse(null);
+        if (guild == null) {
+            // With no gateway there is no MANAGE_SERVER to check, so only somebody who holds the
+            // whole instance may administer. Everything below reads the database, which answers
+            // whether or not a bot is connected; the handful of operations that act on Discord
+            // itself find no guild and say so.
+            if (!operator) {
+                ctx.status(HttpStatus.NOT_FOUND);
+                return null;
+            }
+            return new Resolved(guilds.guild(guildId), discordId, true);
+        }
         if (!operator && !hasGuildAdmin(discordId, guild)) {
             ctx.status(HttpStatus.NOT_FOUND);
             return null;

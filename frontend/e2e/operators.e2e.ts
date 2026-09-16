@@ -10,9 +10,12 @@ import {uniqueEmail} from './fixtures/unique'
 /**
  * Who may reach the instance area, and who may hand it out.
  *
- * <p>This stack names no operator in its configuration and grants none, so what these stories pin is
- * the floor: nobody gets in, and the endpoints that would grant it are shut to everybody. That is
- * the state a fresh instance is in, and the one a mistake here would quietly open up.
+ * <p>Every account these stories make is a fresh one that administers nothing, so what they pin is
+ * the floor: nobody gets in, and the endpoints that would grant it are shut to everybody. That is the
+ * state a fresh instance is in, and the one a mistake here would quietly open up.
+ *
+ * <p>The stack does name one operator - the seeded account, by the Discord id it is linked to - which
+ * is what {@code administering without a bot} below rests on.
  */
 test.describe('The operator endpoints', () => {
     test('are shut to a visitor who is not signed in', async ({request}) => {
@@ -61,5 +64,39 @@ test.describe('The operators page', () => {
         await page.goto('/admin/instance/operators')
 
         await expect(page.getByText(/Operator access required/i)).toBeVisible()
+    })
+
+    /**
+     * This stack runs no bot, which used to mean the admin area answered 404 to everybody: the guard
+     * asked the gateway for the guild before it asked who was calling, and with no gateway there was
+     * no guild to find. An operator holds the whole instance and has no membership to check, so
+     * there is nothing for the gateway to answer.
+     */
+    test('an operator administers a guild even with no bot connected', async ({request, baseURL}) => {
+        const signIn = await request.post('/api/auth/login', {
+            data: {email: 'entitled@example.invalid', password: PASSWORD},
+        })
+        expect(signIn.ok()).toBe(true)
+        const {token} = await signIn.json()
+
+        const products = await request.get('/api/admin/g/4242/products', {
+            headers: {Authorization: `Bearer ${token}`},
+        })
+
+        expect(products.status()).toBe(200)
+        expect(Array.isArray(await products.json())).toBe(true)
+    })
+
+    test('somebody who is not an operator still gets nothing, bot or no bot', async ({request}) => {
+        const signup = await request.post('/api/auth/signup', {
+            data: {email: uniqueEmail('not-an-operator'), password: PASSWORD},
+        })
+        const {token} = await signup.json()
+
+        const products = await request.get('/api/admin/g/4242/products', {
+            headers: {Authorization: `Bearer ${token}`},
+        })
+
+        expect(products.status()).toBe(404)
     })
 })

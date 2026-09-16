@@ -2,7 +2,9 @@
 baseSettings:
   token: ""
   botEnabled: false
-  botOwner: []
+  # The Discord id the seeded "entitled" account is linked to, so the stories can walk the
+  # operator path on a stack that runs no bot.
+  botOwner: [4242424242]
   botGuild: 0
 database:
   host: "postgres_e2e"
