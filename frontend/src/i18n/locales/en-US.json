@@ -147,7 +147,7 @@
           "mailing": {
             "mailingTemplates": "Mailing templates",
             "theMailSentWhenSomebodyBuys": "The mail sent when somebody buys a product. Composed in blocks and rendered into the same layout every other mail uses, so it arrives looking like one.",
-            "middotWrittenBeforeTheEditor": "&middot; written before the editor"
+            "middotWrittenBeforeTheEditor": "· written before the editor"
           },
           "products": {
             "products": "Products",
@@ -197,7 +197,7 @@
         },
         "operators": {
           "operators": "Operators",
-          "anOperatorReachesEveryGuildS": "An operator reaches every guild's admin area and this one. Ids named in the configuration file cannot be withdrawn here &mdash; they are the way back in if a grant goes wrong.",
+          "anOperatorReachesEveryGuildS": "An operator reaches every guild's admin area and this one. Ids named in the configuration file cannot be withdrawn here — they are the way back in if a grant goes wrong.",
           "grantTheInstance": "Grant the instance",
           "discordUserId": "Discord user id"
         },
@@ -216,13 +216,34 @@
   },
   "layout": {
     "account": {
-      "signedInAs": "Signed in as"
+      "signedInAs": "Signed in as",
+      "overview": "Overview",
+      "licenses": "Licenses",
+      "downloads": "Downloads",
+      "security": "Security",
+      "appearance": "Appearance",
+      "anonymous": "Anonymous",
+      "notLinked": "no Discord"
     },
     "admin": {
       "administering": "Administering",
       "selectAGuild": "Select a guild…",
       "noAdminGuildsAvailable": "No admin guilds available.",
-      "instanceArea": "Instance area →"
+      "instanceArea": "Instance area →",
+      "system": "System",
+      "appearance": "Appearance",
+      "operators": "Operators",
+      "products": "Products",
+      "licenses": "Licenses",
+      "registrations": "Registrations",
+      "trial": "Trial",
+      "kofi": "Ko-fi",
+      "mailing": "Mailing",
+      "settings": "Settings",
+      "botConnected": "bot connected",
+      "noBot": "no bot",
+      "guildsCount": "{count} guilds",
+      "guildAdmin": "guild admin"
     }
   },
   "ui": {
@@ -258,22 +279,22 @@
     },
     "linkedAccountsCard": {
       "discord": "Discord",
-      "notLinkedNdash": "Not linked &ndash;",
       "linkNow": "link now",
-      "linkedAccounts": "Linked accounts"
+      "linkedAccounts": "Linked accounts",
+      "notLinked": "Not linked –"
     },
     "pager": {
       "previous": "Previous",
       "next": "Next"
     },
     "recentDownloadsCard": {
-      "noDownloadsYetNdashBrowseThe": "No downloads yet &ndash; browse the",
       "storefront": "storefront",
-      "recentDownloads": "Recent downloads"
+      "recentDownloads": "Recent downloads",
+      "noDownloadsYetBrowseThe": "No downloads yet – browse the"
     },
     "sessionsCard": {
-      "manageSessionsRarr": "Manage sessions &rarr;",
-      "sessions": "Sessions"
+      "sessions": "Sessions",
+      "manageSessions": "Manage sessions →"
     },
     "usernameCard": {
       "username": "Username",
@@ -302,7 +323,7 @@
     },
     "demoAccountPicker": {
       "signInAs": "Sign in as",
-      "thisIsADemoInstancePick": "This is a demo instance. Pick somebody to look at it as &mdash; no password needed."
+      "thisIsADemoInstancePick": "This is a demo instance. Pick somebody to look at it as — no password needed."
     },
     "demoBanner": {
       "thisIsADemoAnyoneCan": "This is a demo. Anyone can sign in, everything here is made up, and it is all thrown away and laid out again on a timer."

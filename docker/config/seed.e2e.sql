@@ -29,8 +29,10 @@ ON CONFLICT (link_code) DO NOTHING;
 -- The licence hangs off the account, not the Discord id. The identity row is here anyway, because a
 -- holder with one is the case the role-granting views answer for.
 
-INSERT INTO public.account (id, email, password_hash)
-SELECT 999000, 'entitled@example.invalid', '$2a$12$Y07xJ9n/YRmyONFQMdyq8uTeNmFH1utmmqrbAQmDqmMQ43QvaRuPi'
+-- The username is set here as well as the handle. The application keeps the two in step whenever a
+-- link is made through it, but these rows go straight into the table and miss that.
+INSERT INTO public.account (id, email, password_hash, username)
+SELECT 999000, 'entitled@example.invalid', '$2a$12$Y07xJ9n/YRmyONFQMdyq8uTeNmFH1utmmqrbAQmDqmMQ43QvaRuPi', 'entitled'
 WHERE NOT EXISTS (SELECT 1 FROM public.account WHERE id = 999000);
 
 INSERT INTO public.account_identity (provider, external_id, account_id, verified_via, handle)

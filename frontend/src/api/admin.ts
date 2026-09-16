@@ -94,6 +94,7 @@ export interface InstanceAppearance {
 export interface SystemInfo {
     version: string
     guildCount: number
+    botConnected: boolean
 }
 
 export async function getInstanceAppearance(): Promise<InstanceAppearance> {

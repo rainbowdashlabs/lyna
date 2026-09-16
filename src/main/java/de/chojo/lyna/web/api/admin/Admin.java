@@ -494,7 +494,7 @@ public class Admin {
         } catch (Exception e) {
             version = "unknown";
         }
-        ctx.json(new SystemInfo(version, guildCount));
+        ctx.json(new SystemInfo(version, guildCount, gateway.connected()));
     }
 
     private void instanceAppearance(Context ctx) {
@@ -529,7 +529,12 @@ public class Admin {
         return true;
     }
 
-    public record SystemInfo(String version, int guildCount) {
+    /**
+     * @param botConnected whether a gateway is connected at all. Worth stating plainly rather than
+     *                     leaving an operator to infer it from a guild count of zero, now that
+     *                     running without a bot is a supported way to run.
+     */
+    public record SystemInfo(String version, int guildCount, boolean botConnected) {
     }
 
     /**

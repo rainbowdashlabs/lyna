@@ -21,7 +21,7 @@ defineProps<{
       <StatValue>{{ activeSessions }}</StatValue>
       <MutedText tag="div">active &middot; last sign-in {{ formatRelative(lastSignInAt) }}</MutedText>
       <NuxtLink class="mt-2 inline-block text-sm text-primary hover:underline" to="/account/security">
-        {{ t('ui.sessionsCard.manageSessionsRarr') }}
+        {{ t('ui.sessionsCard.manageSessions') }}
       </NuxtLink>
     </div>
   </OverviewCard>

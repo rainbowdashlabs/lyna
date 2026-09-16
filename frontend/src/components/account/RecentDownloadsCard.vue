@@ -18,7 +18,7 @@ defineProps<{
 <template>
   <OverviewCard class="md:col-span-2" :title="t('ui.recentDownloadsCard.recentDownloads')">
     <MutedText v-if="rows.length === 0" size="sm" tag="div">
-      {{ t('ui.recentDownloadsCard.noDownloadsYetNdashBrowseThe') }}
+      {{ t('ui.recentDownloadsCard.noDownloadsYetBrowseThe') }}
       <NuxtLink class="text-primary hover:underline" to="/">{{ t('ui.recentDownloadsCard.storefront') }}</NuxtLink>.
     </MutedText>
     <ul v-else class="space-y-2 text-sm">

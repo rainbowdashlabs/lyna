@@ -28,7 +28,7 @@ defineProps<{
             Linked as {{ account.username ?? account.discordId }}
           </template>
           <template v-else>
-            {{ t('ui.linkedAccountsCard.notLinkedNdash') }} <AppLink href="/api/auth/discord/start">{{ t('ui.linkedAccountsCard.linkNow') }}</AppLink>
+            {{ t('ui.linkedAccountsCard.notLinked') }} <AppLink href="/api/auth/discord/start">{{ t('ui.linkedAccountsCard.linkNow') }}</AppLink>
           </template>
         </div>
       </div>

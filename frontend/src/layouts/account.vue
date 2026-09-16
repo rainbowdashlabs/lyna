@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import {computed} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {useRouter} from 'vue-router'
 import {logout} from '~/api/account'
 import {useSession} from '~/composables/useSession'
+import type {Tab} from '~/components/chrome/TabStrip.vue'
+import type {StatusItem} from '~/components/chrome/StatusBar.vue'
 
 const {t} = useI18n()
 
@@ -19,54 +22,36 @@ async function doLogout() {
   await router.replace('/login')
 }
 
-const sidebar = [
-  {to: '/account', label: 'Overview', exact: true},
-  {to: '/account/licenses', label: 'Licenses'},
-  {to: '/account/downloads', label: 'Downloads'},
-  {to: '/account/security', label: 'Security'},
-  {to: '/account/appearance', label: 'Appearance'},
-]
+const tabs = computed<Tab[]>(() => [
+  {to: '/account', label: t('layout.account.overview'), exact: true},
+  {to: '/account/licenses', label: t('layout.account.licenses')},
+  {to: '/account/downloads', label: t('layout.account.downloads')},
+  {to: '/account/security', label: t('layout.account.security')},
+  {to: '/account/appearance', label: t('layout.account.appearance')},
+])
+
+const who = computed(() => account.value?.username
+    ?? account.value?.email
+    ?? t('layout.account.anonymous'))
+
+/**
+ * What the bar says about this session, rather than about the instance. An account area is not the
+ * place to publish a schema version to whoever signs up.
+ */
+const status = computed<StatusItem[]>(() => [
+  {label: who.value, tone: 'ok'},
+  {label: account.value?.discordId ? 'discord' : t('layout.account.notLinked')},
+])
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-screen max-w-6xl gap-6 p-6">
-    <aside class="hidden w-56 shrink-0 md:block">
-      <header class="mb-6">
-        <div class="text-xs uppercase tracking-wider opacity-60">
-          {{ t('layout.account.signedInAs') }}
-        </div>
-        <div class="truncate text-sm font-medium">
-          {{ account?.email ?? account?.discordId ?? 'Anonymous' }}
-        </div>
-      </header>
-      <nav class="space-y-1">
-        <NuxtLink
-            v-for="item in sidebar"
-            :key="item.to"
-            :to="item.to"
-            :exact-active-class="item.exact ? 'bg-primary/10 text-primary font-medium' : ''"
-            active-class="bg-primary/10 text-primary font-medium"
-            class="block rounded-theme px-3 py-2 hover:bg-primary/5"
-        >
-          {{ item.label }}
-        </NuxtLink>
-      </nav>
-      <SecondaryButton class="mt-6" full-width @click="doLogout">{{ t('auth.logout') }}</SecondaryButton>
-    </aside>
-    <main class="flex-1 min-w-0">
-      <nav class="mb-4 flex gap-2 overflow-x-auto md:hidden">
-        <NuxtLink
-            v-for="item in sidebar"
-            :key="item.to"
-            :to="item.to"
-            active-class="bg-primary/10 text-primary"
-            class="rounded-theme border border-border-light dark:border-border-dark px-3 py-1.5 text-sm"
-        >
-          {{ item.label }}
-        </NuxtLink>
-        <SecondaryButton class="ml-auto" compact @click="doLogout">{{ t('auth.logout') }}</SecondaryButton>
-      </nav>
-      <slot />
+  <div class="flex min-h-screen flex-col">
+    <TabStrip :action="t('auth.logout')" :tabs="tabs" @action="doLogout"/>
+
+    <main class="mx-auto w-full max-w-6xl flex-1 p-6">
+      <slot/>
     </main>
+
+    <StatusBar :left="status"/>
   </div>
 </template>

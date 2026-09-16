@@ -6,6 +6,7 @@ interface SessionAccount {
     email: string | null
     hasPassword: boolean
     discordId: string | null
+    username: string | null
     theme: string | null
     darkMode: string | null
 }
