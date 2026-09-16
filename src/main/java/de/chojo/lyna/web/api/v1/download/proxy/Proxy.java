@@ -146,7 +146,7 @@ public class Proxy {
     public String registerAsset(AssetDownload assetDownload) {
         var hashCode = Hashing.sha512().hashString(System.nanoTime() + assetDownload.assetId() + System.nanoTime(), StandardCharsets.UTF_8).toString();
         tokens.put(hashCode, assetDownload);
-        return "%s/api/v1/download/proxy?token=%s".formatted(download.v1().api().configuration().config().api().url(), hashCode);
+        return "%s/api/v1/download/proxy?token=%s".formatted(download.v1().api().configuration().main().api().url(), hashCode);
     }
 
     private static String ipHash(String ip) {

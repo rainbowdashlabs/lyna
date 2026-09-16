@@ -2,8 +2,7 @@ package de.chojo.lyna.data.access;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.nexus.NexusRest;
@@ -15,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class Guilds {
     private final NexusRest nexus;
     private final Cache<Long, LicenseGuild> guilds = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
 
     /**
      * How Discord roles are kept in step, once there is a gateway to keep them with.
@@ -26,7 +25,7 @@ public class Guilds {
      */
     private volatile RoleSync roles = RoleSync.NOOP;
 
-    public Guilds(NexusRest nexus, Configuration<ConfigFile> configuration) {
+    public Guilds(NexusRest nexus, Conf configuration) {
         this.nexus = nexus;
         this.configuration = configuration;
     }

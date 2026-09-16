@@ -2,9 +2,8 @@ package de.chojo.lyna.web.api.admin;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.auth.JwtService;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.access.Guilds;
@@ -46,7 +45,7 @@ public class Admin {
     private static final Logger log = getLogger(Admin.class);
 
     private final Auth auth;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final Accounts accounts;
     private final Guilds guilds;
     private final InstanceSettingsAccess instanceSettings;
@@ -60,7 +59,7 @@ public class Admin {
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private ShardManager shardManager;
 
-    public Admin(Auth auth, Configuration<ConfigFile> configuration, Accounts accounts, Guilds guilds,
+    public Admin(Auth auth, Conf configuration, Accounts accounts, Guilds guilds,
                  InstanceSettingsAccess instanceSettings, KoFiProducts kofi,
                  KioskProducts kioskProducts, InstanceOperators operators,
                  de.chojo.lyna.mail.MailingService mailingService) {
@@ -579,7 +578,7 @@ public class Admin {
 
     private void listOperators(Context ctx) {
         if (!requireOperator(ctx)) return;
-        List<OperatorView> configured = configuration.config().baseSettings().owners().stream()
+        List<OperatorView> configured = configuration.main().baseSettings().owners().stream()
                 .map(id -> new OperatorView(Long.toString(id), null, null, true))
                 .toList();
         List<OperatorView> granted = operators.all().stream()
@@ -637,7 +636,7 @@ public class Admin {
                     .result("That id administers the instance by configuration. Edit the configuration to change it.");
             return;
         }
-        if (configuration.config().baseSettings().owners().isEmpty() && operators.count() <= 1) {
+        if (configuration.main().baseSettings().owners().isEmpty() && operators.count() <= 1) {
             ctx.status(HttpStatus.CONFLICT)
                     .result("That is the last operator, and the configuration names none. Add another first.");
             return;
@@ -676,7 +675,7 @@ public class Admin {
      * withdrawn through the web.
      */
     private boolean isRootOperator(long discordId) {
-        return configuration.config().baseSettings().isOwner(discordId);
+        return configuration.main().baseSettings().isOwner(discordId);
     }
 
     /**

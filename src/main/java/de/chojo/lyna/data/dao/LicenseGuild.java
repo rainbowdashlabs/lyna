@@ -2,8 +2,7 @@ package de.chojo.lyna.data.dao;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.downloadtype.DownloadTypes;
 import de.chojo.lyna.data.dao.licenses.Licenses;
@@ -31,7 +30,7 @@ public class LicenseGuild {
      * Providing access to registered products on this guild.
      */
     Products products;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
 
     /**
      * Providing access to licenses created on this guild.
@@ -48,7 +47,7 @@ public class LicenseGuild {
 
     private final Guilds guilds;
 
-    public LicenseGuild(long guildId, NexusRest nexus, Configuration<ConfigFile> configuration, Guilds guilds) {
+    public LicenseGuild(long guildId, NexusRest nexus, Conf configuration, Guilds guilds) {
         this.guildId = guildId;
         this.guilds = guilds;
         this.nexus = nexus;
@@ -99,7 +98,7 @@ public class LicenseGuild {
         return nexus;
     }
 
-    public Configuration<ConfigFile> configuration() {
+    public Conf configuration() {
         return configuration;
     }
 }

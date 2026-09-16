@@ -2,11 +2,10 @@ package de.chojo.lyna.web.api.auth;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.auth.DiscordOAuthClient;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.EmailVerificationTokens;
@@ -34,7 +33,7 @@ public class Auth {
     private static final String STATE_COOKIE = "lyna_oauth_state";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final Accounts accounts;
     private final AccountSessions accountSessions;
     private final RevokedJtis revokedJtis;
@@ -46,7 +45,7 @@ public class Auth {
     private final MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-    public Auth(Configuration<ConfigFile> configuration,
+    public Auth(Conf configuration,
                 Accounts accounts,
                 AccountSessions accountSessions,
                 RevokedJtis revokedJtis,
@@ -102,12 +101,12 @@ public class Auth {
         if (account.isEmpty()) return;
         var issued = passwordResetTokens.issue(account.get().id(),
                 java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
-        String link = configuration.config().links().frontend() + "/reset-password?token=" + issued.token();
+        String link = configuration.main().links().frontend() + "/reset-password?token=" + issued.token();
         var renderer = mailingService.renderer();
         var values = java.util.Map.<String, Object>of(
                 "url", link,
                 "senderName", "Lyna",
-                "baseUrl", configuration.config().links().frontend());
+                "baseUrl", configuration.main().links().frontend());
         try {
             mailingService.send(body.email(),
                     renderer.subject("reset-password", "en", values),
@@ -126,12 +125,12 @@ public class Auth {
      */
     private void sendVerification(int accountId, String email) {
         var issued = emailTokens.issue(accountId, email, java.time.Instant.now().plus(java.time.Duration.ofDays(1)));
-        String link = configuration.config().links().frontend() + "/verify-email?token=" + issued.token();
+        String link = configuration.main().links().frontend() + "/verify-email?token=" + issued.token();
         try {
             var values = java.util.Map.<String, Object>of(
                     "url", link,
                     "senderName", "Lyna",
-                    "baseUrl", configuration.config().links().frontend());
+                    "baseUrl", configuration.main().links().frontend());
             mailingService.send(email, mailingService.renderer().subject("verify-email", "en", values),
                     mailingService.renderer().render("verify-email", "en", values));
         } catch (Exception e) {

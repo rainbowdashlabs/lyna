@@ -17,8 +17,7 @@ import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -51,7 +50,7 @@ public class Account {
     private final InstanceSettingsAccess instanceSettings;
     private final MailingService mailingService;
     private final EmailVerificationTokens emailTokens;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final AccountSessions sessions;
     private final RevokedJtis revokedJtis;
     private final DownloadLog downloadLog;
@@ -66,7 +65,7 @@ public class Account {
                    InstanceSettingsAccess instanceSettings,
                    MailingService mailingService,
                    EmailVerificationTokens emailTokens,
-                   Configuration<ConfigFile> configuration,
+                   Conf configuration,
                    AccountSessions sessions,
                    RevokedJtis revokedJtis,
                    DownloadLog downloadLog,
@@ -384,13 +383,13 @@ public class Account {
      */
     private void sendVerification(int accountId, String email) {
         var issued = emailTokens.issue(accountId, email, Instant.now().plus(Duration.ofDays(1)));
-        String link = configuration.config().links().frontend() + "/verify-email?token=" + issued.token();
+        String link = configuration.main().links().frontend() + "/verify-email?token=" + issued.token();
         try {
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of(
                     "url", link,
                     "senderName", "Lyna",
-                    "baseUrl", configuration.config().links().frontend());
+                    "baseUrl", configuration.main().links().frontend());
             mailingService.send(email, renderer.subject("verify-email", "en", values),
                     renderer.render("verify-email", "en", values));
         } catch (Exception e) {

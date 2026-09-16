@@ -1,9 +1,8 @@
 package de.chojo.lyna.commands.mailing.handler;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
@@ -21,10 +20,10 @@ import java.util.Optional;
 
 public class Send implements SlashHandler {
     private final MailingService mailingService;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final Guilds guilds;
 
-    public Send(MailingService mailingService, Configuration<ConfigFile> configuration, Guilds guilds) {
+    public Send(MailingService mailingService, Conf configuration, Guilds guilds) {
         this.mailingService = mailingService;
         this.configuration = configuration;
         this.guilds = guilds;

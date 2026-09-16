@@ -1,7 +1,7 @@
 package de.chojo.lyna.service;
 
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.LicenseGuild;
@@ -72,8 +72,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
                 "account_identity", "account");
         roles = new RecordingRoleSync();
 
-        @SuppressWarnings("unchecked")
-        Configuration<ConfigFile> configuration = Mockito.mock(Configuration.class);
+        Conf configuration = TestConf.defaults();
         Guilds guilds = new Guilds(Mockito.mock(NexusRest.class), configuration);
         guilds.roles(roles);
         licenseGuild = guilds.guild(GUILD);
@@ -169,8 +168,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Without a gateway nothing is asked of Discord, and the rows still go")
     void withoutAGatewayTheRowsStillGo() throws SQLException {
-        @SuppressWarnings("unchecked")
-        Configuration<ConfigFile> configuration = Mockito.mock(Configuration.class);
+        Conf configuration = TestConf.defaults();
         Guilds botless = new Guilds(Mockito.mock(NexusRest.class), configuration);
         assertFalse(botless.roles() == roles);
 

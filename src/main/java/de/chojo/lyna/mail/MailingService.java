@@ -1,9 +1,8 @@
 package de.chojo.lyna.mail;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
@@ -37,12 +36,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MailingService {
     private final Threading threading;
     private final Data data;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
     private final MailTemplateRenderer renderer = new MailTemplateRenderer();
 
-    public MailingService(Threading threading, Data data, Configuration<ConfigFile> configuration) {
+    public MailingService(Threading threading, Data data, Conf configuration) {
         this.threading = threading;
         this.data = data;
         this.configuration = configuration;
@@ -58,9 +57,9 @@ public class MailingService {
      *
      * @return the service, polling unless mail is switched off
      */
-    public static MailingService create(Threading threading, Data data, Configuration<ConfigFile> configuration) {
+    public static MailingService create(Threading threading, Data data, Conf configuration) {
         MailingService mailingService = new MailingService(threading, data, configuration);
-        if (!configuration.config().mailing().enabled()) {
+        if (!configuration.main().mailing().enabled()) {
             log.info("Mailing is disabled. No mail is polled or sent.");
             return mailingService;
         }
@@ -73,7 +72,7 @@ public class MailingService {
     }
 
     private void init() throws MessagingException {
-        threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.config().mailing().pollSeconds(), TimeUnit.SECONDS);
+        threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.main().mailing().pollSeconds(), TimeUnit.SECONDS);
         registerMessageListener(new MailHandler(data, this, configuration));
     }
 
@@ -131,7 +130,7 @@ public class MailingService {
         log.debug("Creating new mail session");
         Properties props = new Properties();
         props.putAll(System.getProperties());
-        Mailing mailing = configuration.config().mailing();
+        Mailing mailing = configuration.main().mailing();
         props.putAll(mailing.properties());
         return Session.getInstance(props, new Authenticator() {
             @Override
@@ -159,7 +158,7 @@ public class MailingService {
     }
 
     public void sendMail(Mail mail) {
-        if (!configuration.config().mailing().enabled()) {
+        if (!configuration.main().mailing().enabled()) {
             log.info("Mailing is disabled. Dropping mail to {} with subject {}", mail.address(), mail.subject());
             return;
         }
@@ -204,7 +203,7 @@ public class MailingService {
 
     private boolean sendMessage(MimeMessage message) throws MessagingException {
         log.info("Sending mail to {}", ((InternetAddress) message.getAllRecipients()[0]).getAddress());
-        Transport.send(message, configuration.config().mailing().user(), configuration.config().mailing().password());
+        Transport.send(message, configuration.main().mailing().user(), configuration.main().mailing().password());
         log.info("Mail sent.");
         return true;
     }
@@ -237,7 +236,7 @@ public class MailingService {
 
     private MimeMessage buildMessage(Session session, Mail mail) throws MessagingException {
         var message = new MimeMessage(session);
-        message.addFrom(new Address[]{new InternetAddress(configuration.config().mailing().user())});
+        message.addFrom(new Address[]{new InternetAddress(configuration.main().mailing().user())});
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(mail.address(), false));
         message.setDataHandler(new DataHandler(mail.text(), "text/html; charset=UTF-8"));
         message.setSubject(mail.subject());

@@ -1,7 +1,6 @@
 package de.chojo.lyna.demo;
 
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Threading;
 import org.slf4j.Logger;
 
@@ -24,9 +23,9 @@ public final class DemoSchedule {
     private DemoSchedule() {
     }
 
-    public static void start(Threading threading, DemoService demo, Configuration<ConfigFile> configuration) {
+    public static void start(Threading threading, DemoService demo, Conf configuration) {
         if (!demo.enabled()) return;
-        int minutes = configuration.config().demo().resetIntervalMinutes();
+        int minutes = configuration.main().demo().resetIntervalMinutes();
         log.info("[demo] demo mode is on. The data is laid out shortly, {}",
                 minutes > 0 ? "and again every %d minutes".formatted(minutes) : "and not reset again on its own");
 

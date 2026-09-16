@@ -5,12 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.util.Colors;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +37,11 @@ public class Default implements SlashHandler {
             .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final String version;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private String contributors;
     private Instant lastFetch = Instant.MIN;
 
-    public Default(String version, Configuration<ConfigFile> configuration) {
+    public Default(String version, Conf configuration) {
         this.version = version;
         this.configuration = configuration;
     }
@@ -104,11 +103,11 @@ public class Default implements SlashHandler {
 
     private String getLinks(EventContext context) {
         var links = List.of(
-                getLink("Invite me", configuration.config().links().invite())
-                //getLink("", configuration.config().support()),
-                //getLink("TOS", configuration.config().tos()),
-                //getLink( "Website", configuration.config().website()),
-                //getLink("FAQ", configuration.config().faq())
+                getLink("Invite me", configuration.main().links().invite())
+                //getLink("", configuration.main().support()),
+                //getLink("TOS", configuration.main().tos()),
+                //getLink( "Website", configuration.main().website()),
+                //getLink("FAQ", configuration.main().faq())
         );
         return String.join(" ᠅ ", links);
     }

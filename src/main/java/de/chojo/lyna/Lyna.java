@@ -1,7 +1,6 @@
 package de.chojo.lyna;
 
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
@@ -22,7 +21,7 @@ public class Lyna {
     }
 
     private void init() throws SQLException, IOException, InterruptedException {
-        Configuration<ConfigFile> configuration = Configuration.create(new ConfigFile());
+        Conf configuration = new Conf();
         var threading = new Threading();
         Data data = Data.create(threading, configuration);
         MailingService mailingService = MailingService.create(threading, data, configuration);

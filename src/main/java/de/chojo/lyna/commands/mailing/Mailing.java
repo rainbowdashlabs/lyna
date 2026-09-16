@@ -1,6 +1,5 @@
 package de.chojo.lyna.commands.mailing;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
@@ -8,12 +7,12 @@ import de.chojo.jdautil.interactions.slash.provider.SlashCommand;
 import de.chojo.lyna.commands.mailing.handler.Create;
 import de.chojo.lyna.commands.mailing.handler.Edit;
 import de.chojo.lyna.commands.mailing.handler.Send;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.mail.MailingService;
 
 public class Mailing extends SlashCommand {
-    public Mailing(Guilds guilds, Configuration<ConfigFile> configuration, MailingService mailingService) {
+    public Mailing(Guilds guilds, Conf configuration, MailingService mailingService) {
         super(Slash.of("mailing", "Configure mailing")
                 .unlocalized()
                 .adminCommand()

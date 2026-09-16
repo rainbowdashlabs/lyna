@@ -51,7 +51,7 @@ public class KoFiApi {
                 var post = mapper.readValue(json, KofiPost.class);
                 var presented = post.verificationToken();
                 if (presented == null
-                        || !presented.toString().equals(v1.configuration().config().kofi().verificationToken())) {
+                        || !presented.toString().equals(v1.configuration().main().kofi().verificationToken())) {
                     ctx.status(HttpStatus.FORBIDDEN);
                     return;
                 }

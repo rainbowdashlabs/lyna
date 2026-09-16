@@ -1,6 +1,5 @@
 package de.chojo.lyna.core;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.commands.download.Download;
@@ -14,7 +13,7 @@ import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
 import de.chojo.lyna.commands.trial.Trial;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -30,12 +29,12 @@ public class Bot {
     private static final Logger log = getLogger(Bot.class);
     private final Data data;
     private final Threading threading;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final Web web;
     private final MailingService mailingService;
     private ShardManager shardManager;
 
-    private Bot(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web, MailingService mailingService) {
+    private Bot(Data data, Threading threading, Conf configuration, Web web, MailingService mailingService) {
         this.data = data;
         this.threading = threading;
         this.configuration = configuration;
@@ -43,14 +42,14 @@ public class Bot {
         this.mailingService = mailingService;
     }
 
-    public static Bot create(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web, MailingService mailingService) {
+    public static Bot create(Data data, Threading threading, Conf configuration, Web web, MailingService mailingService) {
         Bot bot = new Bot(data, threading, configuration, web, mailingService);
         bot.init();
         return bot;
     }
 
     private void init() {
-        if (!configuration.config().baseSettings().botEnabled()) {
+        if (!configuration.main().baseSettings().botEnabled()) {
             log.info("Discord bot is disabled. Only the HTTP API is served.");
             return;
         }
@@ -64,7 +63,7 @@ public class Bot {
 
     private void initShardManager() {
         shardManager = DefaultShardManagerBuilder
-                .createDefault(configuration.config().baseSettings().token())
+                .createDefault(configuration.main().baseSettings().token())
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS)
                 .setEnableShutdownHook(false)
                 .setThreadFactory(Threading.createThreadFactory(threading.jdaGroup()))
@@ -81,7 +80,7 @@ public class Bot {
                     log.error(LogNotify.NOTIFY_ADMIN, "Command execution of {} failed\n{}",
                             context.interaction().meta().name(), context.args(), throwable);
                 })
-                .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.config().baseSettings()
+                .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.main().baseSettings()
                         .botGuild()))
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))

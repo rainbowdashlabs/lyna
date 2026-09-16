@@ -1,7 +1,6 @@
 package de.chojo.lyna.web.api;
 
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
@@ -19,7 +18,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class Api {
     private final WebService web;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final NexusRest nexus;
     private final V1 v1;
     private final Auth auth;
@@ -29,7 +28,7 @@ public class Api {
 
     private static final Logger log = getLogger(Api.class);
 
-    public Api(WebService web, Configuration<ConfigFile> configuration, Data data, MailingService mailingService,
+    public Api(WebService web, Conf configuration, Data data, MailingService mailingService,
                de.chojo.lyna.demo.DemoService demoService) {
         this.web = web;
         this.configuration = configuration;
@@ -62,7 +61,7 @@ public class Api {
         admin.shardManager(shardManager);
     }
 
-    public Configuration<ConfigFile> configuration() {
+    public Conf configuration() {
         return configuration;
     }
 

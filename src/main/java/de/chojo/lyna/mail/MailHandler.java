@@ -2,11 +2,10 @@ package de.chojo.lyna.mail;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
@@ -25,11 +24,11 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final Mailings mailings;
     private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
 
     private final Cache<String, String> cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
-    public MailHandler(Data data, MailingService mailingService, Configuration<ConfigFile> configuration) {
+    public MailHandler(Data data, MailingService mailingService, Conf configuration) {
         this.mailings = data.mailings();
         this.mailingService = mailingService;
         this.configuration = configuration;
@@ -37,7 +36,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
 
     @Override
     public void accept(Message message) throws Exception {
-        de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.config().mailing();
+        de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.main().mailing();
         InternetAddress address = (InternetAddress) message.getFrom()[0];
         if ("false".equalsIgnoreCase(SysVar.envOrProp("LYNA_MAILING_SKIPVERIFY","lyna.mailing.skipverify", "false"))) {
             // Check if address is from PayPal

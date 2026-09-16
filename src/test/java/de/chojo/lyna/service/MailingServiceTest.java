@@ -2,8 +2,8 @@ package de.chojo.lyna.service;
 
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetup;
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
@@ -54,28 +54,27 @@ class MailingServiceTest {
         greenMail.stop();
     }
 
-    private Configuration<ConfigFile> configuration() {
-        Properties properties = new Properties();
-        properties.put("mail.smtp.host", "127.0.0.1");
-        properties.put("mail.smtp.port", greenMail.getSmtp().getPort());
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.imap.host", "127.0.0.1");
-        properties.put("mail.imap.port", greenMail.getImap().getPort());
-
-        Mailing mailing = Mockito.mock(Mailing.class);
-        Mockito.when(mailing.user()).thenReturn(USER);
-        Mockito.when(mailing.password()).thenReturn(PASSWORD);
-        Mockito.when(mailing.properties()).thenReturn(properties);
-        Mockito.when(mailing.pollSeconds()).thenReturn(300);
-        Mockito.when(mailing.enabled()).thenReturn(true);
-
-        ConfigFile config = Mockito.mock(ConfigFile.class);
-        Mockito.when(config.mailing()).thenReturn(mailing);
-
-        @SuppressWarnings("unchecked")
-        Configuration<ConfigFile> configuration = Mockito.mock(Configuration.class);
-        Mockito.when(configuration.config()).thenReturn(config);
-        return configuration;
+    /**
+     * A real configuration pointed at the GreenMail server this test just started.
+     *
+     * <p>Written out rather than mocked, so what the service reads is a configuration file of the
+     * shape an operator would write, parsed the way the application parses one.
+     */
+    private Conf configuration() {
+        return TestConf.from("""
+                mailing:
+                  user: "%s"
+                  password: "%s"
+                  pollSeconds: 300
+                  enabled: true
+                  properties:
+                    "mail.smtp.host": "127.0.0.1"
+                    "mail.smtp.port": "%d"
+                    "mail.smtp.auth": "true"
+                    "mail.imap.host": "127.0.0.1"
+                    "mail.imap.port": "%d"
+                """.formatted(USER, PASSWORD,
+                greenMail.getSmtp().getPort(), greenMail.getImap().getPort()));
     }
 
     /**

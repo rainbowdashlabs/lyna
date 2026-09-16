@@ -1,7 +1,6 @@
 package de.chojo.lyna.web;
 
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.Api;
@@ -21,18 +20,18 @@ import static io.javalin.apibuilder.ApiBuilder.before;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class WebService {
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final Api api;
     private static final Logger log = getLogger(WebService.class);
     private Javalin javalin;
 
-    private WebService(Configuration<ConfigFile> configuration, Data data, MailingService mailingService,
+    private WebService(Conf configuration, Data data, MailingService mailingService,
                        de.chojo.lyna.demo.DemoService demoService) {
         this.configuration = configuration;
         api = new Api(this, configuration, data, mailingService, demoService);
     }
 
-    public static WebService create(Configuration<ConfigFile> configuration, Data data, MailingService mailingService,
+    public static WebService create(Conf configuration, Data data, MailingService mailingService,
                                     de.chojo.lyna.demo.DemoService demoService) {
         WebService web = new WebService(configuration, data, mailingService, demoService);
         web.init();
@@ -41,7 +40,7 @@ public class WebService {
 
 
     public void init() {
-        var apiConfig = configuration.config().api();
+        var apiConfig = configuration.main().api();
         javalin = Javalin.create(config -> {
             if (apiConfig.staticUi()) {
                 config.staticFiles.add(staticFiles -> {
@@ -60,7 +59,7 @@ public class WebService {
     }
 
     private void routes() {
-        var apiConfig = configuration.config().api();
+        var apiConfig = configuration.main().api();
         var imgSrcHosts = new ArrayList<String>();
         imgSrcHosts.add("{{ HOST }}");
         imgSrcHosts.add("discordapp.com");

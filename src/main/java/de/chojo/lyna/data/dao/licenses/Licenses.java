@@ -27,7 +27,7 @@ public class Licenses {
     }
 
     public Optional<License> create(Product product, String identifier) {
-        String key = LicenseCreator.create(licenseGuild.configuration().config().license().baseSeed(), product, identifier);
+        String key = LicenseCreator.create(licenseGuild.configuration().main().license().baseSeed(), product, identifier);
         log.info(LogNotify.STATUS, "Creating license key for {} purchased by {}", product.name(), identifier);
         return query("INSERT INTO license(product_id, user_identifier, key) VALUES(?,?,?) ON CONFLICT DO NOTHING RETURNING id")
                 .single(call().bind(product.id()).bind(identifier).bind(key))

@@ -1,12 +1,11 @@
 package de.chojo.lyna.core;
 
 import com.zaxxer.hikari.HikariDataSource;
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.auth.DiscordOAuthClient;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.LicenseInvites;
@@ -42,7 +41,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class Data {
     private static final Logger log = getLogger(Data.class);
     private final Threading threading;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private HikariDataSource dataSource;
     private Guilds guilds;
     private Products products;
@@ -65,7 +64,7 @@ public class Data {
     private JwtService jwtService;
     private DiscordOAuthClient discordOAuthClient;
 
-    private Data(Threading threading, Configuration<ConfigFile> configuration) {
+    private Data(Threading threading, Conf configuration) {
         this.threading = threading;
         this.configuration = configuration;
     }
@@ -73,7 +72,7 @@ public class Data {
     /** How long to wait before asking the database again. */
     private static final Duration CONNECT_RETRY_DELAY = Duration.ofSeconds(10);
 
-    public static Data create(Threading threading, Configuration<ConfigFile> configuration) throws SQLException, IOException, InterruptedException {
+    public static Data create(Threading threading, Conf configuration) throws SQLException, IOException, InterruptedException {
         var data = new Data(threading, configuration);
         data.init();
         return data;
@@ -114,7 +113,7 @@ public class Data {
     }
 
     private void updateDatabase() throws IOException, SQLException {
-        var schema = configuration.config().database().schema();
+        var schema = configuration.main().database().schema();
         SqlUpdater.builder(dataSource, PostgreSql.get())
                 .setReplacements(new QueryReplacement("lyna", schema))
                 .setVersionTable(schema + ".lyna_version")
@@ -132,7 +131,7 @@ public class Data {
 
     private void initDao() {
         log.info("Creating DAOs");
-        Nexus nexus = configuration.config().nexus();
+        Nexus nexus = configuration.main().nexus();
         this.nexus = NexusRest.builder(nexus.host())
                 .setPasswordAuth(nexus.username(), nexus.password())
                 .build();
@@ -153,13 +152,13 @@ public class Data {
         passwordResetTokens = new PasswordResetTokens();
         emailVerificationTokens = new EmailVerificationTokens();
         passwordHasher = new PasswordHasher();
-        jwtService = new JwtService(configuration.config().auth());
-        discordOAuthClient = new DiscordOAuthClient(configuration.config().discord().oauth());
+        jwtService = new JwtService(configuration.main().auth());
+        discordOAuthClient = new DiscordOAuthClient(configuration.main().discord().oauth());
     }
 
     private HikariDataSource getConnectionPool() {
         log.info("Creating connection pool.");
-        var data = configuration.config().database();
+        var data = configuration.main().database();
         return DataSourceCreator.create(PostgreSql.get())
                 .configure(config -> config
                         .host(data.host())

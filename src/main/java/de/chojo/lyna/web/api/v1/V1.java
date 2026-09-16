@@ -1,13 +1,12 @@
 package de.chojo.lyna.web.api.v1;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.web.api.Api;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
@@ -64,7 +63,7 @@ public class V1 {
         return download;
     }
 
-    public Configuration<ConfigFile> configuration() {
+    public Conf configuration() {
         return api.configuration();
     }
 }

@@ -1,6 +1,5 @@
 package de.chojo.lyna.commands.license;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Group;
 import de.chojo.jdautil.interactions.slash.Slash;
@@ -11,14 +10,14 @@ import de.chojo.lyna.commands.license.handler.delete.Identifier;
 import de.chojo.lyna.commands.license.handler.delete.Key;
 import de.chojo.lyna.commands.license.handler.downloads.Grant;
 import de.chojo.lyna.commands.license.handler.downloads.Revoke;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
 
 public class License implements SlashProvider<Slash> {
     private final Guilds guilds;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
 
-    public License(Guilds guilds, Configuration<ConfigFile> configuration) {
+    public License(Guilds guilds, Conf configuration) {
         this.guilds = guilds;
         this.configuration = configuration;
     }

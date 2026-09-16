@@ -1,8 +1,7 @@
 package de.chojo.lyna.demo;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.auth.PasswordHasher;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.dao.LicenseGuild;
@@ -43,12 +42,12 @@ public class DemoService {
     public static final String PASSWORD = "demo";
 
     private final Data data;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final DemoArtifacts artifacts;
     private final PasswordHasher passwordHasher = new PasswordHasher();
     private ShardManager shardManager;
 
-    public DemoService(Data data, Configuration<ConfigFile> configuration) {
+    public DemoService(Data data, Conf configuration) {
         this.data = data;
         this.configuration = configuration;
         this.artifacts = data.demoArtifacts();
@@ -59,7 +58,7 @@ public class DemoService {
     }
 
     public boolean enabled() {
-        return configuration.config().demo().enabled();
+        return configuration.main().demo().enabled();
     }
 
     /**
@@ -271,7 +270,7 @@ public class DemoService {
     }
 
     private Optional<LicenseGuild> licenseGuild() {
-        long guildId = configuration.config().baseSettings().botGuild();
+        long guildId = configuration.main().baseSettings().botGuild();
         if (shardManager == null || guildId == 0 || shardManager.getGuildById(guildId) == null) {
             return Optional.empty();
         }
