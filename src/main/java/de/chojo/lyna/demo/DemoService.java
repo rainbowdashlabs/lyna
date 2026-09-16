@@ -181,8 +181,10 @@ public class DemoService {
     }
 
     /**
-     * The cast: an operator, somebody who owns a licence, somebody it was shared with, and somebody
-     * with nothing. Each is linked to a real member, because the admin screens resolve them.
+     * The cast: an operator, somebody who owns a licence, somebody it was shared with, somebody with
+     * nothing, and somebody who never linked Discord at all. The first four are linked to real
+     * members, because the admin screens resolve them; the last deliberately is not, because a
+     * sharee with no Discord is a case the pages have to handle and cannot otherwise be seen.
      */
     private List<Account> seedAccounts(List<Member> members) {
         List<Account> accounts = new ArrayList<>();
@@ -196,7 +198,20 @@ public class DemoService {
             accounts.add(account);
         }
         data.instanceOperators().add(members.getFirst().getIdLong(), null);
+        accounts.add(seedWebOnlyAccount());
         return accounts;
+    }
+
+    /**
+     * Somebody who signed up and never linked Discord. Named by hand, which is the only way an
+     * account gets a name when no provider is supplying one.
+     */
+    private Account seedWebOnlyAccount() {
+        Account account = data.accounts().create("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
+        data.accounts().confirmEmail(account.id(), account.email());
+        data.accounts().setUsername(account.id(), "webonly");
+        artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
+        return data.accounts().findById(account.id()).orElse(account);
     }
 
     /**
@@ -214,6 +229,11 @@ public class DemoService {
             licence.get().grantAccess(ReleaseType.STABLE);
             data.accountLicenses().addSharee(licence.get().id(),
                     de.chojo.lyna.data.access.Accounts.accountIdForDiscord(sharee));
+            seeded.accounts().stream()
+                    .filter(account -> "demo-web-only@example.invalid".equals(account.email()))
+                    .findFirst()
+                    .ifPresent(webOnly -> data.accountLicenses().addSharee(licence.get().id(), webOnly.id()));
+            data.licenseInvites().invite(licence.get().id(), "demo-invited@example.invalid");
             claim(licence.get(), owner);
             seedDownloads(product, seeded, licence.get());
         }
@@ -245,7 +265,7 @@ public class DemoService {
     }
 
     private void seedSettings(LicenseGuild licenseGuild) {
-        licenseGuild.settings().license().shares(3);
+        licenseGuild.settings().license().shares(4);
         licenseGuild.settings().trial().serverTime(Duration.ofMinutes(60));
         licenseGuild.settings().trial().accountTime(Duration.ofMinutes(120));
     }
@@ -261,7 +281,7 @@ public class DemoService {
     private static final String[] ROLES = {"operator", "owner", "sharee", "newcomer"};
 
     private static String roleOf(int index) {
-        return index < ROLES.length ? ROLES[index] : "member";
+        return index < ROLES.length ? ROLES[index] : "web-only";
     }
 
     private static String describe(int index) {
@@ -269,7 +289,8 @@ public class DemoService {
             case 0 -> "Administers the instance and every guild";
             case 1 -> "Owns licences and has shared one";
             case 2 -> "Had a licence shared with them";
-            default -> "Has an account and nothing else";
+            case 3 -> "Has an account and nothing else";
+            default -> "Never linked Discord: holds a share through the web alone";
         };
     }
 

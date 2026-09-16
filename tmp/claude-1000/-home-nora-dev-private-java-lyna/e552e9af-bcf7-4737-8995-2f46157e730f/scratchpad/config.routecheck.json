@@ -1,40 +1,40 @@
 {
   "baseSettings" : {
     "token" : "",
-    "botEnabled" : false,
+    "botEnabled" : true,
     "botOwner" : [ ],
     "botGuild" : 0
   },
   "database" : {
-    "host" : "postgres_e2e",
+    "host" : "localhost",
     "port" : "5432",
-    "database" : "lyna",
-    "schema" : "public",
+    "database" : "db",
+    "schema" : "lyna",
     "user" : "user",
     "password" : "pw",
     "poolSize" : 5
   },
   "links" : {
     "tos" : "",
-    "invite" : "",
+    "invite" : "https://discord.com/oauth2/authorize?client_id=1065674230362017813&scope=bot&permissions=2415921152",
     "support" : "",
-    "website" : "",
-    "faq" : "",
+    "website" : "https://rainbowdashlabs.github.io/lyna/",
+    "faq" : "https://rainbowdashlabs.github.io/lyna/faq",
     "frontend" : "http://localhost:3000"
   },
   "license" : {
-    "baseSeed" : "W7B6QAAKZEWL7KXAGKJ8WK9WRZXZUEQR92BKVGQUB8J3F5TMAP"
+    "baseSeed" : "ZAH58WL5B8MXVGLVHEF1QK1REH7RXKK5RCQU54THDVJRBMCTJF"
   },
   "nexus" : {
-    "host" : "nexus-e2e",
-    "username" : "",
-    "password" : ""
+    "host" : "eldonexus.de",
+    "username" : "admin",
+    "password" : "passy"
   },
   "api" : {
-    "hostname" : "localhost",
-    "url" : "http://localhost:8888",
-    "host" : "0.0.0.0",
-    "port" : 8888,
+    "hostname" : null,
+    "url" : null,
+    "host" : null,
+    "port" : 0,
     "allowedOrigins" : [ ],
     "iconHosts" : [ ],
     "staticUi" : false
@@ -52,23 +52,23 @@
     },
     "user" : "",
     "password" : "",
-    "originMail" : [ ],
+    "originMail" : [ "" ],
     "pollSeconds" : 300,
-    "enabled" : false,
+    "enabled" : true,
     "properties" : { }
   },
   "kofi" : {
-    "verificationToken" : "7a777eb6-8f9e-9ddf-acba-2b5efada247a"
+    "verificationToken" : "7fc4aea0-9a0d-47f4-b8d1-f9a64d1348fd"
   },
   "auth" : {
-    "jwtSecret" : "end-to-end-suite-secret-not-a-real-one",
+    "jwtSecret" : "",
     "jwtExpirySeconds" : 86400
   },
   "discord" : {
     "oauth" : {
       "clientId" : "",
       "clientSecret" : "",
-      "redirectUri" : "http://localhost:8890/api/auth/discord/callback"
+      "redirectUri" : ""
     }
   },
   "demo" : {
