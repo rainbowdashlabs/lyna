@@ -10,6 +10,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <DemoBanner/>
   <NuxtLayout>
     <NuxtPage/>
   </NuxtLayout>

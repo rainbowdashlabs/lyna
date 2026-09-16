@@ -77,6 +77,7 @@ services:
       # The one-time download links are built from this, so it has to name the port the stack
       # actually publishes - which toolchain.sh derives per checkout.
       LYNA_API_URL: "http://localhost:${LYNA_E2E_API_PORT:-8890}"
+      LYNA_DEMO_ENABLED: "${LYNA_E2E_DEMO:-false}"
     profiles:
       - e2e
     # Derived per checkout by toolchain.sh, so two checkouts never want the same port. The default

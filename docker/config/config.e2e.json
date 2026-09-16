@@ -1,74 +1,78 @@
 {
-  "baseSettings" : {
-    "token" : "",
-    "botEnabled" : false,
-    "botOwner" : [ ],
-    "botGuild" : 0
+  "baseSettings": {
+    "token": "",
+    "botEnabled": false,
+    "botOwner": [],
+    "botGuild": 0
   },
-  "database" : {
-    "host" : "postgres_e2e",
-    "port" : "5432",
-    "database" : "lyna",
-    "schema" : "public",
-    "user" : "user",
-    "password" : "pw",
-    "poolSize" : 5
+  "database": {
+    "host": "postgres_e2e",
+    "port": "5432",
+    "database": "lyna",
+    "schema": "public",
+    "user": "user",
+    "password": "pw",
+    "poolSize": 5
   },
-  "links" : {
-    "tos" : "",
-    "invite" : "",
-    "support" : "",
-    "website" : "",
-    "faq" : "",
-    "frontend" : "http://localhost:3000"
+  "links": {
+    "tos": "",
+    "invite": "",
+    "support": "",
+    "website": "",
+    "faq": "",
+    "frontend": "http://localhost:3000"
   },
-  "license" : {
-    "baseSeed" : "W7B6QAAKZEWL7KXAGKJ8WK9WRZXZUEQR92BKVGQUB8J3F5TMAP"
+  "license": {
+    "baseSeed": "W7B6QAAKZEWL7KXAGKJ8WK9WRZXZUEQR92BKVGQUB8J3F5TMAP"
   },
-  "nexus" : {
-    "host" : "nexus-e2e",
-    "username" : "",
-    "password" : ""
+  "nexus": {
+    "host": "nexus-e2e",
+    "username": "",
+    "password": ""
   },
-  "api" : {
-    "hostname" : "localhost",
-    "url" : "http://localhost:8888",
-    "host" : "0.0.0.0",
-    "port" : 8888,
-    "allowedOrigins" : [ ],
-    "iconHosts" : [ ],
-    "staticUi" : false
+  "api": {
+    "hostname": "localhost",
+    "url": "http://localhost:8888",
+    "host": "0.0.0.0",
+    "port": 8888,
+    "allowedOrigins": [],
+    "iconHosts": [],
+    "staticUi": false
   },
-  "mailing" : {
-    "smtp" : {
-      "host" : "",
-      "port" : 665,
-      "ssl" : false
+  "mailing": {
+    "smtp": {
+      "host": "",
+      "port": 665,
+      "ssl": false
     },
-    "imap" : {
-      "host" : "",
-      "port" : 665,
-      "ssl" : false
+    "imap": {
+      "host": "",
+      "port": 665,
+      "ssl": false
     },
-    "user" : "",
-    "password" : "",
-    "originMail" : [ ],
-    "pollSeconds" : 300,
-    "enabled" : false,
-    "properties" : { }
+    "user": "",
+    "password": "",
+    "originMail": [],
+    "pollSeconds": 300,
+    "enabled": false,
+    "properties": {}
   },
-  "kofi" : {
-    "verificationToken" : "7a777eb6-8f9e-9ddf-acba-2b5efada247a"
+  "kofi": {
+    "verificationToken": "7a777eb6-8f9e-9ddf-acba-2b5efada247a"
   },
-  "auth" : {
-    "jwtSecret" : "end-to-end-suite-secret-not-a-real-one",
-    "jwtExpirySeconds" : 86400
+  "auth": {
+    "jwtSecret": "end-to-end-suite-secret-not-a-real-one",
+    "jwtExpirySeconds": 86400
   },
-  "discord" : {
-    "oauth" : {
-      "clientId" : "",
-      "clientSecret" : "",
-      "redirectUri" : "http://localhost:8890/api/auth/discord/callback"
+  "discord": {
+    "oauth": {
+      "clientId": "",
+      "clientSecret": "",
+      "redirectUri": "http://localhost:8890/api/auth/discord/callback"
     }
+  },
+  "demo": {
+    "enabled": false,
+    "resetIntervalMinutes": 60
   }
 }

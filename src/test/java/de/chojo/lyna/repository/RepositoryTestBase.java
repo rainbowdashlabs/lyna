@@ -5,6 +5,7 @@ import de.chojo.lyna.TestContainers;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceOperators;
@@ -64,6 +65,7 @@ public abstract class RepositoryTestBase {
     protected static AccountSessions accountSessions;
     protected static RevokedJtis revokedJtis;
     protected static DownloadLog downloadLog;
+    protected static DemoArtifacts demoArtifacts;
     protected static InstanceSettingsAccess instanceSettings;
     protected static InstanceOperators instanceOperators;
     protected static KioskProducts kioskProducts;
@@ -104,6 +106,7 @@ public abstract class RepositoryTestBase {
         accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();
         downloadLog = new DownloadLog();
+        demoArtifacts = new DemoArtifacts();
         instanceSettings = new InstanceSettingsAccess();
         instanceOperators = new InstanceOperators();
         kioskProducts = new KioskProducts();

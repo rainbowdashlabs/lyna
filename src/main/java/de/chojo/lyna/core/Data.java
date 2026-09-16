@@ -11,6 +11,7 @@ import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.EmailVerificationTokens;
@@ -52,6 +53,7 @@ public class Data {
     private AccountSessions accountSessions;
     private RevokedJtis revokedJtis;
     private DownloadLog downloadLog;
+    private DemoArtifacts demoArtifacts;
     private InstanceSettingsAccess instanceSettings;
     private InstanceOperators instanceOperators;
     private PasswordResetTokens passwordResetTokens;
@@ -123,6 +125,7 @@ public class Data {
         accountSessions = new AccountSessions();
         revokedJtis = new RevokedJtis();
         downloadLog = new DownloadLog();
+        demoArtifacts = new DemoArtifacts();
         instanceSettings = new InstanceSettingsAccess();
         instanceOperators = new InstanceOperators();
         passwordResetTokens = new PasswordResetTokens();
@@ -213,6 +216,10 @@ public class Data {
 
     public DownloadLog downloadLog() {
         return downloadLog;
+    }
+
+    public DemoArtifacts demoArtifacts() {
+        return demoArtifacts;
     }
 
     public InstanceSettingsAccess instanceSettings() {

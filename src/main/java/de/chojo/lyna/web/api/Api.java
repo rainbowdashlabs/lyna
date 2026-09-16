@@ -29,7 +29,8 @@ public class Api {
 
     private static final Logger log = getLogger(Api.class);
 
-    public Api(WebService web, Configuration<ConfigFile> configuration, Data data, MailingService mailingService) {
+    public Api(WebService web, Configuration<ConfigFile> configuration, Data data, MailingService mailingService,
+               de.chojo.lyna.demo.DemoService demoService) {
         this.web = web;
         this.configuration = configuration;
         this.nexus = data.nexus();
@@ -37,7 +38,8 @@ public class Api {
                 data.passwordResetTokens(), data.emailVerificationTokens(), data.passwordHasher(), data.jwtService(),
                 data.discordOAuthClient(), mailingService);
         v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog(),
-                data.kioskProducts(), auth, data.accounts(), data.accountLicenses());
+                data.kioskProducts(), auth, data.accounts(), data.accountLicenses(),
+                data.accountSessions(), data.jwtService(), demoService);
         account = new Account(auth, data.accounts(), data.accountLicenses(), data.instanceSettings(), mailingService, data.emailVerificationTokens(), configuration,
                 data.accountSessions(), data.revokedJtis(),
                 data.downloadLog(), data.passwordHasher(), data.jwtService());

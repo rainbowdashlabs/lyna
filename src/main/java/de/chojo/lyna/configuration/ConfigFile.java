@@ -4,6 +4,7 @@ import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
+import de.chojo.lyna.configuration.elements.Demo;
 import de.chojo.lyna.configuration.elements.Discord;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
@@ -23,6 +24,7 @@ public class ConfigFile {
     private Kofi kofi = new Kofi();
     private Auth auth = new Auth();
     private Discord discord = new Discord();
+    private Demo demo = new Demo();
 
     public BaseSettings baseSettings() {
         return baseSettings;
@@ -60,5 +62,9 @@ public class ConfigFile {
 
     public Discord discord() {
         return discord;
+    }
+
+    public Demo demo() {
+        return demo;
     }
 }

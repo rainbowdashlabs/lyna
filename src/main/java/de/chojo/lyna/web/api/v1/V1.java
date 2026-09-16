@@ -10,6 +10,7 @@ import de.chojo.lyna.web.api.v1.update.Update;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.AccountLicenses;
+import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
@@ -26,10 +27,12 @@ public class V1 {
     private final de.chojo.lyna.web.api.v1.products.Products products;
     private final Releases releases;
     private final de.chojo.lyna.web.api.v1.products.Wizard wizard;
+    private final de.chojo.lyna.web.api.v1.demo.DemoApi demoApi;
 
     public V1(Api api, Products products, MailingService mailingService, KoFiProducts koFiProducts,
               DownloadLog downloadLog, KioskProducts kioskProducts, Auth auth, Accounts accounts,
-              AccountLicenses accountLicenses) {
+              AccountLicenses accountLicenses, AccountSessions accountSessions,
+              de.chojo.lyna.auth.JwtService jwtService, de.chojo.lyna.demo.DemoService demoService) {
         this.api = api;
         download = new Download(this, products, auth, accounts, accountLicenses, kioskProducts);
         download.proxy().downloadLog(downloadLog);
@@ -38,6 +41,7 @@ public class V1 {
         this.products = new de.chojo.lyna.web.api.v1.products.Products(this, kioskProducts, auth, accounts, accountLicenses);
         releases = new Releases(this, products, auth, accounts, accountLicenses, kioskProducts);
         wizard = new de.chojo.lyna.web.api.v1.products.Wizard(this, products, kioskProducts, auth, accounts, accountLicenses);
+        demoApi = new de.chojo.lyna.web.api.v1.demo.DemoApi(demoService, accounts, accountSessions, jwtService);
     }
 
     public void init() {
@@ -48,6 +52,7 @@ public class V1 {
             products.init();
             releases.init();
             wizard.init();
+            demoApi.init();
         });
     }
 

@@ -39,6 +39,7 @@ async function submit() {
     <PageHeader class="mb-6">
       Log in
     </PageHeader>
+    <DemoAccountPicker class="mb-6"/>
     <form class="space-y-4" @submit.prevent="submit">
       <LabelledField label="Email">
         <EmailInput v-model="email" autocomplete="email" required/>

@@ -26,13 +26,15 @@ public class WebService {
     private static final Logger log = getLogger(WebService.class);
     private Javalin javalin;
 
-    private WebService(Configuration<ConfigFile> configuration, Data data, MailingService mailingService) {
+    private WebService(Configuration<ConfigFile> configuration, Data data, MailingService mailingService,
+                       de.chojo.lyna.demo.DemoService demoService) {
         this.configuration = configuration;
-        api = new Api(this, configuration, data, mailingService);
+        api = new Api(this, configuration, data, mailingService, demoService);
     }
 
-    public static WebService create(Configuration<ConfigFile> configuration, Data data, MailingService mailingService) {
-        WebService web = new WebService(configuration, data, mailingService);
+    public static WebService create(Configuration<ConfigFile> configuration, Data data, MailingService mailingService,
+                                    de.chojo.lyna.demo.DemoService demoService) {
+        WebService web = new WebService(configuration, data, mailingService, demoService);
         web.init();
         return web;
     }
