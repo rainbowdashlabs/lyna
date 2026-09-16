@@ -1,0 +1,9 @@
+The fonts in this directory are used under the SIL Open Font License, Version 1.1.
+
+Public Sans      — https://github.com/uswds/public-sans
+JetBrains Mono   — https://github.com/JetBrains/JetBrainsMono
+
+Full licence text: https://openfontlicense.org/
+
+Only the latin and latin-ext subsets are shipped. They are served from this instance rather than
+from a font host so that running Lyna does not put a third party into every visitor's page load.

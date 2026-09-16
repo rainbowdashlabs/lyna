@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./fonts.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -42,7 +43,10 @@
     --color-success-badge: #00A006;
     --color-error-badge: #ec2929;
 
-    --radius-theme: 0.5rem;
+    --radius-theme: 0;
+
+    --font-sans: 'Public Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
 :root {
@@ -69,7 +73,15 @@ html {
 
 body {
     min-height: 100vh;
-    font-family: 'Roboto', 'Helvetica Neue', system-ui, sans-serif;
+    font-family: var(--font-sans);
+}
+
+/* Anything a person reads as data rather than as prose: keys, versions, timestamps, counts,
+   labels and the chrome. It is what makes a column of figures line up. */
+.font-data {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
 }
 
 .rounded-theme {
