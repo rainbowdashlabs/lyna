@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.Duration;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -69,6 +70,9 @@ public class Data {
         this.configuration = configuration;
     }
 
+    /** How long to wait before asking the database again. */
+    private static final Duration CONNECT_RETRY_DELAY = Duration.ofSeconds(10);
+
     public static Data create(Threading threading, Configuration<ConfigFile> configuration) throws SQLException, IOException, InterruptedException {
         var data = new Data(threading, configuration);
         data.init();
@@ -81,16 +85,31 @@ public class Data {
         updateDatabase();
         initDao();
     }
-    public void initConnection() {
-        try {
-            dataSource = getConnectionPool();
-        } catch (Exception e) {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to database. Retrying in 10.", e);
+
+    /**
+     * Waits for the database, however long that takes.
+     *
+     * <p>A deployment routinely starts before its database does, so a refused connection is not a
+     * reason to give up - it is a reason to wait. There is no attempt limit for the same reason: an
+     * application that exits after five tries only moves the problem to whatever restarts it.
+     *
+     * <p>Being interrupted is the one way out. That is a shutdown asking the process to stop, and
+     * stopping is what it should do rather than going back to sleep.
+     *
+     * @throws InterruptedException if the wait is interrupted. Thrown rather than swallowed so the
+     *                              signal reaches the caller: the sleep clears the thread's
+     *                              interrupt flag, so the exception is all that is left of it
+     */
+    public void initConnection() throws InterruptedException {
+        while (true) {
             try {
-                Thread.sleep(1000 * 10);
-            } catch (InterruptedException ignore) {
+                dataSource = getConnectionPool();
+                return;
+            } catch (Exception e) {
+                log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to database. Retrying in {}s.",
+                        CONNECT_RETRY_DELAY.toSeconds(), e);
             }
-            initConnection();
+            Thread.sleep(CONNECT_RETRY_DELAY.toMillis());
         }
     }
 
