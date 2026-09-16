@@ -121,6 +121,19 @@ public abstract class RepositoryTestBase {
      *
      * @param tables the unqualified table names, in an order no foreign key objects to
      */
+    /**
+     * @param table a table in the test schema
+     * @return how many rows it holds
+     */
+    protected static int countRows(String table) throws SQLException {
+        try (var connection = dataSource.getConnection();
+             var statement = connection.createStatement();
+             var rows = statement.executeQuery("SELECT count(*) FROM %s.%s".formatted(schemaName, table))) {
+            rows.next();
+            return rows.getInt(1);
+        }
+    }
+
     protected static void clear(String... tables) throws SQLException {
         try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
             for (String table : tables) {

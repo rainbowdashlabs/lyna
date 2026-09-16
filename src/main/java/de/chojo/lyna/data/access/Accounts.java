@@ -243,6 +243,50 @@ public class Accounts {
                 .delete();
     }
 
+    /**
+     * The account a Discord id belongs to, making one if it does not have any yet.
+     *
+     * <p>The bot hands licences to whoever is in front of it, and most of those people have never
+     * opened the web at all. Licences hang off accounts, so one is minted for them: no address, no
+     * password, nothing but the identity. Signing in through Discord later lands on that same
+     * account and finds the licences already there, because it is reached by the same identity.
+     *
+     * @param discordUserId the Discord id
+     * @return the account id, never zero
+     */
+    public static int accountIdForDiscord(long discordUserId) {
+        String externalId = Long.toString(discordUserId);
+        Optional<Integer> existing = query("""
+                SELECT account_id FROM account_identity WHERE provider = ? AND external_id = ?
+                """)
+                .single(call().bind(AccountIdentity.DISCORD).bind(externalId))
+                .map(row -> row.getInt("account_id"))
+                .first();
+        if (existing.isPresent()) return existing.get();
+
+        int accountId = query("INSERT INTO account (email, password_hash) VALUES (NULL, NULL) RETURNING id")
+                .single(call())
+                .map(row -> row.getInt("id"))
+                .first()
+                .orElseThrow(() -> new IllegalStateException("Could not create an account for " + externalId));
+        Optional<Integer> linked = query("""
+                INSERT INTO account_identity (provider, external_id, account_id, verified_via)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT (provider, external_id) DO UPDATE SET external_id = EXCLUDED.external_id
+                RETURNING account_id
+                """)
+                .single(call().bind(AccountIdentity.DISCORD).bind(externalId).bind(accountId)
+                        .bind(AccountIdentity.Verification.BOT_DM_CODE.dbValue()))
+                .map(row -> row.getInt("account_id"))
+                .first();
+        int resolved = linked.orElseThrow(
+                () -> new IllegalStateException("Could not link an account for " + externalId));
+        if (resolved != accountId) {
+            delete(accountId);
+        }
+        return resolved;
+    }
+
     private static AccountIdentity readIdentity(Row row) throws SQLException {
         return new AccountIdentity(
                 row.getInt("account_id"),
@@ -301,7 +345,7 @@ public class Accounts {
                 .update();
     }
 
-    public void delete(int accountId) {
+    public static void delete(int accountId) {
         query("DELETE FROM account WHERE id = ?")
                 .single(call().bind(accountId))
                 .delete();

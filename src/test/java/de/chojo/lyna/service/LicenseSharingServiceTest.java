@@ -19,8 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * What an account may do with a license it holds: see the ones its Discord id carries, share them
- * up to the guild's cap, revoke a share, and read the download history the license produced.
+ * What an account may do with a license it holds: see it, share it up to the guild's cap, revoke a
+ * share, and read the download history the license produced.
+ *
+ * <p>All of it by account. Discord is one way to arrive at an account and not a condition of holding
+ * anything, which is what the unlinking cases below are about.
  */
 class LicenseSharingServiceTest extends RepositoryTestBase {
     private static final long GUILD = 2001L;
@@ -61,8 +64,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
                     INSERT INTO license (product_id, user_identifier, key)
                     VALUES (%d, 'owner@example.invalid', 'KEY-1') RETURNING id
                     """.formatted(productId));
-            statement.execute("INSERT INTO %s.user_license (user_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, OWNER_DISCORD, licenseId));
+            statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
+                    .formatted(schemaName, owner.id(), licenseId));
         }
     }
 
@@ -81,43 +84,56 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("An account with no Discord link holds no licenses, rather than being refused")
+    @DisplayName("An account that never linked Discord holds nothing, rather than being refused")
     void unlinkedAccountHoldsNothing() {
         Account unlinked = accounts.create("unlinked@example.invalid", "hash");
 
         assertTrue(discordIdOf(unlinked).isEmpty());
+        assertTrue(accountLicenses.owned(unlinked.id()).isEmpty());
+        assertTrue(accountLicenses.shared(unlinked.id()).isEmpty());
     }
 
     @Test
-    @DisplayName("Unlinking hides the licenses, and linking again brings them back")
-    void unlinkHidesAndRelinkRestores() {
-        assertEquals(1, accountLicenses.owned(discordIdOf(owner).orElseThrow()).size());
+    @DisplayName("Unlinking Discord does not take the licenses away: they belong to the account")
+    void unlinkKeepsTheLicenses() {
+        assertEquals(1, accountLicenses.owned(owner.id()).size());
 
         accounts.unlink(owner.id());
-        assertTrue(discordIdOf(owner).isEmpty());
 
-        accounts.link(owner.id(), OWNER_DISCORD, AccountIdentity.Verification.OAUTH);
-        assertEquals(1, accountLicenses.owned(discordIdOf(owner).orElseThrow()).size());
+        assertTrue(discordIdOf(owner).isEmpty());
+        assertEquals(1, accountLicenses.owned(owner.id()).size());
+    }
+
+    @Test
+    @DisplayName("An account with no Discord at all can be shared with, and reads the license")
+    void shareeNeedsNoDiscord() {
+        Account webOnly = accounts.create("web-only@example.invalid", "hash");
+
+        assertTrue(accountLicenses.addSharee(licenseId, webOnly.id()));
+
+        assertEquals(1, accountLicenses.shared(webOnly.id()).size());
+        assertEquals("KEY-1", accountLicenses.keyForHolder(licenseId, webOnly.id()).orElseThrow());
+        assertTrue(discordIdOf(webOnly).isEmpty());
     }
 
     @Test
     @DisplayName("Sharing hands the license to the other account without giving it away")
     void sharingKeepsOwnership() {
-        accountLicenses.addSharee(licenseId, SHAREE_DISCORD);
+        accountLicenses.addSharee(licenseId, sharee.id());
 
-        assertEquals(1, accountLicenses.owned(OWNER_DISCORD).size());
-        assertTrue(accountLicenses.owned(SHAREE_DISCORD).isEmpty());
-        assertEquals(1, accountLicenses.shared(SHAREE_DISCORD).size());
-        assertTrue(accountLicenses.shared(OWNER_DISCORD).isEmpty());
+        assertEquals(1, accountLicenses.owned(owner.id()).size());
+        assertTrue(accountLicenses.owned(sharee.id()).isEmpty());
+        assertEquals(1, accountLicenses.shared(sharee.id()).size());
+        assertTrue(accountLicenses.shared(owner.id()).isEmpty());
     }
 
     @Test
     @DisplayName("The cap is the guild's, and it is reached when the sharees fill it")
     void capIsReported() {
-        accountLicenses.addSharee(licenseId, SHAREE_DISCORD);
-        accountLicenses.addSharee(licenseId, 702L);
+        accountLicenses.addSharee(licenseId, sharee.id());
+        accountLicenses.addSharee(licenseId, accounts.create(null, null).id());
 
-        AccountLicense license = accountLicenses.owned(OWNER_DISCORD).getFirst();
+        AccountLicense license = accountLicenses.owned(owner.id()).getFirst();
         assertEquals(2, license.shareesUsed());
         assertEquals(2, license.shareesCap());
         assertTrue(license.shareesUsed() >= license.shareesCap());
@@ -126,31 +142,33 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Revoking takes the license back and frees a place under the cap")
     void revokingFreesAPlace() {
-        accountLicenses.addSharee(licenseId, SHAREE_DISCORD);
-        accountLicenses.addSharee(licenseId, 702L);
+        accountLicenses.addSharee(licenseId, sharee.id());
+        accountLicenses.addSharee(licenseId, accounts.create(null, null).id());
 
-        accountLicenses.removeSharee(licenseId, SHAREE_DISCORD);
+        accountLicenses.removeSharee(licenseId, sharee.id());
 
-        assertTrue(accountLicenses.shared(SHAREE_DISCORD).isEmpty());
-        assertEquals(1, accountLicenses.owned(OWNER_DISCORD).getFirst().shareesUsed());
+        assertTrue(accountLicenses.shared(sharee.id()).isEmpty());
+        assertEquals(1, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
     }
 
     @Test
     @DisplayName("A sharee cannot manage the sharees: they are not the owner")
     void shareeIsNotTheOwner() {
-        accountLicenses.addSharee(licenseId, SHAREE_DISCORD);
+        accountLicenses.addSharee(licenseId, sharee.id());
 
-        AccountLicense asSharee = accountLicenses.forHolder(licenseId, SHAREE_DISCORD).orElseThrow();
+        AccountLicense asSharee = accountLicenses.forHolder(licenseId, sharee.id()).orElseThrow();
 
         assertEquals(AccountLicense.Role.SHAREE, asSharee.role());
-        assertEquals(OWNER_DISCORD, asSharee.ownerDiscordId());
+        assertEquals(owner.id(), asSharee.ownerAccountId());
     }
 
     @Test
     @DisplayName("Somebody holding no part of the license reads nothing about it")
     void strangerReadsNothing() {
-        assertTrue(accountLicenses.forHolder(licenseId, 999L).isEmpty());
-        assertTrue(accountLicenses.keyForHolder(licenseId, 999L).isEmpty());
+        Account stranger = accounts.create("stranger@example.invalid", "hash");
+
+        assertTrue(accountLicenses.forHolder(licenseId, stranger.id()).isEmpty());
+        assertTrue(accountLicenses.keyForHolder(licenseId, stranger.id()).isEmpty());
     }
 
     @Test
@@ -194,10 +212,27 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("Deleting the owner's account leaves the license with the Discord id it belongs to")
-    void deletingTheAccountKeepsTheLicense() {
+    @DisplayName("Deleting the owner's account releases the license rather than destroying it")
+    void deletingTheAccountReleasesTheLicense() throws SQLException {
         accounts.delete(owner.id());
 
-        assertFalse(accountLicenses.owned(OWNER_DISCORD).isEmpty());
+        assertTrue(accountLicenses.owned(owner.id()).isEmpty());
+        assertEquals(0, countRows("user_license"));
+        assertEquals(1, countRows("license"));
+
+        Account returning = accounts.create("returning@example.invalid", "hash");
+        assertTrue(accountLicenses.addSharee(licenseId, returning.id()));
+        assertEquals("KEY-1", accountLicenses.keyForHolder(licenseId, returning.id()).orElseThrow());
+    }
+
+    @Test
+    @DisplayName("Deleting a sharee's account ends their share and frees a place under the cap")
+    void deletingAShareeFreesAPlace() {
+        accountLicenses.addSharee(licenseId, sharee.id());
+        assertEquals(1, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
+
+        accounts.delete(sharee.id());
+
+        assertEquals(0, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
     }
 }

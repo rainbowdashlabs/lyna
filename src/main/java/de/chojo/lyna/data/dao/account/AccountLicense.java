@@ -7,7 +7,7 @@ import java.util.List;
  * gateway, so it reads the same whether or not the bot is connected.
  *
  * @param role          whether the account owns this license or was shared it
- * @param ownerDiscordId the Discord id the license belongs to, which a sharee sees as a handle
+ * @param ownerAccountId the account the license belongs to, which a sharee sees as a username
  * @param shareesUsed   how many people the owner has shared it with
  * @param shareesCap    how many the guild allows, which is what the owner is measured against
  */
@@ -20,7 +20,7 @@ public record AccountLicense(
         String userIdentifier,
         List<String> releaseTypes,
         Role role,
-        long ownerDiscordId,
+        int ownerAccountId,
         int shareesUsed,
         int shareesCap
 ) {

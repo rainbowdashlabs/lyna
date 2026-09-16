@@ -3,6 +3,7 @@ package de.chojo.lyna.service;
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
@@ -60,13 +61,15 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         }
 
         private boolean stillEntitled(long discordId, int productId) {
-            return accountLicenses.entitledProductIds(discordId).contains(productId);
+            return accountLicenses.entitledProductIds(Accounts.accountIdForDiscord(discordId))
+                    .contains(productId);
         }
     }
 
     @BeforeEach
     void seed() throws SQLException {
-        clear("user_sub_license", "user_license", "license_access", "license", "product");
+        clear("user_sub_license", "user_license", "license_access", "license", "product",
+                "account_identity", "account");
         roles = new RecordingRoleSync();
 
         @SuppressWarnings("unchecked")
@@ -83,10 +86,10 @@ class RoleSyncServiceTest extends RepositoryTestBase {
                     INSERT INTO license (product_id, user_identifier, key)
                     VALUES (%d, 'owner@example.invalid', 'ROLE-KEY') RETURNING id
                     """.formatted(productId));
-            statement.execute("INSERT INTO %s.user_license (user_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, OWNER, licenseId));
-            statement.execute("INSERT INTO %s.user_sub_license (user_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, SHAREE, licenseId));
+            statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
+                    .formatted(schemaName, Accounts.accountIdForDiscord(OWNER), licenseId));
+            statement.execute("INSERT INTO %s.user_sub_license (account_id, license_id) VALUES (%d, %d)"
+                    .formatted(schemaName, Accounts.accountIdForDiscord(SHAREE), licenseId));
         }
     }
 
@@ -99,15 +102,6 @@ class RoleSyncServiceTest extends RepositoryTestBase {
 
     private License license() {
         return licenseGuild.licenses().byId(licenseId).orElseThrow();
-    }
-
-    private int countRows(String table) throws SQLException {
-        try (var connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             var rows = statement.executeQuery("SELECT count(*) FROM %s.%s".formatted(schemaName, table))) {
-            rows.next();
-            return rows.getInt(1);
-        }
     }
 
     @Test
@@ -134,7 +128,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         license().clearSubUsers();
 
         assertEquals(0, countRows("user_sub_license"));
-        assertTrue(accountLicenses.shared(SHAREE).isEmpty());
+        assertTrue(accountLicenses.shared(Accounts.accountIdForDiscord(SHAREE)).isEmpty());
     }
 
     @Test
@@ -168,8 +162,8 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     void ownerIsUnaffectedByAShareBeingCleared() {
         license().clearSubUsers();
 
-        assertTrue(accountLicenses.entitledProductIds(OWNER).contains(license().product().id()));
-        assertTrue(accountLicenses.entitledProductIds(SHAREE).isEmpty());
+        assertTrue(accountLicenses.entitledProductIds(Accounts.accountIdForDiscord(OWNER)).contains(license().product().id()));
+        assertTrue(accountLicenses.entitledProductIds(Accounts.accountIdForDiscord(SHAREE)).isEmpty());
     }
 
     @Test

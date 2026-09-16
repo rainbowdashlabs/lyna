@@ -181,13 +181,4 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
         assertEquals(1, options.size());
         assertEquals("Chatty", options.getFirst().name());
     }
-
-    private static int countRows(String table) throws SQLException {
-        try (var connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             var rows = statement.executeQuery("SELECT count(*) FROM %s.%s".formatted(schemaName, table))) {
-            rows.next();
-            return rows.getInt(1);
-        }
-    }
 }

@@ -16,16 +16,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AccountLicensesRepositoryTest extends RepositoryTestBase {
     private static final long GUILD_A = 1001L;
     private static final long GUILD_B = 1002L;
-    private static final long OWNER = 500L;
-    private static final long SHAREE = 600L;
+    private static final long OWNER_DISCORD = 500L;
+    private static final long SHAREE_DISCORD = 600L;
 
     private int chattyLicense;
     private int otherGuildLicense;
+    private int owner;
+    private int sharee;
 
     @BeforeEach
     void seedLicenses() throws SQLException {
         clear("user_sub_license", "user_license", "license_access", "license",
-                "license_settings", "product");
+                "license_settings", "product", "account_identity", "account");
+        owner = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(OWNER_DISCORD);
+        sharee = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(SHAREE_DISCORD);
 
         try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.license_settings (guild_id, shares) VALUES (%d, 3)"
@@ -44,8 +48,8 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
                     VALUES (%d, 'buyer@example.invalid', 'KEY-ELSEWHERE') RETURNING id
                     """.formatted(elsewhere));
 
-            statement.execute("INSERT INTO %s.user_license (user_id, license_id) VALUES (%d, %d), (%d, %d)"
-                    .formatted(schemaName, OWNER, chattyLicense, OWNER, otherGuildLicense));
+            statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d), (%d, %d)"
+                    .formatted(schemaName, owner, chattyLicense, owner, otherGuildLicense));
             statement.execute("INSERT INTO %s.license_access (license_id, release_type) VALUES (%d, 'STABLE'), (%d, 'DEV')"
                     .formatted(schemaName, chattyLicense, chattyLicense));
         }
@@ -61,7 +65,7 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("An owner sees every license they hold, whichever guild issued it")
     void ownedIsCrossGuild() {
-        List<AccountLicense> owned = accountLicenses.owned(OWNER);
+        List<AccountLicense> owned = accountLicenses.owned(owner);
 
         assertEquals(List.of("Chatty", "Elsewhere"),
                 owned.stream().map(AccountLicense::productName).toList());
@@ -72,7 +76,7 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A license carries its release types in the order the enum declares them")
     void releaseTypesAreListed() {
-        AccountLicense chatty = accountLicenses.owned(OWNER).getFirst();
+        AccountLicense chatty = accountLicenses.owned(owner).getFirst();
 
         assertEquals(List.of("STABLE", "DEV"), chatty.releaseTypes());
     }
@@ -80,7 +84,7 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A license with no access granted lists no release types rather than failing")
     void licenseWithoutAccessHasNoReleaseTypes() {
-        AccountLicense elsewhere = accountLicenses.owned(OWNER).getLast();
+        AccountLicense elsewhere = accountLicenses.owned(owner).getLast();
 
         assertTrue(elsewhere.releaseTypes().isEmpty());
     }
@@ -88,30 +92,30 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Somebody who holds nothing sees nothing")
     void strangerSeesNothing() {
-        assertTrue(accountLicenses.owned(999L).isEmpty());
-        assertTrue(accountLicenses.shared(999L).isEmpty());
+        assertTrue(accountLicenses.owned(stranger()).isEmpty());
+        assertTrue(accountLicenses.shared(stranger()).isEmpty());
     }
 
     @Test
     @DisplayName("A shared license shows up for the sharee and not among what they own")
     void sharedIsSeparateFromOwned() {
-        accountLicenses.addSharee(chattyLicense, SHAREE);
+        accountLicenses.addSharee(chattyLicense, sharee);
 
-        List<AccountLicense> shared = accountLicenses.shared(SHAREE);
+        List<AccountLicense> shared = accountLicenses.shared(sharee);
         assertEquals(1, shared.size());
         assertEquals("Chatty", shared.getFirst().productName());
         assertEquals(AccountLicense.Role.SHAREE, shared.getFirst().role());
-        assertEquals(OWNER, shared.getFirst().ownerDiscordId());
-        assertTrue(accountLicenses.owned(SHAREE).isEmpty());
+        assertEquals(owner, shared.getFirst().ownerAccountId());
+        assertTrue(accountLicenses.owned(sharee).isEmpty());
     }
 
     @Test
     @DisplayName("The sharee count and the guild's cap are both reported")
     void shareeCountAndCap() {
-        accountLicenses.addSharee(chattyLicense, SHAREE);
-        accountLicenses.addSharee(chattyLicense, 601L);
+        accountLicenses.addSharee(chattyLicense, sharee);
+        accountLicenses.addSharee(chattyLicense, stranger());
 
-        AccountLicense chatty = accountLicenses.owned(OWNER).getFirst();
+        AccountLicense chatty = accountLicenses.owned(owner).getFirst();
         assertEquals(2, chatty.shareesUsed());
         assertEquals(3, chatty.shareesCap());
     }
@@ -119,7 +123,7 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A guild that set no cap reads as none rather than as an error")
     void missingSettingsMeanNoCap() {
-        AccountLicense elsewhere = accountLicenses.owned(OWNER).getLast();
+        AccountLicense elsewhere = accountLicenses.owned(owner).getLast();
 
         assertEquals(0, elsewhere.shareesCap());
     }
@@ -127,49 +131,56 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Sharing with the same person twice adds them once")
     void addShareeIsIdempotent() {
-        assertTrue(accountLicenses.addSharee(chattyLicense, SHAREE));
+        assertTrue(accountLicenses.addSharee(chattyLicense, sharee));
 
-        assertFalse(accountLicenses.addSharee(chattyLicense, SHAREE));
+        assertFalse(accountLicenses.addSharee(chattyLicense, sharee));
 
-        assertEquals(List.of(SHAREE), accountLicenses.sharees(chattyLicense));
+        assertEquals(List.of(sharee), accountLicenses.sharees(chattyLicense));
     }
 
     @Test
     @DisplayName("Revoking takes the license away from the sharee")
     void removeSharee() {
-        accountLicenses.addSharee(chattyLicense, SHAREE);
+        accountLicenses.addSharee(chattyLicense, sharee);
 
-        assertTrue(accountLicenses.removeSharee(chattyLicense, SHAREE));
+        assertTrue(accountLicenses.removeSharee(chattyLicense, sharee));
 
-        assertTrue(accountLicenses.shared(SHAREE).isEmpty());
-        assertFalse(accountLicenses.removeSharee(chattyLicense, SHAREE));
+        assertTrue(accountLicenses.shared(sharee).isEmpty());
+        assertFalse(accountLicenses.removeSharee(chattyLicense, sharee));
     }
 
     @Test
     @DisplayName("A holder reads their own license, and is told which side of it they are on")
     void forHolderReportsTheRole() {
-        accountLicenses.addSharee(chattyLicense, SHAREE);
+        accountLicenses.addSharee(chattyLicense, sharee);
 
         assertEquals(AccountLicense.Role.OWNER,
-                accountLicenses.forHolder(chattyLicense, OWNER).orElseThrow().role());
+                accountLicenses.forHolder(chattyLicense, owner).orElseThrow().role());
         assertEquals(AccountLicense.Role.SHAREE,
-                accountLicenses.forHolder(chattyLicense, SHAREE).orElseThrow().role());
+                accountLicenses.forHolder(chattyLicense, sharee).orElseThrow().role());
     }
 
     @Test
     @DisplayName("Somebody who holds no part of a license cannot read it")
     void forHolderRefusesAStranger() {
-        assertTrue(accountLicenses.forHolder(chattyLicense, 999L).isEmpty());
-        assertTrue(accountLicenses.keyForHolder(chattyLicense, 999L).isEmpty());
+        assertTrue(accountLicenses.forHolder(chattyLicense, stranger()).isEmpty());
+        assertTrue(accountLicenses.keyForHolder(chattyLicense, stranger()).isEmpty());
     }
 
     @Test
     @DisplayName("The key is handed to the owner and to a sharee, and to nobody else")
     void keyGoesToHoldersOnly() {
-        accountLicenses.addSharee(chattyLicense, SHAREE);
+        accountLicenses.addSharee(chattyLicense, sharee);
 
-        assertEquals("KEY-CHATTY", accountLicenses.keyForHolder(chattyLicense, OWNER).orElseThrow());
-        assertEquals("KEY-CHATTY", accountLicenses.keyForHolder(chattyLicense, SHAREE).orElseThrow());
-        assertTrue(accountLicenses.keyForHolder(chattyLicense, 999L).isEmpty());
+        assertEquals("KEY-CHATTY", accountLicenses.keyForHolder(chattyLicense, owner).orElseThrow());
+        assertEquals("KEY-CHATTY", accountLicenses.keyForHolder(chattyLicense, sharee).orElseThrow());
+        assertTrue(accountLicenses.keyForHolder(chattyLicense, stranger()).isEmpty());
     }
+
+    /** An account that holds nothing, minted fresh so it cannot collide with the cast. */
+    private static int stranger() {
+        return de.chojo.lyna.data.access.Accounts.accountIdForDiscord(900_000L + counter++);
+    }
+
+    private static long counter = 0;
 }

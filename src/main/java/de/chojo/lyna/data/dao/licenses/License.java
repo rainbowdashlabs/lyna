@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Member;
@@ -62,7 +63,13 @@ public class License {
         if (owner != -1) {
             return owner;
         }
-        owner = query("SELECT user_id, license_id FROM user_license WHERE license_id = ?")
+        owner = query("""
+                SELECT i.external_id::BIGINT AS user_id
+                FROM user_license u
+                    JOIN account_identity i
+                        ON i.account_id = u.account_id AND i.provider = 'discord'
+                WHERE u.license_id = ?
+                """)
                 .single(call().bind(id))
                 .map(row -> row.getLong("user_id"))
                 .first().orElse(0L);
@@ -70,7 +77,13 @@ public class License {
     }
 
     public List<Long> subUsers() {
-        return query("SELECT user_id, license_id FROM user_sub_license WHERE license_id = ?")
+        return query("""
+                SELECT i.external_id::BIGINT AS user_id
+                FROM user_sub_license u
+                    JOIN account_identity i
+                        ON i.account_id = u.account_id AND i.provider = 'discord'
+                WHERE u.license_id = ?
+                """)
                 .single(call().bind(id))
                 .map(row -> row.getLong("user_id"))
                 .all();
@@ -113,8 +126,8 @@ public class License {
     }
 
     public boolean claim(Member member) {
-        if (query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(member.getIdLong()).bind(id))
+        if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id))
                 .insert()
                 .changed()) {
             log.info(LogNotify.STATUS, "{} claimed license {} for {}", member.getEffectiveName(), id, product().name());
@@ -131,8 +144,8 @@ public class License {
 
     public boolean transfer(Member member) {
         clearSubUsers();
-        if (query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET user_id = excluded.user_id")
-                .single(call().bind(member.getIdLong()).bind(id))
+        if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET account_id = excluded.account_id")
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id))
                 .insert()
                 .changed()) {
             Member oldOwner = member.getGuild().retrieveMemberById(owner).complete();
@@ -169,8 +182,8 @@ public class License {
     }
 
     public boolean removeSubUser(Member member) {
-        boolean changed = query("DELETE FROM user_sub_license WHERE license_id = ? AND user_id = ?")
-                .single(call().bind(id()).bind(member.getIdLong()))
+        boolean changed = query("DELETE FROM user_sub_license WHERE license_id = ? AND account_id = ?")
+                .single(call().bind(id()).bind(Accounts.accountIdForDiscord(member.getIdLong())))
                 .delete()
                 .changed();
         if (changed) {
@@ -184,8 +197,8 @@ public class License {
     public boolean addSubUser(Member member) {
         product.assign(member);
         log.info(LogNotify.STATUS, "{} shared license for {} with {}", owner, product.name(), member.getEffectiveName());
-        return query("INSERT INTO user_sub_license(user_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(member.getIdLong()).bind(id()))
+        return query("INSERT INTO user_sub_license(account_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id()))
                 .insert()
                 .changed();
     }

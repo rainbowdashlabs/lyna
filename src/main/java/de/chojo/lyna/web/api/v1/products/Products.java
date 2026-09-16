@@ -57,9 +57,7 @@ public class Products {
      */
     private Set<Integer> entitlements(Context ctx) {
         return auth.currentSession(ctx)
-                .flatMap(session -> accounts.findLinkByAccountId(session.accountId()))
-                .map(AccountIdentity::externalIdAsLong)
-                .map(licenses::entitledProductIds)
+                .map(session -> licenses.entitledProductIds(session.accountId()))
                 .orElse(Set.of());
     }
 

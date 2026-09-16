@@ -212,7 +212,8 @@ public class DemoService {
             Optional<License> licence = product.createLicense("demo-owner@example.invalid");
             if (licence.isEmpty()) continue;
             licence.get().grantAccess(ReleaseType.STABLE);
-            data.accountLicenses().addSharee(licence.get().id(), sharee);
+            data.accountLicenses().addSharee(licence.get().id(),
+                    de.chojo.lyna.data.access.Accounts.accountIdForDiscord(sharee));
             claim(licence.get(), owner);
             seedDownloads(product, seeded, licence.get());
         }
@@ -224,8 +225,10 @@ public class DemoService {
      */
     private void claim(License licence, long discordId) {
         de.chojo.sadu.queries.api.query.Query
-                .query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(de.chojo.sadu.queries.api.call.Call.call().bind(discordId).bind(licence.id()))
+                .query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
+                .single(de.chojo.sadu.queries.api.call.Call.call()
+                        .bind(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(discordId))
+                        .bind(licence.id()))
                 .insert();
     }
 

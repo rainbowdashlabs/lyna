@@ -93,8 +93,9 @@ public class Licenses {
                 SELECT l.product_id, l.id, l.user_identifier, l.key
                 FROM license l
                 JOIN user_license u ON u.license_id = l.id
+                JOIN account_identity i ON i.account_id = u.account_id AND i.provider = 'discord'
                 JOIN product p ON p.id = l.product_id
-                WHERE u.user_id = ? AND p.guild_id = ?
+                WHERE i.external_id = ?::TEXT AND p.guild_id = ?
                 ORDER BY l.id DESC
                 """)
                 .single(call().bind(discordId).bind(guildId()))
@@ -107,8 +108,9 @@ public class Licenses {
                 SELECT l.product_id, l.id, l.user_identifier, l.key
                 FROM license l
                 JOIN user_sub_license u ON u.license_id = l.id
+                JOIN account_identity i ON i.account_id = u.account_id AND i.provider = 'discord'
                 JOIN product p ON p.id = l.product_id
-                WHERE u.user_id = ? AND p.guild_id = ?
+                WHERE i.external_id = ?::TEXT AND p.guild_id = ?
                 ORDER BY l.id DESC
                 """)
                 .single(call().bind(discordId).bind(guildId()))

@@ -186,10 +186,7 @@ public class Wizard {
         }
         var session = auth.currentSession(ctx);
         if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
-        Set<String> types = accounts.findLinkByAccountId(session.get().accountId())
-                .map(AccountIdentity::externalIdAsLong)
-                .map(discordId -> licenses.releaseTypes(discordId, productId))
-                .orElse(Set.of());
+        Set<String> types = licenses.releaseTypes(session.get().accountId(), productId);
         if (types.isEmpty()) throw new ForbiddenResponse("You do not hold a license for this product");
         return types;
     }

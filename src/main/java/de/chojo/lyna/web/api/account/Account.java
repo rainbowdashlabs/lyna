@@ -258,8 +258,7 @@ public class Account {
         Integer licenseId = filterId(ctx, "license");
         Integer scopedAccount = accountId;
         if (licenseId != null) {
-            boolean owns = linkedDiscordId(accountId)
-                    .flatMap(discordId -> licenses.forHolder(licenseId, discordId))
+            boolean owns = licenses.forHolder(licenseId, accountId)
                     .filter(license -> license.role() == AccountLicense.Role.OWNER)
                     .isPresent();
             if (owns) scopedAccount = null;
@@ -437,27 +436,13 @@ public class Account {
         ctx.json(new Appearance(theme, feel, darkMode));
     }
 
-    /**
-     * The Discord id the calling account is linked to.
-     *
-     * <p>Licenses are keyed by that id, not by the account, so an account that has never linked one
-     * holds nothing - which is a legitimate answer rather than a refusal.
-     */
-    private Optional<Long> linkedDiscordId(int accountId) {
-        return accounts.findLinkByAccountId(accountId).map(AccountIdentity::externalIdAsLong);
-    }
-
     private void listLicenses(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
-        var discordId = linkedDiscordId(session.get().accountId());
-        if (discordId.isEmpty()) {
-            ctx.json(new LicenseList(List.of(), List.of()));
-            return;
-        }
+        int accountId = session.get().accountId();
         ctx.json(new LicenseList(
-                licenses.owned(discordId.get()).stream().map(Account::toView).toList(),
-                licenses.shared(discordId.get()).stream().map(Account::toView).toList()));
+                licenses.owned(accountId).stream().map(Account::toView).toList(),
+                licenses.shared(accountId).stream().map(Account::toView).toList()));
     }
 
     private void licenseDetail(Context ctx) {
@@ -465,12 +450,7 @@ public class Account {
         if (session.isEmpty()) return;
         Integer licenseId = pathId(ctx, "id");
         if (licenseId == null) return;
-        var discordId = linkedDiscordId(session.get().accountId());
-        if (discordId.isEmpty()) {
-            ctx.status(HttpStatus.NOT_FOUND);
-            return;
-        }
-        var license = licenses.forHolder(licenseId, discordId.get());
+        var license = licenses.forHolder(licenseId, session.get().accountId());
         if (license.isEmpty()) {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
@@ -480,7 +460,7 @@ public class Account {
                 : List.of();
         ctx.json(new LicenseDetail(
                 toView(license.get()),
-                licenses.keyForHolder(licenseId, discordId.get()).orElse(null),
+                licenses.keyForHolder(licenseId, session.get().accountId()).orElse(null),
                 sharees,
                 downloadLog.recentForLicense(licenseId, license.get().role() == AccountLicense.Role.OWNER
                         ? null
@@ -502,7 +482,7 @@ public class Account {
             ctx.status(HttpStatus.NOT_FOUND).result("That is not a Discord id");
             return;
         }
-        if (subject == owned.ownerDiscordId()) {
+        if (Accounts.accountIdForDiscord(subject) == owned.ownerAccountId()) {
             ctx.status(HttpStatus.CONFLICT).result("The owner already holds this license");
             return;
         }
@@ -510,7 +490,7 @@ public class Account {
             ctx.status(HttpStatus.CONFLICT).result("Cap reached. Revoke a sharee first.");
             return;
         }
-        licenses.addSharee(owned.id(), subject);
+        licenses.addSharee(owned.id(), Accounts.accountIdForDiscord(subject));
         tellSharee("licence-shared", subject, owned);
         ctx.status(HttpStatus.CREATED).json(new ShareeView(Long.toString(subject)));
     }
@@ -523,7 +503,7 @@ public class Account {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        licenses.removeSharee(owned.id(), subject);
+        licenses.removeSharee(owned.id(), Accounts.accountIdForDiscord(subject));
         tellSharee("licence-revoked", subject, owned);
         ctx.status(HttpStatus.NO_CONTENT);
     }
@@ -544,7 +524,7 @@ public class Account {
             if (sharee.isEmpty() || sharee.get().email() == null) return;
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of(
-                    "owner", Long.toString(license.ownerDiscordId()),
+                    "owner", Integer.toString(license.ownerAccountId()),
                     "product", license.productName(),
                     "senderName", "Lyna");
             mailingService.send(sharee.get().email(),
@@ -568,12 +548,7 @@ public class Account {
         if (session.isEmpty()) return null;
         Integer licenseId = pathId(ctx, "id");
         if (licenseId == null) return null;
-        var discordId = linkedDiscordId(session.get().accountId());
-        if (discordId.isEmpty()) {
-            ctx.status(HttpStatus.NOT_FOUND);
-            return null;
-        }
-        var license = licenses.forHolder(licenseId, discordId.get());
+        var license = licenses.forHolder(licenseId, session.get().accountId());
         if (license.isEmpty() || license.get().role() != AccountLicense.Role.OWNER) {
             ctx.status(HttpStatus.NOT_FOUND);
             return null;
@@ -613,7 +588,7 @@ public class Account {
                 license.userIdentifier(),
                 license.releaseTypes(),
                 license.role().name().toLowerCase(),
-                Long.toString(license.ownerDiscordId()),
+                Integer.toString(license.ownerAccountId()),
                 license.shareesUsed(),
                 license.shareesCap());
     }
@@ -636,7 +611,7 @@ public class Account {
     }
 
     public record LicenseView(int id, String guildId, int productId, String productName, String productUrl,
-                              String userIdentifier, List<String> releaseTypes, String role, String ownerDiscordId,
+                              String userIdentifier, List<String> releaseTypes, String role, String ownerAccountId,
                               int shareesUsed, int shareesCap) {
     }
 

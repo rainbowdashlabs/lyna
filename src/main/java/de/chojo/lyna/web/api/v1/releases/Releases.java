@@ -50,11 +50,7 @@ public class Releases {
         if (kiosk.isFree(productId)) return;
         var session = auth.currentSession(ctx);
         if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
-        boolean entitled = accounts.findLinkByAccountId(session.get().accountId())
-                .map(AccountIdentity::externalIdAsLong)
-                .map(licenses::entitledProductIds)
-                .filter(ids -> ids.contains(productId))
-                .isPresent();
+        boolean entitled = licenses.entitledProductIds(session.get().accountId()).contains(productId);
         if (!entitled) throw new ForbiddenResponse("You do not hold a license for this product");
     }
 

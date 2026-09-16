@@ -17,8 +17,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class KioskProductsRepositoryTest extends RepositoryTestBase {
     private static final long GUILD_A = 3001L;
     private static final long GUILD_B = 3002L;
-    private static final long BUYER = 800L;
-    private static final long SHAREE = 801L;
+    private static final long BUYER_DISCORD = 800L;
+    private static final long SHAREE_DISCORD = 801L;
+
+    private int buyer;
+    private int sharee;
 
     private int freeProduct;
     private int premiumProduct;
@@ -27,7 +30,9 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     @BeforeEach
     void seedCatalog() throws SQLException {
         clear("user_sub_license", "user_license", "license_access", "license",
-                "kofi_products", "product");
+                "kofi_products", "product", "account_identity", "account");
+        buyer = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(BUYER_DISCORD);
+        sharee = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(SHAREE_DISCORD);
 
         try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             freeProduct = insert(statement, """
@@ -44,8 +49,8 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
                     INSERT INTO license (product_id, user_identifier, key)
                     VALUES (%d, 'buyer@example.invalid', 'KEY-PREMIUM') RETURNING id
                     """.formatted(premiumProduct));
-            statement.execute("INSERT INTO %s.user_license (user_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, BUYER, premiumLicense));
+            statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
+                    .formatted(schemaName, buyer, premiumLicense));
         }
     }
 
@@ -111,29 +116,29 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A license owner is entitled to the product it covers")
     void ownerIsEntitled() {
-        assertEquals(java.util.Set.of(premiumProduct), accountLicenses.entitledProductIds(BUYER));
+        assertEquals(java.util.Set.of(premiumProduct), accountLicenses.entitledProductIds(buyer));
     }
 
     @Test
     @DisplayName("A sharee is entitled to the same product the owner is")
     void shareeIsEntitled() {
-        accountLicenses.addSharee(premiumLicense, SHAREE);
+        accountLicenses.addSharee(premiumLicense, sharee);
 
-        assertEquals(java.util.Set.of(premiumProduct), accountLicenses.entitledProductIds(SHAREE));
+        assertEquals(java.util.Set.of(premiumProduct), accountLicenses.entitledProductIds(sharee));
     }
 
     @Test
     @DisplayName("Somebody holding no license is entitled to nothing")
     void strangerIsEntitledToNothing() {
-        assertTrue(accountLicenses.entitledProductIds(999L).isEmpty());
+        assertTrue(accountLicenses.entitledProductIds(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(999L)).isEmpty());
     }
 
     @Test
     @DisplayName("Revoking a share takes the entitlement with it")
     void revokingRemovesEntitlement() {
-        accountLicenses.addSharee(premiumLicense, SHAREE);
-        accountLicenses.removeSharee(premiumLicense, SHAREE);
+        accountLicenses.addSharee(premiumLicense, sharee);
+        accountLicenses.removeSharee(premiumLicense, sharee);
 
-        assertTrue(accountLicenses.entitledProductIds(SHAREE).isEmpty());
+        assertTrue(accountLicenses.entitledProductIds(sharee).isEmpty());
     }
 }
