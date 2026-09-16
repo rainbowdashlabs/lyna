@@ -10,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <th :class="align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : ''" class="px-3 py-2 font-medium">
+  <th :class="align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : ''" class="font-data px-3 py-2 text-[10px] tracking-[0.12em] text-(--text-muted) uppercase">
     <slot/>
   </th>
 </template>

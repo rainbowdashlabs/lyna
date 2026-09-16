@@ -32,9 +32,6 @@
     "passwordTooShort": "Password must be at least 8 characters.",
     "passwordsDiffer": "Passwords do not match."
   },
-  "tableFilter": {
-    "sortBy": "Sort by {column}"
-  },
   "page": {
     "forgot-password": {
       "resetPassword": "Reset password",

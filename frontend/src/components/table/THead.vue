@@ -7,7 +7,7 @@
 </script>
 
 <template>
-  <tr class="border-b border-bg-light-accent dark:border-bg-dark-accent text-left">
+  <tr class="border-b border-(--border) text-left">
     <slot/>
   </tr>
 </template>
