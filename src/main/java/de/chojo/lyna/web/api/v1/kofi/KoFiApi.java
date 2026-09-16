@@ -49,7 +49,9 @@ public class KoFiApi {
                 var results = Urls.splitQuery(ctx.body());
                 var json = results.get("data");
                 var post = mapper.readValue(json, KofiPost.class);
-                if (!post.verificationToken().equals(v1.configuration().config().kofi().verificationToken())) {
+                var presented = post.verificationToken();
+                if (presented == null
+                        || !presented.toString().equals(v1.configuration().config().kofi().verificationToken())) {
                     ctx.status(HttpStatus.FORBIDDEN);
                     return;
                 }

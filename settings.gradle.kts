@@ -14,6 +14,11 @@ dependencyResolutionManagement {
 
             version("log4j", "2.25.3")
 
+            library("ocular", "dev.chojo:ocular:2.2.1")
+            version("jackson", "3.2.1")
+            library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
+            bundle("config", listOf("ocular", "jackson-yaml"))
+
             library("pebble", "io.pebbletemplates:pebble:4.1.2")
             library("bcrypt", "at.favre.lib:bcrypt:0.10.2")
             library("java-jwt", "com.auth0:java-jwt:4.5.0")

@@ -19,6 +19,10 @@ dependencies {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
+    // configuration
+    implementation(libs.bundles.config)
+    annotationProcessor(libs.ocular)
+
     // database
     implementation("org.postgresql", "postgresql", "42.7.8")
     implementation(libs.bundles.sadu)
