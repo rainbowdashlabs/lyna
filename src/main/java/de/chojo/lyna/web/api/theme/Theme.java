@@ -1,5 +1,6 @@
 package de.chojo.lyna.web.api.theme;
 
+import com.google.inject.Inject;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.dao.InstanceSettings;
 import io.javalin.http.Context;
@@ -17,6 +18,7 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 public class Theme {
     private final InstanceSettingsAccess instanceSettings;
 
+    @Inject
     public Theme(InstanceSettingsAccess instanceSettings) {
         this.instanceSettings = instanceSettings;
     }

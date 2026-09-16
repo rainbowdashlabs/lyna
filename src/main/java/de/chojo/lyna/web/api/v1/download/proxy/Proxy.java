@@ -8,7 +8,9 @@ import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.util.JarUtil;
-import de.chojo.lyna.web.api.v1.download.Download;
+import com.google.inject.Inject;
+import de.chojo.lyna.configuration.elements.Api;
+import de.chojo.nexus.NexusRest;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpStatus;
 import org.intellij.lang.annotations.Language;
@@ -25,7 +27,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class Proxy {
     private static final Logger log = getLogger(Proxy.class);
-    private final Download download;
+    private final NexusRest nexus;
+    private final Api apiSettings;
     private final Cache<String, AssetDownload> tokens = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
     @Language("HTML")
     private final String shareHtml = """
@@ -54,15 +57,15 @@ public class Proxy {
                         
             """;
     private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
-    private DownloadLog downloadLog;
+    private final DownloadLog downloadLog;
 
-    public Proxy(Download download) {
-        this.download = download;
-    }
-
-    public void downloadLog(DownloadLog downloadLog) {
+    @Inject
+    public Proxy(NexusRest nexus, Api apiSettings, DownloadLog downloadLog) {
+        this.nexus = nexus;
+        this.apiSettings = apiSettings;
         this.downloadLog = downloadLog;
     }
+
 
     public void init() {
         path("proxy", () -> {
@@ -89,12 +92,12 @@ public class Proxy {
                     return;
                 }
 
-                var asset = this.download.v1().api().nexus().v1().assets().get(download.assetId()).complete();
+                var asset = nexus.v1().assets().get(download.assetId()).complete();
                 String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
 
                 download.postDownload().run();
 
-                if (downloadLog != null && download.productId() != null && download.downloadId() != null
+                if (download.productId() != null && download.downloadId() != null
                         && download.version() != null && download.source() != null) {
                     try {
                         downloadLog.record(
@@ -146,7 +149,7 @@ public class Proxy {
     public String registerAsset(AssetDownload assetDownload) {
         var hashCode = Hashing.sha512().hashString(System.nanoTime() + assetDownload.assetId() + System.nanoTime(), StandardCharsets.UTF_8).toString();
         tokens.put(hashCode, assetDownload);
-        return "%s/api/v1/download/proxy?token=%s".formatted(download.v1().api().configuration().main().api().url(), hashCode);
+        return "%s/api/v1/download/proxy?token=%s".formatted(apiSettings.url(), hashCode);
     }
 
     private static String ipHash(String ip) {

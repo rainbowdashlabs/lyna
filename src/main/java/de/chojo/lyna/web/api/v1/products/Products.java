@@ -1,12 +1,12 @@
 package de.chojo.lyna.web.api.v1.products;
 
+import com.google.inject.Inject;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.products.KioskProduct;
 import de.chojo.lyna.web.api.auth.Auth;
-import de.chojo.lyna.web.api.v1.V1;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -23,14 +23,13 @@ import static io.javalin.apibuilder.ApiBuilder.path;
  * may do with a product is answered per request from the licenses their Discord id holds.
  */
 public class Products {
-    private final V1 v1;
     private final KioskProducts kiosk;
     private final Auth auth;
     private final Accounts accounts;
     private final AccountLicenses licenses;
 
-    public Products(V1 v1, KioskProducts kiosk, Auth auth, Accounts accounts, AccountLicenses licenses) {
-        this.v1 = v1;
+    @Inject
+    public Products(KioskProducts kiosk, Auth auth, Accounts accounts, AccountLicenses licenses) {
         this.kiosk = kiosk;
         this.auth = auth;
         this.accounts = accounts;

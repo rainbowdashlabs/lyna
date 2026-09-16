@@ -1,5 +1,6 @@
 package de.chojo.lyna.web.api.admin;
 
+import com.google.inject.Inject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.lyna.auth.JwtService;
@@ -59,6 +60,7 @@ public class Admin {
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     private final Gateway gateway;
 
+    @Inject
     public Admin(Auth auth, Conf configuration, Accounts accounts, Guilds guilds,
                  InstanceSettingsAccess instanceSettings, KoFiProducts kofi,
                  KioskProducts kioskProducts, InstanceOperators operators,

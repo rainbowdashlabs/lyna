@@ -1,5 +1,6 @@
 package de.chojo.lyna.web.api.account;
 
+import com.google.inject.Inject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.lyna.auth.JwtService;
@@ -58,6 +59,7 @@ public class Account {
     private final JwtService jwtService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+    @Inject
     public Account(Auth auth,
                    Accounts accounts,
                    AccountLicenses licenses,

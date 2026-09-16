@@ -1,5 +1,6 @@
 package de.chojo.lyna.web.api.v1.products;
 
+import com.google.inject.Inject;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
@@ -10,7 +11,7 @@ import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.web.api.auth.Auth;
-import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.Context;
@@ -48,16 +49,17 @@ public class Wizard {
     private static final int DEFAULT_VERSION_LIMIT = 25;
     private static final int MAX_VERSION_LIMIT = 100;
 
-    private final V1 v1;
+    private final Proxy proxy;
     private final Products products;
     private final KioskProducts kiosk;
     private final Auth auth;
     private final Accounts accounts;
     private final AccountLicenses licenses;
 
-    public Wizard(V1 v1, Products products, KioskProducts kiosk, Auth auth, Accounts accounts,
+    @Inject
+    public Wizard(Proxy proxy, Products products, KioskProducts kiosk, Auth auth, Accounts accounts,
                   AccountLicenses licenses) {
-        this.v1 = v1;
+        this.proxy = proxy;
         this.products = products;
         this.kiosk = kiosk;
         this.auth = auth;
@@ -165,7 +167,7 @@ public class Wizard {
         AssetDownload assetDownload = new AssetDownload(asset.id(), () -> download.downloaded(asset.maven2().version()), actor)
                 .withDownloadContext(product.id(), download.id(), asset.maven2().version(),
                         product.free() ? "free" : "license", accountId, discordId, null);
-        String url = v1.download().proxy().registerAsset(assetDownload);
+        String url = proxy.registerAsset(assetDownload);
 
         String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(),
                 asset.maven2().extension());

@@ -1,11 +1,11 @@
 package de.chojo.lyna.web.api.v1.update;
 
+import com.google.inject.Inject;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.util.Version;
-import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.HttpStatus;
 import org.jetbrains.annotations.Nullable;
@@ -19,11 +19,10 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Update {
-    private final V1 v1;
     private final Products products;
 
-    public Update(V1 v1, Products products) {
-        this.v1 = v1;
+    @Inject
+    public Update(Products products) {
         this.products = products;
     }
 

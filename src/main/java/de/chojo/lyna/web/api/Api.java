@@ -3,7 +3,7 @@ package de.chojo.lyna.web.api;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.mail.MailingService;
-import de.chojo.lyna.web.WebService;
+import com.google.inject.Inject;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.auth.Auth;
@@ -17,7 +17,6 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Api {
-    private final WebService web;
     private final Conf configuration;
     private final NexusRest nexus;
     private final V1 v1;
@@ -28,23 +27,16 @@ public class Api {
 
     private static final Logger log = getLogger(Api.class);
 
-    public Api(WebService web, Conf configuration, Data data, MailingService mailingService,
-               de.chojo.lyna.demo.DemoService demoService, Gateway gateway) {
-        this.web = web;
+    @Inject
+    public Api(Conf configuration, NexusRest nexus, V1 v1, Auth auth, Account account, Theme theme,
+               Admin admin) {
         this.configuration = configuration;
-        this.nexus = data.nexus();
-        auth = new Auth(configuration, data.accounts(), data.accountSessions(), data.revokedJtis(),
-                data.passwordResetTokens(), data.emailVerificationTokens(), data.passwordHasher(), data.jwtService(),
-                data.discordOAuthClient(), mailingService);
-        v1 = new V1(this, data.products(), mailingService, data.kofi(), data.downloadLog(),
-                data.kioskProducts(), auth, data.accounts(), data.accountLicenses(),
-                data.accountSessions(), data.jwtService(), demoService);
-        account = new Account(auth, data.accounts(), data.accountLicenses(), data.licenseInvites(), data.instanceSettings(), mailingService, data.emailVerificationTokens(), configuration,
-                data.accountSessions(), data.revokedJtis(),
-                data.downloadLog(), data.passwordHasher(), data.jwtService());
-        theme = new Theme(data.instanceSettings());
-        admin = new Admin(auth, configuration, data.accounts(), data.guilds(), data.instanceSettings(), data.kofi(), data.kioskProducts(),
-                data.instanceOperators(), mailingService, gateway);
+        this.nexus = nexus;
+        this.v1 = v1;
+        this.auth = auth;
+        this.account = account;
+        this.theme = theme;
+        this.admin = admin;
     }
 
     public void init() {
@@ -58,17 +50,8 @@ public class Api {
     }
 
 
-    public Conf configuration() {
-        return configuration;
-    }
 
-    public NexusRest nexus() {
-        return nexus;
-    }
 
-    public V1 v1() {
-        return v1;
-    }
 
     public Auth auth() {
         return auth;

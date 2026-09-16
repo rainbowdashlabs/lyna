@@ -40,13 +40,38 @@ import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.core.Web;
 import de.chojo.lyna.data.roles.JdaRoleSync;
 import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.demo.DemoService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
+import de.chojo.lyna.web.WebService;
+import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.theme.Theme;
+import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.demo.DemoApi;
+import de.chojo.lyna.web.api.v1.download.Download;
+import de.chojo.lyna.web.api.v1.download.direct.Direct;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
+import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
+import de.chojo.lyna.web.api.v1.products.Wizard;
+import de.chojo.lyna.web.api.v1.releases.Releases;
+import de.chojo.lyna.web.api.v1.update.Update;
+import de.chojo.lyna.web.WebService;
+import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.theme.Theme;
+import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.demo.DemoApi;
+import de.chojo.lyna.web.api.v1.download.Download;
+import de.chojo.lyna.web.api.v1.download.direct.Direct;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
+import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
+import de.chojo.lyna.web.api.v1.products.Wizard;
+import de.chojo.lyna.web.api.v1.releases.Releases;
+import de.chojo.lyna.web.api.v1.update.Update;
 import de.chojo.nexus.NexusRest;
 
 /**
@@ -127,7 +152,24 @@ public class LynaModule extends AbstractModule {
         bind(Data.class).in(Singleton.class);
         bind(MailingService.class).in(Singleton.class);
         bind(DemoService.class).in(Singleton.class);
-        bind(Web.class).in(Singleton.class);
+        bind(WebService.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.Api.class).in(Singleton.class);
+        bind(V1.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.auth.Auth.class).in(Singleton.class);
+        bind(Account.class).in(Singleton.class);
+        bind(Theme.class).in(Singleton.class);
+        bind(Admin.class).in(Singleton.class);
+        bind(Download.class).in(Singleton.class);
+        bind(Direct.class).in(Singleton.class);
+        bind(Update.class).in(Singleton.class);
+        bind(KoFiApi.class).in(Singleton.class);
+        bind(Releases.class).in(Singleton.class);
+        bind(Wizard.class).in(Singleton.class);
+        bind(DemoApi.class).in(Singleton.class);
+
+        // The token cache lives here: a link minted by one instance would not be redeemable by
+        // another, and the bot mints links through the same object the API serves them from.
+        bind(Proxy.class).in(Singleton.class);
         bind(Bot.class).in(Singleton.class);
 
         bind(Accounts.class).in(Singleton.class);

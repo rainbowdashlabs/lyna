@@ -1,5 +1,6 @@
 package de.chojo.lyna.web.api.v1.kofi;
 
+import com.google.inject.Inject;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +13,7 @@ import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.util.Urls;
-import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.web.api.v1.kofi.payloads.DataType;
 import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
 import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
@@ -26,7 +27,7 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class KoFiApi {
-    private final V1 v1;
+    private final Kofi kofiSettings;
     private static final Logger log = getLogger(KoFiApi.class);
 
     private final KoFiProducts kofi;
@@ -37,8 +38,9 @@ public class KoFiApi {
             .findAndAddModules()
             .build();
 
-    public KoFiApi(V1 v1, KoFiProducts kofi, MailingService mailing) {
-        this.v1 = v1;
+    @Inject
+    public KoFiApi(Kofi kofiSettings, KoFiProducts kofi, MailingService mailing) {
+        this.kofiSettings = kofiSettings;
         this.kofi = kofi;
         this.mailing = mailing;
     }
@@ -51,7 +53,7 @@ public class KoFiApi {
                 var post = mapper.readValue(json, KofiPost.class);
                 var presented = post.verificationToken();
                 if (presented == null
-                        || !presented.toString().equals(v1.configuration().main().kofi().verificationToken())) {
+                        || !presented.toString().equals(kofiSettings.verificationToken())) {
                     ctx.status(HttpStatus.FORBIDDEN);
                     return;
                 }

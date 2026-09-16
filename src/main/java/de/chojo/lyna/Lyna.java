@@ -5,7 +5,7 @@ import com.google.inject.Injector;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
-import de.chojo.lyna.core.Web;
+import de.chojo.lyna.web.WebService;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.inject.LynaModule;
 import de.chojo.lyna.mail.MailingService;
@@ -34,7 +34,7 @@ public class Lyna {
 
         injector.getInstance(Data.class).start();
         injector.getInstance(MailingService.class).start();
-        injector.getInstance(Web.class).start();
+        injector.getInstance(WebService.class).init();
         injector.getInstance(Bot.class).start();
         injector.getInstance(DemoSchedule.class).start();
     }

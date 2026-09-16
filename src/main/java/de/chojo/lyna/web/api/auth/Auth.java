@@ -1,5 +1,6 @@
 package de.chojo.lyna.web.api.auth;
 
+import com.google.inject.Inject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.lyna.auth.DiscordOAuthClient;
@@ -45,6 +46,7 @@ public class Auth {
     private final MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+    @Inject
     public Auth(Conf configuration,
                 Accounts accounts,
                 AccountSessions accountSessions,

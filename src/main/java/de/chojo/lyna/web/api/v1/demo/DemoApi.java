@@ -1,5 +1,6 @@
 package de.chojo.lyna.web.api.v1.demo;
 
+import com.google.inject.Inject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
@@ -36,6 +37,7 @@ public class DemoApi {
     private final JwtService jwtService;
     private final ObjectMapper json = new ObjectMapper();
 
+    @Inject
     public DemoApi(DemoService demo, Accounts accounts, AccountSessions sessions, JwtService jwtService) {
         this.demo = demo;
         this.accounts = accounts;

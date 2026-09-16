@@ -1,5 +1,6 @@
 package de.chojo.lyna.core;
 
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
@@ -31,16 +32,16 @@ public class Bot {
     private final Data data;
     private final Threading threading;
     private final Conf configuration;
-    private final Web web;
+    private final Proxy proxy;
     private final MailingService mailingService;
     private ShardManager shardManager;
 
     @Inject
-    public Bot(Data data, Threading threading, Conf configuration, Web web, MailingService mailingService) {
+    public Bot(Data data, Threading threading, Conf configuration, Proxy proxy, MailingService mailingService) {
         this.data = data;
         this.threading = threading;
         this.configuration = configuration;
-        this.web = web;
+        this.proxy = proxy;
         this.mailingService = mailingService;
     }
 
@@ -96,8 +97,8 @@ public class Bot {
                         new Settings(data.guilds()),
                         Info.create(configuration),
                         new Downloads(data.guilds(), data.nexus()),
-                        new Download(data.guilds(), web.webService().api()),
-                        new Trial(data.guilds(), web.webService().api()),
+                        new Download(data.guilds(), proxy),
+                        new Trial(data.guilds(), proxy),
                         new Mailing(data.guilds(), configuration, mailingService),
                         new KoFi(data.guilds(), data.kofi())
                 )

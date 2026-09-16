@@ -1,5 +1,6 @@
 package de.chojo.lyna.web;
 
+import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.core.Data;
@@ -26,17 +27,10 @@ public class WebService {
     private static final Logger log = getLogger(WebService.class);
     private Javalin javalin;
 
-    private WebService(Gateway gateway, Conf configuration, Data data, MailingService mailingService,
-                       de.chojo.lyna.demo.DemoService demoService) {
+    @Inject
+    public WebService(Conf configuration, Api api) {
         this.configuration = configuration;
-        api = new Api(this, configuration, data, mailingService, demoService, gateway);
-    }
-
-    public static WebService create(Gateway gateway, Conf configuration, Data data, MailingService mailingService,
-                                    de.chojo.lyna.demo.DemoService demoService) {
-        WebService web = new WebService(gateway, configuration, data, mailingService, demoService);
-        web.init();
-        return web;
+        this.api = api;
     }
 
 

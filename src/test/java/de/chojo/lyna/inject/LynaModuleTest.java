@@ -13,7 +13,19 @@ import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
-import de.chojo.lyna.core.Web;
+import de.chojo.lyna.web.WebService;
+import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.theme.Theme;
+import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.demo.DemoApi;
+import de.chojo.lyna.web.api.v1.download.Download;
+import de.chojo.lyna.web.api.v1.download.direct.Direct;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
+import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
+import de.chojo.lyna.web.api.v1.products.Wizard;
+import de.chojo.lyna.web.api.v1.releases.Releases;
+import de.chojo.lyna.web.api.v1.update.Update;
 import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.demo.DemoService;
@@ -169,7 +181,7 @@ class LynaModuleTest {
         assertNotNull(injector.getInstance(Data.class));
         assertNotNull(injector.getInstance(MailingService.class));
         assertNotNull(injector.getInstance(DemoService.class));
-        assertNotNull(injector.getInstance(Web.class));
+        assertNotNull(injector.getInstance(WebService.class));
         assertNotNull(injector.getInstance(Bot.class));
         assertNotNull(injector.getInstance(DemoSchedule.class));
     }
@@ -209,5 +221,31 @@ class LynaModuleTest {
         Injector injector = injector();
 
         assertSame(injector.getInstance(RoleSync.class), injector.getInstance(Guilds.class).roles());
+    }
+
+    /**
+     * The web layer used to be a tree where each part held its parent, so a class reached the
+     * configuration by walking up to whoever owned it. Those references are gone, which is what lets
+     * an injector build the thing at all - a parent reference is a circle.
+     */
+    @Test
+    @DisplayName("Every part of the web layer can be built on its own")
+    void webLayerIsBuildable() {
+        Injector injector = injector();
+
+        for (Class<?> part : List.of(WebService.class, de.chojo.lyna.web.api.Api.class, V1.class, Download.class,
+                Proxy.class, Direct.class, Update.class, KoFiApi.class, Releases.class,
+                Wizard.class, DemoApi.class, Account.class, Admin.class, Theme.class,
+                de.chojo.lyna.web.api.auth.Auth.class)) {
+            assertNotNull(injector.getInstance(part), part.getSimpleName() + " could not be built");
+        }
+    }
+
+    @Test
+    @DisplayName("The one-time download links are minted by the same proxy that serves them")
+    void proxyIsSharedWithTheBot() {
+        Injector injector = injector();
+
+        assertSame(injector.getInstance(Proxy.class), injector.getInstance(Proxy.class));
     }
 }
