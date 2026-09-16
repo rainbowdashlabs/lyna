@@ -66,18 +66,17 @@ services:
       tls_init_e2e:
         condition: service_completed_successfully
     volumes:
-      - ./config/:/app/config/
+      - ./config-e2e/:/app/config/
       - nexus_tls:/app/nexus-tls/
     environment:
       JAVA_OPTS: >-
-        -Dbot.config=config/config.e2e.json
         -Dlog4j.configurationFile=config/log4j2.xml
         -Djavax.net.ssl.trustStore=/app/nexus-tls/truststore.jks
         -Djavax.net.ssl.trustStorePassword=e2estub
       # The one-time download links are built from this, so it has to name the port the stack
       # actually publishes - which toolchain.sh derives per checkout.
-      LYNA_API_URL: "http://localhost:${LYNA_E2E_API_PORT:-8890}"
-      LYNA_DEMO_ENABLED: "${LYNA_E2E_DEMO:-false}"
+      API_URL: "http://localhost:${LYNA_E2E_API_PORT:-8890}"
+      DEMO_ENABLED: "${LYNA_E2E_DEMO:-false}"
     profiles:
       - e2e
     # Derived per checkout by toolchain.sh, so two checkouts never want the same port. The default

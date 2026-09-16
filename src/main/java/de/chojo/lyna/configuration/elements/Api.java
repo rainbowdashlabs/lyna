@@ -43,15 +43,14 @@ public class Api {
      * The address this API is reached at from outside, which is what the one-time download links
      * are built from.
      *
-     * <p>`LYNA_API_URL` overrides the configured value. A deployment whose published port is not
-     * fixed - the end-to-end stack derives its own per checkout - would otherwise mint links
-     * pointing at a port nothing answers on.
+     * <p>{@code API_URL} overrides it, which a deployment whose published port is not fixed needs -
+     * the end-to-end stack derives its own per checkout, and would otherwise mint links pointing at
+     * a port nothing answers on.
      *
      * @return the public base address, without a trailing slash
      */
     public String url() {
-        String override = SysVar.envOrProp("LYNA_API_URL", "lyna.api.url", null);
-        return override == null || override.isBlank() ? url : override;
+        return url;
     }
 
     public List<String> allowedOrigins() {

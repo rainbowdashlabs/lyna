@@ -14,6 +14,6 @@ COPY --from=build /home/gradle/build/install/lyna/ ./
 
 RUN mkdir -p config
 
-ENV JAVA_OPTS="-Dbot.config=config/config.json -Dlog4j.configurationFile=config/log4j2.xml"
+ENV JAVA_OPTS="-Dlog4j.configurationFile=config/log4j2.xml"
 
 ENTRYPOINT ["./bin/lyna"]
