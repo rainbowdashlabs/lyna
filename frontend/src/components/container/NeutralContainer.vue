@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
   <BaseContainer
       :padded="props.padded"
       :class="clickable ? 'cursor-pointer hover:border-primary transition-colors' : ''"
-      class="border-bg-light-accent bg-bg-light-accent/20 dark:border-bg-dark-accent dark:bg-bg-dark-accent/20">
+      class="border-(--border) bg-(--bg)">
     <slot/>
   </BaseContainer>
 </template>

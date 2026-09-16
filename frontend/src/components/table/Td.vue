@@ -22,7 +22,7 @@ defineProps<{
         muted ? 'text-(--text-muted)' : '',
         align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : '',
       ]"
-      class="py-2"
+      class="border-b border-(--border) py-2 tabular-nums"
   >
     <slot/>
   </td>

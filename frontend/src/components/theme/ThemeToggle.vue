@@ -41,7 +41,7 @@ function cycle() {
 <template>
     <button
         aria-label="Toggle theme"
-        class="p-2 rounded-lg text-[var(--text)] transition-colors duration-150 hover:bg-bg-light-accent dark:hover:bg-bg-dark-accent"
+        class="p-2 rounded-theme text-[var(--text)] transition-colors duration-150 hover:bg-bg-light-accent dark:hover:bg-bg-dark-accent"
         @click="cycle"
     >
         <font-awesome-icon :icon="['fas', icon]" class="h-5 w-5" />

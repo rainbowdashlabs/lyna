@@ -103,7 +103,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
         <input
             v-model="searchQuery"
             type="text"
-            class="w-full px-2 py-1 text-sm rounded border border-bg-light-accent dark:border-bg-dark-accent bg-transparent focus:outline-none focus:border-primary"
+            class="w-full px-2 py-1 text-sm rounded-theme border border-bg-light-accent dark:border-bg-dark-accent bg-transparent focus:outline-none focus:border-primary"
             :placeholder="t('ui.singleSelectDropdown.suche')"
             @click.stop
         />

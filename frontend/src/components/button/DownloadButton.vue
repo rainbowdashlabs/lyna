@@ -22,7 +22,7 @@ defineEmits<{
   <IconButton
       :disabled="disabled"
       :icon="['fas', 'download']"
-      class="text-secondary-accent hover:bg-secondary/15 dark:text-secondary dark:hover:bg-secondary/15"
+      class="border-transparent text-secondary-accent hover:border-secondary hover:bg-secondary/15 dark:text-secondary dark:hover:bg-secondary/15"
       :label="t('common.download')"
       @click="$emit('click', $event)"
   />

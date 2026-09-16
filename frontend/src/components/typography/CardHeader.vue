@@ -14,7 +14,7 @@ withDefaults(defineProps<{
 
 <template>
   <h2 :class="tone === 'error' ? 'text-error' : 'text-(--text-muted)'"
-      class="mb-3 text-sm font-semibold tracking-wider uppercase">
+      class="font-data mb-3 text-[11px] tracking-[0.14em] uppercase">
     <slot/>
   </h2>
 </template>

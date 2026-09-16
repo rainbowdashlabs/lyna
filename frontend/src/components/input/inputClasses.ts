@@ -14,11 +14,10 @@
  * with `${BORDERED_INPUT_CLASSES} w-full` etc.
  */
 export const BORDERED_INPUT_CLASSES =
-    'px-3 py-2 rounded-theme border border-bg-light-accent bg-bg-light text-(--text)' +
-    ' transition-colors duration-150 outline-none' +
-    ' focus:border-primary focus:ring-1 focus:ring-primary' +
-    ' disabled:opacity-50 disabled:cursor-not-allowed' +
-    ' dark:border-bg-dark-accent dark:bg-bg-dark'
+    'px-3 py-2 rounded-theme border border-(--border) bg-(--bg) text-(--text)' +
+    ' transition-colors duration-100 outline-none' +
+    ' focus:border-primary focus:shadow-[inset_0_0_0_1px_var(--color-primary)]' +
+    ' disabled:opacity-50 disabled:cursor-not-allowed'
 
 /**
  * Inline borderless variant — same focus / disabled language as
@@ -27,7 +26,7 @@ export const BORDERED_INPUT_CLASSES =
  * tables or cells.
  */
 export const BORDERLESS_INPUT_CLASSES =
-    'px-2 py-1 bg-transparent text-(--text) transition-colors duration-150 outline-none' +
+    'px-2 py-1 bg-transparent text-(--text) transition-colors duration-100 outline-none' +
     ' rounded-theme hover:bg-(--bg-accent) focus:bg-(--bg)' +
-    ' focus:ring-1 focus:ring-primary' +
+    ' focus:shadow-[inset_0_0_0_1px_var(--color-primary)]' +
     ' disabled:opacity-50 disabled:cursor-not-allowed'

@@ -10,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <code :class="block ? 'block px-3 py-2 text-xs' : 'px-2 py-1'" class="bg-(--bg-accent)/20 rounded">
+  <code :class="block ? 'block px-3 py-2 text-xs' : 'px-2 py-1'" class="font-data rounded-theme border border-(--border) bg-(--bg-accent)/30">
     <slot/>
   </code>
 </template>

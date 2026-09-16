@@ -16,6 +16,6 @@ defineProps<{
     v-model="model"
     type="checkbox"
     :disabled="disabled"
-    class="h-4 w-4 rounded accent-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+    class="h-4 w-4 rounded-theme accent-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
   />
 </template>

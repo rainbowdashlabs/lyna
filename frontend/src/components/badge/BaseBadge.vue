@@ -5,14 +5,16 @@
  */
 <script lang="ts" setup>
 defineProps<{
-  bgClass: string
+  /** The fill, for the two badges that carry a state. The rest are outlines. */
+  bgClass?: string
 }>()
 </script>
 
 <template>
   <span
-      :class="[bgClass, 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium']"
+      :class="bgClass ?? 'border border-(--border) text-(--text-muted)'"
+      class="font-data rounded-theme inline-flex items-center px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase"
   >
-    <slot />
+    <slot/>
   </span>
 </template>

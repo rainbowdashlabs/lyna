@@ -7,7 +7,7 @@
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-[var(--border)] bg-[var(--bg)]">
+  <span class="font-data rounded-theme inline-flex items-center gap-1 border border-(--border) bg-secondary/12 px-2 py-0.5 text-xs">
     <slot/>
   </span>
 </template>

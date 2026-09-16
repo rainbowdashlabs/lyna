@@ -39,7 +39,7 @@ const percentage = computed(() =>
           ? undefined
           : `linear-gradient(to right, var(--color-primary) ${percentage}%, var(--color-bg-light-accent) ${percentage}%)`,
       }"
-        class="w-full h-2 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-bg-light-accent dark:bg-bg-dark-accent"
+        class="w-full h-2 rounded-theme appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-bg-light-accent dark:bg-bg-dark-accent"
         type="range"
     />
     <input

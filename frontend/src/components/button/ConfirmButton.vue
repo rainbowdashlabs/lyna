@@ -22,7 +22,7 @@ defineEmits<{
   <IconButton
       :disabled="disabled"
       :icon="['fas', 'check']"
-      class="text-success hover:bg-success/15"
+      class="border-transparent text-success hover:border-success hover:bg-success/15"
       :label="t('common.confirm')"
       @click="$emit('click', $event)"
   />

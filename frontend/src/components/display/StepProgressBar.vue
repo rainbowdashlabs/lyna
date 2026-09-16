@@ -27,7 +27,7 @@ function selectStep(index: number, disabled?: boolean) {
       />
       <!-- Step -->
       <div
-          class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium cursor-pointer select-none transition-colors duration-200"
+          class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-theme text-sm font-medium cursor-pointer select-none transition-colors duration-200"
           :class="[
             index === currentStep
               ? 'bg-primary text-primary-text shadow-sm'
@@ -40,7 +40,7 @@ function selectStep(index: number, disabled?: boolean) {
           @click="selectStep(index, step.disabled)"
       >
         <span
-            class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0"
+            class="flex items-center justify-center w-6 h-6 rounded-theme text-xs font-bold shrink-0"
             :class="index === currentStep ? 'bg-white/25' : index < currentStep ? 'bg-primary/20' : 'bg-(--border)'"
         >
           <font-awesome-icon v-if="index < currentStep" :icon="['fas', 'check']" class="text-xs"/>

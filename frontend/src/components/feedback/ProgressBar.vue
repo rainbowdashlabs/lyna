@@ -12,7 +12,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="w-full h-3 rounded-full bg-bg-light-accent dark:bg-bg-dark-accent overflow-hidden">
+  <div class="w-full h-3 rounded-theme bg-bg-light-accent dark:bg-bg-dark-accent overflow-hidden">
     <div
         :class="{
         'bg-primary': !variant || variant === 'primary',
@@ -22,7 +22,7 @@ defineProps<{
         'bg-info': variant === 'info',
       }"
         :style="{ width: `${Math.min(100, Math.max(0, (value / (max ?? 100)) * 100))}%` }"
-        class="h-full rounded-full transition-all duration-300"
+        class="h-full rounded-theme transition-all duration-300"
     />
   </div>
 </template>

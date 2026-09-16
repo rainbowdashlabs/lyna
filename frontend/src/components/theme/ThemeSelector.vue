@@ -35,7 +35,7 @@ const choices = computed(() => Object.entries(THEMES)
             v-for="swatch in [choice.colors.light.primary, choice.colors.light.secondary, choice.colors.light.info]"
             :key="swatch"
             :style="{backgroundColor: swatch}"
-            class="h-5 w-5 rounded-full"
+            class="h-5 w-5 rounded-theme"
         />
       </div>
       <div class="text-sm font-medium">{{ choice.label }}</div>

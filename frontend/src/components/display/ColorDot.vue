@@ -14,5 +14,5 @@ defineProps<{
 </script>
 
 <template>
-  <span :style="{backgroundColor: color}" class="inline-block h-3 w-3 rounded-full"></span>
+  <span :style="{backgroundColor: color}" class="inline-block h-3 w-3 rounded-theme"></span>
 </template>

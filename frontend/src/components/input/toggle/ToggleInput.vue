@@ -16,7 +16,7 @@ defineProps<{
       :aria-checked="model"
       :class="model ? 'bg-success' : 'bg-error'"
       :disabled="disabled"
-      class="relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-theme border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       role="switch"
       type="button"
       @click="model = !model"
@@ -38,7 +38,7 @@ defineProps<{
     <!-- Knob -->
     <span
         :class="model ? 'translate-x-6' : 'translate-x-0'"
-        class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform duration-200"
+        class="pointer-events-none inline-block h-5 w-5 rounded-theme bg-white shadow ring-0 transition-transform duration-200"
     />
   </button>
 </template>

@@ -12,7 +12,7 @@
 </script>
 
 <template>
-  <th class="font-medium pr-3 py-1">
+  <th class="font-data border-b border-(--border) py-1.5 pr-3 text-[10px] tracking-[0.12em] text-(--text-muted) uppercase">
     <slot/>
   </th>
 </template>

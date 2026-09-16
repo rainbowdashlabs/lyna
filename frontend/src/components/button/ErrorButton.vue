@@ -22,7 +22,7 @@ defineEmits<{
       :disabled="disabled"
       :full-width="fullWidth"
       :compact="compact"
-      class="bg-error text-error-text hover:brightness-110"
+      class="border-error bg-error text-error-text hover:brightness-110"
       @click="$emit('click', $event)"
   >
     <slot/>

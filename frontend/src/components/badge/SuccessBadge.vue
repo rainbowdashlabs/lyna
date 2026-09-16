@@ -8,7 +8,7 @@ import BaseBadge from './BaseBadge.vue'
 </script>
 
 <template>
-  <BaseBadge bg-class="bg-success/70">
+  <BaseBadge bg-class="bg-success text-success-text border border-success">
     <slot/>
   </BaseBadge>
 </template>

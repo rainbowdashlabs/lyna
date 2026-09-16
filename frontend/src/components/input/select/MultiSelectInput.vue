@@ -42,7 +42,7 @@ function getLabel(value: string): string {
       <span
           v-for="val in modelValue"
           :key="val"
-          class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+          class="inline-flex items-center gap-1 rounded-theme px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary border border-primary/20"
       >
         {{ getLabel(val) }}
         <button class="hover:text-error" type="button" @click="remove(val)">
