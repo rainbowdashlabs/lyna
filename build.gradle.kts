@@ -19,6 +19,9 @@ dependencies {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
+    // wiring
+    implementation(libs.guice)
+
     // configuration
     implementation(libs.bundles.config)
     annotationProcessor(libs.ocular)

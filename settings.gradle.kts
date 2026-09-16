@@ -14,6 +14,8 @@ dependencyResolutionManagement {
 
             version("log4j", "2.25.3")
 
+            library("guice", "com.google.inject:guice:7.0.0")
+
             library("ocular", "dev.chojo:ocular:2.2.1")
             version("jackson", "3.2.1")
             library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
