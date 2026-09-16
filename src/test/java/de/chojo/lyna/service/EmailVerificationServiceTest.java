@@ -28,7 +28,7 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void freshAccount() throws SQLException {
-        clear("email_verification_token", "account_discord_link", "account");
+        clear("email_verification_token", "account_identity", "account");
         account = accounts.create("first@example.invalid", "hash");
     }
 

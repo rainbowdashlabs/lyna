@@ -3,7 +3,7 @@ package de.chojo.lyna.web.api.v1.products;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.products.KioskProduct;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.V1;
@@ -58,7 +58,7 @@ public class Products {
     private Set<Integer> entitlements(Context ctx) {
         return auth.currentSession(ctx)
                 .flatMap(session -> accounts.findLinkByAccountId(session.accountId()))
-                .map(DiscordLink::discordUserId)
+                .map(AccountIdentity::externalIdAsLong)
                 .map(licenses::entitledProductIds)
                 .orElse(Set.of());
     }

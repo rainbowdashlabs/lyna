@@ -4,7 +4,7 @@ import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.data.dao.products.Product;
@@ -45,7 +45,7 @@ public class Direct {
         var session = auth.currentSession(ctx);
         if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
         boolean entitled = accounts.findLinkByAccountId(session.get().accountId())
-                .map(DiscordLink::discordUserId)
+                .map(AccountIdentity::externalIdAsLong)
                 .map(licenses::entitledProductIds)
                 .filter(ids -> ids.contains(productId))
                 .isPresent();

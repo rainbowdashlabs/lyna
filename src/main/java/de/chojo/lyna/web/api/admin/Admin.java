@@ -6,6 +6,7 @@ import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
@@ -571,7 +572,7 @@ public class Admin {
     private Long resolveDiscordId(JwtService.Verified verified) {
         if (verified.discordId() != null) return verified.discordId();
         return accounts.findLinkByAccountId(verified.accountId())
-                .map(link -> link.discordUserId())
+                .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
     }
 

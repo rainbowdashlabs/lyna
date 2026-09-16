@@ -14,7 +14,7 @@ import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -223,7 +223,7 @@ public class Auth {
         Account account = opt.get();
         accounts.touchLastLogin(account.id());
         Long discordId = accounts.findLinkByAccountId(account.id())
-                .map(DiscordLink::discordUserId)
+                .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
         issueAndWrite(ctx, account, discordId, HttpStatus.OK);
     }
@@ -249,7 +249,7 @@ public class Auth {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
         }
-        Optional<DiscordLink> link = accounts.findLinkByAccountId(account.get().id());
+        Optional<AccountIdentity> link = accounts.findLinkByAccountId(account.get().id());
         ctx.json(toMePayload(account.get(), link.orElse(null)));
     }
 
@@ -289,11 +289,11 @@ public class Auth {
                 return;
             }
             account = me.get();
-            accounts.link(account.id(), discordUser.id(), DiscordLink.Verification.OAUTH, discordUser.handle());
+            accounts.link(account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
         } else {
             account = accounts.findByDiscordId(discordUser.id()).orElseGet(() -> {
                 Account created = accounts.create(null, null);
-                accounts.link(created.id(), discordUser.id(), DiscordLink.Verification.OAUTH, discordUser.handle());
+                accounts.link(created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
                 return created;
             });
             accounts.rememberHandle(discordUser.id(), discordUser.handle());
@@ -328,8 +328,8 @@ public class Auth {
                 toMePayload(account, discordId == null ? null : new MiniLink(discordId))));
     }
 
-    private Object toMePayload(Account account, DiscordLink link) {
-        return toMePayload(account, link == null ? null : new MiniLink(link.discordUserId()));
+    private Object toMePayload(Account account, AccountIdentity link) {
+        return toMePayload(account, link == null ? null : new MiniLink(link.externalIdAsLong()));
     }
 
     private Object toMePayload(Account account, MiniLink link) {

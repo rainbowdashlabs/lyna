@@ -4,7 +4,7 @@ import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
@@ -156,7 +156,7 @@ public class Wizard {
         var session = auth.currentSession(ctx);
         Integer accountId = session.map(verified -> verified.accountId()).orElse(null);
         Long discordId = session.flatMap(verified -> accounts.findLinkByAccountId(verified.accountId()))
-                .map(DiscordLink::discordUserId)
+                .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
         String actor = discordId == null
                 ? "anonymous(%s)".formatted(ctx.ip())
@@ -187,7 +187,7 @@ public class Wizard {
         var session = auth.currentSession(ctx);
         if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
         Set<String> types = accounts.findLinkByAccountId(session.get().accountId())
-                .map(DiscordLink::discordUserId)
+                .map(AccountIdentity::externalIdAsLong)
                 .map(discordId -> licenses.releaseTypes(discordId, productId))
                 .orElse(Set.of());
         if (types.isEmpty()) throw new ForbiddenResponse("You do not hold a license for this product");

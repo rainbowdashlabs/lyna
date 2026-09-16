@@ -29,7 +29,7 @@ class SessionServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void freshSession() throws SQLException {
-        clear("account_session", "revoked_jti", "account_discord_link", "account");
+        clear("account_session", "revoked_jti", "account_identity", "account");
         Auth config = Mockito.mock(Auth.class);
         Mockito.when(config.jwtSecret()).thenReturn("service-test-secret");
         Mockito.when(config.jwtExpirySeconds()).thenReturn(3600L);

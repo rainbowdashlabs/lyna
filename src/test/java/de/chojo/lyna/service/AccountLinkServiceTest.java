@@ -2,7 +2,7 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +25,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void clearAccounts() throws SQLException {
-        clear("account_discord_link", "account");
+        clear("account_identity", "account");
     }
 
     /**
@@ -38,7 +38,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
         Optional<Account> existing = accounts.findByDiscordId(discordId);
         if (existing.isPresent()) return new Callback(existing.get(), false);
         Account created = accounts.create(null, null);
-        accounts.link(created.id(), discordId, DiscordLink.Verification.OAUTH);
+        accounts.link(created.id(), discordId, AccountIdentity.Verification.OAUTH);
         return new Callback(created, true);
     }
 
@@ -52,7 +52,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
 
         assertTrue(first.created());
         assertFalse(first.account().hasPassword());
-        assertEquals(DISCORD_ID, accounts.findLinkByAccountId(first.account().id()).orElseThrow().discordUserId());
+        assertEquals(DISCORD_ID, accounts.findLinkByAccountId(first.account().id()).orElseThrow().externalIdAsLong());
     }
 
     @Test
@@ -71,7 +71,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     void passwordFirstThenLink() {
         Account created = accounts.create("password-first@example.invalid", HASHER.hash("secret"));
 
-        accounts.link(created.id(), DISCORD_ID, DiscordLink.Verification.OAUTH);
+        accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
 
         assertEquals(created.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
         assertTrue(accounts.findById(created.id()).orElseThrow().hasPassword());
@@ -82,23 +82,23 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     void botDmCodeLinks() {
         Account created = accounts.create("no-oauth@example.invalid", HASHER.hash("secret"));
 
-        accounts.link(created.id(), DISCORD_ID, DiscordLink.Verification.BOT_DM_CODE);
+        accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.BOT_DM_CODE);
 
-        DiscordLink link = accounts.findLinkByAccountId(created.id()).orElseThrow();
+        AccountIdentity link = accounts.findLinkByAccountId(created.id()).orElseThrow();
         assertEquals("bot_dm_code", link.verifiedVia());
-        assertEquals(DISCORD_ID, link.discordUserId());
+        assertEquals(DISCORD_ID, link.externalIdAsLong());
     }
 
     @Test
     @DisplayName("Unlinking hides the Discord id, and linking again restores it")
     void unlinkThenRelink() {
         Account created = accounts.create("relinks@example.invalid", HASHER.hash("secret"));
-        accounts.link(created.id(), DISCORD_ID, DiscordLink.Verification.OAUTH);
+        accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
 
         accounts.unlink(created.id());
         assertTrue(accounts.findByDiscordId(DISCORD_ID).isEmpty());
 
-        accounts.link(created.id(), DISCORD_ID, DiscordLink.Verification.OAUTH);
+        accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
 
         assertEquals(created.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
     }
@@ -107,7 +107,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     @DisplayName("A Discord id another account already holds cannot be taken over")
     void discordIdCannotBeTakenOver() {
         Account holder = accounts.create("holder@example.invalid", HASHER.hash("secret"));
-        accounts.link(holder.id(), DISCORD_ID, DiscordLink.Verification.OAUTH);
+        accounts.link(holder.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
         Account newcomer = accounts.create("newcomer@example.invalid", HASHER.hash("secret"));
 
         assertThrowsOnLink(newcomer.id());
@@ -121,7 +121,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
      */
     private static void assertThrowsOnLink(int accountId) {
         try {
-            accounts.link(accountId, DISCORD_ID, DiscordLink.Verification.OAUTH);
+            accounts.link(accountId, DISCORD_ID, AccountIdentity.Verification.OAUTH);
             throw new AssertionError("Linking an already held Discord id should have been refused");
         } catch (RuntimeException expected) {
             return;

@@ -1,10 +1,12 @@
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.sadu.mapper.wrapper.Row;
 
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
@@ -78,82 +80,123 @@ public class Accounts {
     }
 
     public Optional<Account> findByDiscordId(long discordUserId) {
+        return findByIdentity(AccountIdentity.DISCORD, Long.toString(discordUserId));
+    }
+
+    /**
+     * @param provider   which service the id comes from
+     * @param externalId what that service calls the account
+     * @return the account that identity belongs to, if it has been linked
+     */
+    public Optional<Account> findByIdentity(String provider, String externalId) {
         return query("""
                 SELECT a.id, a.email, a.email_verified, a.password_hash, a.theme, a.feel, a.dark_mode, a.created_at, a.last_login_at
                 FROM account a
-                JOIN account_discord_link l ON l.account_id = a.id
-                WHERE l.discord_user_id = ?
+                JOIN account_identity i ON i.account_id = a.id
+                WHERE i.provider = ? AND i.external_id = ?
                 """)
-                .single(call().bind(discordUserId))
-                .map(row -> new Account(
-                        row.getInt("id"),
-                        row.getString("email"),
-                        row.getBoolean("email_verified"),
-                        row.getString("password_hash"),
-                        row.getString("theme"),
-                        row.getString("feel"),
-                        row.getString("dark_mode"),
-                        toInstant(row.getTimestamp("created_at")),
-                        toInstant(row.getTimestamp("last_login_at"))))
+                .single(call().bind(provider).bind(externalId))
+                .map(Accounts::readAccount)
                 .first();
     }
 
-    public Optional<DiscordLink> findLinkByAccountId(int accountId) {
+    public Optional<AccountIdentity> findLinkByAccountId(int accountId) {
+        return findIdentity(accountId, AccountIdentity.DISCORD);
+    }
+
+    /**
+     * @return what one provider knows about an account, if it has been linked to that provider
+     */
+    public Optional<AccountIdentity> findIdentity(int accountId, String provider) {
         return query("""
-                SELECT account_id, discord_user_id, linked_at, verified_via, handle
-                FROM account_discord_link WHERE account_id = ?
+                SELECT account_id, provider, external_id, linked_at, verified_via, handle
+                FROM account_identity WHERE account_id = ? AND provider = ?
+                """)
+                .single(call().bind(accountId).bind(provider))
+                .map(Accounts::readIdentity)
+                .first();
+    }
+
+    /**
+     * @return every provider this account is known to, oldest link first
+     */
+    public List<AccountIdentity> identities(int accountId) {
+        return query("""
+                SELECT account_id, provider, external_id, linked_at, verified_via, handle
+                FROM account_identity WHERE account_id = ? ORDER BY linked_at
                 """)
                 .single(call().bind(accountId))
-                .map(row -> new DiscordLink(
-                        row.getInt("account_id"),
-                        row.getLong("discord_user_id"),
-                        toInstant(row.getTimestamp("linked_at")),
-                        row.getString("verified_via"),
-                        row.getString("handle")))
-                .first();
+                .map(Accounts::readIdentity)
+                .all();
     }
 
-    public void link(int accountId, long discordUserId, DiscordLink.Verification via) {
+    public void link(int accountId, long discordUserId, AccountIdentity.Verification via) {
         link(accountId, discordUserId, via, null);
     }
 
-    /**
-     * Links an account to a Discord id, and records what that id is called if we were told.
-     *
-     * <p>A link made without a handle keeps whatever one was recorded before rather than clearing
-     * it: the bot-DM path never learns a name, and losing the one the OAuth round trip found would
-     * put the pages back to showing numbers.
-     */
-    public void link(int accountId, long discordUserId, DiscordLink.Verification via, String handle) {
-        query("""
-                INSERT INTO account_discord_link (account_id, discord_user_id, verified_via, handle, handle_seen_at)
-                VALUES (?, ?, ?, ?, CASE WHEN ?::TEXT IS NULL THEN NULL ELSE now() END)
-                ON CONFLICT (account_id) DO UPDATE SET
-                    discord_user_id = EXCLUDED.discord_user_id,
-                    linked_at       = now(),
-                    verified_via    = EXCLUDED.verified_via,
-                    handle          = COALESCE(EXCLUDED.handle, account_discord_link.handle),
-                    handle_seen_at  = COALESCE(EXCLUDED.handle_seen_at, account_discord_link.handle_seen_at)
-                """)
-                .single(call().bind(accountId).bind(discordUserId).bind(via.dbValue()).bind(handle).bind(handle))
-                .insert();
+    public void link(int accountId, long discordUserId, AccountIdentity.Verification via, String handle) {
+        link(accountId, AccountIdentity.DISCORD, Long.toString(discordUserId), via, handle);
     }
 
     /**
-     * Records what a Discord id is called, wherever we happen to learn it.
+     * Links an account to an identity at some provider, and records what that provider calls it.
      *
-     * <p>Keyed by the id rather than the account, because the bot meets people by id and does not
-     * know which account, if any, they hold.
+     * <p>A link made without a handle keeps whatever one was recorded before rather than clearing it:
+     * the bot-DM path never learns a name, and losing the one an OAuth round trip found would put the
+     * pages back to showing raw ids.
      *
-     * @return whether a link for that id was there to update
+     * <p>An identity another account already holds is refused rather than moved. Whoever controls a
+     * provider account could otherwise walk it onto a second account here, and once licences hang off
+     * accounts that would be a way to carry them across.
+     *
+     * @throws IllegalStateException if the identity belongs to a different account
      */
+    public void link(int accountId, String provider, String externalId,
+                     AccountIdentity.Verification via, String handle) {
+        Optional<Account> holder = findByIdentity(provider, externalId);
+        if (holder.isPresent() && holder.get().id() != accountId) {
+            throw new IllegalStateException(
+                    "That %s identity is already linked to another account".formatted(provider));
+        }
+        query("""
+                DELETE FROM account_identity
+                WHERE provider = ? AND account_id = ? AND external_id <> ?
+                """)
+                .single(call().bind(provider).bind(accountId).bind(externalId))
+                .delete();
+        query("""
+                INSERT INTO account_identity (provider, external_id, account_id, verified_via, handle, handle_seen_at)
+                VALUES (?, ?, ?, ?, ?, CASE WHEN ?::TEXT IS NULL THEN NULL ELSE now() END)
+                ON CONFLICT (provider, external_id) DO UPDATE SET
+                    linked_at      = now(),
+                    verified_via   = EXCLUDED.verified_via,
+                    handle         = COALESCE(EXCLUDED.handle, account_identity.handle),
+                    handle_seen_at = COALESCE(EXCLUDED.handle_seen_at, account_identity.handle_seen_at)
+                """)
+                .single(call().bind(provider).bind(externalId).bind(accountId).bind(via.dbValue())
+                        .bind(handle).bind(handle))
+                .insert();
+    }
+
     public boolean rememberHandle(long discordUserId, String handle) {
+        return rememberHandle(AccountIdentity.DISCORD, Long.toString(discordUserId), handle);
+    }
+
+    /**
+     * Records what a provider calls an id, wherever we happen to learn it.
+     *
+     * <p>Keyed by the identity rather than the account, because the bot meets people by id and does
+     * not know which account, if any, they hold.
+     *
+     * @return whether a link for that identity was there to update
+     */
+    public boolean rememberHandle(String provider, String externalId, String handle) {
         if (handle == null || handle.isBlank()) return false;
         return query("""
-                UPDATE account_discord_link SET handle = ?, handle_seen_at = now()
-                WHERE discord_user_id = ? AND (handle IS DISTINCT FROM ?)
+                UPDATE account_identity SET handle = ?, handle_seen_at = now()
+                WHERE provider = ? AND external_id = ? AND handle IS DISTINCT FROM ?
                 """)
-                .single(call().bind(handle).bind(discordUserId).bind(handle))
+                .single(call().bind(handle).bind(provider).bind(externalId).bind(handle))
                 .update()
                 .changed();
     }
@@ -165,22 +208,62 @@ public class Accounts {
      * @return the handles that are known, by id; an id nobody has linked is simply absent
      */
     public Map<Long, String> handles(Collection<Long> discordIds) {
-        if (discordIds.isEmpty()) return Map.of();
+        var byId = handles(AccountIdentity.DISCORD,
+                discordIds.stream().map(id -> Long.toString(id)).toList());
         var result = new HashMap<Long, String>();
+        byId.forEach((externalId, handle) -> result.put(Long.parseLong(externalId), handle));
+        return result;
+    }
+
+    /**
+     * @param provider    which service the ids come from
+     * @param externalIds the ids to name
+     * @return the handles that are known, by id; an id nobody has linked is simply absent
+     */
+    public Map<String, String> handles(String provider, Collection<String> externalIds) {
+        if (externalIds.isEmpty()) return Map.of();
+        var result = new HashMap<String, String>();
         query("""
-                SELECT discord_user_id, handle FROM account_discord_link
-                WHERE handle IS NOT NULL AND ARRAY[discord_user_id] && ?
+                SELECT external_id, handle FROM account_identity
+                WHERE provider = ? AND handle IS NOT NULL AND ARRAY[external_id] && ?
                 """)
-                .single(call().bind(List.copyOf(discordIds), PostgreSqlTypes.BIGINT))
-                .map(row -> result.put(row.getLong("discord_user_id"), row.getString("handle")))
+                .single(call().bind(provider).bind(List.copyOf(externalIds), PostgreSqlTypes.TEXT))
+                .map(row -> result.put(row.getString("external_id"), row.getString("handle")))
                 .all();
         return result;
     }
 
     public void unlink(int accountId) {
-        query("DELETE FROM account_discord_link WHERE account_id = ?")
-                .single(call().bind(accountId))
+        unlink(accountId, AccountIdentity.DISCORD);
+    }
+
+    public void unlink(int accountId, String provider) {
+        query("DELETE FROM account_identity WHERE account_id = ? AND provider = ?")
+                .single(call().bind(accountId).bind(provider))
                 .delete();
+    }
+
+    private static AccountIdentity readIdentity(Row row) throws SQLException {
+        return new AccountIdentity(
+                row.getInt("account_id"),
+                row.getString("provider"),
+                row.getString("external_id"),
+                toInstant(row.getTimestamp("linked_at")),
+                row.getString("verified_via"),
+                row.getString("handle"));
+    }
+
+    private static Account readAccount(Row row) throws SQLException {
+        return new Account(
+                row.getInt("id"),
+                row.getString("email"),
+                row.getBoolean("email_verified"),
+                row.getString("password_hash"),
+                row.getString("theme"),
+                row.getString("feel"),
+                row.getString("dark_mode"),
+                toInstant(row.getTimestamp("created_at")),
+                toInstant(row.getTimestamp("last_login_at")));
     }
 
     public void touchLastLogin(int accountId) {

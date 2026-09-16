@@ -22,7 +22,7 @@ class AppearanceServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void freshAccount() throws SQLException {
-        clear("account_discord_link", "account");
+        clear("account_identity", "account");
         instanceSettings.update(new InstanceSettings(
                 "lyna", "ROUNDED", false, true, true, List.of(), null));
         account = accounts.create("appearance@example.invalid", "hash");

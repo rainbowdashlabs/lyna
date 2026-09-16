@@ -21,7 +21,7 @@ class AccountSessionsRepositoryTest extends RepositoryTestBase {
 
     @BeforeEach
     void freshAccount() throws SQLException {
-        clear("account_session", "account_discord_link", "account");
+        clear("account_session", "account_identity", "account");
         account = accounts.create("sessions@example.invalid", "hash");
     }
 

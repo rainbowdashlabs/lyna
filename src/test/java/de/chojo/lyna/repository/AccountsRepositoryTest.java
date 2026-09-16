@@ -1,7 +1,7 @@
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ class AccountsRepositoryTest extends RepositoryTestBase {
 
     @BeforeEach
     void clearAccounts() throws SQLException {
-        clear("account_discord_link", "account");
+        clear("account_identity", "account");
     }
 
     @Test
@@ -75,11 +75,11 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     void linkAndUnlink() {
         Account created = accounts.create("linked@example.invalid", "hash");
 
-        accounts.link(created.id(), 1234567890L, DiscordLink.Verification.OAUTH);
+        accounts.link(created.id(), 1234567890L, AccountIdentity.Verification.OAUTH);
 
         assertEquals(created.id(), accounts.findByDiscordId(1234567890L).orElseThrow().id());
-        DiscordLink link = accounts.findLinkByAccountId(created.id()).orElseThrow();
-        assertEquals(1234567890L, link.discordUserId());
+        AccountIdentity link = accounts.findLinkByAccountId(created.id()).orElseThrow();
+        assertEquals(1234567890L, link.externalIdAsLong());
         assertEquals("oauth", link.verifiedVia());
         assertNotNull(link.linkedAt());
 
@@ -94,8 +94,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     void relinkReplaces() {
         Account created = accounts.create("relink@example.invalid", "hash");
 
-        accounts.link(created.id(), 111L, DiscordLink.Verification.OAUTH);
-        accounts.link(created.id(), 222L, DiscordLink.Verification.BOT_DM_CODE);
+        accounts.link(created.id(), 111L, AccountIdentity.Verification.OAUTH);
+        accounts.link(created.id(), 222L, AccountIdentity.Verification.BOT_DM_CODE);
 
         assertTrue(accounts.findByDiscordId(111L).isEmpty());
         assertEquals(created.id(), accounts.findByDiscordId(222L).orElseThrow().id());
@@ -108,10 +108,10 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         Account first = accounts.create("first@example.invalid", "hash");
         Account second = accounts.create("second@example.invalid", "hash");
 
-        accounts.link(first.id(), 999L, DiscordLink.Verification.OAUTH);
+        accounts.link(first.id(), 999L, AccountIdentity.Verification.OAUTH);
 
         assertThrows(RuntimeException.class,
-                () -> accounts.link(second.id(), 999L, DiscordLink.Verification.OAUTH));
+                () -> accounts.link(second.id(), 999L, AccountIdentity.Verification.OAUTH));
     }
 
     @Test
@@ -142,7 +142,7 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("Deleting an account takes its Discord link with it")
     void deleteCascadesToLink() {
         Account created = accounts.create("gone@example.invalid", "hash");
-        accounts.link(created.id(), 555L, DiscordLink.Verification.OAUTH);
+        accounts.link(created.id(), 555L, AccountIdentity.Verification.OAUTH);
 
         accounts.delete(created.id());
 
@@ -154,9 +154,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("The handle the OAuth round trip saw is kept with the link")
     void linkRecordsTheHandle() {
         Account account = accounts.create("handle@example.invalid", "hash");
-        accounts.link(account.id(), 4001L, DiscordLink.Verification.OAUTH, "ada");
+        accounts.link(account.id(), 4001L, AccountIdentity.Verification.OAUTH, "ada");
 
-        DiscordLink link = accounts.findLinkByAccountId(account.id()).orElseThrow();
+        AccountIdentity link = accounts.findLinkByAccountId(account.id()).orElseThrow();
         assertEquals("ada", link.handle());
         assertEquals("ada", link.display());
     }
@@ -165,9 +165,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("A link made without a handle shows the id, which is all there is to show")
     void linkWithoutHandleDisplaysTheId() {
         Account account = accounts.create("nohandle@example.invalid", "hash");
-        accounts.link(account.id(), 4002L, DiscordLink.Verification.BOT_DM_CODE);
+        accounts.link(account.id(), 4002L, AccountIdentity.Verification.BOT_DM_CODE);
 
-        DiscordLink link = accounts.findLinkByAccountId(account.id()).orElseThrow();
+        AccountIdentity link = accounts.findLinkByAccountId(account.id()).orElseThrow();
         assertNull(link.handle());
         assertEquals("4002", link.display());
     }
@@ -176,8 +176,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("Relinking without a handle keeps the one already known")
     void relinkingKeepsAKnownHandle() {
         Account account = accounts.create("keep@example.invalid", "hash");
-        accounts.link(account.id(), 4003L, DiscordLink.Verification.OAUTH, "ada");
-        accounts.link(account.id(), 4003L, DiscordLink.Verification.BOT_DM_CODE);
+        accounts.link(account.id(), 4003L, AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(account.id(), 4003L, AccountIdentity.Verification.BOT_DM_CODE);
 
         assertEquals("ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
     }
@@ -186,8 +186,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("Signing in again under a new handle records the new one")
     void relinkingUpdatesTheHandle() {
         Account account = accounts.create("renamed@example.invalid", "hash");
-        accounts.link(account.id(), 4004L, DiscordLink.Verification.OAUTH, "ada");
-        accounts.link(account.id(), 4004L, DiscordLink.Verification.OAUTH, "ada.lovelace");
+        accounts.link(account.id(), 4004L, AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(account.id(), 4004L, AccountIdentity.Verification.OAUTH, "ada.lovelace");
 
         assertEquals("ada.lovelace", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
     }
@@ -196,7 +196,7 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("A handle learned elsewhere is recorded against the id, and only when it changed")
     void rememberHandleUpdatesByDiscordId() {
         Account account = accounts.create("remember@example.invalid", "hash");
-        accounts.link(account.id(), 4005L, DiscordLink.Verification.BOT_DM_CODE);
+        accounts.link(account.id(), 4005L, AccountIdentity.Verification.BOT_DM_CODE);
 
         assertTrue(accounts.rememberHandle(4005L, "ada"));
         assertFalse(accounts.rememberHandle(4005L, "ada"));
@@ -212,9 +212,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         Account first = accounts.create("bulk-a@example.invalid", "hash");
         Account second = accounts.create("bulk-b@example.invalid", "hash");
         Account third = accounts.create("bulk-c@example.invalid", "hash");
-        accounts.link(first.id(), 4101L, DiscordLink.Verification.OAUTH, "ada");
-        accounts.link(second.id(), 4102L, DiscordLink.Verification.OAUTH, "grace");
-        accounts.link(third.id(), 4103L, DiscordLink.Verification.BOT_DM_CODE);
+        accounts.link(first.id(), 4101L, AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(second.id(), 4102L, AccountIdentity.Verification.OAUTH, "grace");
+        accounts.link(third.id(), 4103L, AccountIdentity.Verification.BOT_DM_CODE);
 
         var handles = accounts.handles(java.util.List.of(4101L, 4102L, 4103L, 4104L));
 
@@ -223,5 +223,62 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         assertEquals("grace", handles.get(4102L));
         assertNull(handles.get(4103L));
         assertTrue(accounts.handles(java.util.List.of()).isEmpty());
+    }
+
+    @Test
+    @DisplayName("A provider nobody has taught us about yet is stored like any other")
+    void anyProviderCanBeLinked() {
+        Account account = accounts.create("multi@example.invalid", "hash");
+        accounts.link(account.id(), AccountIdentity.DISCORD, "5001",
+                AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(account.id(), "github", "octocat-1",
+                AccountIdentity.Verification.OAUTH, "octocat");
+
+        assertEquals(2, accounts.identities(account.id()).size());
+        assertEquals("octocat",
+                accounts.findIdentity(account.id(), "github").orElseThrow().handle());
+        assertEquals(account.id(),
+                accounts.findByIdentity("github", "octocat-1").orElseThrow().id());
+        assertEquals("ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+    }
+
+    @Test
+    @DisplayName("An account holds one identity per provider, and swapping it replaces the old one")
+    void oneIdentityPerProvider() {
+        Account account = accounts.create("swap@example.invalid", "hash");
+        accounts.link(account.id(), 5101L, AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(account.id(), 5102L, AccountIdentity.Verification.OAUTH, "grace");
+
+        assertEquals(1, accounts.identities(account.id()).size());
+        assertEquals("5102", accounts.findLinkByAccountId(account.id()).orElseThrow().externalId());
+        assertTrue(accounts.findByIdentity(AccountIdentity.DISCORD, "5101").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Unlinking one provider leaves the others alone")
+    void unlinkIsPerProvider() {
+        Account account = accounts.create("unlink@example.invalid", "hash");
+        accounts.link(account.id(), AccountIdentity.DISCORD, "5201",
+                AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(account.id(), "github", "octocat-2",
+                AccountIdentity.Verification.OAUTH, "octocat");
+
+        accounts.unlink(account.id());
+
+        assertTrue(accounts.findLinkByAccountId(account.id()).isEmpty());
+        assertEquals("octocat", accounts.findIdentity(account.id(), "github").orElseThrow().handle());
+    }
+
+    @Test
+    @DisplayName("The same id at two providers is two identities, not a clash")
+    void providersDoNotShareAnIdSpace() {
+        Account first = accounts.create("prov-a@example.invalid", "hash");
+        Account second = accounts.create("prov-b@example.invalid", "hash");
+        accounts.link(first.id(), AccountIdentity.DISCORD, "5301",
+                AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(second.id(), "github", "5301", AccountIdentity.Verification.OAUTH, "grace");
+
+        assertEquals(first.id(), accounts.findByIdentity(AccountIdentity.DISCORD, "5301").orElseThrow().id());
+        assertEquals(second.id(), accounts.findByIdentity("github", "5301").orElseThrow().id());
     }
 }

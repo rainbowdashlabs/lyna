@@ -2,7 +2,7 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.AccountLicense;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,12 +37,12 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     void seed() throws SQLException {
         clear("download_log", "user_sub_license", "user_license", "license_access", "license",
                 "license_settings", "download", "download_type", "product",
-                "account_discord_link", "account");
+                "account_identity", "account");
 
         owner = accounts.create("owner@example.invalid", "hash");
         sharee = accounts.create("sharee@example.invalid", "hash");
-        accounts.link(owner.id(), OWNER_DISCORD, DiscordLink.Verification.OAUTH);
-        accounts.link(sharee.id(), SHAREE_DISCORD, DiscordLink.Verification.OAUTH);
+        accounts.link(owner.id(), OWNER_DISCORD, AccountIdentity.Verification.OAUTH);
+        accounts.link(sharee.id(), SHAREE_DISCORD, AccountIdentity.Verification.OAUTH);
 
         try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.license_settings (guild_id, shares) VALUES (%d, 2)"
@@ -77,7 +77,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
      * @return the Discord id the account is linked to, which is what its licenses are keyed by
      */
     private Optional<Long> discordIdOf(Account account) {
-        return accounts.findLinkByAccountId(account.id()).map(DiscordLink::discordUserId);
+        return accounts.findLinkByAccountId(account.id()).map(AccountIdentity::externalIdAsLong);
     }
 
     @Test
@@ -96,7 +96,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         accounts.unlink(owner.id());
         assertTrue(discordIdOf(owner).isEmpty());
 
-        accounts.link(owner.id(), OWNER_DISCORD, DiscordLink.Verification.OAUTH);
+        accounts.link(owner.id(), OWNER_DISCORD, AccountIdentity.Verification.OAUTH);
         assertEquals(1, accountLicenses.owned(discordIdOf(owner).orElseThrow()).size());
     }
 

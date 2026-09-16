@@ -26,7 +26,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void freshAccount() throws SQLException {
-        clear("password_reset_token", "account_session", "account_discord_link", "account");
+        clear("password_reset_token", "account_session", "account_identity", "account");
         account = accounts.create("forgetful@example.invalid", HASHER.hash("forgotten"));
     }
 

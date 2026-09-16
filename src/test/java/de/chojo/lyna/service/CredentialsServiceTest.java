@@ -21,7 +21,7 @@ class CredentialsServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void clearAccounts() throws SQLException {
-        clear("account_discord_link", "account");
+        clear("account_identity", "account");
     }
 
     /**

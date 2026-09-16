@@ -14,7 +14,7 @@ import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.data.dao.account.AccountLicense;
 import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.account.AccountSession;
-import de.chojo.lyna.data.dao.account.DiscordLink;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
 import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.lyna.configuration.ConfigFile;
@@ -134,8 +134,8 @@ public class Account {
                         acc.get().emailVerified(),
                         emailTokens.pendingEmail(acc.get().id()).orElse(null),
                         acc.get().hasPassword(),
-                        link.map(l -> Long.toString(l.discordUserId())).orElse(null),
-                        link.map(DiscordLink::linkedAt).orElse(null),
+                        link.map(AccountIdentity::externalId).orElse(null),
+                        link.map(AccountIdentity::linkedAt).orElse(null),
                         acc.get().theme(),
                         acc.get().feel(),
                         acc.get().darkMode()),
@@ -444,7 +444,7 @@ public class Account {
      * holds nothing - which is a legitimate answer rather than a refusal.
      */
     private Optional<Long> linkedDiscordId(int accountId) {
-        return accounts.findLinkByAccountId(accountId).map(DiscordLink::discordUserId);
+        return accounts.findLinkByAccountId(accountId).map(AccountIdentity::externalIdAsLong);
     }
 
     private void listLicenses(Context ctx) {

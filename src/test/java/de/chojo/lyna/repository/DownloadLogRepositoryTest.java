@@ -26,7 +26,7 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
 
     @BeforeEach
     void seedCatalog() throws SQLException {
-        clear("download_log", "download", "download_type", "product", "account_discord_link", "account");
+        clear("download_log", "download", "download_type", "product", "account_identity", "account");
         account = accounts.create("downloads@example.invalid", "hash");
 
         try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {

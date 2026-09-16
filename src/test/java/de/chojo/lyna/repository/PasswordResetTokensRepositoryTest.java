@@ -19,7 +19,7 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
 
     @BeforeEach
     void freshAccount() throws SQLException {
-        clear("password_reset_token", "account_discord_link", "account");
+        clear("password_reset_token", "account_identity", "account");
         account = accounts.create("reset@example.invalid", "hash");
     }
 
