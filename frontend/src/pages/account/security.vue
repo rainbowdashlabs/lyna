@@ -149,39 +149,12 @@ function fmt(iso: string | null): string {
         </form>
       </section>
 
-      <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
-        <CardHeader>
-          Discord
-        </CardHeader>
-        <div v-if="summary.account.discordId" class="space-y-2 text-sm">
-          <div>
-            <span class="opacity-70">Linked id:</span> {{ summary.account.discordId }}
-          </div>
-          <div v-if="summary.account.discordLinkedAt" class="opacity-70">
-            Since {{ fmt(summary.account.discordLinkedAt) }}
-          </div>
-          <div class="flex gap-2 pt-2">
-            <a
-                href="/api/auth/discord/start"
-                class="rounded-theme border border-border-light dark:border-border-dark px-3 py-1.5 text-sm hover:bg-primary/10"
-            >Re-link</a>
-            <ErrorButton compact @click="doUnlinkDiscord">Unlink</ErrorButton>
-          </div>
-        </div>
-        <div v-else class="text-sm">
-          Not linked. <a href="/api/auth/discord/start" class="text-primary hover:underline">Link your Discord</a> to claim
-          licenses tied to your Discord id.
-        </div>
-      </section>
-
-      <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
-        <EmailCard
-            :email="summary.account.email"
-            :pending-email="summary.account.pendingEmail"
-            :verified="summary.account.emailVerified"
-            @changed="refresh"
-        />
-      </section>
+      <IdentitySection
+          :account="summary.account"
+          :format="fmt"
+          @changed="refresh"
+          @unlink="doUnlinkDiscord"
+      />
 
       <section class="rounded-theme border border-border-light dark:border-border-dark p-4">
         <CardHeader class="flex items-center justify-between">

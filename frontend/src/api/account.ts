@@ -14,6 +14,10 @@ export interface AccountInfo {
     hasPassword: boolean
     discordId: string | null
     discordLinkedAt: string | null
+    /** The name as it is shown, digits and all. Null for an account nobody has named yet. */
+    username: string | null
+    /** False while Discord supplies the name, which is when the field is not the account's to set. */
+    nameIsTheirs: boolean
     theme: string | null
     feel: string | null
     darkMode: string | null
@@ -150,10 +154,19 @@ export interface LicenseList {
     shared: LicenseView[]
 }
 
+export interface ShareeView {
+    /** How to address this sharee when revoking. Opaque: never parse it. */
+    ref: string
+    /** A username, or the address of an invite the owner typed. */
+    name: string
+    /** An invite still waiting for that address to be proved. */
+    pending: boolean
+}
+
 export interface LicenseDetail {
     license: LicenseView
     key: string | null
-    sharees: string[]
+    sharees: ShareeView[]
     recentDownloads: DownloadRow[]
 }
 
@@ -167,12 +180,19 @@ export async function licenseDetail(id: number): Promise<LicenseDetail> {
     return data
 }
 
+/** A username, with or without its digits, or an email address. */
 export async function addSharee(id: number, subject: string): Promise<void> {
     await client.post(`/api/account/licenses/${id}/sharees`, {subject})
 }
 
-export async function removeSharee(id: number, discordId: string): Promise<void> {
-    await client.delete(`/api/account/licenses/${id}/sharees/${encodeURIComponent(discordId)}`)
+export async function removeSharee(id: number, ref: string): Promise<void> {
+    await client.delete(`/api/account/licenses/${id}/sharees/${encodeURIComponent(ref)}`)
+}
+
+/** Sets the account's own name. Refused while Discord supplies it. */
+export async function setUsername(username: string): Promise<string | null> {
+    const {data} = await client.put<{username: string | null}>('/api/account/username', {username})
+    return data.username
 }
 
 export async function changeEmail(newEmail: string): Promise<void> {

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
-import {addSharee, licenseDetail, type LicenseDetail, removeSharee} from '~/api/account'
+import {addSharee, licenseDetail, type LicenseDetail, removeSharee, type ShareeView} from '~/api/account'
 
 definePageMeta({layout: 'account'})
 
@@ -16,7 +16,7 @@ const keyShown = ref(false)
 const addShown = ref(false)
 const shareeInput = ref('')
 const shareeError = ref<string | null>(null)
-const revoking = ref<string | null>(null)
+const revoking = ref<ShareeView | null>(null)
 
 const isOwner = computed(() => data.value?.license.role === 'owner')
 const maskedKey = computed(() => (data.value?.key ? '•'.repeat(data.value.key.length) : ''))
@@ -54,10 +54,10 @@ async function doAddSharee() {
 }
 
 async function doRevoke() {
-  const discordId = revoking.value
-  if (!discordId) return
+  const sharee = revoking.value
+  if (!sharee) return
   revoking.value = null
-  await removeSharee(licenseId, discordId)
+  await removeSharee(licenseId, sharee.ref)
   await refresh()
 }
 
@@ -95,12 +95,14 @@ async function copyKey() {
           v-model:show="addShown"
           v-model:value="shareeInput"
           confirm-label="Share"
-          placeholder="Discord user id"
+          placeholder="Username or email address"
           title="Share this license"
           @confirm="doAddSharee"
       />
       <ConfirmDeleteModal
-          :message="`Revoke ${revoking}'s access to ${data.license.productName}? They will lose access immediately.`"
+          :message="revoking?.pending
+              ? `Withdraw the invitation to ${revoking.name}? They will not be able to accept it.`
+              : `Revoke ${revoking?.name}'s access to ${data.license.productName}? They will lose access immediately.`"
           :model-value="revoking !== null"
           @confirm="doRevoke"
           @update:model-value="revoking = $event ? revoking : null"

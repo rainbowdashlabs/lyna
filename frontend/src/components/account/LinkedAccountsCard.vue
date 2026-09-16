@@ -22,7 +22,7 @@ defineProps<{
         <DetailLabel>Discord</DetailLabel>
         <div>
           <template v-if="account.discordId">
-            Linked (id {{ account.discordId }})
+            Linked as {{ account.username ?? account.discordId }}
           </template>
           <template v-else>
             Not linked &ndash; <AppLink href="/api/auth/discord/start">link now</AppLink>
