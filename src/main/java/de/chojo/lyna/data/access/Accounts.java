@@ -30,7 +30,7 @@ public class Accounts {
         return query("""
                 INSERT INTO account (email, password_hash)
                 VALUES (?, ?)
-                RETURNING id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
+                RETURNING id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
                 """)
                 .single(call().bind(email).bind(passwordHash))
                 .map(row -> new Account(
@@ -39,7 +39,6 @@ public class Accounts {
                         row.getBoolean("email_verified"),
                         row.getString("password_hash"),
                         row.getString("theme"),
-                        row.getString("feel"),
                         row.getString("dark_mode"),
                         row.getString("username"),
                         row.getString("discriminator"),
@@ -51,7 +50,7 @@ public class Accounts {
 
     public Optional<Account> findById(int id) {
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
+                SELECT id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
                 FROM account WHERE id = ?
                 """)
                 .single(call().bind(id))
@@ -61,7 +60,6 @@ public class Accounts {
                         row.getBoolean("email_verified"),
                         row.getString("password_hash"),
                         row.getString("theme"),
-                        row.getString("feel"),
                         row.getString("dark_mode"),
                         row.getString("username"),
                         row.getString("discriminator"),
@@ -72,7 +70,7 @@ public class Accounts {
 
     public Optional<Account> findByEmail(String email) {
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
+                SELECT id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
                 FROM account WHERE LOWER(email) = LOWER(?)
                 """)
                 .single(call().bind(email))
@@ -82,7 +80,6 @@ public class Accounts {
                         row.getBoolean("email_verified"),
                         row.getString("password_hash"),
                         row.getString("theme"),
-                        row.getString("feel"),
                         row.getString("dark_mode"),
                         row.getString("username"),
                         row.getString("discriminator"),
@@ -102,7 +99,7 @@ public class Accounts {
      */
     public Optional<Account> findByIdentity(String provider, String externalId) {
         return query("""
-                SELECT a.id, a.email, a.email_verified, a.password_hash, a.theme, a.feel, a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
+                SELECT a.id, a.email, a.email_verified, a.password_hash, a.theme, a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
                 FROM account a
                 JOIN account_identity i ON i.account_id = a.id
                 WHERE i.provider = ? AND i.external_id = ?
@@ -441,7 +438,7 @@ public class Accounts {
         String discriminator = hash < 0 ? null : trimmed.substring(hash + 1);
         if (username.isBlank()) return Optional.empty();
         return query("""
-                SELECT id, email, email_verified, password_hash, theme, feel, dark_mode, username, discriminator, created_at, last_login_at
+                SELECT id, email, email_verified, password_hash, theme, dark_mode, username, discriminator, created_at, last_login_at
                 FROM account
                 WHERE lower(username) = lower(?) AND discriminator IS NOT DISTINCT FROM ?
                 """)
@@ -467,7 +464,6 @@ public class Accounts {
                 row.getBoolean("email_verified"),
                 row.getString("password_hash"),
                 row.getString("theme"),
-                row.getString("feel"),
                 row.getString("dark_mode"),
                 row.getString("username"),
                 row.getString("discriminator"),
@@ -513,9 +509,9 @@ public class Accounts {
      * Stores the account's own appearance choices. A null leaves that choice to the operator's
      * default rather than pinning it, which is what "use the default" means in this table.
      */
-    public void setAppearance(int accountId, String theme, String feel, String darkMode) {
-        query("UPDATE account SET theme = ?, feel = ?, dark_mode = ? WHERE id = ?")
-                .single(call().bind(theme).bind(feel).bind(darkMode).bind(accountId))
+    public void setAppearance(int accountId, String theme, String darkMode) {
+        query("UPDATE account SET theme = ?, dark_mode = ? WHERE id = ?")
+                .single(call().bind(theme).bind(darkMode).bind(accountId))
                 .update();
     }
 

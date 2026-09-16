@@ -7,7 +7,7 @@
 import {useI18n} from 'vue-i18n'
 import type {InstanceAppearance} from '~/api/admin'
 import {computed} from 'vue'
-import {Feel, THEMES} from '~/theme/themes'
+import {THEMES} from '~/theme/themes'
 
 const {t} = useI18n()
 
@@ -45,19 +45,11 @@ const enabledThemes = computed({
           <option v-for="(theme, key) in THEMES" :key="key" :value="key">{{ theme.label }}</option>
         </SelectInput>
       </LabelledField>
-      <LabelledField :label="t('ui.instanceAppearanceForm.defaultFeel')">
-        <SelectInput v-model="data.defaultFeel">
-          <option :value="Feel.ROUNDED">{{ t('ui.instanceAppearanceForm.rounded') }}</option>
-          <option :value="Feel.CORNERS">{{ t('ui.instanceAppearanceForm.corners') }}</option>
-        </SelectInput>
-      </LabelledField>
       <LabelledField :help="t('ui.instanceAppearanceForm.emptyMeansEveryThemeIsAvailable')" :label="t('ui.instanceAppearanceForm.enabledThemesCommaSeparated')">
         <TextInput v-model="enabledThemes"/>
       </LabelledField>
-      <div class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
-        <FieldLabel inline><CheckboxInput v-model="data.lockFeel"/> {{ t('ui.instanceAppearanceForm.lockFeel') }}</FieldLabel>
+      <div class="grid grid-cols-1 gap-2 text-sm">
         <FieldLabel inline><CheckboxInput v-model="data.allowUserTheme"/> {{ t('ui.instanceAppearanceForm.allowUserTheme') }}</FieldLabel>
-        <FieldLabel inline><CheckboxInput v-model="data.allowUserFeel"/> {{ t('ui.instanceAppearanceForm.allowUserFeel') }}</FieldLabel>
       </div>
       <LabelledField :label="t('ui.instanceAppearanceForm.customThemeColorsJson')">
         <TextAreaInput v-model="customThemeColors" :rows="6" class="font-mono text-xs"/>

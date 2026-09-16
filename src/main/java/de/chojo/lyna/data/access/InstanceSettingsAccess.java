@@ -14,17 +14,13 @@ public class InstanceSettingsAccess {
 
     public InstanceSettings get() {
         return query("""
-                SELECT default_theme, default_feel, lock_feel,
-                       allow_user_theme, allow_user_feel, enabled_themes, custom_theme_colors
+                SELECT default_theme, allow_user_theme, enabled_themes, custom_theme_colors
                 FROM instance_settings WHERE id = 1
                 """)
                 .single(call())
                 .map(row -> new InstanceSettings(
                         row.getString("default_theme"),
-                        row.getString("default_feel"),
-                        row.getBoolean("lock_feel"),
                         row.getBoolean("allow_user_theme"),
-                        row.getBoolean("allow_user_feel"),
                         readStringArray(row.getArray("enabled_themes")),
                         row.getString("custom_theme_colors")))
                 .first()
@@ -35,20 +31,14 @@ public class InstanceSettingsAccess {
         query("""
                 UPDATE instance_settings
                 SET default_theme = ?,
-                    default_feel = ?,
-                    lock_feel = ?,
                     allow_user_theme = ?,
-                    allow_user_feel = ?,
                     enabled_themes = ?,
                     custom_theme_colors = ?::JSONB
                 WHERE id = 1
                 """)
                 .single(call()
                         .bind(next.defaultTheme())
-                        .bind(next.defaultFeel())
-                        .bind(next.lockFeel())
                         .bind(next.allowUserTheme())
-                        .bind(next.allowUserFeel())
                         .bind(next.enabledThemes(), PostgreSqlTypes.TEXT)
                         .bind(next.customThemeColorsJson()))
                 .update();
@@ -67,6 +57,6 @@ public class InstanceSettingsAccess {
     }
 
     private static InstanceSettings defaults() {
-        return new InstanceSettings("lyna", "ROUNDED", false, true, true, List.of(), null);
+        return new InstanceSettings("transistor", true, List.of(), null);
     }
 }

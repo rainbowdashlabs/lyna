@@ -24,7 +24,7 @@ class AppearanceServiceTest extends RepositoryTestBase {
     void freshAccount() throws SQLException {
         clear("account_identity", "account");
         instanceSettings.update(new InstanceSettings(
-                "lyna", "ROUNDED", false, true, true, List.of(), null));
+                "lyna", true, List.of(), null));
         account = accounts.create("appearance@example.invalid", "hash");
     }
 
@@ -34,7 +34,7 @@ class AppearanceServiceTest extends RepositoryTestBase {
      *
      * @return what is actually stored for the account after the choice is offered
      */
-    private Stored apply(String theme, String feel, String darkMode) {
+    private Stored apply(String theme, String darkMode) {
         InstanceSettings policy = instanceSettings.get();
         Account current = accounts.findById(account.id()).orElseThrow();
 
@@ -43,20 +43,16 @@ class AppearanceServiceTest extends RepositoryTestBase {
                 && (policy.enabledThemes().isEmpty() || policy.enabledThemes().contains(theme))) {
             nextTheme = theme.isBlank() ? null : theme;
         }
-        String nextFeel = current.feel();
-        if (policy.allowUserFeel() && !policy.lockFeel() && feel != null) {
-            nextFeel = feel.isBlank() ? null : feel;
-        }
         String nextDarkMode = darkMode == null
                 ? current.darkMode()
                 : darkMode.isBlank() ? null : darkMode;
 
-        accounts.setAppearance(account.id(), nextTheme, nextFeel, nextDarkMode);
+        accounts.setAppearance(account.id(), nextTheme, nextDarkMode);
         Account stored = accounts.findById(account.id()).orElseThrow();
-        return new Stored(stored.theme(), stored.feel(), stored.darkMode());
+        return new Stored(stored.theme(), stored.darkMode());
     }
 
-    private record Stored(String theme, String feel, String darkMode) {
+    private record Stored(String theme, String darkMode) {
     }
 
     @Test
@@ -65,41 +61,37 @@ class AppearanceServiceTest extends RepositoryTestBase {
         Account stored = accounts.findById(account.id()).orElseThrow();
 
         assertNull(stored.theme());
-        assertNull(stored.feel());
         assertNull(stored.darkMode());
     }
 
     @Test
     @DisplayName("What the account picks is what it gets back")
     void choicesAreStored() {
-        Stored stored = apply("midnight", "CORNERS", "dark");
+        Stored stored = apply("midnight", "dark");
 
         assertEquals("midnight", stored.theme());
-        assertEquals("CORNERS", stored.feel());
         assertEquals("dark", stored.darkMode());
     }
 
     @Test
     @DisplayName("Clearing a choice puts the account back on the operator's default")
     void blankClearsTheChoice() {
-        apply("midnight", "CORNERS", "dark");
+        apply("midnight", "dark");
 
-        Stored stored = apply("", "", "");
+        Stored stored = apply("", "");
 
         assertNull(stored.theme());
-        assertNull(stored.feel());
         assertNull(stored.darkMode());
     }
 
     @Test
     @DisplayName("Leaving a field out changes nothing about it")
     void absentFieldsAreLeftAlone() {
-        apply("midnight", "CORNERS", "dark");
+        apply("midnight", "dark");
 
-        Stored stored = apply(null, null, "light");
+        Stored stored = apply(null, "light");
 
         assertEquals("midnight", stored.theme());
-        assertEquals("CORNERS", stored.feel());
         assertEquals("light", stored.darkMode());
     }
 
@@ -107,39 +99,28 @@ class AppearanceServiceTest extends RepositoryTestBase {
     @DisplayName("A theme outside the operator's whitelist is not taken")
     void themeOutsideTheWhitelistIsRefused() {
         instanceSettings.update(new InstanceSettings(
-                "lyna", "ROUNDED", false, true, true, List.of("lyna", "forest"), null));
+                "lyna", true, List.of("lyna", "forest"), null));
 
-        assertNull(apply("midnight", null, null).theme());
-        assertEquals("forest", apply("forest", null, null).theme());
+        assertNull(apply("midnight", null).theme());
+        assertEquals("forest", apply("forest", null).theme());
     }
 
     @Test
     @DisplayName("With the theme forced for everyone, the account's pick is ignored")
     void lockedThemeIgnoresThePick() {
         instanceSettings.update(new InstanceSettings(
-                "lyna", "ROUNDED", false, false, true, List.of(), null));
+                "lyna", false, List.of(), null));
 
-        assertNull(apply("midnight", null, null).theme());
+        assertNull(apply("midnight", null).theme());
     }
 
-    @Test
-    @DisplayName("With the feel locked, the account's pick is ignored but its theme still lands")
-    void lockedFeelIgnoresThePick() {
-        instanceSettings.update(new InstanceSettings(
-                "lyna", "ROUNDED", true, true, true, List.of(), null));
-
-        Stored stored = apply("midnight", "CORNERS", null);
-
-        assertEquals("midnight", stored.theme());
-        assertNull(stored.feel());
-    }
 
     @Test
     @DisplayName("Dark mode is the account's own, whatever the operator locked")
     void darkModeIsAlwaysTheAccountsOwn() {
         instanceSettings.update(new InstanceSettings(
-                "lyna", "ROUNDED", true, false, false, List.of(), null));
+                "lyna", false, List.of(), null));
 
-        assertEquals("dark", apply(null, null, "dark").darkMode());
+        assertEquals("dark", apply(null, "dark").darkMode());
     }
 }

@@ -32,16 +32,13 @@ public class Theme {
         ctx.header("Cache-Control", "public, max-age=60");
         ctx.json(new PublicTheme(
                 settings.defaultTheme(),
-                settings.defaultFeel(),
-                settings.lockFeel(),
                 settings.allowUserTheme(),
-                settings.allowUserFeel(),
                 settings.enabledThemes(),
                 settings.customThemeColorsJson()));
     }
 
-    public record PublicTheme(String defaultTheme, String defaultFeel, boolean lockFeel, boolean allowUserTheme,
-                              boolean allowUserFeel, java.util.List<String> enabledThemes,
+    public record PublicTheme(String defaultTheme, boolean allowUserTheme,
+                              java.util.List<String> enabledThemes,
                               String customThemeColors) {
     }
 }

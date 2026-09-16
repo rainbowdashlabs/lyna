@@ -146,7 +146,6 @@ public class Account {
                         acc.get().displayName(),
                         link.isEmpty(),
                         acc.get().theme(),
-                        acc.get().feel(),
                         acc.get().darkMode()),
                 active.size(),
                 acc.get().lastLoginAt(),
@@ -432,17 +431,12 @@ public class Account {
             theme = body.theme().isBlank() ? null : body.theme();
         }
 
-        String feel = acc.get().feel();
-        if (policy.allowUserFeel() && !policy.lockFeel() && body.feel() != null) {
-            feel = body.feel().isBlank() ? null : body.feel();
-        }
-
         String darkMode = body.darkMode() == null
                 ? acc.get().darkMode()
                 : body.darkMode().isBlank() ? null : body.darkMode();
 
-        accounts.setAppearance(acc.get().id(), theme, feel, darkMode);
-        ctx.json(new Appearance(theme, feel, darkMode));
+        accounts.setAppearance(acc.get().id(), theme, darkMode);
+        ctx.json(new Appearance(theme, darkMode));
     }
 
     private void listLicenses(Context ctx) {
@@ -697,7 +691,7 @@ public class Account {
     public record AccountInfo(int id, String email, boolean emailVerified, String pendingEmail,
                               boolean hasPassword, String discordId, Instant discordLinkedAt,
                               String username, boolean nameIsTheirs,
-                              String theme, String feel, String darkMode) {
+                              String theme, String darkMode) {
     }
 
     public record Username(String username) {
@@ -734,7 +728,7 @@ public class Account {
     public record EmailChange(String newEmail) {
     }
 
-    public record Appearance(String theme, String feel, String darkMode) {
+    public record Appearance(String theme, String darkMode) {
     }
 
     /**

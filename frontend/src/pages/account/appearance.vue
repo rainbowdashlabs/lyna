@@ -4,13 +4,13 @@ import {computed, onMounted, ref} from 'vue'
 import {overview} from '~/api/account'
 import {publicTheme, type PublicTheme, saveAppearance} from '~/api/theme'
 import {useTheme} from '~/composables/useTheme'
-import {DarkMode, type DarkModeValue, Feel, type FeelValue} from '~/theme/themes'
+import {DarkMode, type DarkModeValue} from '~/theme/themes'
 
 const {t} = useI18n()
 
 definePageMeta({layout: 'account'})
 
-const {activeTheme, activeFeel, darkMode, setTheme, setFeel, setDarkMode} = useTheme()
+const {activeTheme, darkMode, setTheme, setDarkMode} = useTheme()
 
 const policy = ref<PublicTheme | null>(null)
 const loading = ref(true)
@@ -18,19 +18,16 @@ const errorMessage = ref<string | null>(null)
 const saveMessage = ref<string | null>(null)
 
 const theme = ref('lyna')
-const feel = ref<FeelValue>(Feel.ROUNDED)
 const mode = ref<DarkModeValue>(DarkMode.SYSTEM)
 
-const feelLocked = computed(() => !!policy.value && (policy.value.lockFeel || !policy.value.allowUserFeel))
 const themeLocked = computed(() => !!policy.value && !policy.value.allowUserTheme)
-const nothingToChoose = computed(() => themeLocked.value && feelLocked.value)
+const nothingToChoose = computed(() => themeLocked.value)
 
 onMounted(async () => {
   try {
     const [settings, account] = await Promise.all([publicTheme(), overview()])
     policy.value = settings
     theme.value = account.account.theme ?? settings.defaultTheme
-    feel.value = (account.account.feel ?? settings.defaultFeel) as FeelValue
     mode.value = (account.account.darkMode ?? darkMode.value) as DarkModeValue
   } catch (e) {
     errorMessage.value = (e as Error).message ?? 'Failed to load appearance settings'
@@ -46,10 +43,9 @@ onMounted(async () => {
 async function save() {
   saveMessage.value = null
   if (!themeLocked.value) setTheme(theme.value)
-  if (!feelLocked.value) setFeel(feel.value)
   setDarkMode(mode.value)
   try {
-    await saveAppearance({theme: theme.value, feel: feel.value, darkMode: mode.value})
+    await saveAppearance({theme: theme.value, darkMode: mode.value})
     saveMessage.value = 'Saved.'
   } catch {
     saveMessage.value = 'Could not save your choice.'
@@ -82,16 +78,6 @@ async function save() {
           </SelectInput>
         </section>
 
-        <section>
-          <CardHeader>{{ t('page.account.appearance.corners') }}</CardHeader>
-          <SelectInput v-model="feel" :disabled="feelLocked" class="max-w-xs">
-            <option :value="Feel.ROUNDED">{{ t('page.account.appearance.rounded') }}</option>
-            <option :value="Feel.CORNERS">{{ t('page.account.appearance.square') }}</option>
-          </SelectInput>
-          <MutedText v-if="feelLocked" class="mt-2 block" size="sm">
-            {{ t('page.account.appearance.yourOperatorHasLockedTheCorner') }}
-          </MutedText>
-        </section>
 
         <div class="flex items-center gap-3">
           <PrimaryButton @click="save">{{ t('common.save') }}</PrimaryButton>

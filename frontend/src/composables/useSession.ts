@@ -7,7 +7,6 @@ interface SessionAccount {
     hasPassword: boolean
     discordId: string | null
     theme: string | null
-    feel: string | null
     darkMode: string | null
 }
 

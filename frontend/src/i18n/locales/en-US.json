@@ -85,11 +85,7 @@
         "darkMode": "Dark mode",
         "followTheSystem": "Follow the system",
         "alwaysLight": "Always light",
-        "alwaysDark": "Always dark",
-        "corners": "Corners",
-        "rounded": "Rounded",
-        "square": "Square",
-        "yourOperatorHasLockedTheCorner": "Your operator has locked the corner style."
+        "alwaysDark": "Always dark"
       },
       "downloads": {
         "downloads": "Downloads",
@@ -287,13 +283,8 @@
       "threeToThirtyTwoCharactersLetters": "Three to thirty-two characters: letters, digits, dots, dashes or underscores. Four digits are added so two people can share a name."
     },
     "instanceAppearanceForm": {
-      "rounded": "Rounded",
-      "corners": "Corners",
-      "lockFeel": "Lock feel",
       "allowUserTheme": "Allow user theme",
-      "allowUserFeel": "Allow user feel",
       "defaultTheme": "Default theme",
-      "defaultFeel": "Default feel",
       "emptyMeansEveryThemeIsAvailable": "Empty means every theme is available.",
       "enabledThemesCommaSeparated": "Enabled themes (comma-separated)",
       "customThemeColorsJson": "Custom theme colors (JSON)"

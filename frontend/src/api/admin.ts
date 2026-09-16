@@ -86,10 +86,7 @@ export async function lookupRegistration(guildId: string, discordId: string): Pr
 
 export interface InstanceAppearance {
     defaultTheme: string
-    defaultFeel: string
-    lockFeel: boolean
     allowUserTheme: boolean
-    allowUserFeel: boolean
     enabledThemes: string[]
     customThemeColorsJson: string | null
 }

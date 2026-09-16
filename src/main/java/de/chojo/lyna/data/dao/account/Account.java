@@ -15,7 +15,6 @@ public record Account(
         boolean emailVerified,
         String passwordHash,
         String theme,
-        String feel,
         String darkMode,
         String username,
         String discriminator,

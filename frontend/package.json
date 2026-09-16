@@ -7,7 +7,7 @@
     "dev": "nuxi dev --host 0.0.0.0",
     "build": "nuxi build",
     "preview": "nuxi preview",
-    "typecheck": "vue-tsc --noEmit",
+    "typecheck": "nuxt prepare && vue-tsc --noEmit",
     "lint:icons": "node scripts/lint-icons.mjs",
     "lint:conventions": "node scripts/lint-conventions.mjs",
     "lint:locales": "node scripts/lint-locales.mjs",

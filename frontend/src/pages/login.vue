@@ -43,10 +43,10 @@ async function submit() {
     </PageHeader>
     <DemoAccountPicker class="mb-6"/>
     <form class="space-y-4" @submit.prevent="submit">
-      <LabelledField :::label="t('page.login.tPageLoginTauthemail')">
+      <LabelledField :label="t('auth.email')">
         <EmailInput v-model="email" autocomplete="email" required/>
       </LabelledField>
-      <LabelledField :::label="t('page.login.tPageLoginTauthpassword')">
+      <LabelledField :label="t('auth.password')">
         <PasswordInput v-model="password" autocomplete="current-password" required/>
       </LabelledField>
       <div v-if="errorMessage" class="rounded-theme border border-error/40 bg-error/10 p-2 text-sm text-error">

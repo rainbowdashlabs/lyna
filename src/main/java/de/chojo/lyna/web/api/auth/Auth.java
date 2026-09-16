@@ -341,7 +341,6 @@ public class Auth {
                 account.hasPassword(),
                 link == null ? null : Long.toString(link.discordUserId()),
                 account.theme(),
-                account.feel(),
                 account.darkMode());
     }
 
@@ -391,7 +390,7 @@ public class Auth {
     }
 
     public record AccountResponse(int id, String email, boolean emailVerified, boolean hasPassword, String discordId,
-                                  String theme, String feel, String darkMode) {
+                                  String theme, String darkMode) {
     }
 
     private record MiniLink(long discordUserId) {

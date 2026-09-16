@@ -3,14 +3,6 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-export const Feel = {ROUNDED: 'ROUNDED', CORNERS: 'CORNERS'} as const
-export type FeelValue = (typeof Feel)[keyof typeof Feel]
-
-export const FEEL_RADIUS: Record<FeelValue, string> = {
-    ROUNDED: '0.5rem',
-    CORNERS: '0.125rem',
-}
-
 export interface ModeColors {
     primary: string
     primaryAccent: string
@@ -31,13 +23,45 @@ export interface ThemeColors {
     bgDarkAccent: string
 }
 
+/**
+ * A colour scheme. Square corners, the chrome and the type are the application's, not a theme's -
+ * a theme changes what things are coloured and nothing about their shape.
+ */
 export interface ThemeDefinition {
     label: string
     colors: ThemeColors
-    supportedFeels: FeelValue[]
 }
 
 export const THEMES: Record<string, ThemeDefinition> = {
+    transistor: {
+        label: 'Transistor',
+        colors: {
+            light: {
+                primary: '#eb9db2',
+                primaryAccent: '#d97e96',
+                secondary: '#7cc4e4',
+                secondaryAccent: '#57a9ce',
+                info: '#c9a227',
+                infoAccent: '#a5811a',
+                success: '#3f9d6b',
+                error: '#d95c5c',
+            },
+            dark: {
+                primary: '#f2b3c4',
+                primaryAccent: '#e28fa6',
+                secondary: '#9bd8f5',
+                secondaryAccent: '#6fbfe3',
+                info: '#dcc05a',
+                infoAccent: '#bb9b32',
+                success: '#5cc189',
+                error: '#ef7d7d',
+            },
+            bgLight: '#f5f8fa',
+            bgLightAccent: '#dde5ec',
+            bgDark: '#12171d',
+            bgDarkAccent: '#0c1015',
+        },
+    },
     lyna: {
         label: 'Lyna',
         colors: {
@@ -66,7 +90,6 @@ export const THEMES: Record<string, ThemeDefinition> = {
             bgDark: '#1E2129',
             bgDarkAccent: '#111317',
         },
-        supportedFeels: [Feel.ROUNDED, Feel.CORNERS],
     },
     midnight: {
         label: 'Midnight',
@@ -96,7 +119,6 @@ export const THEMES: Record<string, ThemeDefinition> = {
             bgDark: '#0D1B2A',
             bgDarkAccent: '#071120',
         },
-        supportedFeels: [Feel.ROUNDED, Feel.CORNERS],
     },
     forest: {
         label: 'Forest',
@@ -126,7 +148,6 @@ export const THEMES: Record<string, ThemeDefinition> = {
             bgDark: '#1A2418',
             bgDarkAccent: '#111A10',
         },
-        supportedFeels: [Feel.ROUNDED, Feel.CORNERS],
     },
 }
 

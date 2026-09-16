@@ -2,17 +2,13 @@ import client from './client'
 
 export interface PublicTheme {
     defaultTheme: string
-    defaultFeel: string
-    lockFeel: boolean
     allowUserTheme: boolean
-    allowUserFeel: boolean
     enabledThemes: string[]
     customThemeColors: string | null
 }
 
 export interface AppearanceChoice {
     theme: string | null
-    feel: string | null
     darkMode: string | null
 }
 

@@ -19,7 +19,6 @@ export interface AccountInfo {
     /** False while Discord supplies the name, which is when the field is not the account's to set. */
     nameIsTheirs: boolean
     theme: string | null
-    feel: string | null
     darkMode: string | null
 }
 

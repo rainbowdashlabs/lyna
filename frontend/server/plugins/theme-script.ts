@@ -4,7 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {contrastTextColor, ensureContrast} from '../../src/theme/contrast'
-import {Feel, FEEL_RADIUS, type FeelValue, type ModeColors, THEMES, type ThemeColors} from '../../src/theme/themes'
+import {type ModeColors, THEMES, type ThemeColors} from '../../src/theme/themes'
 
 /**
  * Puts the operator's theme into the first response, before the browser paints anything.
@@ -20,7 +20,6 @@ const CACHE_TTL_MS = 60_000
 
 interface ResolvedTheme {
     theme: string
-    feel: FeelValue
     customColors: ThemeColors | null
 }
 
@@ -38,7 +37,6 @@ async function resolveTheme(backendUrl: string, now: number): Promise<ResolvedTh
         if (!response.ok) return cached?.data ?? null
         const payload = await response.json() as {
             defaultTheme: string
-            defaultFeel: string
             customThemeColors: string | null
         }
         let customColors: ThemeColors | null = null
@@ -51,7 +49,6 @@ async function resolveTheme(backendUrl: string, now: number): Promise<ResolvedTh
         }
         const resolved: ResolvedTheme = {
             theme: payload.defaultTheme,
-            feel: (payload.defaultFeel ?? Feel.ROUNDED) as FeelValue,
             customColors,
         }
         cached = {data: resolved, expires: now + CACHE_TTL_MS}
@@ -63,7 +60,7 @@ async function resolveTheme(backendUrl: string, now: number): Promise<ResolvedTh
 
 function resolveColors(theme: string, customColors: ThemeColors | null): ThemeColors {
     if (theme === 'custom' && customColors) return customColors
-    return THEMES[theme]?.colors ?? THEMES.lyna!.colors
+    return THEMES[theme]?.colors ?? THEMES.transistor!.colors
 }
 
 function buildModeBlock(mode: ModeColors, pageBg: string): string {
@@ -94,13 +91,11 @@ function buildModeBlock(mode: ModeColors, pageBg: string): string {
 
 function buildStyle(theme: ResolvedTheme): string {
     const colors = resolveColors(theme.theme, theme.customColors)
-    const radius = FEEL_RADIUS[theme.feel] ?? FEEL_RADIUS[Feel.ROUNDED]
     const rootBlock = [
         `--color-bg-light:${colors.bgLight}`,
         `--color-bg-light-accent:${colors.bgLightAccent}`,
         `--color-bg-dark:${colors.bgDark}`,
         `--color-bg-dark-accent:${colors.bgDarkAccent}`,
-        `--radius-theme:${radius}`,
     ].join(';')
     return `<style data-ssr-theme>:root{${rootBlock}}.light{${buildModeBlock(colors.light, colors.bgLight)}}`
         + `.dark{${buildModeBlock(colors.dark, colors.bgDark)}}</style>`

@@ -6,17 +6,13 @@
 import {readonly, ref} from 'vue'
 import {
     DarkMode,
-    Feel,
-    FEEL_RADIUS,
     THEMES,
     type DarkModeValue,
-    type FeelValue,
     type ThemeColors,
 } from '@/theme/themes'
 import {contrastTextColor} from '@/theme/contrast'
 
-const activeTheme = ref<string>('lyna')
-const activeFeel = ref<FeelValue>(Feel.ROUNDED)
+const activeTheme = ref<string>('transistor')
 const darkMode = ref<DarkModeValue>('system')
 
 function isDarkActive(): boolean {
@@ -26,7 +22,7 @@ function isDarkActive(): boolean {
 
 function applyTheme(themeKey: string) {
     if (typeof document === 'undefined') return
-    const colors = (THEMES[themeKey]?.colors ?? THEMES.lyna?.colors!)
+    const colors = (THEMES[themeKey]?.colors ?? THEMES.transistor?.colors!)
     const root = document.documentElement.style
     root.setProperty('--color-bg-light', colors.bgLight)
     root.setProperty('--color-bg-light-accent', colors.bgLightAccent)
@@ -37,7 +33,7 @@ function applyTheme(themeKey: string) {
 
 function applyModeColors(themeColors?: ThemeColors) {
     if (typeof document === 'undefined') return
-    const colors = themeColors ?? THEMES[activeTheme.value]?.colors ?? THEMES.lyna?.colors!
+    const colors = themeColors ?? THEMES[activeTheme.value]?.colors ?? THEMES.transistor?.colors!
     const mode = isDarkActive() ? colors.dark : colors.light
     const root = document.documentElement.style
     root.setProperty('--color-primary', mode.primary)
@@ -58,10 +54,6 @@ function applyModeColors(themeColors?: ThemeColors) {
     root.setProperty('--color-error-text', contrastTextColor(mode.error))
 }
 
-function applyFeel(feel: FeelValue) {
-    if (typeof document === 'undefined') return
-    document.documentElement.style.setProperty('--radius-theme', FEEL_RADIUS[feel] ?? FEEL_RADIUS[Feel.ROUNDED])
-}
 
 function applyDarkMode(mode: DarkModeValue) {
     if (typeof document === 'undefined') return
@@ -81,13 +73,10 @@ function applyDarkMode(mode: DarkModeValue) {
 function initFromLocalStorage() {
     if (typeof localStorage === 'undefined') return
     const savedTheme = localStorage.getItem('theme_name')
-    const savedFeel = localStorage.getItem('feel') as FeelValue | null
     const savedDarkMode = localStorage.getItem('dark_mode') as DarkModeValue | null
     if (savedTheme && THEMES[savedTheme]) activeTheme.value = savedTheme
-    if (savedFeel && (savedFeel === Feel.ROUNDED || savedFeel === Feel.CORNERS)) activeFeel.value = savedFeel
     if (savedDarkMode) darkMode.value = savedDarkMode
     applyTheme(activeTheme.value)
-    applyFeel(activeFeel.value)
     applyDarkMode(darkMode.value)
 }
 
@@ -98,11 +87,6 @@ function setTheme(themeKey: string) {
     if (typeof localStorage !== 'undefined') localStorage.setItem('theme_name', themeKey)
 }
 
-function setFeel(feel: FeelValue) {
-    activeFeel.value = feel
-    applyFeel(feel)
-    if (typeof localStorage !== 'undefined') localStorage.setItem('feel', feel)
-}
 
 function setDarkMode(mode: DarkModeValue) {
     darkMode.value = mode
@@ -113,14 +97,11 @@ function setDarkMode(mode: DarkModeValue) {
 export function useTheme() {
     return {
         activeTheme: readonly(activeTheme),
-        activeFeel: readonly(activeFeel),
         darkMode: readonly(darkMode),
         applyTheme,
-        applyFeel,
         applyDarkMode,
         initFromLocalStorage,
         setTheme,
-        setFeel,
         setDarkMode,
     }
 }
