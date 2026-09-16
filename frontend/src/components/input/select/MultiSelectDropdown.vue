@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
 import SecondaryButton from '@/components/button/SecondaryButton.vue'
+
+const {t} = useI18n()
 
 export interface SelectOption {
   value: string
@@ -109,7 +112,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
           :disabled="allSelected"
           @click.stop="selectAll"
         >
-          Alle auswählen
+          {{ t('ui.multiSelectDropdown.alleAuswHlen') }}
         </button>
         <span class="text-[var(--text)]">/</span>
         <button
@@ -119,7 +122,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
           :disabled="modelValue.length === 0"
           @click.stop="selectNone"
         >
-          Keine
+          {{ t('ui.multiSelectDropdown.keine') }}
         </button>
       </div>
 
@@ -129,7 +132,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
             v-model="searchQuery"
             type="text"
             class="w-full px-2 py-1 text-sm rounded border border-bg-light-accent dark:border-bg-dark-accent bg-transparent focus:outline-none focus:border-primary"
-            placeholder="Suche…"
+            :placeholder="t('ui.multiSelectDropdown.suche')"
             @click.stop
         />
       </div>

@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import type {LicenseView} from '~/api/account'
+
+const {t} = useI18n()
 
 defineProps<{
     license: LicenseView
@@ -24,7 +27,7 @@ defineProps<{
         <MutedText v-if="license.role === 'owner'">
           {{ license.shareesUsed }} / {{ license.shareesCap }} sharees
         </MutedText>
-        <MutedText v-else>Shared with you</MutedText>
+        <MutedText v-else>{{ t('ui.licenseRow.sharedWithYou') }}</MutedText>
       </div>
     </div>
     <MutedText size="sm">{{ license.role === 'owner' ? 'Manage →' : 'View →' }}</MutedText>

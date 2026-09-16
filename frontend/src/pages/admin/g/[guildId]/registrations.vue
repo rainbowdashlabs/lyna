@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {lookupRegistration, type RegistrationInfo} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -26,7 +29,7 @@ async function submit() {
     result.value = await lookupRegistration(guildId.value, discordIdInput.value.trim())
   } catch (e) {
     const error = e as {response?: {data?: string, status?: number}}
-    if (error.response?.status === 404) errorMessage.value = 'No registration found.'
+    if (error.response?.status === 404) errorMessage.value = t('page.admin.g.guildId.registrations.noRegistrationFound')
     else errorMessage.value = typeof error.response?.data === 'string' ? error.response.data : 'Lookup failed.'
   } finally {
     busy.value = false
@@ -37,13 +40,13 @@ async function submit() {
 <template>
   <div>
     <PageHeader class="mb-4">
-      Registrations
+      {{ t('page.admin.g.guildId.registrations.registrations') }}
     </PageHeader>
     <p class="mb-4 text-sm opacity-70">
-      Look up a registration by Discord user id.
+      {{ t('page.admin.g.guildId.registrations.lookUpARegistrationByDiscord') }}
     </p>
     <form class="mb-4 flex gap-2" @submit.prevent="submit">
-      <TextInput v-model="discordIdInput" class="flex-1" inputmode="numeric" placeholder="Discord user id"/>
+      <TextInput v-model="discordIdInput" class="flex-1" inputmode="numeric" :placeholder="t('page.admin.g.guildId.registrations.discordUserId')"/>
       <PrimaryButton :disabled="busy" @click="submit">
         {{ busy ? 'Looking up…' : 'Look up' }}
       </PrimaryButton>
@@ -57,10 +60,10 @@ async function submit() {
     >
       <div>
         <div>
-          <span class="opacity-70">Discord id:</span> {{ result.discordId }}
+          <span class="opacity-70">{{ t('page.admin.g.guildId.registrations.discordId') }}</span> {{ result.discordId }}
         </div>
         <div>
-          <span class="opacity-70">Member name:</span> {{ result.memberName ?? '— not in this guild —' }}
+          <span class="opacity-70">{{ t('page.admin.g.guildId.registrations.memberName') }}</span> {{ result.memberName ?? '— not in this guild —' }}
         </div>
       </div>
       <section>
@@ -74,7 +77,7 @@ async function submit() {
           </li>
         </ul>
         <div v-else class="opacity-60">
-          None.
+          {{ t('page.admin.g.guildId.registrations.none') }}
         </div>
       </section>
       <section>
@@ -88,7 +91,7 @@ async function submit() {
           </li>
         </ul>
         <div v-else class="opacity-60">
-          None.
+          {{ t('page.admin.g.guildId.registrations.none') }}
         </div>
       </section>
     </div>

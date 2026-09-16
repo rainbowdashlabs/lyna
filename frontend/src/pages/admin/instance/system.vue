@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {getInstanceSystem, type SystemInfo} from '~/api/admin'
 import Spinner from '~/components/feedback/Spinner.vue'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -24,7 +27,7 @@ onMounted(async () => {
 <template>
   <div>
     <PageHeader class="mb-4">
-      System
+      {{ t('page.admin.instance.system.system') }}
     </PageHeader>
     <div v-if="loading" class="flex justify-center py-12">
       <Spinner size="lg" />
@@ -38,7 +41,7 @@ onMounted(async () => {
     >
       <div>
         <dt class="text-xs uppercase tracking-wider opacity-60">
-          Version
+          {{ t('page.admin.instance.system.version') }}
         </dt>
         <dd class="font-mono text-sm">
           {{ info.version }}
@@ -46,7 +49,7 @@ onMounted(async () => {
       </div>
       <div>
         <dt class="text-xs uppercase tracking-wider opacity-60">
-          Guilds
+          {{ t('page.admin.instance.system.guilds') }}
         </dt>
         <dd class="text-sm">
           {{ info.guildCount }}

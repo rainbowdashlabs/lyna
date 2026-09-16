@@ -4,11 +4,14 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {demoLogin} from '~/api/demo'
 import {useDemo} from '~/composables/useDemo'
 import {useSession} from '~/composables/useSession'
+
+const {t} = useI18n()
 
 const router = useRouter()
 const {accounts, load} = useDemo()
@@ -44,9 +47,9 @@ async function signInAs(email: string) {
 
 <template>
   <section v-if="accounts && accounts.length" class="rounded-theme border border-info/40 bg-info/10 p-4">
-    <CardHeader>Sign in as</CardHeader>
+    <CardHeader>{{ t('ui.demoAccountPicker.signInAs') }}</CardHeader>
     <MutedText class="mb-3 block" size="sm">
-      This is a demo instance. Pick somebody to look at it as &mdash; no password needed.
+      {{ t('ui.demoAccountPicker.thisIsADemoInstancePick') }}
     </MutedText>
     <ul class="space-y-2">
       <li v-for="account in accounts" :key="account.email">

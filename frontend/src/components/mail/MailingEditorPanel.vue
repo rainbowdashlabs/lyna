@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
 import {type MailBlock, type MailingTemplate, previewMailing, saveMailingBlocks, sendTestMail} from '~/api/admin'
+
+const {t} = useI18n()
 
 const props = defineProps<{
     guildId: string
@@ -86,19 +89,19 @@ async function sendTest() {
         <SectionHeader>{{ template.productName }}</SectionHeader>
         <MutedText tag="div">{{ template.name }}</MutedText>
       </div>
-      <SecondaryButton compact @click="emit('close')">Back to the list</SecondaryButton>
+      <SecondaryButton compact @click="emit('close')">{{ t('ui.mailingEditorPanel.backToTheList') }}</SecondaryButton>
     </header>
 
     <MailBlockEditor v-model="blocks"/>
 
     <div class="flex flex-wrap items-center gap-2">
       <PrimaryButton :disabled="busy" @click="save">{{ busy ? 'Working…' : 'Save' }}</PrimaryButton>
-      <SecondaryButton :disabled="busy" @click="preview">Preview</SecondaryButton>
+      <SecondaryButton :disabled="busy" @click="preview">{{ t('ui.mailingEditorPanel.preview') }}</SecondaryButton>
       <MutedText v-if="message" :class="isError ? 'text-error' : 'text-success'" size="sm">{{ message }}</MutedText>
     </div>
 
     <section v-if="previewHtml">
-      <CardHeader>Preview</CardHeader>
+      <CardHeader>{{ t('ui.mailingEditorPanel.preview') }}</CardHeader>
       <!--
         Sandboxed, and the document is assigned rather than written into the page. The raw block is
         operator HTML on purpose, and this is the one place it is rendered - it must not be able to
@@ -108,20 +111,20 @@ async function sendTest() {
           :srcdoc="previewHtml"
           class="h-[28rem] w-full rounded-theme border border-border-light dark:border-border-dark"
           sandbox=""
-          title="What the mail looks like"
+          :title="t('ui.mailingEditorPanel.whatTheMailLooksLike')"
       />
     </section>
 
     <section>
-      <CardHeader>Send yourself one</CardHeader>
+      <CardHeader>{{ t('ui.mailingEditorPanel.sendYourselfOne') }}</CardHeader>
       <MutedText class="mb-2 block" size="sm">
-        With stand-in values. The only real check is what a mail client makes of it.
+        {{ t('ui.mailingEditorPanel.withStandInValuesTheOnly') }}
       </MutedText>
       <div class="flex flex-wrap items-end gap-2">
-        <LabelledField class="flex-1" label="Address">
+        <LabelledField class="flex-1" :label="t('ui.mailingEditorPanel.address')">
           <EmailInput v-model="testAddress" autocomplete="email"/>
         </LabelledField>
-        <SecondaryButton :disabled="busy || !testAddress.trim()" @click="sendTest">Send</SecondaryButton>
+        <SecondaryButton :disabled="busy || !testAddress.trim()" @click="sendTest">{{ t('ui.mailingEditorPanel.send') }}</SecondaryButton>
       </div>
     </section>
   </div>

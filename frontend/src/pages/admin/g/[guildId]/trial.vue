@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {getTrialInfo, type TrialInfo} from '~/api/admin'
 import Spinner from '~/components/feedback/Spinner.vue'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -38,7 +41,7 @@ function fmtMinutes(min: number): string {
 <template>
   <div>
     <PageHeader class="mb-4">
-      Trial
+      {{ t('page.admin.g.guildId.trial.trial') }}
     </PageHeader>
     <div v-if="loading" class="flex justify-center py-12">
       <Spinner size="lg" />
@@ -46,24 +49,24 @@ function fmtMinutes(min: number): string {
     <template v-else-if="info">
       <section class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4 text-sm">
         <div class="text-xs uppercase tracking-wider opacity-60">
-          Active limits
+          {{ t('page.admin.g.guildId.trial.activeLimits') }}
         </div>
         <div class="mt-1">
-          <span class="opacity-70">Per server cooldown:</span> {{ fmtMinutes(info.serverMinutes) }}
+          <span class="opacity-70">{{ t('page.admin.g.guildId.trial.perServerCooldown') }}</span> {{ fmtMinutes(info.serverMinutes) }}
         </div>
         <div>
-          <span class="opacity-70">Per account cooldown:</span> {{ fmtMinutes(info.accountMinutes) }}
+          <span class="opacity-70">{{ t('page.admin.g.guildId.trial.perAccountCooldown') }}</span> {{ fmtMinutes(info.accountMinutes) }}
         </div>
         <p class="mt-2 opacity-60">
-          Edit these limits under
+          {{ t('page.admin.g.guildId.trial.editTheseLimitsUnder') }}
           <NuxtLink :to="`/admin/g/${guildId}/settings`" class="text-primary hover:underline">
-            Settings
+            {{ t('page.admin.g.guildId.trial.settings') }}
           </NuxtLink>.
         </p>
       </section>
       <section>
         <CardHeader>
-          Products
+          {{ t('page.admin.g.guildId.trial.products') }}
         </CardHeader>
         <ul v-if="info.products.length" class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark text-sm">
           <li v-for="p in info.products" :key="p.id" class="p-3">
@@ -72,7 +75,7 @@ function fmtMinutes(min: number): string {
           </li>
         </ul>
         <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
-          No products.
+          {{ t('page.admin.g.guildId.trial.noProducts') }}
         </div>
       </section>
     </template>

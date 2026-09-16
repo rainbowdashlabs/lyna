@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {useRouter} from 'vue-router'
 import {logout} from '~/api/account'
 import {useSession} from '~/composables/useSession'
+
+const {t} = useI18n()
 
 const router = useRouter()
 const {clear, account} = useSession()
@@ -30,7 +33,7 @@ const sidebar = [
     <aside class="hidden w-56 shrink-0 md:block">
       <header class="mb-6">
         <div class="text-xs uppercase tracking-wider opacity-60">
-          Signed in as
+          {{ t('layout.account.signedInAs') }}
         </div>
         <div class="truncate text-sm font-medium">
           {{ account?.email ?? account?.discordId ?? 'Anonymous' }}
@@ -48,7 +51,7 @@ const sidebar = [
           {{ item.label }}
         </NuxtLink>
       </nav>
-      <SecondaryButton class="mt-6" full-width @click="doLogout">Log out</SecondaryButton>
+      <SecondaryButton class="mt-6" full-width @click="doLogout">{{ t('auth.logout') }}</SecondaryButton>
     </aside>
     <main class="flex-1 min-w-0">
       <nav class="mb-4 flex gap-2 overflow-x-auto md:hidden">
@@ -61,7 +64,7 @@ const sidebar = [
         >
           {{ item.label }}
         </NuxtLink>
-        <SecondaryButton class="ml-auto" compact @click="doLogout">Log out</SecondaryButton>
+        <SecondaryButton class="ml-auto" compact @click="doLogout">{{ t('auth.logout') }}</SecondaryButton>
       </nav>
       <slot />
     </main>

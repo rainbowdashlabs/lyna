@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted} from 'vue'
 import {useDemo} from '~/composables/useDemo'
+
+const {t} = useI18n()
 
 const {accounts, load} = useDemo()
 
@@ -18,7 +21,6 @@ onMounted(load)
       class="bg-info px-4 py-2 text-center text-sm text-info-text"
       role="status"
   >
-    This is a demo. Anyone can sign in, everything here is made up, and it is all thrown away and
-    laid out again on a timer.
+    {{ t('ui.demoBanner.thisIsADemoAnyoneCan') }}
   </div>
 </template>

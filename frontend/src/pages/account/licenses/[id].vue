@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {addSharee, licenseDetail, type LicenseDetail, removeSharee, type ShareeView} from '~/api/account'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'account'})
 
@@ -88,15 +91,15 @@ async function copyKey() {
       />
       <LicenseUpdaterLink v-if="data.key" :license-key="data.key"/>
       <EmptyHint v-if="!isOwner">
-        The license owner can see when you download. Account emails are never shared.
+        {{ t('page.account.licenses.id.theLicenseOwnerCanSeeWhen') }}
       </EmptyHint>
 
       <SingleFieldModal
           v-model:show="addShown"
           v-model:value="shareeInput"
-          confirm-label="Share"
-          placeholder="Username or email address"
-          title="Share this license"
+          :confirm-label="t('page.account.licenses.id.share')"
+          :placeholder="t('page.account.licenses.id.usernameOrEmailAddress')"
+          :title="t('page.account.licenses.id.shareThisLicense')"
           @confirm="doAddSharee"
       />
       <ConfirmDeleteModal

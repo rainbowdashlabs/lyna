@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed} from 'vue'
 import {callToAction, type KioskProduct} from '~/api/kiosk'
+
+const {t} = useI18n()
 
 const props = defineProps<{
     product: KioskProduct
@@ -28,9 +31,9 @@ const action = computed(() => callToAction(props.product))
       <ProductIcon :icon-url="product.iconUrl" :name="product.name"/>
       <div class="min-w-0 flex-1">
         <SectionHeader class="truncate">{{ product.name }}</SectionHeader>
-        <SuccessBadge v-if="product.free">Free</SuccessBadge>
-        <PrimaryBadge v-else-if="product.entitled">Owned</PrimaryBadge>
-        <SecondaryBadge v-else>Premium</SecondaryBadge>
+        <SuccessBadge v-if="product.free">{{ t('ui.productTile.free') }}</SuccessBadge>
+        <PrimaryBadge v-else-if="product.entitled">{{ t('ui.productTile.owned') }}</PrimaryBadge>
+        <SecondaryBadge v-else>{{ t('ui.productTile.premium') }}</SecondaryBadge>
       </div>
     </header>
 
@@ -47,7 +50,7 @@ const action = computed(() => callToAction(props.product))
       </a>
       <PrimaryButton v-if="action === 'download'" @click="$emit('download', product)">
         <font-awesome-icon :icon="['fas', 'download']" class="mr-1"/>
-        Download
+        {{ t('common.download') }}
       </PrimaryButton>
       <a
           v-else-if="action === 'buy'"
@@ -57,13 +60,13 @@ const action = computed(() => callToAction(props.product))
           target="_blank"
       >
         <font-awesome-icon :icon="['fas', 'cart-shopping']" class="mr-1"/>
-        Buy on Ko-fi
+        {{ t('ui.productTile.buyOnKoFi') }}
       </a>
-      <MutedText v-else size="sm">Not for sale here</MutedText>
+      <MutedText v-else size="sm">{{ t('ui.productTile.notForSaleHere') }}</MutedText>
     </footer>
     <MutedText v-if="action === 'buy' && signedIn" class="mt-2 block text-right" size="xs">
-      Already bought it?
-      <NuxtLink class="text-primary hover:underline" to="/account/security">Link your Discord</NuxtLink>
+      {{ t('ui.productTile.alreadyBoughtIt') }}
+      <NuxtLink class="text-primary hover:underline" to="/account/security">{{ t('ui.productTile.linkYourDiscord') }}</NuxtLink>
     </MutedText>
   </article>
 </template>

@@ -1,9 +1,12 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {getGuildSettings, updateGuildSettings, type GuildSettings} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -64,7 +67,7 @@ async function save() {
 <template>
   <div>
     <PageHeader class="mb-4">
-      Settings
+      {{ t('page.admin.g.guildId.settings.settings') }}
     </PageHeader>
     <div v-if="loading" class="flex justify-center py-12">
       <Spinner size="lg" />
@@ -74,18 +77,18 @@ async function save() {
         class="space-y-4 rounded-theme border border-border-light dark:border-border-dark p-4"
         @submit.prevent="save"
     >
-      <LabelledField label="License sharee cap">
+      <LabelledField :label="t('page.admin.g.guildId.settings.licenseShareeCap')">
         <NumberInput v-model="data.shares" class="w-32" min="0"/>
       </LabelledField>
-      <LabelledField label="Trial server time (minutes)">
+      <LabelledField :label="t('page.admin.g.guildId.settings.trialServerTimeMinutes')">
         <NumberInput v-model="data.trialServerMinutes" class="w-32" min="0"/>
       </LabelledField>
-      <LabelledField label="Trial account time (minutes)">
+      <LabelledField :label="t('page.admin.g.guildId.settings.trialAccountTimeMinutes')">
         <NumberInput v-model="data.trialAccountMinutes" class="w-32" min="0"/>
       </LabelledField>
       <LabelledField
-          help="Members of this role administer this guild here. Leave empty so only Manage Server does."
-          label="Admin role id (optional)"
+          :help="t('page.admin.g.guildId.settings.membersOfThisRoleAdministerThis')"
+          :label="t('page.admin.g.guildId.settings.adminRoleIdOptional')"
       >
         <TextInput v-model="adminRoleId" inputmode="numeric" placeholder="e.g. 1065674230362017813"/>
       </LabelledField>

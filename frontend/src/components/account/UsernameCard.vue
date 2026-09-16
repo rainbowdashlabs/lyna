@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
 import {setUsername} from '~/api/account'
+
+const {t} = useI18n()
 
 const props = defineProps<{
     username: string | null
@@ -47,20 +50,19 @@ async function submit() {
 
 <template>
   <section>
-    <CardHeader>Username</CardHeader>
+    <CardHeader>{{ t('ui.usernameCard.username') }}</CardHeader>
     <div class="space-y-2 text-sm">
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-medium">{{ props.username ?? 'No name yet' }}</span>
-        <SecondaryBadge v-if="!props.nameIsTheirs">From Discord</SecondaryBadge>
+        <SecondaryBadge v-if="!props.nameIsTheirs">{{ t('ui.usernameCard.fromDiscord') }}</SecondaryBadge>
       </div>
 
       <MutedText tag="div">
-        This is how you appear to somebody who shares a license with you. Your email address is never
-        shown to them.
+        {{ t('ui.usernameCard.thisIsHowYouAppearTo') }}
       </MutedText>
 
       <MutedText v-if="!props.nameIsTheirs" tag="div">
-        Discord supplies this name. Unlink Discord to choose one yourself.
+        {{ t('ui.usernameCard.discordSuppliesThisNameUnlinkDiscord') }}
       </MutedText>
 
       <div v-else class="flex flex-wrap gap-2 pt-1">
@@ -71,8 +73,8 @@ async function submit() {
 
       <form v-if="props.nameIsTheirs && editing" class="space-y-2 pt-2" @submit.prevent="submit">
         <LabelledField
-            help="Three to thirty-two characters: letters, digits, dots, dashes or underscores. Four digits are added so two people can share a name."
-            label="Username"
+            :help="t('ui.usernameCard.threeToThirtyTwoCharactersLetters')"
+            :label="t('ui.usernameCard.username')"
         >
           <TextInput v-model="draft" autocomplete="username" required/>
         </LabelledField>

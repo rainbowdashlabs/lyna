@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {listMailings, type MailBlock, type MailingTemplate} from '~/api/admin'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -55,11 +58,10 @@ function blocksOf(template: MailingTemplate): MailBlock[] {
 <template>
   <div>
     <PageHeader class="mb-4">
-      Mailing templates
+      {{ t('page.admin.g.guildId.mailing.mailingTemplates') }}
     </PageHeader>
     <MutedText class="mb-4 block" size="sm">
-      The mail sent when somebody buys a product. Composed in blocks and rendered into the same
-      layout every other mail uses, so it arrives looking like one.
+      {{ t('page.admin.g.guildId.mailing.theMailSentWhenSomebodyBuys') }}
     </MutedText>
 
     <AsyncSection
@@ -84,10 +86,10 @@ function blocksOf(template: MailingTemplate): MailBlock[] {
                 <div class="font-medium">{{ template.productName }}</div>
                 <MutedText tag="div">
                   {{ template.name }}
-                  <template v-if="!template.blocks"> &middot; written before the editor</template>
+                  <template v-if="!template.blocks"> {{ t('page.admin.g.guildId.mailing.middotWrittenBeforeTheEditor') }}</template>
                 </MutedText>
               </div>
-              <PrimaryButton compact @click="editing = template">Edit</PrimaryButton>
+              <PrimaryButton compact @click="editing = template">{{ t('common.edit') }}</PrimaryButton>
             </div>
           </NeutralContainer>
         </li>

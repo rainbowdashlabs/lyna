@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
 import {changeEmail, resendVerification} from '~/api/account'
+
+const {t} = useI18n()
 
 const props = defineProps<{
     email: string | null
@@ -53,7 +56,7 @@ async function doResend() {
   isError.value = false
   try {
     await resendVerification()
-    message.value = 'Sent. Check the inbox, and the spam folder.'
+    message.value = t('ui.emailCard.sentCheckTheInboxAndThe')
   } catch (e) {
     report(e, 'Could not send it again.')
   } finally {
@@ -64,12 +67,12 @@ async function doResend() {
 
 <template>
   <section>
-    <CardHeader>Email</CardHeader>
+    <CardHeader>{{ t('auth.email') }}</CardHeader>
     <div class="space-y-2 text-sm">
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-medium">{{ email ?? 'No address' }}</span>
-        <SuccessBadge v-if="verified">Confirmed</SuccessBadge>
-        <SecondaryBadge v-else-if="email">Not confirmed</SecondaryBadge>
+        <SuccessBadge v-if="verified">{{ t('ui.emailCard.confirmed') }}</SuccessBadge>
+        <SecondaryBadge v-else-if="email">{{ t('ui.emailCard.notConfirmed') }}</SecondaryBadge>
       </div>
       <MutedText v-if="pendingEmail" tag="div">
         Waiting on {{ pendingEmail }} to be confirmed. This account keeps {{ email ?? 'no address' }} until it is.
@@ -80,14 +83,14 @@ async function doResend() {
           {{ changing ? 'Cancel' : 'Change email' }}
         </SecondaryButton>
         <SecondaryButton v-if="email && (!verified || pendingEmail)" :disabled="busy" compact @click="doResend">
-          Send the link again
+          {{ t('ui.emailCard.sendTheLinkAgain') }}
         </SecondaryButton>
       </div>
 
       <form v-if="changing" class="space-y-2 pt-2" @submit.prevent="submitChange">
         <LabelledField
-            help="Nothing changes until the new address is confirmed from the mail sent to it."
-            label="New email"
+            :help="t('ui.emailCard.nothingChangesUntilTheNewAddress')"
+            :label="t('ui.emailCard.newEmail')"
         >
           <EmailInput v-model="newEmail" autocomplete="email" required/>
         </LabelledField>

@@ -1,6 +1,9 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {getInstanceAppearance, updateInstanceAppearance, type InstanceAppearance} from '~/api/admin'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -40,7 +43,7 @@ async function save() {
 <template>
   <div>
     <PageHeader class="mb-4">
-      Appearance
+      {{ t('page.admin.instance.appearance.appearance') }}
     </PageHeader>
     <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
       <InstanceAppearanceForm

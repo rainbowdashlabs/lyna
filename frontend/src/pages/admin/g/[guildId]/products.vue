@@ -1,9 +1,12 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {createGuildProduct, listGuildProducts, type ProductSummary} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -77,7 +80,7 @@ async function submitCreate() {
   <div>
     <header class="mb-4 flex items-center justify-between">
       <PageHeader>
-        Products
+        {{ t('page.admin.g.guildId.products.products') }}
       </PageHeader>
       <PrimaryButton @click="showCreate = !showCreate">
         {{ showCreate ? 'Cancel' : 'New product' }}
@@ -89,23 +92,23 @@ async function submitCreate() {
         class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4"
     >
       <CardHeader>
-        Create product
+        {{ t('page.admin.g.guildId.products.createProduct') }}
       </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <LabelledField label="Name">
+        <LabelledField :label="t('page.admin.g.guildId.products.name')">
           <TextInput v-model="createName" required/>
         </LabelledField>
-        <LabelledField label="Role id">
+        <LabelledField :label="t('page.admin.g.guildId.products.roleId')">
           <TextInput v-model="createRoleId" required/>
         </LabelledField>
-        <LabelledField label="Project URL (optional)">
+        <LabelledField :label="t('page.admin.g.guildId.products.projectUrlOptional')">
           <TextInput v-model="createUrl" type="url"/>
         </LabelledField>
         <label class="flex items-center gap-2 text-sm">
-          <CheckboxInput v-model="createFree"/> Free product
+          <CheckboxInput v-model="createFree"/> {{ t('page.admin.g.guildId.products.freeProduct') }}
         </label>
         <label class="flex items-center gap-2 text-sm">
-          <CheckboxInput v-model="createTrial"/> Trial available
+          <CheckboxInput v-model="createTrial"/> {{ t('page.admin.g.guildId.products.trialAvailable') }}
         </label>
       </div>
       <div v-if="createError" class="mt-2 text-sm text-error">
@@ -128,8 +131,8 @@ async function submitCreate() {
       <li v-for="p in products" :key="p.id" class="space-y-2 p-3 text-sm">
         <div class="flex items-center gap-2">
           <span class="font-medium">{{ p.name }}</span>
-          <SuccessBadge v-if="p.free">Free</SuccessBadge>
-          <SecondaryBadge v-else>Premium</SecondaryBadge>
+          <SuccessBadge v-if="p.free">{{ t('page.admin.g.guildId.products.free') }}</SuccessBadge>
+          <SecondaryBadge v-else>{{ t('page.admin.g.guildId.products.premium') }}</SecondaryBadge>
         </div>
         <MutedText tag="div">
           id {{ p.id }} &middot; role {{ p.roleId }}{{ p.url ? ` · ${p.url}` : '' }}
@@ -144,7 +147,7 @@ async function submitCreate() {
       </li>
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
-      No products yet.
+      {{ t('page.admin.g.guildId.products.noProductsYet') }}
     </div>
   </div>
 </template>

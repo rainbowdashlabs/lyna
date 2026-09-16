@@ -4,6 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, ref, watch} from 'vue'
 import {
     type DownloadTypeEntry,
@@ -17,6 +18,8 @@ import {
     type VersionEntry,
 } from '~/api/kiosk'
 import {formatDateTime, formatSize} from '~/util/format'
+
+const {t} = useI18n()
 
 const props = defineProps<{
     product: KioskProduct | null
@@ -63,9 +66,9 @@ const crumbIndex = computed(() => Math.max(0, crumbs.value.findIndex(crumb => cr
 function report(e: unknown, fallback: string) {
     const status = (e as {response?: {status?: number}}).response?.status
     needsLogin.value = status === 401
-    if (status === 401) errorMessage.value = 'Sign in to download this product.'
-    else if (status === 403) errorMessage.value = 'You do not hold a license for this product.'
-    else if (status === 503) errorMessage.value = 'Downloads are unavailable: the Discord bot is not connected.'
+    if (status === 401) errorMessage.value = t('ui.downloadWizard.signInToDownloadThisProduct')
+    else if (status === 403) errorMessage.value = t('ui.downloadWizard.youDoNotHoldALicense')
+    else if (status === 503) errorMessage.value = t('ui.downloadWizard.downloadsAreUnavailableTheDiscordBot')
     else errorMessage.value = fallback
 }
 
@@ -169,7 +172,7 @@ function back() {
         <template #error>
           <Alert variant="error">
             {{ errorMessage }}
-            <NuxtLink v-if="needsLogin" class="ml-1 text-primary hover:underline" to="/login?next=/">Log in</NuxtLink>
+            <NuxtLink v-if="needsLogin" class="ml-1 text-primary hover:underline" to="/login?next=/">{{ t('auth.login') }}</NuxtLink>
           </Alert>
         </template>
 
@@ -177,7 +180,7 @@ function back() {
           <li v-for="entry in releaseTypes" :key="entry.id">
             <ChoiceButton :detail="entry.description ?? undefined" :title="entry.id" @click="pickReleaseType(entry)"/>
           </li>
-          <EmptyHint v-if="!releaseTypes.length">Nothing is published for you to download yet.</EmptyHint>
+          <EmptyHint v-if="!releaseTypes.length">{{ t('ui.downloadWizard.nothingIsPublishedForYouTo') }}</EmptyHint>
         </ul>
 
         <ul v-else-if="step === 'version'" class="space-y-2">
@@ -188,7 +191,7 @@ function back() {
                 @click="pickVersion(entry)"
             />
           </li>
-          <EmptyHint v-if="!versions.length">No version has been published for this release type.</EmptyHint>
+          <EmptyHint v-if="!versions.length">{{ t('ui.downloadWizard.noVersionHasBeenPublishedFor') }}</EmptyHint>
         </ul>
 
         <ul v-else-if="step === 'downloadType'" class="space-y-2">
@@ -203,7 +206,7 @@ function back() {
 
         <div v-else-if="issued" class="space-y-3">
           <div>
-            <DetailLabel>File</DetailLabel>
+            <DetailLabel>{{ t('ui.downloadWizard.file') }}</DetailLabel>
             <div class="font-medium">{{ issued.filename }}</div>
             <MutedText v-if="issued.sizeBytes" tag="div">{{ formatSize(issued.sizeBytes) }}</MutedText>
           </div>
@@ -212,9 +215,9 @@ function back() {
               class="inline-flex items-center rounded-theme bg-primary px-3 py-1.5 text-sm font-medium text-primary-text hover:bg-primary-accent"
           >
             <font-awesome-icon :icon="['fas', 'download']" class="mr-1"/>
-            Download
+            {{ t('common.download') }}
           </a>
-          <MutedText class="block" size="sm">This is a one-time link. Do not distribute.</MutedText>
+          <MutedText class="block" size="sm">{{ t('ui.downloadWizard.thisIsAOneTimeLink') }}</MutedText>
         </div>
       </AsyncSection>
 

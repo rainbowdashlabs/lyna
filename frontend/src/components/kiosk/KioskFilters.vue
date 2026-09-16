@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed} from 'vue'
+
+const {t} = useI18n()
 
 const filter = defineModel<string>('filter', {required: true})
 const search = defineModel<string>('search', {required: true})
@@ -21,7 +24,7 @@ const chips = computed(() => props.signedIn
 
 <template>
   <div class="mb-4 space-y-3">
-    <SearchInput v-model="search" placeholder="Search plugins…"/>
+    <SearchInput v-model="search" :placeholder="t('ui.kioskFilters.searchPlugins')"/>
     <TabBar v-model="filter" :tabs="chips"/>
   </div>
 </template>

@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {formatRelative} from '~/util/format'
+
+const {t} = useI18n()
 
 defineProps<{
     activeSessions: number
@@ -13,12 +16,12 @@ defineProps<{
 </script>
 
 <template>
-  <OverviewCard title="Sessions">
+  <OverviewCard :title="t('ui.sessionsCard.sessions')">
     <div class="text-sm">
       <StatValue>{{ activeSessions }}</StatValue>
       <MutedText tag="div">active &middot; last sign-in {{ formatRelative(lastSignInAt) }}</MutedText>
       <NuxtLink class="mt-2 inline-block text-sm text-primary hover:underline" to="/account/security">
-        Manage sessions &rarr;
+        {{ t('ui.sessionsCard.manageSessionsRarr') }}
       </NuxtLink>
     </div>
   </OverviewCard>

@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed} from 'vue'
 import type {MailBlock} from '~/api/admin'
+
+const {t} = useI18n()
 
 const block = defineModel<MailBlock>({required: true})
 
@@ -28,48 +31,48 @@ const itemsText = computed({
     <LabelledField
         v-if="block.type === 'heading'"
         help="Placeholders: {{ name }} {{ key }} {{ product }} {{ downloadUrl }}"
-        label="Heading"
+        :label="t('ui.mailBlockField.heading')"
     >
       <TextInput v-model="block.text"/>
     </LabelledField>
 
     <LabelledField
         v-else-if="block.type === 'paragraph'"
-        help="Placeholders work here. A link is written [label](https://…)."
-        label="Text"
+        :help="t('ui.mailBlockField.placeholdersWorkHereALinkIs')"
+        :label="t('ui.mailBlockField.text')"
     >
       <TextAreaInput v-model="block.text" :rows="3"/>
     </LabelledField>
 
     <LabelledField
         v-else-if="block.type === 'key'"
-        help="The licence key itself is filled in when the mail is sent."
-        label="Label above the key"
+        :help="t('ui.mailBlockField.theLicenceKeyItselfIsFilled')"
+        :label="t('ui.mailBlockField.labelAboveTheKey')"
     >
       <TextInput v-model="block.label"/>
     </LabelledField>
 
     <div v-else-if="block.type === 'button'" class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      <LabelledField label="Button text">
+      <LabelledField :label="t('ui.mailBlockField.buttonText')">
         <TextInput v-model="block.label"/>
       </LabelledField>
-      <LabelledField help="Has to be an http address. {{ downloadUrl }} works here." label="Address">
+      <LabelledField help="Has to be an http address. {{ downloadUrl }} works here." :label="t('ui.mailBlockField.address')">
         <TextInput v-model="block.url" type="url"/>
       </LabelledField>
     </div>
 
-    <LabelledField v-else-if="block.type === 'list'" help="One line per item." label="Items">
+    <LabelledField v-else-if="block.type === 'list'" :help="t('ui.mailBlockField.oneLinePerItem')" :label="t('ui.mailBlockField.items')">
       <TextAreaInput v-model="itemsText" :rows="3"/>
     </LabelledField>
 
     <LabelledField
         v-else-if="block.type === 'raw'"
-        help="Sent as written. This is what a mail composed before the editor kept."
-        label="HTML"
+        :help="t('ui.mailBlockField.sentAsWrittenThisIsWhat')"
+        :label="t('ui.mailBlockField.html')"
     >
       <TextAreaInput v-model="block.html" :rows="4" class="font-mono text-xs"/>
     </LabelledField>
 
-    <MutedText v-else size="sm">A line across the mail.</MutedText>
+    <MutedText v-else size="sm">{{ t('ui.mailBlockField.aLineAcrossTheMail') }}</MutedText>
   </div>
 </template>

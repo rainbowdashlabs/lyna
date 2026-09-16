@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {type DownloadPage, listDownloads} from '~/api/account'
 import {todayIsoDate, toIsoDate} from '~/util/format'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'account'})
 
@@ -63,11 +66,11 @@ watch(page, load)
 <template>
   <div>
     <PageHeader class="mb-6">
-      Downloads
+      {{ t('page.account.downloads.downloads') }}
     </PageHeader>
     <MutedText v-if="licenseFilter" class="mb-4 block" size="sm">
-      Showing one license only.
-      <NuxtLink class="text-primary hover:underline" to="/account/downloads">Show everything</NuxtLink>
+      {{ t('page.account.downloads.showingOneLicenseOnly') }}
+      <NuxtLink class="text-primary hover:underline" to="/account/downloads">{{ t('page.account.downloads.showEverything') }}</NuxtLink>
     </MutedText>
     <DownloadFilters
         v-model:from="from"

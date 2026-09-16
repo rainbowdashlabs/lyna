@@ -1,9 +1,12 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {createKofi, listGuildProducts, listKofi, type KofiMapping, type ProductSummary} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -48,7 +51,7 @@ async function submit() {
     await createKofi(guildId.value, linkCode.value.trim(), productId.value)
     linkCode.value = ''
     productId.value = null
-    message.value = 'Mapping saved.'
+    message.value = t('page.admin.g.guildId.kofi.mappingSaved')
     await load()
   } catch (e) {
     const err = e as {response?: {data?: string}}
@@ -63,22 +66,22 @@ async function submit() {
 <template>
   <div>
     <PageHeader class="mb-4">
-      Ko-fi mappings
+      {{ t('page.admin.g.guildId.kofi.koFiMappings') }}
     </PageHeader>
     <p class="mb-4 text-sm opacity-70">
-      Map Ko-fi direct-link codes to products. Used when a Ko-fi webhook arrives — the matching product issues a license.
+      {{ t('page.admin.g.guildId.kofi.mapKoFiDirectLinkCodes') }}
     </p>
     <section class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4">
       <CardHeader>
-        Add or update mapping
+        {{ t('page.admin.g.guildId.kofi.addOrUpdateMapping') }}
       </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <LabelledField label="Link code">
+        <LabelledField :label="t('page.admin.g.guildId.kofi.linkCode')">
           <TextInput v-model="linkCode"/>
         </LabelledField>
-        <LabelledField label="Product">
+        <LabelledField :label="t('common.product')">
           <SelectInput v-model="productId">
-            <option :value="null" disabled>Choose…</option>
+            <option :value="null" disabled>{{ t('page.admin.g.guildId.kofi.choose') }}</option>
             <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
           </SelectInput>
         </LabelledField>
@@ -105,7 +108,7 @@ async function submit() {
       </li>
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
-      No Ko-fi mappings yet.
+      {{ t('page.admin.g.guildId.kofi.noKoFiMappingsYet') }}
     </div>
   </div>
 </template>

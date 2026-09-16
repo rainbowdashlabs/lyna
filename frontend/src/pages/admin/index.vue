@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAdminGuilds} from '~/composables/useAdminGuilds'
+
+const {t} = useI18n()
 
 const router = useRouter()
 const {guilds, load} = useAdminGuilds()
@@ -23,7 +26,7 @@ onMounted(async () => {
 <template>
   <div class="flex min-h-screen items-center justify-center">
     <p class="text-sm opacity-70">
-      Resolving admin context…
+      {{ t('page.admin.resolvingAdminContext') }}
     </p>
   </div>
 </template>

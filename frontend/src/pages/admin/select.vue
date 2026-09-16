@@ -1,6 +1,9 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted} from 'vue'
 import {useAdminGuilds} from '~/composables/useAdminGuilds'
+
+const {t} = useI18n()
 
 const {guilds, load} = useAdminGuilds()
 onMounted(load)
@@ -9,10 +12,10 @@ onMounted(load)
 <template>
   <main class="mx-auto max-w-2xl p-6">
     <PageHeader class="mb-4">
-      Select a guild
+      {{ t('page.admin.select.selectAGuild') }}
     </PageHeader>
     <p class="mb-6 opacity-70">
-      You administer more than one guild. Pick one to continue.
+      {{ t('page.admin.select.youAdministerMoreThanOneGuild') }}
     </p>
     <ul class="space-y-2">
       <li v-for="g in guilds" :key="g.id">
@@ -28,7 +31,7 @@ onMounted(load)
         </NuxtLink>
       </li>
       <li v-if="guilds.length === 0" class="text-sm opacity-70">
-        No admin access.
+        {{ t('page.admin.select.noAdminAccess') }}
       </li>
     </ul>
   </main>

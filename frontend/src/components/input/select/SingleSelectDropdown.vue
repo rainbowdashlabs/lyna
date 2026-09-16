@@ -4,9 +4,12 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
 import SecondaryButton from '@/components/button/SecondaryButton.vue'
 import type {SelectOption} from '@/components/input/select/MultiSelectDropdown.vue'
+
+const {t} = useI18n()
 
 const modelValue = defineModel<string>({required: true})
 
@@ -92,7 +95,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
         @click.stop="clear"
       >
         <font-awesome-icon :icon="['fas', 'xmark']" class="h-4 w-4" />
-        <span>Auswahl aufheben</span>
+        <span>{{ t('ui.singleSelectDropdown.auswahlAufheben') }}</span>
       </button>
 
       <!-- Search -->
@@ -101,7 +104,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
             v-model="searchQuery"
             type="text"
             class="w-full px-2 py-1 text-sm rounded border border-bg-light-accent dark:border-bg-dark-accent bg-transparent focus:outline-none focus:border-primary"
-            placeholder="Suche…"
+            :placeholder="t('ui.singleSelectDropdown.suche')"
             @click.stop
         />
       </div>

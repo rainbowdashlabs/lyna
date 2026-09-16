@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import type {MailBlock} from '~/api/admin'
+
+const {t} = useI18n()
 
 const blocks = defineModel<MailBlock[]>({required: true})
 
@@ -54,14 +57,14 @@ function move(index: number, by: number) {
             <div class="flex gap-1">
               <SecondaryButton :disabled="index === 0" compact @click="move(index, -1)">↑</SecondaryButton>
               <SecondaryButton :disabled="index === blocks.length - 1" compact @click="move(index, 1)">↓</SecondaryButton>
-              <ErrorButton compact @click="remove(index)">Remove</ErrorButton>
+              <ErrorButton compact @click="remove(index)">{{ t('common.remove') }}</ErrorButton>
             </div>
           </header>
           <MailBlockField :model-value="block" @update:model-value="blocks[index] = $event"/>
         </NeutralContainer>
       </li>
     </ol>
-    <EmptyHint v-else>Nothing in this mail yet. Add a block to start it.</EmptyHint>
+    <EmptyHint v-else>{{ t('ui.mailBlockEditor.nothingInThisMailYetAdd') }}</EmptyHint>
 
     <div class="flex flex-wrap gap-2">
       <SecondaryButton v-for="entry in TYPES" :key="entry.type" compact @click="add(entry.make)">

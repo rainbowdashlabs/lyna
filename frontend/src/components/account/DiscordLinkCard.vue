@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import type {AccountInfo} from '~/api/account'
+
+const {t} = useI18n()
 
 defineProps<{
     account: AccountInfo
@@ -19,25 +22,24 @@ defineEmits<{
 
 <template>
   <section>
-    <CardHeader>Discord</CardHeader>
+    <CardHeader>{{ t('ui.discordLinkCard.discord') }}</CardHeader>
     <div v-if="account.discordId" class="space-y-2 text-sm">
       <div>
-        <span class="opacity-70">Linked as:</span> {{ account.username ?? account.discordId }}
+        <span class="opacity-70">{{ t('ui.discordLinkCard.linkedAs') }}</span> {{ account.username ?? account.discordId }}
       </div>
       <MutedText v-if="account.discordLinkedAt" tag="div">
         Since {{ format(account.discordLinkedAt) }}
       </MutedText>
       <MutedText tag="div">
-        While this is linked, Discord supplies your username.
+        {{ t('ui.discordLinkCard.whileThisIsLinkedDiscordSupplies') }}
       </MutedText>
       <div class="flex items-center gap-3 pt-2">
-        <AppLink href="/api/auth/discord/start">Re-link</AppLink>
-        <ErrorButton compact @click="$emit('unlink')">Unlink</ErrorButton>
+        <AppLink href="/api/auth/discord/start">{{ t('ui.discordLinkCard.reLink') }}</AppLink>
+        <ErrorButton compact @click="$emit('unlink')">{{ t('ui.discordLinkCard.unlink') }}</ErrorButton>
       </div>
     </div>
     <div v-else class="text-sm">
-      Not linked. <AppLink href="/api/auth/discord/start">Link your Discord</AppLink> to claim the
-      licenses your Discord id already holds, and to be granted the roles they carry.
+      {{ t('ui.discordLinkCard.notLinked') }} <AppLink href="/api/auth/discord/start">{{ t('ui.discordLinkCard.linkYourDiscord') }}</AppLink> {{ t('ui.discordLinkCard.toClaimTheLicensesYourDiscord') }}
     </div>
   </section>
 </template>

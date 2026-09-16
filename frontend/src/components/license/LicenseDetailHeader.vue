@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import type {LicenseView} from '~/api/account'
+
+const {t} = useI18n()
 
 defineProps<{
     license: LicenseView
@@ -32,7 +35,7 @@ defineEmits<{
     <div v-if="licenseKey" class="flex items-center gap-2">
       <KeyBadge>{{ keyShown ? licenseKey : maskedKey }}</KeyBadge>
       <SecondaryButton compact @click="$emit('toggle')">{{ keyShown ? 'Hide' : 'Show' }}</SecondaryButton>
-      <SecondaryButton compact @click="$emit('copy')">Copy</SecondaryButton>
+      <SecondaryButton compact @click="$emit('copy')">{{ t('ui.licenseDetailHeader.copy') }}</SecondaryButton>
     </div>
   </header>
 </template>

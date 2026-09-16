@@ -1,6 +1,9 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {listLicenses, type LicenseList, type LicenseView} from '~/api/account'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'account'})
 
@@ -38,21 +41,21 @@ const anyLicenses = computed(() => (data.value?.owned.length ?? 0) + (data.value
 <template>
   <div>
     <PageHeader class="mb-6">
-      Licenses
+      {{ t('page.account.licenses.licenses') }}
     </PageHeader>
     <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
       <div v-if="data">
         <TabBar v-model="tab" :tabs="tabs" class="mb-4"/>
-        <SearchInput v-if="anyLicenses" v-model="search" class="mb-4" placeholder="Search by product…"/>
+        <SearchInput v-if="anyLicenses" v-model="search" class="mb-4" :placeholder="t('page.account.licenses.searchByProduct')"/>
         <div v-if="shown.length" class="space-y-2">
           <LicenseRow v-for="license in shown" :key="license.id" :license="license"/>
         </div>
-        <EmptyHint v-else-if="search">No license matches that name.</EmptyHint>
+        <EmptyHint v-else-if="search">{{ t('page.account.licenses.noLicenseMatchesThatName') }}</EmptyHint>
         <EmptyHint v-else-if="tab === 'owned'">
-          You don't own any licenses yet. Browse the
-          <NuxtLink class="text-primary hover:underline" to="/">storefront</NuxtLink>.
+          {{ t('page.account.licenses.youDonTOwnAnyLicenses') }}
+          <NuxtLink class="text-primary hover:underline" to="/">{{ t('page.account.licenses.storefront') }}</NuxtLink>.
         </EmptyHint>
-        <EmptyHint v-else>No one has shared a license with you.</EmptyHint>
+        <EmptyHint v-else>{{ t('page.account.licenses.noOneHasSharedALicense') }}</EmptyHint>
       </div>
     </AsyncSection>
   </div>

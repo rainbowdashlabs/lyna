@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAdminGuilds} from '~/composables/useAdminGuilds'
+
+const {t} = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -53,7 +56,7 @@ function switchGuild(event: Event) {
     <aside class="hidden w-64 shrink-0 md:block">
       <header class="mb-6">
         <div class="text-xs uppercase tracking-wider opacity-60">
-          Administering
+          {{ t('layout.admin.administering') }}
         </div>
         <SelectInput
             v-if="guilds.length > 0"
@@ -61,13 +64,13 @@ function switchGuild(event: Event) {
             class="mt-1"
             @change="switchGuild"
         >
-          <option disabled value="">Select a guild…</option>
+          <option disabled value="">{{ t('layout.admin.selectAGuild') }}</option>
           <option v-for="g in guilds" :key="g.id" :value="g.id">
             {{ g.name }}{{ g.role === 'operator' ? ' (operator)' : '' }}
           </option>
         </SelectInput>
         <div v-else class="mt-1 text-sm opacity-70">
-          No admin guilds available.
+          {{ t('layout.admin.noAdminGuildsAvailable') }}
         </div>
       </header>
       <nav v-if="sections.length" class="space-y-1">
@@ -86,7 +89,7 @@ function switchGuild(event: Event) {
           to="/admin/instance/system"
           class="mt-4 block rounded-theme border border-border-light dark:border-border-dark px-3 py-2 text-xs uppercase tracking-wider opacity-70 hover:opacity-100"
       >
-        Instance area →
+        {{ t('layout.admin.instanceArea') }}
       </NuxtLink>
     </aside>
     <main class="flex-1 min-w-0">

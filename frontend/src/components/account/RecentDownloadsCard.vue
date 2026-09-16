@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import type {DownloadRow} from '~/api/account'
 import {formatRelative} from '~/util/format'
+
+const {t} = useI18n()
 
 defineProps<{
     rows: DownloadRow[]
@@ -13,10 +16,10 @@ defineProps<{
 </script>
 
 <template>
-  <OverviewCard class="md:col-span-2" title="Recent downloads">
+  <OverviewCard class="md:col-span-2" :title="t('ui.recentDownloadsCard.recentDownloads')">
     <MutedText v-if="rows.length === 0" size="sm" tag="div">
-      No downloads yet &ndash; browse the
-      <NuxtLink class="text-primary hover:underline" to="/">storefront</NuxtLink>.
+      {{ t('ui.recentDownloadsCard.noDownloadsYetNdashBrowseThe') }}
+      <NuxtLink class="text-primary hover:underline" to="/">{{ t('ui.recentDownloadsCard.storefront') }}</NuxtLink>.
     </MutedText>
     <ul v-else class="space-y-2 text-sm">
       <li v-for="row in rows" :key="row.id" class="flex items-center justify-between">

@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {confirmPasswordReset} from '~/api/account'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
+
+const {t} = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -17,15 +20,15 @@ const done = ref(false)
 async function submit() {
   errorMessage.value = null
   if (!token.value) {
-    errorMessage.value = 'Missing token. Use the link from your email.'
+    errorMessage.value = t('page.reset-password.missingTokenUseTheLinkFrom')
     return
   }
   if (password.value.length < 8) {
-    errorMessage.value = 'Password must be at least 8 characters.'
+    errorMessage.value = t('auth.passwordTooShort')
     return
   }
   if (password.value !== confirm.value) {
-    errorMessage.value = 'Passwords do not match.'
+    errorMessage.value = t('auth.passwordsDiffer')
     return
   }
   submitting.value = true
@@ -34,7 +37,7 @@ async function submit() {
     done.value = true
   } catch (e) {
     const err = e as {response?: {status?: number, data?: string}}
-    if (err.response?.status === 410) errorMessage.value = 'This reset link has expired. Request a new one.'
+    if (err.response?.status === 410) errorMessage.value = t('page.reset-password.thisResetLinkHasExpiredRequest')
     else errorMessage.value = typeof err.response?.data === 'string' ? err.response.data : 'Reset failed.'
   } finally {
     submitting.value = false
@@ -49,14 +52,14 @@ async function goToLogin() {
 <template>
   <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
     <PageHeader class="mb-6">
-      Set a new password
+      {{ t('page.reset-password.setANewPassword') }}
     </PageHeader>
     <template v-if="!done">
       <form class="space-y-4" @submit.prevent="submit">
-        <LabelledField label="New password">
+        <LabelledField :label="t('page.reset-password.newPassword')">
           <PasswordInput v-model="password" autocomplete="new-password" minlength="8" required/>
         </LabelledField>
-        <LabelledField label="Confirm new password">
+        <LabelledField :label="t('page.reset-password.confirmNewPassword')">
           <PasswordInput v-model="confirm" autocomplete="new-password" minlength="8" required/>
         </LabelledField>
         <div v-if="errorMessage" class="rounded-theme border border-error/40 bg-error/10 p-2 text-sm text-error">
@@ -69,10 +72,10 @@ async function goToLogin() {
     </template>
     <div v-else class="space-y-4">
       <p class="rounded-theme border border-success/40 bg-success/10 p-3 text-sm">
-        Password updated. You can log in now.
+        {{ t('page.reset-password.passwordUpdatedYouCanLogIn') }}
       </p>
       <PrimaryButton full-width @click="goToLogin">
-        Go to login
+        {{ t('page.reset-password.goToLogin') }}
       </PrimaryButton>
     </div>
   </main>

@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import type {InstanceOperator} from '~/api/admin'
 import {formatDateTime} from '~/util/format'
+
+const {t} = useI18n()
 
 defineProps<{
     operators: InstanceOperator[]
@@ -19,15 +22,15 @@ defineEmits<{
 <template>
   <DataTable>
     <template #head>
-      <Th>Discord id</Th>
-      <Th>Granted by</Th>
-      <Th>Granted</Th>
-      <Th align="right">Withdraw</Th>
+      <Th>{{ t('ui.operatorList.discordId') }}</Th>
+      <Th>{{ t('ui.operatorList.grantedBy') }}</Th>
+      <Th>{{ t('ui.operatorList.granted') }}</Th>
+      <Th align="right">{{ t('ui.operatorList.withdraw') }}</Th>
     </template>
     <TRow v-for="operator in operators" :key="operator.discordId">
       <Td>
         <KeyBadge>{{ operator.discordId }}</KeyBadge>
-        <SecondaryBadge v-if="operator.configured" class="ml-2">From the config</SecondaryBadge>
+        <SecondaryBadge v-if="operator.configured" class="ml-2">{{ t('ui.operatorList.fromTheConfig') }}</SecondaryBadge>
       </Td>
       <Td muted>{{ operator.addedBy ?? '—' }}</Td>
       <Td muted>{{ operator.addedAt ? formatDateTime(operator.addedAt) : '—' }}</Td>
@@ -37,9 +40,9 @@ defineEmits<{
             compact
             @click="$emit('remove', operator.discordId)"
         >
-          Withdraw
+          {{ t('ui.operatorList.withdraw') }}
         </SecondaryButton>
-        <MutedText v-else size="sm">Edit the config</MutedText>
+        <MutedText v-else size="sm">{{ t('ui.operatorList.editTheConfig') }}</MutedText>
       </Td>
     </TRow>
   </DataTable>

@@ -1,9 +1,12 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {createGuildLicense, listGuildLicenses, listGuildProducts, type LicenseSummary, type ProductSummary} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -70,7 +73,7 @@ async function submitCreate() {
   <div>
     <header class="mb-4 flex items-center justify-between">
       <PageHeader>
-        Licenses
+        {{ t('page.admin.g.guildId.licenses.licenses') }}
       </PageHeader>
       <PrimaryButton @click="showCreate = !showCreate; issuedKey = null">
         {{ showCreate ? 'Cancel' : 'Issue license' }}
@@ -82,16 +85,16 @@ async function submitCreate() {
         class="mb-4 rounded-theme border border-border-light dark:border-border-dark p-4"
     >
       <CardHeader>
-        Issue license
+        {{ t('page.admin.g.guildId.licenses.issueLicense') }}
       </CardHeader>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <LabelledField label="Product">
+        <LabelledField :label="t('common.product')">
           <SelectInput v-model="createProductId">
-            <option :value="null" disabled>Choose…</option>
+            <option :value="null" disabled>{{ t('page.admin.g.guildId.licenses.choose') }}</option>
             <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
           </SelectInput>
         </LabelledField>
-        <LabelledField label="Identifier (mail / order id)">
+        <LabelledField :label="t('page.admin.g.guildId.licenses.identifierMailOrderId')">
           <TextInput v-model="createIdentifier" required/>
         </LabelledField>
       </div>
@@ -108,7 +111,7 @@ async function submitCreate() {
           class="mt-4 rounded-theme border border-success/40 bg-success/10 p-3 text-sm"
       >
         <div class="font-semibold">
-          License issued
+          {{ t('page.admin.g.guildId.licenses.licenseIssued') }}
         </div>
         <code class="mt-1 block break-all">{{ issuedKey }}</code>
       </div>
@@ -133,7 +136,7 @@ async function submitCreate() {
       </li>
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
-      No licenses yet.
+      {{ t('page.admin.g.guildId.licenses.noLicensesYet') }}
     </div>
   </div>
 </template>

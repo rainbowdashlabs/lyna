@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
 import MutedText from '@/components/typography/MutedText.vue'
+
+const {t} = useI18n()
 
 const model = defineModel<string>()
 
@@ -89,7 +92,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
           {{ opt.label }}
         </button>
         <MutedText tag="div" size="sm" class="py-2 px-3" v-if="filteredOptions.length === 0">
-          Keine Ergebnisse
+          {{ t('ui.searchSelectInput.keineErgebnisse') }}
         </MutedText>
       </div>
     </div>

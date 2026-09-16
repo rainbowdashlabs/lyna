@@ -4,8 +4,11 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
 import {setProductIcon} from '~/api/admin'
+
+const {t} = useI18n()
 
 const props = defineProps<{
     guildId: string
@@ -48,7 +51,7 @@ async function save() {
   <div class="flex items-start gap-3">
     <ProductIcon :icon-url="value || null" :name="productName" size="sm"/>
     <div class="min-w-0 flex-1">
-      <TextInput v-model="value" placeholder="https://…/icon.png" type="url"/>
+      <TextInput v-model="value" :placeholder="t('ui.productIconField.httpsIconPng')" type="url"/>
       <MutedText v-if="errorMessage" class="mt-1 block text-error" size="sm">{{ errorMessage }}</MutedText>
     </div>
     <SecondaryButton :disabled="busy" compact @click="save">{{ busy ? 'Saving…' : 'Save icon' }}</SecondaryButton>

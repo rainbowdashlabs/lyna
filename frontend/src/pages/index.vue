@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {type KioskProduct, listProducts} from '~/api/kiosk'
 import {useSession} from '~/composables/useSession'
+
+const {t} = useI18n()
 
 const {account, hydrate} = useSession()
 
@@ -55,10 +58,10 @@ function clearFilters() {
     <header class="border-b border-border-light bg-primary py-6 text-primary-text dark:border-border-dark">
       <div class="mx-auto max-w-6xl px-4">
         <PageHeader>
-          Lyna Download Center
+          {{ t('kiosk.title') }}
         </PageHeader>
         <p class="opacity-80">
-          Browse and download plugin releases.
+          {{ t('page.home.browseAndDownloadPluginReleases') }}
         </p>
       </div>
     </header>
@@ -72,8 +75,8 @@ function clearFilters() {
       >
         <template #empty>
           <EmptyState>
-            <p class="mb-3">No plugins match.</p>
-            <SecondaryButton compact @click="clearFilters">Clear filters</SecondaryButton>
+            <p class="mb-3">{{ t('page.home.noPluginsMatch') }}</p>
+            <SecondaryButton compact @click="clearFilters">{{ t('page.home.clearFilters') }}</SecondaryButton>
           </EmptyState>
         </template>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

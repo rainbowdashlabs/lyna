@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {signup} from '~/api/account'
 import {useSession} from '~/composables/useSession'
+
+const {t} = useI18n()
 
 const router = useRouter()
 const {setToken, hydrate} = useSession()
@@ -16,11 +19,11 @@ const errorMessage = ref<string | null>(null)
 async function submit() {
   errorMessage.value = null
   if (password.value.length < 8) {
-    errorMessage.value = 'Password must be at least 8 characters.'
+    errorMessage.value = t('auth.passwordTooShort')
     return
   }
   if (password.value !== passwordConfirm.value) {
-    errorMessage.value = 'Passwords do not match.'
+    errorMessage.value = t('auth.passwordsDiffer')
     return
   }
   submitting.value = true
@@ -32,11 +35,11 @@ async function submit() {
   } catch (e) {
     const error = e as {response?: {status?: number, data?: string}}
     if (error.response?.status === 409) {
-      errorMessage.value = 'An account with this email already exists.'
+      errorMessage.value = t('page.signup.anAccountWithThisEmailAlready')
     } else if (typeof error.response?.data === 'string') {
       errorMessage.value = error.response.data
     } else {
-      errorMessage.value = 'Signup failed. Please try again.'
+      errorMessage.value = t('page.signup.signupFailedPleaseTryAgain')
     }
   } finally {
     submitting.value = false
@@ -47,16 +50,16 @@ async function submit() {
 <template>
   <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
     <PageHeader class="mb-6">
-      Sign up
+      {{ t('auth.signup') }}
     </PageHeader>
     <form class="space-y-4" @submit.prevent="submit">
-      <LabelledField label="Email">
+      <LabelledField :label="t('auth.email')">
         <EmailInput v-model="email" autocomplete="email" required/>
       </LabelledField>
-      <LabelledField label="Password">
+      <LabelledField :label="t('auth.password')">
         <PasswordInput v-model="password" autocomplete="new-password" minlength="8" required/>
       </LabelledField>
-      <LabelledField label="Confirm password">
+      <LabelledField :label="t('page.signup.confirmPassword')">
         <PasswordInput v-model="passwordConfirm" autocomplete="new-password" minlength="8" required/>
       </LabelledField>
       <Alert v-if="errorMessage" variant="error">{{ errorMessage }}</Alert>
@@ -65,8 +68,8 @@ async function submit() {
       </PrimaryButton>
       <DiscordLoginLink/>
       <MutedText class="block text-center" size="sm" tag="p">
-        Already have an account?
-        <NuxtLink class="text-primary hover:underline" to="/login">Log in</NuxtLink>
+        {{ t('page.signup.alreadyHaveAnAccount') }}
+        <NuxtLink class="text-primary hover:underline" to="/login">{{ t('auth.login') }}</NuxtLink>
       </MutedText>
     </form>
   </main>

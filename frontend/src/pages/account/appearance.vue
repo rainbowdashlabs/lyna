@@ -1,9 +1,12 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {overview} from '~/api/account'
 import {publicTheme, type PublicTheme, saveAppearance} from '~/api/theme'
 import {useTheme} from '~/composables/useTheme'
 import {DarkMode, type DarkModeValue, Feel, type FeelValue} from '~/theme/themes'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'account'})
 
@@ -57,41 +60,41 @@ async function save() {
 <template>
   <div>
     <PageHeader class="mb-6">
-      Appearance
+      {{ t('page.account.appearance.appearance') }}
     </PageHeader>
     <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
       <div v-if="policy" class="space-y-6">
         <EmptyHint v-if="nothingToChoose">
-          Your operator has fixed the theme and the corner style for everyone.
+          {{ t('page.account.appearance.yourOperatorHasFixedTheTheme') }}
         </EmptyHint>
 
         <section v-if="!themeLocked">
-          <CardHeader>Theme</CardHeader>
+          <CardHeader>{{ t('page.account.appearance.theme') }}</CardHeader>
           <ThemeSelector v-model="theme" :enabled="policy.enabledThemes"/>
         </section>
 
         <section>
-          <CardHeader>Dark mode</CardHeader>
+          <CardHeader>{{ t('page.account.appearance.darkMode') }}</CardHeader>
           <SelectInput v-model="mode" class="max-w-xs">
-            <option :value="DarkMode.SYSTEM">Follow the system</option>
-            <option :value="DarkMode.LIGHT">Always light</option>
-            <option :value="DarkMode.DARK">Always dark</option>
+            <option :value="DarkMode.SYSTEM">{{ t('page.account.appearance.followTheSystem') }}</option>
+            <option :value="DarkMode.LIGHT">{{ t('page.account.appearance.alwaysLight') }}</option>
+            <option :value="DarkMode.DARK">{{ t('page.account.appearance.alwaysDark') }}</option>
           </SelectInput>
         </section>
 
         <section>
-          <CardHeader>Corners</CardHeader>
+          <CardHeader>{{ t('page.account.appearance.corners') }}</CardHeader>
           <SelectInput v-model="feel" :disabled="feelLocked" class="max-w-xs">
-            <option :value="Feel.ROUNDED">Rounded</option>
-            <option :value="Feel.CORNERS">Square</option>
+            <option :value="Feel.ROUNDED">{{ t('page.account.appearance.rounded') }}</option>
+            <option :value="Feel.CORNERS">{{ t('page.account.appearance.square') }}</option>
           </SelectInput>
           <MutedText v-if="feelLocked" class="mt-2 block" size="sm">
-            Your operator has locked the corner style.
+            {{ t('page.account.appearance.yourOperatorHasLockedTheCorner') }}
           </MutedText>
         </section>
 
         <div class="flex items-center gap-3">
-          <PrimaryButton @click="save">Save</PrimaryButton>
+          <PrimaryButton @click="save">{{ t('common.save') }}</PrimaryButton>
           <MutedText v-if="saveMessage" :class="saveMessage === 'Saved.' ? 'text-success' : 'text-error'" size="sm">
             {{ saveMessage }}
           </MutedText>

@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import IconButton from './IconButton.vue'
+
+const {t} = useI18n()
 
 defineProps<{
   disabled?: boolean
@@ -20,7 +23,7 @@ defineEmits<{
       :disabled="disabled"
       :icon="['fas', 'check']"
       class="text-success hover:bg-success/15"
-      label="Confirm"
+      :label="t('common.confirm')"
       @click="$emit('click', $event)"
   />
 </template>

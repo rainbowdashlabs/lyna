@@ -1,6 +1,9 @@
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {addOperator, type InstanceOperator, listOperators, removeOperator} from '~/api/admin'
+
+const {t} = useI18n()
 
 definePageMeta({layout: 'admin'})
 
@@ -70,11 +73,10 @@ async function doRemove() {
 <template>
   <div>
     <PageHeader class="mb-4">
-      Operators
+      {{ t('page.admin.instance.operators.operators') }}
     </PageHeader>
     <MutedText class="mb-4 block" size="sm">
-      An operator reaches every guild's admin area and this one. Ids named in the configuration file
-      cannot be withdrawn here &mdash; they are the way back in if a grant goes wrong.
+      {{ t('page.admin.instance.operators.anOperatorReachesEveryGuildS') }}
     </MutedText>
 
     <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
@@ -82,9 +84,9 @@ async function doRemove() {
         <OperatorList :operators="operators" @remove="removing = $event"/>
 
         <NeutralContainer>
-          <CardHeader>Grant the instance</CardHeader>
+          <CardHeader>{{ t('page.admin.instance.operators.grantTheInstance') }}</CardHeader>
           <div class="flex flex-wrap items-end gap-2">
-            <LabelledField class="flex-1" label="Discord user id">
+            <LabelledField class="flex-1" :label="t('page.admin.instance.operators.discordUserId')">
               <TextInput v-model="newId" inputmode="numeric" placeholder="e.g. 128014201982911361"/>
             </LabelledField>
             <PrimaryButton :disabled="busy || !newId.trim()" @click="doAdd">

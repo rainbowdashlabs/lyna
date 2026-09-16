@@ -4,7 +4,10 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {useI18n} from 'vue-i18n'
 import type {AccountInfo} from '~/api/account'
+
+const {t} = useI18n()
 
 defineProps<{
     account: AccountInfo
@@ -12,20 +15,20 @@ defineProps<{
 </script>
 
 <template>
-  <OverviewCard title="Linked accounts">
+  <OverviewCard :title="t('ui.linkedAccountsCard.linkedAccounts')">
     <div class="space-y-2 text-sm">
       <div>
-        <DetailLabel>Email</DetailLabel>
+        <DetailLabel>{{ t('auth.email') }}</DetailLabel>
         <div>{{ account.email ?? 'Not set' }}</div>
       </div>
       <div>
-        <DetailLabel>Discord</DetailLabel>
+        <DetailLabel>{{ t('ui.linkedAccountsCard.discord') }}</DetailLabel>
         <div>
           <template v-if="account.discordId">
             Linked as {{ account.username ?? account.discordId }}
           </template>
           <template v-else>
-            Not linked &ndash; <AppLink href="/api/auth/discord/start">link now</AppLink>
+            {{ t('ui.linkedAccountsCard.notLinkedNdash') }} <AppLink href="/api/auth/discord/start">{{ t('ui.linkedAccountsCard.linkNow') }}</AppLink>
           </template>
         </div>
       </div>
