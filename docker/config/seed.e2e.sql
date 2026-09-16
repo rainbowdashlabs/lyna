@@ -25,14 +25,18 @@ ON CONFLICT (link_code) DO NOTHING;
 -- An account that already holds a license, so the stories can walk the entitled path without an
 -- OAuth round trip. Its password is the suite's own and hashed the way the application hashes one;
 -- nothing outside this stack ever sees these rows.
+--
+-- The licence hangs off the account, not the Discord id. The identity row is here anyway, because a
+-- holder with one is the case the role-granting views answer for.
 
 INSERT INTO public.account (id, email, password_hash)
 SELECT 999000, 'entitled@example.invalid', '$2a$12$Y07xJ9n/YRmyONFQMdyq8uTeNmFH1utmmqrbAQmDqmMQ43QvaRuPi'
 WHERE NOT EXISTS (SELECT 1 FROM public.account WHERE id = 999000);
 
-INSERT INTO public.account_discord_link (account_id, discord_user_id, verified_via)
-SELECT 999000, 4242424242, 'oauth'
-WHERE NOT EXISTS (SELECT 1 FROM public.account_discord_link WHERE account_id = 999000);
+INSERT INTO public.account_identity (provider, external_id, account_id, verified_via, handle)
+SELECT 'discord', '4242424242', 999000, 'oauth', 'entitled'
+WHERE NOT EXISTS (SELECT 1 FROM public.account_identity
+                  WHERE provider = 'discord' AND external_id = '4242424242');
 
 INSERT INTO public.license (product_id, user_identifier, key)
 SELECT id, 'entitled@example.invalid', 'E2E-LICENSE-KEY'
@@ -40,8 +44,8 @@ FROM public.product
 WHERE name = 'E2E Premium'
   AND NOT EXISTS (SELECT 1 FROM public.license WHERE key = 'E2E-LICENSE-KEY');
 
-INSERT INTO public.user_license (user_id, license_id)
-SELECT 4242424242, id FROM public.license WHERE key = 'E2E-LICENSE-KEY'
+INSERT INTO public.user_license (account_id, license_id)
+SELECT 999000, id FROM public.license WHERE key = 'E2E-LICENSE-KEY'
 ON CONFLICT (license_id) DO NOTHING;
 
 INSERT INTO public.license_access (license_id, release_type)
