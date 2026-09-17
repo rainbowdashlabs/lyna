@@ -72,7 +72,7 @@ function clearFilters() {
     </header>
 
     <section class="mx-auto max-w-6xl px-4 py-6">
-      <KioskFilters v-model:filter="filter" v-model:search="search" :signed-in="signedIn"/>
+      <KioskFilters v-model:filter="filter" v-model:search="search" :loading="loading" :signed-in="signedIn"/>
       <AsyncSection
           :empty="!loading && shown.length === 0"
           :error="errorMessage ?? undefined"

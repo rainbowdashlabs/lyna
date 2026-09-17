@@ -34,22 +34,36 @@ public class Accounts {
      * <p>The address arrives unverified: creating an account is not proof that somebody reads the
      * inbox they typed.
      *
+     * <p>The account and its address are written by one statement. Each statement here takes a
+     * connection of its own, so a signup that spent four of them put a small pool under enough
+     * pressure to start failing requests.
+     *
      * @throws IllegalStateException if the address already belongs to somebody
      */
     public Account create(String email, String passwordHash) {
-        int id = query("INSERT INTO account (password_hash) VALUES (?) RETURNING id")
-                .single(call().bind(passwordHash))
-                .map(row -> row.getInt("id"))
+        if (email == null || email.isBlank()) {
+            int id = query("INSERT INTO account (password_hash) VALUES (?) RETURNING id")
+                    .single(call().bind(passwordHash))
+                    .map(row -> row.getInt("id"))
+                    .first()
+                    .orElseThrow(() -> new IllegalStateException("Failed to insert account"));
+            return findById(id).orElseThrow(() -> new IllegalStateException("Failed to read the new account"));
+        }
+        if (emails.byAddress(email).isPresent()) {
+            throw new IllegalStateException("That address belongs to another account");
+        }
+        int id = query("""
+                WITH created AS (
+                    INSERT INTO account (password_hash) VALUES (?) RETURNING id
+                )
+                INSERT INTO account_email (account_id, email, is_primary)
+                SELECT id, ?, TRUE FROM created
+                RETURNING account_id
+                """)
+                .single(call().bind(passwordHash).bind(email.trim()))
+                .map(row -> row.getInt("account_id"))
                 .first()
                 .orElseThrow(() -> new IllegalStateException("Failed to insert account"));
-        if (email != null && !email.isBlank()) {
-            try {
-                emails.add(id, email);
-            } catch (RuntimeException e) {
-                delete(id);
-                throw e;
-            }
-        }
         return findById(id).orElseThrow(() -> new IllegalStateException("Failed to read the new account"));
     }
 

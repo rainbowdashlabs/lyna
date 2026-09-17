@@ -15,6 +15,12 @@ const search = defineModel<string>('search', {required: true})
 const props = defineProps<{
     /** `Owned` is only meaningful once somebody is signed in, so it appears only then. */
     signedIn: boolean
+    /**
+     * The catalogue is fetched by the browser, so there is a moment where there is nothing to filter.
+     * Typing into the box then loses what was typed - the first render after the list arrives writes
+     * the model's empty string back over it - so the box is not offered until there is a list.
+     */
+    loading?: boolean
 }>()
 
 const chips = computed(() => props.signedIn
@@ -24,7 +30,7 @@ const chips = computed(() => props.signedIn
 
 <template>
   <div class="mb-4 space-y-3">
-    <SearchInput v-model="search" :placeholder="t('ui.kioskFilters.searchPlugins')"/>
+    <SearchInput v-model="search" :disabled="loading" :placeholder="t('ui.kioskFilters.searchPlugins')"/>
     <TabBar v-model="filter" :tabs="chips"/>
   </div>
 </template>
