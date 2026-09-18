@@ -87,7 +87,7 @@ services:
   # A run of its own, finishing before either of them starts, so neither has to wait on the other and
   # nothing has to be committed: a key that lives as long as the stack is a key nobody has to rotate.
   tls_init_e2e:
-    image: eclipse-temurin:21-alpine
+    image: eclipse-temurin:25-alpine
     volumes:
       - nexus_tls:/tls
     profiles:
