@@ -12,13 +12,10 @@ import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
-import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.service.LicenseService;
-import de.chojo.lyna.mail.Mail;
-import de.chojo.lyna.mail.MailCreator;
+import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.MailingService;
-import de.chojo.lyna.mail.PurchaseRecipient;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -31,13 +28,13 @@ public class Send implements SlashHandler {
     private final MailingService mailingService;
     private final Conf configuration;
     private final Guilds guilds;
-    private final PurchaseCollectionService purchases;
+    private final PurchaseService purchases;
 
     public Send(
             MailingService mailingService,
             Conf configuration,
             Guilds guilds,
-            PurchaseCollectionService purchases,
+            PurchaseService purchases,
             LicenseService licenseService) {
         this.mailingService = mailingService;
         this.configuration = configuration;
@@ -75,18 +72,7 @@ public class Send implements SlashHandler {
 
         licenseService.grantAccess(license.get(), ReleaseType.STABLE);
 
-        Mailing mailing = optMailing.get();
-        boolean handedOver = purchases.handOver(license.get().id(), address);
-        Mail mail = MailCreator.createLicenseMessage(
-                mailingService.renderer(),
-                mailing,
-                license.get().key(),
-                name,
-                address,
-                mailing.product().url(),
-                handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
-
-        mailingService.sendMail(mail);
+        purchases.announce(optMailing.get(), license.get(), name, address);
         event.reply("Email sent").setEphemeral(true).queue();
     }
 

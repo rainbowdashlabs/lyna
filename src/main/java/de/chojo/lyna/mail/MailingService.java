@@ -6,14 +6,15 @@
 package de.chojo.lyna.mail;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.Mailings;
-import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
 import jakarta.mail.Address;
@@ -44,7 +45,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MailingService {
     private final Threading threading;
     private final Mailings mailings;
-    private final PurchaseCollectionService purchases;
+    /**
+     * Asked for lazily, and that is load-bearing: the purchase flow sends mail through this service,
+     * and this service builds the handler that runs the purchase flow. Asking for it when the
+     * mailbox is first polled makes that a sequence rather than a circle.
+     */
+    private final Provider<PurchaseService> purchases;
+
     private final LicenseService licenseService;
     private final Conf configuration;
     private static final Logger log = getLogger(MailingService.class);
@@ -55,7 +62,7 @@ public class MailingService {
     public MailingService(
             Threading threading,
             Mailings mailings,
-            PurchaseCollectionService purchases,
+            Provider<PurchaseService> purchases,
             Conf configuration,
             LicenseService licenseService) {
         this.threading = threading;
@@ -93,7 +100,7 @@ public class MailingService {
                 .botWorker()
                 .scheduleAtFixedRate(
                         this::loop, 10, configuration.main().mailing().pollSeconds(), TimeUnit.SECONDS);
-        registerMessageListener(new MailHandler(mailings, this, purchases, configuration, licenseService));
+        registerMessageListener(new MailHandler(mailings, this, purchases.get(), configuration, licenseService));
     }
 
     private void loop() {
