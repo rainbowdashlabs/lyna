@@ -1,14 +1,20 @@
 name: Verify
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main, 'feature/**']
+    tags: ['v*']
+  pull_request:
+  merge_group:
 
 env:
   NODE_VERSION: 24
+  JAVA_VERSION: 25
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Gradle build
+    name: Verify Backend Build
 
     steps:
       - uses: actions/checkout@v7
@@ -17,15 +23,15 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 25
+          java-version: ${{ env.JAVA_VERSION }}
       - name: Build with Gradle
-        run: ./gradlew --build-cache build -x test
+        run: ./gradlew --build-cache build -x test -x javadoc -x spotlessCheck
 
   test:
     runs-on: ubuntu-latest
     # Divided by kind, so a red job names where to look. The repository and service jobs each start
     # a database container per fork; the rest needs none.
-    name: Test (${{ matrix.kind }})
+    name: Verify Tests (${{ matrix.kind }})
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -38,9 +44,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: ${{ env.JAVA_VERSION }}
+      # Retried once: a container that fails to start is a run to repeat, not a change to blame.
       - name: Run the tests
-        run: ./gradlew --build-cache ${{ matrix.kind }}
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 15
+          max_attempts: 2
+          retry_wait_seconds: 60
+          command: ./gradlew --build-cache ${{ matrix.kind }}
       - name: Upload the report
         uses: actions/upload-artifact@v4
         if: failure()
@@ -50,7 +62,7 @@ jobs:
 
   build-frontend:
     runs-on: ubuntu-latest
-    name: Frontend lint and build
+    name: Verify Frontend Build
 
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +99,7 @@ jobs:
 
   test-frontend-e2e:
     runs-on: ubuntu-latest
-    name: End-to-end
+    name: Verify Frontend End-to-End
     needs: [ build-frontend ]
     timeout-minutes: 30
 
@@ -143,9 +155,134 @@ jobs:
 
   build-docker:
     runs-on: ubuntu-latest
-    name: Docker build
+    name: Verify Docker Build
 
     steps:
       - uses: actions/checkout@v7
-      - name: Build as Docker image
+      - name: Build backend image
         run: docker build -f docker/backend.Dockerfile .
+      - name: Build frontend image
+        run: docker build -f docker/frontend.Dockerfile .
+
+  javadoc:
+    runs-on: ubuntu-latest
+    name: Verify Javadoc
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Generate the javadoc
+        run: ./gradlew --build-cache javadoc
+
+  formatting-backend:
+    runs-on: ubuntu-latest
+    name: Verify Backend Formatting
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Check formatting and licence headers
+        run: ./gradlew --build-cache spotlessJavaCheck spotlessBackendLocalesCheck
+
+  formatting-frontend:
+    runs-on: ubuntu-latest
+    name: Verify Frontend Formatting
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Check formatting and licence headers
+        run: >-
+          ./gradlew --build-cache
+          spotlessTypescriptCheck spotlessVueCheck spotlessFrontendLocalesCheck
+
+  # A database that has run a patch is never offered it again, so a patch may not change once it
+  # exists on main. Every test builds its database from nothing, which is the one path where such an
+  # edit is invisible: the from-nothing database runs the edited file and looks correct, while every
+  # running instance skips it and silently lacks whatever was added.
+  migrations-frozen:
+    runs-on: ubuntu-latest
+    name: Verify Migrations Are Frozen
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check that no existing migration was changed
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+        run: |
+          base=$(git merge-base "$BASE_SHA" HEAD)
+          touched=$(git diff --name-only --diff-filter=MDR "$base" HEAD -- \
+            'src/main/resources/database/postgresql/**/patch_*.sql' \
+            'src/main/resources/database/postgresql/**/setup.sql')
+
+          if [ -z "$touched" ]; then
+            echo "No existing migration was changed."
+            exit 0
+          fi
+
+          echo "These migrations already exist and were changed or removed:"
+          printf '  %s\n' $touched
+          echo
+
+          # Repairing a mistake in a patch that is already on main means changing that patch, so the
+          # rule needs a way to be set aside on purpose. A marker in a commit message is that
+          # acknowledgement, and it stays in the history next to the change it permits.
+          if git log "$base..HEAD" --format=%B | grep -qiF '[modify patch]'; then
+            echo "Acknowledged by [modify patch] in a commit on this branch."
+            exit 0
+          fi
+
+          echo "A database that has applied a patch is never offered it again, so a change to one"
+          echo "reaches new databases only. Restore the file and add a new patch instead, raising"
+          echo "src/main/resources/database/version to match."
+          echo
+          echo "When the change is the point, put [modify patch] in a commit message on this branch."
+          exit 1
+
+  # A patch that has not reached main has not reached any database either, so several of them on one
+  # branch carry no history worth keeping apart and are free to become one file.
+  one-migration-per-change:
+    runs-on: ubuntu-latest
+    name: Verify One Migration Per Change
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check that at most one migration is added
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+        run: |
+          base=$(git merge-base "$BASE_SHA" HEAD)
+          added=$(git diff --name-only --diff-filter=A "$base" HEAD -- \
+            'src/main/resources/database/postgresql/**/patch_*.sql')
+          count=$(printf '%s' "$added" | grep -c . || true)
+
+          if [ "$count" -le 1 ]; then
+            echo "This change adds $count migration(s)."
+            exit 0
+          fi
+
+          echo "This change adds $count migrations:"
+          printf '  %s\n' $added
+          echo
+          echo "None of them has been applied anywhere, so they can be one file. Merge their"
+          echo "statements into the lowest-numbered patch, delete the rest, and set"
+          echo "src/main/resources/database/version to that one number."
+          exit 1
