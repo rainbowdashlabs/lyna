@@ -15,6 +15,7 @@ import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
+import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
@@ -55,6 +56,7 @@ public class Admin {
     private static final int DESCRIPTION_LIMIT = 8000;
 
     private final OAuth oauthConfig;
+    private final ProductIconService productIcons;
 
     private final LicenseService licenseService;
     private final LicenseSharingService licenseSharing;
@@ -89,7 +91,9 @@ public class Admin {
             Gateway gateway,
             LicenseService licenseService,
             LicenseSharingService licenseSharing,
-            OAuth oauthConfig) {
+            OAuth oauthConfig,
+            ProductIconService productIcons) {
+        this.productIcons = productIcons;
         this.oauthConfig = oauthConfig;
         this.licenseService = licenseService;
         this.licenseSharing = licenseSharing;
@@ -111,8 +115,10 @@ public class Admin {
             path("g/{guildId}", () -> {
                 get("products", this::listProducts);
                 post("products", this::createProduct);
-                put("products/{productId}/icon", this::setProductIcon);
+                put("products/{productId}", this::updateProduct);
                 put("products/{productId}/description", this::setProductDescription);
+                post("products/{productId}/icon", this::uploadProductIcon);
+                delete("products/{productId}/icon", this::deleteProductIcon);
                 get("licenses", this::listLicenses);
                 post("licenses", this::createLicense);
                 get("registrations/{discordId}", this::registrationInfo);
@@ -160,8 +166,9 @@ public class Admin {
                         p.id(),
                         p.name(),
                         p.url(),
-                        p.role(),
+                        Long.toString(p.role()),
                         p.free(),
+                        p.trial(),
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null))
                 .toList());
@@ -328,38 +335,111 @@ public class Admin {
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
-    private void setProductIcon(Context ctx) {
+    /**
+     * Changes everything about a product that is not its icon.
+     *
+     * <p>One endpoint rather than one per field: a form that saves a name and then fails on the role
+     * has already changed half of what somebody asked for.
+     */
+    private void updateProduct(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        ProductEdit body;
+        try {
+            body = json.readValue(ctx.body(), ProductEdit.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        if (body == null || body.name() == null || body.name().isBlank()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("A product needs a name");
+            return;
+        }
+        if (body.description() != null && body.description().length() > DESCRIPTION_LIMIT) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .result("A description is at most %d characters".formatted(DESCRIPTION_LIMIT));
+            return;
+        }
+        long roleId;
+        try {
+            roleId = body.roleId() == null || body.roleId().isBlank() ? 0L : Long.parseLong(body.roleId());
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("That is not a role id");
+            return;
+        }
+        product.name(body.name().strip());
+        product.url(
+                body.url() == null || body.url().isBlank() ? null : body.url().strip());
+        product.role(roleId);
+        product.free(body.free());
+        product.trial(body.trial());
+        String description =
+                body.description() == null ? "" : body.description().strip();
+        kioskProducts.description(product.id(), description.isBlank() ? null : description);
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Takes an uploaded image as a product's icon.
+     *
+     * <p>What the upload says it is does not decide anything: the service reads the type out of the
+     * first bytes, and refuses what it cannot resize.
+     */
+    private void uploadProductIcon(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        var upload = ctx.uploadedFile("icon");
+        if (upload == null) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("No file was uploaded");
+            return;
+        }
+        try {
+            byte[] data = upload.content().readAllBytes();
+            var stored = productIcons.store(product.id(), data);
+            if (stored.isEmpty()) {
+                ctx.status(HttpStatus.BAD_REQUEST).result("That is not a PNG, JPEG or WebP image");
+                return;
+            }
+            ctx.status(HttpStatus.NO_CONTENT);
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
+        } catch (Exception e) {
+            log.warn("Could not store the icon for product {}", product.id(), e);
+            ctx.status(HttpStatus.BAD_REQUEST).result("That image could not be read");
+        }
+    }
+
+    private void deleteProductIcon(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        productIcons.remove(product.id());
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * @return the product the path names, within the guild being administered, or null having already
+     *         answered
+     */
+    private de.chojo.lyna.feature.product.entity.Product productFromPath(Context ctx, Resolved resolved) {
         int productId;
         try {
             productId = Integer.parseInt(ctx.pathParam("productId"));
         } catch (NumberFormatException e) {
             ctx.status(HttpStatus.NOT_FOUND);
-            return;
+            return null;
         }
-        if (resolved.guild().products().byId(productId).isEmpty()) {
+        var product = resolved.guild().products().byId(productId);
+        if (product.isEmpty()) {
             ctx.status(HttpStatus.NOT_FOUND);
-            return;
+            return null;
         }
-        ProductIcon body;
-        try {
-            body = json.readValue(ctx.body(), ProductIcon.class);
-        } catch (Exception e) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
-            return;
-        }
-        String url =
-                body == null || body.iconUrl() == null ? "" : body.iconUrl().trim();
-        if (!url.isBlank()) {
-            var rejection = iconUrls.reject(url);
-            if (rejection.isPresent()) {
-                ctx.status(HttpStatus.BAD_REQUEST).result(rejection.get());
-                return;
-            }
-        }
-        kioskProducts.iconUrl(productId, url);
-        ctx.status(HttpStatus.NO_CONTENT);
+        return product.get();
     }
 
     private void createProduct(Context ctx) {
@@ -394,7 +474,8 @@ public class Admin {
         }
         var p = product.get();
         ctx.status(HttpStatus.CREATED)
-                .json(new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null, null));
+                .json(new ProductSummary(
+                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null));
     }
 
     private void listLicenses(Context ctx) {
@@ -561,7 +642,8 @@ public class Admin {
         if (resolved == null) return;
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
-                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null, null))
+                .map(p -> new ProductSummary(
+                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null))
                 .toList();
         ctx.json(new TrialInfo(
                 (int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
@@ -853,10 +935,27 @@ public class Admin {
 
     public record AdminGuild(String id, String name, String iconUrl, String role) {}
 
+    /**
+     * @param roleId as text, because a Discord id is larger than a JavaScript number holds exactly -
+     *               sent as one it comes back rounded, and the edit form would write the wrong role
+     */
     public record ProductSummary(
-            int id, String name, String url, long roleId, boolean free, String iconUrl, String description) {}
+            int id,
+            String name,
+            String url,
+            String roleId,
+            boolean free,
+            boolean trial,
+            String iconUrl,
+            String description) {}
 
     public record ProductDescription(String description) {}
+
+    /**
+     * @param roleId the Discord role, as text because a role id does not fit a JavaScript number
+     */
+    public record ProductEdit(
+            String name, String url, String roleId, boolean free, boolean trial, String description, String iconUrl) {}
 
     /**
      * @param configured whether the id holds the instance by configuration, and so cannot be
@@ -869,8 +968,6 @@ public class Admin {
     public record MailingBlocks(String blocks) {}
 
     public record MailingTest(String address) {}
-
-    public record ProductIcon(String iconUrl) {}
 
     public record CreateProduct(String name, String url, Long roleId, boolean free, boolean trial) {}
 

@@ -426,6 +426,31 @@
       "faq": "FAQ",
       "terms": "Terms",
       "license": "AGPL-3.0-only"
+    },
+    "productIconUpload": {
+      "pngJpegOrWebp": "PNG, JPEG or WebP. Resized here to the sizes the pages use.",
+      "remove": "Remove icon",
+      "couldNotUpload": "That image could not be uploaded.",
+      "couldNotRemove": "The icon could not be removed."
+    },
+    "productEditForm": {
+      "name": "Name",
+      "roleId": "Discord role id",
+      "projectUrl": "Project URL",
+      "description": "Description",
+      "markdownShownOnThePage": "Markdown. Shown on the product's own page.",
+      "trialAvailable": "Trial available",
+      "freeToEveryone": "Free to everyone",
+      "thisChangesWhoMayDownloadIt": "This changes who may download it.",
+      "save": "Save",
+      "saved": "Saved.",
+      "couldNotSave": "That could not be saved.",
+      "iconAddress": "Icon address",
+      "usedWhenNothingIsUploaded": "Used only when no icon has been uploaded."
+    },
+    "productAdminRow": {
+      "edit": "Edit",
+      "done": "Done"
     }
   }
 }

@@ -36,6 +36,7 @@ import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.configuration.elements.Nexus;
+import de.chojo.lyna.configuration.elements.Storage;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
@@ -59,6 +60,9 @@ import de.chojo.lyna.feature.download.repository.DownloadRepository;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.roles.JdaRoleSync;
 import de.chojo.lyna.feature.guild.roles.RoleSync;
+import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
+import de.chojo.lyna.feature.icon.service.ProductIconService;
+import de.chojo.lyna.feature.icon.storage.IconStorage;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
@@ -159,6 +163,12 @@ public class LynaModule extends AbstractModule {
     @Singleton
     Api api(ConfigFile config) {
         return config.api();
+    }
+
+    @Provides
+    @Singleton
+    Storage storage(ConfigFile config) {
+        return config.storage();
     }
 
     @Provides
@@ -271,6 +281,9 @@ public class LynaModule extends AbstractModule {
         bind(TrialService.class).in(Singleton.class);
         bind(DownloadRepository.class).in(Singleton.class);
         bind(PurchaseService.class).in(Singleton.class);
+        bind(IconStorage.class).in(Singleton.class);
+        bind(ProductIconRepository.class).in(Singleton.class);
+        bind(ProductIconService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);
         bind(LicenseInviteRepository.class).in(Singleton.class);

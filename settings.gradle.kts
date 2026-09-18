@@ -22,6 +22,9 @@ dependencyResolutionManagement {
             bundle("config", listOf("ocular", "jackson-yaml"))
 
             library("pebble", "io.pebbletemplates:pebble:4.1.2")
+            library("thumbnailator", "net.coobird:thumbnailator:0.4.20")
+            library("imageio-webp", "com.twelvemonkeys.imageio:imageio-webp:3.12.0")
+            bundle("images", listOf("thumbnailator", "imageio-webp"))
             library("bcrypt", "at.favre.lib:bcrypt:0.10.2")
             library("java-jwt", "com.auth0:java-jwt:4.5.0")
 

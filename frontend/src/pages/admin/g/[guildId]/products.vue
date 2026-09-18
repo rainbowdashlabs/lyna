@@ -133,23 +133,13 @@ async function submitCreate() {
       {{ errorMessage }}
     </div>
     <ul v-else-if="products.length" class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark">
-      <li v-for="p in products" :key="p.id" class="space-y-2 p-3 text-sm">
-        <div class="flex items-center gap-2">
-          <span class="font-medium">{{ p.name }}</span>
-          <NeutralBadge v-if="p.free">{{ t('page.admin.g.guildId.products.free') }}</NeutralBadge>
-          <NeutralBadge v-else>{{ t('page.admin.g.guildId.products.premium') }}</NeutralBadge>
-        </div>
-        <MutedText tag="div">
-          id {{ p.id }} &middot; role {{ p.roleId }}{{ p.url ? ` · ${p.url}` : '' }}
-        </MutedText>
-        <ProductIconField
-            :guild-id="guildId"
-            :icon-url="p.iconUrl"
-            :product-id="p.id"
-            :product-name="p.name"
-            @saved="p.iconUrl = $event || null"
-        />
-      </li>
+      <ProductAdminRow
+          v-for="p in products"
+          :key="p.id"
+          :guild-id="guildId"
+          :product="p"
+          @changed="load"
+      />
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
       {{ t('page.admin.g.guildId.products.noProductsYet') }}

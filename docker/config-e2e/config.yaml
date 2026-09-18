@@ -1,3 +1,4 @@
+---
 api:
   allowedOrigins: []
   host: "0.0.0.0"
@@ -65,3 +66,5 @@ nexus:
   host: "nexus-e2e"
   password: ""
   username: ""
+storage:
+  directory: "data"

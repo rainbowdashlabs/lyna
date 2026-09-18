@@ -10,6 +10,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.Api;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
+import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 import org.slf4j.Logger;
 
@@ -52,9 +53,28 @@ public class WebService {
         javalin.start(apiConfig.host(), apiConfig.port());
     }
 
+    /**
+     * What of a request's body is worth writing into the log.
+     *
+     * <p>An upload is named rather than read. Reading the body consumes the stream, and a handler
+     * that then asks for the multipart parts is told the body has already been consumed - so logging
+     * an upload at trace level is enough to break every upload there is. The bytes would be
+     * unreadable in a log anyway.
+     */
+    private static String loggedBody(Context ctx) {
+        String type = Objects.requireNonNullElse(ctx.contentType(), "");
+        if (type.startsWith(ContentType.MULTIPART_FORM_DATA.getMimeType())) {
+            return "Multipart, not read";
+        }
+        String body = ctx.body();
+        return body.substring(0, Math.min(body.length(), 180));
+    }
+
     private void routes() {
         var apiConfig = configuration.main().api();
         var imgSrcHosts = new ArrayList<String>();
+        // Product icons are uploaded here and served from here.
+        imgSrcHosts.add("'self'");
         imgSrcHosts.add("{{ HOST }}");
         imgSrcHosts.add("discordapp.com");
         imgSrcHosts.add("data:");
@@ -94,7 +114,7 @@ public class WebService {
                     ctx.headerMap().entrySet().stream()
                             .map(h -> "   " + h.getKey() + ": " + h.getValue())
                             .collect(Collectors.joining("\n")),
-                    ctx.body().substring(0, Math.min(ctx.body().length(), 180)));
+                    loggedBody(ctx));
         });
 
         after(ctx -> {

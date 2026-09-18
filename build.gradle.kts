@@ -53,6 +53,9 @@ dependencies {
 
     // Mailing
     implementation(libs.pebble)
+
+    // icons
+    implementation(libs.bundles.images)
     implementation("org.eclipse.angus", "angus-mail", "2.0.5")
     implementation("org.jsoup", "jsoup", "1.23.2")
 
