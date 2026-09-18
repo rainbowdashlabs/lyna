@@ -3,11 +3,10 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products.downloads;
+package de.chojo.lyna.feature.download.entity;
 
-import de.chojo.lyna.data.dao.downloadtype.DownloadType;
-import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.download.repository.DownloadRepository;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.nexus.entities.AssetXO;
 import de.chojo.nexus.requests.v1.search.Direction;
 import de.chojo.nexus.requests.v1.search.Sort;

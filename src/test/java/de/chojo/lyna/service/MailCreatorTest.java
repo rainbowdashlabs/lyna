@@ -5,9 +5,9 @@
  */
 package de.chojo.lyna.service;
 
-import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.Products;
-import de.chojo.lyna.data.dao.products.mailings.Mailing;
+import de.chojo.lyna.feature.mail.entity.Mailing;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailTemplateRenderer;

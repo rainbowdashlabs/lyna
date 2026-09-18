@@ -5,9 +5,9 @@
  */
 package de.chojo.lyna.repository;
 
-import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.dao.account.DownloadLogEntry;
 import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
+import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -196,7 +196,7 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
         downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.0", "free", null, null);
         downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.1", "free", null, null);
 
-        List<DownloadLog.ProductOption> options = downloadLog.productsForAccount(account.id());
+        List<DownloadLogRepository.ProductOption> options = downloadLog.productsForAccount(account.id());
         assertEquals(1, options.size());
         assertEquals("Chatty", options.getFirst().name());
     }

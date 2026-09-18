@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao;
+package de.chojo.lyna.feature.instance.entity;
 
 import java.util.List;
 

@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products.mailings;
+package de.chojo.lyna.feature.mail.entity;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.sadu.queries.api.call.Call;
 
 import java.util.function.Function;

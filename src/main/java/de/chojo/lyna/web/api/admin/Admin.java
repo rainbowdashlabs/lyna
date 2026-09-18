@@ -11,19 +11,19 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.InstanceOperators;
-import de.chojo.lyna.data.access.InstanceSettingsAccess;
-import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
-import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.instance.entity.InstanceSettings;
+import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
+import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -58,10 +58,10 @@ public class Admin {
     private final Conf configuration;
     private final AccountRepository accounts;
     private final Guilds guilds;
-    private final InstanceSettingsAccess instanceSettings;
+    private final InstanceSettingsRepository instanceSettings;
     private final KoFiProducts kofi;
-    private final KioskProducts kioskProducts;
-    private final InstanceOperators operators;
+    private final KioskProductRepository kioskProducts;
+    private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final de.chojo.lyna.mail.blocks.MailBlockRenderer blockRenderer =
             new de.chojo.lyna.mail.blocks.MailBlockRenderer();
@@ -75,10 +75,10 @@ public class Admin {
             Conf configuration,
             AccountRepository accounts,
             Guilds guilds,
-            InstanceSettingsAccess instanceSettings,
+            InstanceSettingsRepository instanceSettings,
             KoFiProducts kofi,
-            KioskProducts kioskProducts,
-            InstanceOperators operators,
+            KioskProductRepository kioskProducts,
+            InstanceOperatorRepository operators,
             de.chojo.lyna.mail.MailingService mailingService,
             Gateway gateway,
             LicenseService licenseService,
@@ -144,7 +144,7 @@ public class Admin {
         if (resolved == null) return;
         var icons = kioskProducts.all().stream()
                 .collect(java.util.stream.Collectors.toMap(
-                        de.chojo.lyna.data.dao.products.KioskProduct::id,
+                        de.chojo.lyna.feature.kiosk.entity.KioskProduct::id,
                         product -> java.util.Optional.ofNullable(product.iconUrl())));
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream()
@@ -164,7 +164,7 @@ public class Admin {
      * <p>Looked up through the guild rather than by id alone, so a mailing belonging to another
      * guild cannot be reached by guessing its number.
      */
-    private de.chojo.lyna.data.dao.products.mailings.Mailing requireMailing(Context ctx, Resolved resolved) {
+    private de.chojo.lyna.feature.mail.entity.Mailing requireMailing(Context ctx, Resolved resolved) {
         int mailingId;
         try {
             mailingId = Integer.parseInt(ctx.pathParam("mailingId"));

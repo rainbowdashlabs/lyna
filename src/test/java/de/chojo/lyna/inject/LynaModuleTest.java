@@ -24,11 +24,7 @@ import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.DemoArtifacts;
-import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.InstanceOperators;
-import de.chojo.lyna.data.access.InstanceSettingsAccess;
-import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.Mailings;
@@ -42,6 +38,10 @@ import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
+import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
+import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
@@ -136,13 +136,13 @@ class LynaModuleTest {
                 LicenseInvites.class,
                 AccountSessionRepository.class,
                 RevokedJtiRepository.class,
-                DownloadLog.class,
+                DownloadLogRepository.class,
                 DemoArtifacts.class,
-                InstanceSettingsAccess.class,
-                InstanceOperators.class,
+                InstanceSettingsRepository.class,
+                InstanceOperatorRepository.class,
                 PasswordResetTokenRepository.class,
                 EmailVerificationTokenRepository.class,
-                KioskProducts.class,
+                KioskProductRepository.class,
                 Guilds.class,
                 Products.class,
                 Mailings.class,

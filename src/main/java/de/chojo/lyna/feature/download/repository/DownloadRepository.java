@@ -6,7 +6,7 @@
 package de.chojo.lyna.feature.download.repository;
 
 import com.google.inject.Singleton;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.sadu.queries.api.call.Call;
 
 import java.util.function.Function;

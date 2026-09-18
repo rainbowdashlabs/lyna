@@ -6,11 +6,11 @@
 package de.chojo.lyna.web.api.v1.download.direct;
 
 import com.google.inject.Inject;
-import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.ContentType;
@@ -28,7 +28,7 @@ public class Direct {
     private final Auth auth;
     private final AccountRepository accounts;
     private final AccountLicenseRepository licenses;
-    private final KioskProducts kiosk;
+    private final KioskProductRepository kiosk;
 
     @Inject
     public Direct(
@@ -36,7 +36,7 @@ public class Direct {
             Auth auth,
             AccountRepository accounts,
             AccountLicenseRepository licenses,
-            KioskProducts kiosk) {
+            KioskProductRepository kiosk) {
         this.products = products;
         this.auth = auth;
         this.accounts = accounts;

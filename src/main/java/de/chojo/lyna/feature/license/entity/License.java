@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.feature.license.entity;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.product.entity.Product;
 
 /**
  * One licence: the key somebody bought, and the product it opens.

@@ -5,8 +5,8 @@
  */
 package de.chojo.lyna.service;
 
-import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

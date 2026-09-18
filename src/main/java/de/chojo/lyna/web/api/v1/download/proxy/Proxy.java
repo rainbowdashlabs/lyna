@@ -13,7 +13,7 @@ import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Downloads;
-import de.chojo.lyna.data.access.DownloadLog;
+import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.util.JarUtil;
 import de.chojo.nexus.NexusRest;
 import io.javalin.http.ContentType;
@@ -65,11 +65,11 @@ public class Proxy {
             """;
 
     private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
-    private final DownloadLog downloadLog;
+    private final DownloadLogRepository downloadLog;
     private final Downloads downloads;
 
     @Inject
-    public Proxy(NexusRest nexus, Api apiSettings, DownloadLog downloadLog, Downloads downloads) {
+    public Proxy(NexusRest nexus, Api apiSettings, DownloadLogRepository downloadLog, Downloads downloads) {
         this.nexus = nexus;
         this.apiSettings = apiSettings;
         this.downloadLog = downloadLog;

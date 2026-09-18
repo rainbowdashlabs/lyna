@@ -9,7 +9,7 @@ import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.products.mailings.Mailing;
+import de.chojo.lyna.feature.mail.entity.Mailing;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;

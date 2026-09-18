@@ -6,8 +6,8 @@
 package de.chojo.lyna.web.api.theme;
 
 import com.google.inject.Inject;
-import de.chojo.lyna.data.access.InstanceSettingsAccess;
-import de.chojo.lyna.data.dao.InstanceSettings;
+import de.chojo.lyna.feature.instance.entity.InstanceSettings;
+import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import io.javalin.http.Context;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -21,10 +21,10 @@ import static io.javalin.apibuilder.ApiBuilder.path;
  * person, so there is nothing to withhold.
  */
 public class Theme {
-    private final InstanceSettingsAccess instanceSettings;
+    private final InstanceSettingsRepository instanceSettings;
 
     @Inject
-    public Theme(InstanceSettingsAccess instanceSettings) {
+    public Theme(InstanceSettingsRepository instanceSettings) {
         this.instanceSettings = instanceSettings;
     }
 

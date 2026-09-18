@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.instance.repository;
 
-import de.chojo.lyna.data.dao.InstanceOperator;
+import de.chojo.lyna.feature.instance.entity.InstanceOperator;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * who removes the wrong row - or a database edited by hand - never locks everybody out. Ids added
  * here can be added and removed freely.
  */
-public class InstanceOperators {
+public class InstanceOperatorRepository {
     /**
      * @return every operator granted through the web, oldest first
      */

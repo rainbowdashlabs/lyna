@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products;
+package de.chojo.lyna.feature.kiosk.entity;
 
 /**
  * A product as the storefront shows it, across every guild the bot serves.

@@ -6,6 +6,8 @@
 package de.chojo.lyna.data.dao.downloadtype;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.feature.download.entity.DownloadType;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
 import java.util.List;
