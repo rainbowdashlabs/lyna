@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.downloads.handler.download;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -38,7 +43,9 @@ public class DeleteDownload implements SlashHandler {
 
         Optional<Download> download = product.get().downloads().byType(type.get());
         if (download.isEmpty()) {
-            event.reply("Download type not defined for this product").setEphemeral(true).queue();
+            event.reply("Download type not defined for this product")
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
@@ -53,10 +60,12 @@ public class DeleteDownload implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue()))
+                    .queue();
         }
         if (focusedOption.getName().equals("type")) {
-            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue()))
+                    .queue();
         }
     }
 }

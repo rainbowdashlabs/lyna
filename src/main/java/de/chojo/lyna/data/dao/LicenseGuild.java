@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao;
 
 import com.google.common.cache.Cache;
@@ -30,6 +35,7 @@ public class LicenseGuild {
      * Providing access to registered products on this guild.
      */
     Products products;
+
     private final Conf configuration;
 
     /**
@@ -43,7 +49,8 @@ public class LicenseGuild {
     /**
      * The recently accessed users
      */
-    Cache<Long, LicenseUser> users = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
+    Cache<Long, LicenseUser> users =
+            CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
     private final Guilds guilds;
 

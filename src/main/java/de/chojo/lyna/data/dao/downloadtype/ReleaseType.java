@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.downloadtype;
 
 import de.chojo.lyna.util.Enums;
@@ -7,7 +12,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public enum ReleaseType implements Comparable<ReleaseType> {
-    STABLE(Collections.emptySet()), DEV(Set.of(STABLE)), SNAPSHOT(Set.of(STABLE, DEV));
+    STABLE(Collections.emptySet()),
+    DEV(Set.of(STABLE)),
+    SNAPSHOT(Set.of(STABLE, DEV));
 
     private final Set<ReleaseType> descendants;
 
@@ -16,7 +23,6 @@ public enum ReleaseType implements Comparable<ReleaseType> {
         d.add(this);
         this.descendants = Collections.unmodifiableSet(d);
     }
-
 
     public static ReleaseType parse(String string) {
         return Enums.parse(ReleaseType.class, string).get();

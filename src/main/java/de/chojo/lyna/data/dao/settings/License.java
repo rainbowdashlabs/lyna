@@ -1,5 +1,9 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.settings;
-
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -29,10 +33,7 @@ public class License {
                 ON CONFLICT(guild_id)
                      DO UPDATE
                          SET shares = excluded.shares
-                """)
-                .single(call().bind(guildId()).bind(shares))
-                .insert()
-                .changed()) {
+                """).single(call().bind(guildId()).bind(shares)).insert().changed()) {
             this.shares = shares;
         }
     }
@@ -55,10 +56,7 @@ public class License {
                 ON CONFLICT(guild_id)
                      DO UPDATE
                          SET admin_role_id = excluded.admin_role_id
-                """)
-                .single(call().bind(guildId()).bind(adminRoleId))
-                .insert()
-                .changed()) {
+                """).single(call().bind(guildId()).bind(adminRoleId)).insert().changed()) {
             this.adminRoleId = adminRoleId;
         }
     }
@@ -66,5 +64,4 @@ public class License {
     public long guildId() {
         return settings.guildId();
     }
-
 }

@@ -1,37 +1,45 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.inject;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
+import de.chojo.lyna.auth.DiscordOAuthClient;
+import de.chojo.lyna.auth.JwtService;
+import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.kofi.KoFi;
 import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
 import de.chojo.lyna.commands.trial.Trial;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.ConfigFile;
-import de.chojo.lyna.auth.DiscordOAuthClient;
-import de.chojo.lyna.auth.JwtService;
-import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.Demo;
-import de.chojo.lyna.configuration.elements.Downloads;
 import de.chojo.lyna.configuration.elements.Discord;
+import de.chojo.lyna.configuration.elements.Downloads;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.configuration.elements.Nexus;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
+import de.chojo.lyna.core.Bot;
+import de.chojo.lyna.core.Data;
+import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.AccountEmails;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
@@ -49,28 +57,12 @@ import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.access.RevokedJtis;
-import de.chojo.lyna.core.Bot;
-import de.chojo.lyna.core.Data;
-import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.roles.JdaRoleSync;
 import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.demo.DemoService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
-import de.chojo.lyna.web.WebService;
-import de.chojo.lyna.web.api.account.Account;
-import de.chojo.lyna.web.api.admin.Admin;
-import de.chojo.lyna.web.api.theme.Theme;
-import de.chojo.lyna.web.api.v1.V1;
-import de.chojo.lyna.web.api.v1.demo.DemoApi;
-import de.chojo.lyna.web.api.v1.download.Download;
-import de.chojo.lyna.web.api.v1.download.direct.Direct;
-import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
-import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
-import de.chojo.lyna.web.api.v1.products.Wizard;
-import de.chojo.lyna.web.api.v1.releases.Releases;
-import de.chojo.lyna.web.api.v1.update.Update;
 import de.chojo.lyna.web.WebService;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.admin.Admin;
@@ -120,31 +112,83 @@ public class LynaModule extends AbstractModule {
         return conf.main();
     }
 
-    @Provides @Singleton BaseSettings baseSettings(ConfigFile config) { return config.baseSettings(); }
+    @Provides
+    @Singleton
+    BaseSettings baseSettings(ConfigFile config) {
+        return config.baseSettings();
+    }
 
-    @Provides @Singleton Database database(ConfigFile config) { return config.database(); }
+    @Provides
+    @Singleton
+    Database database(ConfigFile config) {
+        return config.database();
+    }
 
-    @Provides @Singleton Links links(ConfigFile config) { return config.links(); }
+    @Provides
+    @Singleton
+    Links links(ConfigFile config) {
+        return config.links();
+    }
 
-    @Provides @Singleton License license(ConfigFile config) { return config.license(); }
+    @Provides
+    @Singleton
+    License license(ConfigFile config) {
+        return config.license();
+    }
 
-    @Provides @Singleton Nexus nexus(ConfigFile config) { return config.nexus(); }
+    @Provides
+    @Singleton
+    Nexus nexus(ConfigFile config) {
+        return config.nexus();
+    }
 
-    @Provides @Singleton Api api(ConfigFile config) { return config.api(); }
+    @Provides
+    @Singleton
+    Api api(ConfigFile config) {
+        return config.api();
+    }
 
-    @Provides @Singleton Mailing mailing(ConfigFile config) { return config.mailing(); }
+    @Provides
+    @Singleton
+    Mailing mailing(ConfigFile config) {
+        return config.mailing();
+    }
 
-    @Provides @Singleton Kofi kofi(ConfigFile config) { return config.kofi(); }
+    @Provides
+    @Singleton
+    Kofi kofi(ConfigFile config) {
+        return config.kofi();
+    }
 
-    @Provides @Singleton Auth auth(ConfigFile config) { return config.auth(); }
+    @Provides
+    @Singleton
+    Auth auth(ConfigFile config) {
+        return config.auth();
+    }
 
-    @Provides @Singleton Discord discord(ConfigFile config) { return config.discord(); }
+    @Provides
+    @Singleton
+    Discord discord(ConfigFile config) {
+        return config.discord();
+    }
 
-    @Provides @Singleton OAuth oauth(Discord discord) { return discord.oauth(); }
+    @Provides
+    @Singleton
+    OAuth oauth(Discord discord) {
+        return discord.oauth();
+    }
 
-    @Provides @Singleton Demo demo(ConfigFile config) { return config.demo(); }
+    @Provides
+    @Singleton
+    Demo demo(ConfigFile config) {
+        return config.demo();
+    }
 
-    @Provides @Singleton Downloads downloads(ConfigFile config) { return config.downloads(); }
+    @Provides
+    @Singleton
+    Downloads downloads(ConfigFile config) {
+        return config.downloads();
+    }
 
     /**
      * The data-access objects.
@@ -163,8 +207,7 @@ public class LynaModule extends AbstractModule {
     @Override
     protected void configure() {
         Multibinder<SlashProvider<Slash>> commands =
-                Multibinder.newSetBinder(binder(), new TypeLiteral<SlashProvider<Slash>>() {
-                });
+                Multibinder.newSetBinder(binder(), new TypeLiteral<SlashProvider<Slash>>() {});
         commands.addBinding().to(de.chojo.lyna.commands.products.Products.class);
         commands.addBinding().to(de.chojo.lyna.commands.license.License.class);
         commands.addBinding().to(Register.class);
@@ -259,11 +302,23 @@ public class LynaModule extends AbstractModule {
         return guilds;
     }
 
-    @Provides @Singleton Products products(Guilds guilds) { return new Products(guilds); }
+    @Provides
+    @Singleton
+    Products products(Guilds guilds) {
+        return new Products(guilds);
+    }
 
-    @Provides @Singleton Mailings mailings(Guilds guilds) { return new Mailings(guilds); }
+    @Provides
+    @Singleton
+    Mailings mailings(Guilds guilds) {
+        return new Mailings(guilds);
+    }
 
-    @Provides @Singleton KoFiProducts koFiProducts(Products products) { return new KoFiProducts(products); }
+    @Provides
+    @Singleton
+    KoFiProducts koFiProducts(Products products) {
+        return new KoFiProducts(products);
+    }
 
     /**
      * <p>Built by its own factory, which reads the version off the classpath - something a
@@ -275,7 +330,15 @@ public class LynaModule extends AbstractModule {
         return Info.create(conf);
     }
 
-    @Provides @Singleton JwtService jwtService(Auth auth) { return new JwtService(auth); }
+    @Provides
+    @Singleton
+    JwtService jwtService(Auth auth) {
+        return new JwtService(auth);
+    }
 
-    @Provides @Singleton DiscordOAuthClient discordOAuthClient(OAuth oauth) { return new DiscordOAuthClient(oauth); }
+    @Provides
+    @Singleton
+    DiscordOAuthClient discordOAuthClient(OAuth oauth) {
+        return new DiscordOAuthClient(oauth);
+    }
 }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import com.sun.net.httpserver.HttpServer;
@@ -84,14 +89,14 @@ class IconUrlServiceTest {
     @Test
     @DisplayName("Nothing listening at the address is reported rather than stored")
     void unreachableIsRejected() {
-        assertEquals(Optional.of("Nothing answered at that address"),
-                iconUrls.reject("http://127.0.0.1:1/icon.png"));
+        assertEquals(Optional.of("Nothing answered at that address"), iconUrls.reject("http://127.0.0.1:1/icon.png"));
     }
 
     @Test
     @DisplayName("Only http and https may be pointed at")
     void otherSchemesAreRejected() {
-        assertEquals(Optional.of("The address has to be http or https"), iconUrls.reject("ftp://example.invalid/i.png"));
+        assertEquals(
+                Optional.of("The address has to be http or https"), iconUrls.reject("ftp://example.invalid/i.png"));
         assertEquals(Optional.of("The address has to be http or https"), iconUrls.reject("/local/path.png"));
     }
 

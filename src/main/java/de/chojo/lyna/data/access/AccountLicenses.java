@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.AccountLicense;
@@ -88,10 +93,9 @@ public class AccountLicenses {
                        OR EXISTS (SELECT 1 FROM user_sub_license s WHERE s.license_id = l.id AND s.account_id = ?))
                 """)
                 .single(call().bind(licenseId).bind(accountId).bind(accountId))
-                .map(row -> read(row,
-                        row.getLong("owner_id") == accountId
-                                ? AccountLicense.Role.OWNER
-                                : AccountLicense.Role.SHAREE))
+                .map(row -> read(
+                        row,
+                        row.getLong("owner_id") == accountId ? AccountLicense.Role.OWNER : AccountLicense.Role.SHAREE))
                 .first();
     }
 

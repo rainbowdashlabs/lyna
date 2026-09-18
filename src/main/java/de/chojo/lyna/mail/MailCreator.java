@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail;
 
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
@@ -20,8 +25,7 @@ public final class MailCreator {
     /** What a per-product template may refer to. */
     private static final String[] PLACEHOLDERS = {"name", "key", "product", "downloadUrl"};
 
-    private MailCreator() {
-    }
+    private MailCreator() {}
 
     /**
      * The mail telling somebody their licence.
@@ -33,9 +37,14 @@ public final class MailCreator {
      * @param downloadUrl where the product can be downloaded, or null when there is nowhere to point
      * @param recipient   what the application knows about who is receiving it
      */
-    public static Mail createLicenseMessage(MailTemplateRenderer renderer, Mailing mailing, String key,
-                                            String name, String address, String downloadUrl,
-                                            PurchaseRecipient recipient) {
+    public static Mail createLicenseMessage(
+            MailTemplateRenderer renderer,
+            Mailing mailing,
+            String key,
+            String name,
+            String address,
+            String downloadUrl,
+            PurchaseRecipient recipient) {
         Map<String, Object> values = new LinkedHashMap<>();
         values.put("name", name);
         values.put("key", key);
@@ -48,7 +57,8 @@ public final class MailCreator {
         context.put("hasAccount", recipient == PurchaseRecipient.WITH_ACCOUNT);
         context.put("buyerAddress", address);
 
-        return new Mail(address,
+        return new Mail(
+                address,
                 renderer.subject("licence-issued", "en", values),
                 renderer.render("licence-custom", "en", context));
     }

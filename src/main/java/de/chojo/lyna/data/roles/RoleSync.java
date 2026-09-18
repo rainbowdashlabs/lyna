@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.roles;
 
 import de.chojo.lyna.data.dao.products.Product;
@@ -19,12 +24,10 @@ public interface RoleSync {
      */
     RoleSync NOOP = new RoleSync() {
         @Override
-        public void revoke(long guildId, long discordId, Product product) {
-        }
+        public void revoke(long guildId, long discordId, Product product) {}
 
         @Override
-        public void revokeIfUnentitled(long guildId, long discordId, Product product) {
-        }
+        public void revokeIfUnentitled(long guildId, long discordId, Product product) {}
     };
 
     /**

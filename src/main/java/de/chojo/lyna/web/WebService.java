@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web;
 
 import com.google.inject.Inject;
@@ -29,7 +34,6 @@ public class WebService {
         this.api = api;
     }
 
-
     public void init() {
         var apiConfig = configuration.main().api();
         javalin = Javalin.create(config -> {
@@ -45,7 +49,6 @@ public class WebService {
             config.router.apiBuilder(this::routes);
         });
 
-
         javalin.start(apiConfig.host(), apiConfig.port());
     }
 
@@ -58,7 +61,8 @@ public class WebService {
         imgSrcHosts.addAll(apiConfig.iconHosts());
 
         before(ctx -> {
-            var cspList = List.of("default-src 'self' {{ HOST }}",
+            var cspList = List.of(
+                    "default-src 'self' {{ HOST }}",
                     "script-src 'self' {{ HOST }} *.fontawesome.com",
                     "frame-src 'none'",
                     "connect-src {{ HOST }} *.fontawesome.com",
@@ -83,25 +87,34 @@ public class WebService {
                 }
             }
 
-            log.trace("Received request on route: {} {}\nHeaders:\n{}\nBody:\n{}",
+            log.trace(
+                    "Received request on route: {} {}\nHeaders:\n{}\nBody:\n{}",
                     ctx.method() + " " + ctx.url(),
                     ctx.queryString(),
-                    ctx.headerMap().entrySet().stream().map(h -> "   " + h.getKey() + ": " + h.getValue())
+                    ctx.headerMap().entrySet().stream()
+                            .map(h -> "   " + h.getKey() + ": " + h.getValue())
                             .collect(Collectors.joining("\n")),
                     ctx.body().substring(0, Math.min(ctx.body().length(), 180)));
         });
 
         after(ctx -> {
-            log.trace("Answered request on route: {} {}\nStatus: {}\nHeaders:\n{}\nBody:\n{}",
+            log.trace(
+                    "Answered request on route: {} {}\nStatus: {}\nHeaders:\n{}\nBody:\n{}",
                     ctx.method() + " " + ctx.url(),
                     ctx.queryString(),
                     ctx.status(),
-                    ctx.res().getHeaderNames().stream().map(h -> "   " + h + ": " + ctx.res().getHeader(h))
+                    ctx.res().getHeaderNames().stream()
+                            .map(h -> "   " + h + ": " + ctx.res().getHeader(h))
                             .collect(Collectors.joining("\n")),
-                    ContentType.OCTET_STREAM.equals(ctx.contentType()) ? "Bytes"
+                    ContentType.OCTET_STREAM.equals(ctx.contentType())
+                            ? "Bytes"
                             : Objects.requireNonNullElse(ctx.result(), "")
-                            .substring(0, Math.min(
-                                    Objects.requireNonNullElse(ctx.result(), "").length(), 180)));
+                                    .substring(
+                                            0,
+                                            Math.min(
+                                                    Objects.requireNonNullElse(ctx.result(), "")
+                                                            .length(),
+                                                    180)));
         });
 
         api.init();

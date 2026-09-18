@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import java.util.List;
@@ -15,6 +20,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 public class DemoArtifacts {
     /** The kinds a reset knows how to take back, in the order it has to walk them. */
     public static final String ACCOUNT = "account";
+
     public static final String PRODUCT = "product";
     public static final String DOWNLOAD_TYPE = "download_type";
 
@@ -22,9 +28,7 @@ public class DemoArtifacts {
         query("""
                 INSERT INTO demo_artifact (kind, artifact) VALUES (?, ?)
                 ON CONFLICT (kind, artifact) DO NOTHING
-                """)
-                .single(call().bind(kind).bind(artifact))
-                .insert();
+                """).single(call().bind(kind).bind(artifact)).insert();
     }
 
     /**

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna;
 
 import org.testcontainers.containers.GenericContainer;
@@ -30,8 +35,7 @@ public final class TestContainers {
             Path.of(System.getProperty("java.io.tmpdir"), "lyna-testcontainer-start.lock");
     private static final Object JVM_LOCK = new Object();
 
-    private TestContainers() {
-    }
+    private TestContainers() {}
 
     /**
      * Starts the container unless it is already running, letting no other fork start one meanwhile.
@@ -43,8 +47,8 @@ public final class TestContainers {
         synchronized (JVM_LOCK) {
             if (container.isRunning()) return;
             try (FileChannel channel =
-                         FileChannel.open(LOCK_FILE, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-                 FileLock ignored = channel.lock()) {
+                            FileChannel.open(LOCK_FILE, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                    FileLock ignored = channel.lock()) {
                 container.start();
             } catch (IOException e) {
                 container.start();

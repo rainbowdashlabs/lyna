@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.registrations.handler.share;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -36,19 +41,25 @@ public class Add implements SlashHandler {
 
         Optional<License> license = licenseUser.licenseByProduct(product.get());
         if (license.isEmpty()) {
-            event.reply("You don't have a license for this product.").setEphemeral(true).queue();
+            event.reply("You don't have a license for this product.")
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
         if (product.get().canAccess(target)) {
             product.get().assign(target);
-            event.reply("This user has already access to this product.").setEphemeral(true).queue();
+            event.reply("This user has already access to this product.")
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
         List<Long> subUsers = license.get().subUsers();
         if (subUsers.contains(target.getIdLong())) {
-            event.reply("This user has already access to your license.").setEphemeral(true).queue();
+            event.reply("This user has already access to your license.")
+                    .setEphemeral(true)
+                    .queue();
             product.get().assign(target);
             return;
         }
@@ -60,18 +71,22 @@ public class Add implements SlashHandler {
 
         license.get().addSubUser(target);
         event.reply("Access granted.").setEphemeral(true).queue();
-        target.getUser().openPrivateChannel().complete()
-              .sendMessage("%s shared their %s license with you."
-                      .formatted(event.getMember().getAsMention(), product.get().name()))
-              .queue();
+        target.getUser()
+                .openPrivateChannel()
+                .complete()
+                .sendMessage("%s shared their %s license with you."
+                        .formatted(
+                                event.getMember().getAsMention(), product.get().name()))
+                .queue();
     }
 
     @Override
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            var choices = guilds.guild(event.getGuild()).user(event.getMember())
-                                .completeOwnProducts(focusedOption.getValue());
+            var choices = guilds.guild(event.getGuild())
+                    .user(event.getMember())
+                    .completeOwnProducts(focusedOption.getValue());
             event.replyChoices(choices).queue();
         }
     }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.downloads.handler.download;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -33,8 +38,10 @@ public class CreateDownload implements SlashHandler {
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         var guild = guilds.guild(event.getGuild());
-        Optional<Product> product = guild.products().byId(event.getOption("product").getAsInt());
-        Optional<DownloadType> type = guild.downloadTypes().byId(event.getOption("type").getAsInt());
+        Optional<Product> product =
+                guild.products().byId(event.getOption("product").getAsInt());
+        Optional<DownloadType> type =
+                guild.downloadTypes().byId(event.getOption("type").getAsInt());
         String repository = event.getOption("repository", OptionMapping::getAsString);
         String groupId = event.getOption("group_id", OptionMapping::getAsString);
         String artifactId = event.getOption("artifact_id", OptionMapping::getAsString);
@@ -58,25 +65,25 @@ public class CreateDownload implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue()))
+                    .queue();
         }
         if (focusedOption.getName().equals("type")) {
-            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue()))
+                    .queue();
         }
         if (focusedOption.getName().equals("repository")) {
-            event.replyChoices(Completion.complete(focusedOption.getValue(),
-                            nexusRest.v1()
-                                    .repositories()
-                                    .list()
-                                    .complete()
-                                    .stream()
+            event.replyChoices(Completion.complete(
+                            focusedOption.getValue(),
+                            nexusRest.v1().repositories().list().complete().stream()
                                     .filter(repo -> repo.type() == RepositoryType.HOSTED)
                                     .map(RepositoryXO::name)
                                     .sorted()))
                     .queue();
         }
         if (focusedOption.getName().equals("group_id")) {
-            SearchRequest request = nexusRest.v1()
+            SearchRequest request = nexusRest
+                    .v1()
                     .search()
                     .search()
                     .mavenGroupId(focusedOption.getValue() + "*")
@@ -85,15 +92,14 @@ public class CreateDownload implements SlashHandler {
             if (event.getOption("repository") != null) {
                 request.repository(event.getOption("repository", OptionMapping::getAsString));
             }
-            event.replyChoices(Completion.complete(focusedOption.getValue(),
-                            request.complete()
-                                    .stream()
-                                    .map(ComponentXO::group)
-                                    .collect(Collectors.toSet())))
+            event.replyChoices(Completion.complete(
+                            focusedOption.getValue(),
+                            request.complete().stream().map(ComponentXO::group).collect(Collectors.toSet())))
                     .queue();
         }
         if (focusedOption.getName().equals("artifact_id")) {
-            SearchRequest request = nexusRest.v1()
+            SearchRequest request = nexusRest
+                    .v1()
                     .search()
                     .search()
                     .mavenArtifactId(focusedOption.getValue() + "*")
@@ -106,11 +112,9 @@ public class CreateDownload implements SlashHandler {
             if (event.getOption("group_id") != null) {
                 request.mavenGroupId(event.getOption("group_id", OptionMapping::getAsString));
             }
-            event.replyChoices(Completion.complete(focusedOption.getValue(),
-                            request.complete()
-                                    .stream()
-                                    .map(ComponentXO::name)
-                                    .collect(Collectors.toSet())))
+            event.replyChoices(Completion.complete(
+                            focusedOption.getValue(),
+                            request.complete().stream().map(ComponentXO::name).collect(Collectors.toSet())))
                     .queue();
         }
     }

@@ -1,15 +1,20 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.download.proxy;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
+import com.google.inject.Inject;
 import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.util.JarUtil;
-import com.google.inject.Inject;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Downloads;
+import de.chojo.lyna.data.access.DownloadLog;
+import de.chojo.lyna.util.JarUtil;
 import de.chojo.nexus.NexusRest;
 import io.javalin.http.ContentType;
 import io.javalin.http.HttpStatus;
@@ -29,7 +34,9 @@ public class Proxy {
     private static final Logger log = getLogger(Proxy.class);
     private final NexusRest nexus;
     private final Api apiSettings;
-    private final Cache<String, AssetDownload> tokens = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
+    private final Cache<String, AssetDownload> tokens =
+            CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
+
     @Language("HTML")
     private final String shareHtml = """
             <!DOCTYPE html>
@@ -39,23 +46,24 @@ public class Proxy {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <meta name="author" content="Chojo">
                 <meta name="description" content="I know sharing is caring, but it would be nice if your links stay your links ^-^">
-                        
+
                 <meta property="og:title" content="I said do not share c:">
                 <meta property="og:description" content="I know sharing is caring, but it would be nice if your links stay your links ^-^">
                 <meta property="og:image" content="https://cdn.discordapp.com/emojis/940946164646293514.webp">
                 <meta property="og:url" content="https://cdn.discordapp.com/emojis/940946164646293514.webp">
-                        
+
                 <meta name="twitter:card" content="summary_large_image">
                 <meta name="theme-color" content="#ff0faf">
-                        
+
                 <link rel="icon" href="{{ favicon }}">
-                        
+
                 <title>I said do not share c:</title>
             <body>
             </body>
             </html>
-                        
+
             """;
+
     private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
     private final DownloadLog downloadLog;
     private final Downloads downloads;
@@ -67,7 +75,6 @@ public class Proxy {
         this.downloadLog = downloadLog;
         this.downloads = downloads;
     }
-
 
     public void init() {
         path("proxy", () -> {
@@ -88,19 +95,23 @@ public class Proxy {
                 tokens.invalidate(token);
                 String agent = ctx.header("User-Agent");
                 if (agent != null && agent.toLowerCase(Locale.ROOT).contains("discordbot")) {
-                    ctx.status(HttpStatus.OK)
-                            .contentType(ContentType.TEXT_HTML)
-                            .result(shareHtml);
+                    ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML).result(shareHtml);
                     return;
                 }
 
                 var asset = nexus.v1().assets().get(download.assetId()).complete();
-                String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(), asset.maven2().extension());
+                String filename = "%s-%s.%s"
+                        .formatted(
+                                asset.maven2().artifactId(),
+                                asset.maven2().version(),
+                                asset.maven2().extension());
 
                 download.postDownload().run();
 
-                if (download.productId() != null && download.downloadId() != null
-                        && download.version() != null && download.source() != null) {
+                if (download.productId() != null
+                        && download.downloadId() != null
+                        && download.version() != null
+                        && download.source() != null) {
                     try {
                         downloadLog.record(
                                 download.accountId(),
@@ -131,8 +142,7 @@ public class Proxy {
                 Map<String, String> replacements = Map.of(
                         "%%__USER__%%", download.userId(),
                         "%%__RESOURCE__%%", download.assetId(),
-                        "%%__NONCE__%%", snowflakeCreator.nextString()
-                );
+                        "%%__NONCE__%%", snowflakeCreator.nextString());
 
                 byte[] replacedJarFile;
                 try {
@@ -149,7 +159,9 @@ public class Proxy {
     }
 
     public String registerAsset(AssetDownload assetDownload) {
-        var hashCode = Hashing.sha512().hashString(System.nanoTime() + assetDownload.assetId() + System.nanoTime(), StandardCharsets.UTF_8).toString();
+        var hashCode = Hashing.sha512()
+                .hashString(System.nanoTime() + assetDownload.assetId() + System.nanoTime(), StandardCharsets.UTF_8)
+                .toString();
         tokens.put(hashCode, assetDownload);
         return "%s/api/v1/download/proxy?token=%s".formatted(apiSettings.url(), hashCode);
     }

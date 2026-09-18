@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.logutil.marker.LogNotify;
@@ -72,7 +77,8 @@ public class License {
                 """)
                 .single(call().bind(id))
                 .map(row -> row.getLong("user_id"))
-                .first().orElse(0L);
+                .first()
+                .orElse(0L);
         return owner;
     }
 
@@ -194,10 +200,16 @@ public class License {
 
     public boolean claim(Member member) {
         if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id))
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong()))
+                        .bind(id))
                 .insert()
                 .changed()) {
-            log.info(LogNotify.STATUS, "{} claimed license {} for {}", member.getEffectiveName(), id, product().name());
+            log.info(
+                    LogNotify.STATUS,
+                    "{} claimed license {} for {}",
+                    member.getEffectiveName(),
+                    id,
+                    product().name());
             owner = member.getIdLong();
             product.assign(member);
             return true;
@@ -211,13 +223,20 @@ public class License {
 
     public boolean transfer(Member member) {
         clearSubUsers();
-        if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET account_id = excluded.account_id")
-                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id))
+        if (query(
+                        "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET account_id = excluded.account_id")
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong()))
+                        .bind(id))
                 .insert()
                 .changed()) {
             Member oldOwner = member.getGuild().retrieveMemberById(owner).complete();
             if (oldOwner != null && !product.canAccess(oldOwner)) {
-                log.info(LogNotify.STATUS, "{} transferred license for {} to {}", oldOwner.getEffectiveName(), product.name(), member.getEffectiveName());
+                log.info(
+                        LogNotify.STATUS,
+                        "{} transferred license for {} to {}",
+                        oldOwner.getEffectiveName(),
+                        product.name(),
+                        member.getEffectiveName());
                 product.revoke(oldOwner);
             }
             owner = member.getIdLong();
@@ -263,15 +282,18 @@ public class License {
 
     public boolean addSubUser(Member member) {
         product.assign(member);
-        log.info(LogNotify.STATUS, "{} shared license for {} with {}", owner, product.name(), member.getEffectiveName());
+        log.info(
+                LogNotify.STATUS, "{} shared license for {} with {}", owner, product.name(), member.getEffectiveName());
         return query("INSERT INTO user_sub_license(account_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id()))
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong()))
+                        .bind(id()))
                 .insert()
                 .changed();
     }
 
     public boolean grantAccess(ReleaseType type) {
-        return query("INSERT INTO license_access(license_id, release_type) VALUES (?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
+        return query(
+                        "INSERT INTO license_access(license_id, release_type) VALUES (?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
                 .single(call().bind(id).bind(type))
                 .insert()
                 .changed();

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.InstanceOperator;
@@ -82,8 +87,11 @@ class InstanceOperatorsRepositoryTest extends RepositoryTestBase {
         instanceOperators.add(201L, GRANTER);
         instanceOperators.add(202L, GRANTER);
 
-        assertEquals(List.of(GRANTEE, 201L, 202L),
-                instanceOperators.all().stream().map(InstanceOperator::discordId).toList());
+        assertEquals(
+                List.of(GRANTEE, 201L, 202L),
+                instanceOperators.all().stream()
+                        .map(InstanceOperator::discordId)
+                        .toList());
         assertEquals(3, instanceOperators.count());
     }
 }

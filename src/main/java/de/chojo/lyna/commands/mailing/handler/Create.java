@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.mailing.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -31,7 +36,6 @@ public class Create implements SlashHandler {
         var mailName = event.getOption("mail_name", OptionMapping::getAsString);
         var mail = event.getOption("mail", OptionMapping::getAsAttachment);
 
-
         if (product.isEmpty()) {
             event.reply("Invalid product").setEphemeral(true).queue();
             return;
@@ -49,7 +53,8 @@ public class Create implements SlashHandler {
             event.reply("Created").setEphemeral(true).queue();
         } else {
             event.reply("Please provide a address test").setEphemeral(true).queue();
-            context.registerModal(ModalHandler.builder("modal").addInput(TextInputHandler.builder("html", "HTML", TextInputStyle.PARAGRAPH)
+            context.registerModal(ModalHandler.builder("modal")
+                    .addInput(TextInputHandler.builder("html", "HTML", TextInputStyle.PARAGRAPH)
                             .withHandler(text -> product.get().mailings().create(mailName, text.getAsString())))
                     .withHandler(e -> e.reply("Registered").setEphemeral(true).queue())
                     .build());
@@ -60,7 +65,8 @@ public class Create implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue(), false)).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue(), false))
+                    .queue();
         }
     }
 }

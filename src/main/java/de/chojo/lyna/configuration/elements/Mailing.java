@@ -1,11 +1,15 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration.elements;
 
+import de.chojo.lyna.configuration.elements.mailing.MailSettings;
 import dev.chojo.ocular.override.Env;
 import dev.chojo.ocular.override.Overwrite;
-import dev.chojo.ocular.override.Prop;
 import dev.chojo.ocular.override.OverwritePrefix;
-
-import de.chojo.lyna.configuration.elements.mailing.MailSettings;
+import dev.chojo.ocular.override.Prop;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,8 +21,10 @@ import java.util.Properties;
 public class Mailing {
     private MailSettings smtp = new MailSettings();
     private MailSettings imap = new MailSettings();
+
     @Overwrite(env = @Env, prop = @Prop)
     private String user = "";
+
     @Overwrite(env = @Env, prop = @Prop)
     private String password = "";
     /**
@@ -41,6 +47,7 @@ public class Mailing {
 
     @Overwrite(env = @Env, prop = @Prop)
     private int pollSeconds = 300;
+
     @Overwrite(env = @Env, prop = @Prop)
     private boolean enabled = true;
     /**

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.license.handler.delete;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -18,8 +23,8 @@ public class Key implements SlashHandler {
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
-        Optional<License> license = guilds.guild(event.getGuild())
-                                          .licenses().byKey(event.getOption("key", OptionMapping::getAsString));
+        Optional<License> license =
+                guilds.guild(event.getGuild()).licenses().byKey(event.getOption("key", OptionMapping::getAsString));
 
         if (license.isEmpty()) {
             event.reply("Invalid key").setEphemeral(true).queue();

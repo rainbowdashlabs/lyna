@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.inject;
 
 import com.google.inject.Guice;
@@ -17,24 +22,6 @@ import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
-import de.chojo.lyna.web.WebService;
-import de.chojo.lyna.web.api.account.Account;
-import de.chojo.lyna.web.api.admin.Admin;
-import de.chojo.lyna.web.api.theme.Theme;
-import de.chojo.lyna.web.api.v1.V1;
-import de.chojo.lyna.web.api.v1.demo.DemoApi;
-import de.chojo.lyna.web.api.v1.download.Download;
-import de.chojo.lyna.web.api.v1.download.direct.Direct;
-import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
-import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
-import de.chojo.lyna.web.api.v1.products.Wizard;
-import de.chojo.lyna.web.api.v1.releases.Releases;
-import de.chojo.lyna.web.api.v1.update.Update;
-import de.chojo.lyna.data.roles.RoleSync;
-import de.chojo.lyna.demo.DemoSchedule;
-import de.chojo.lyna.demo.DemoService;
-import de.chojo.lyna.gateway.Gateway;
-import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.AccountSessions;
@@ -52,11 +39,29 @@ import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.data.access.RevokedJtis;
+import de.chojo.lyna.data.roles.RoleSync;
+import de.chojo.lyna.demo.DemoSchedule;
+import de.chojo.lyna.demo.DemoService;
+import de.chojo.lyna.gateway.Gateway;
+import de.chojo.lyna.mail.MailingService;
+import de.chojo.lyna.web.WebService;
+import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.theme.Theme;
+import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.demo.DemoApi;
+import de.chojo.lyna.web.api.v1.download.Download;
+import de.chojo.lyna.web.api.v1.download.direct.Direct;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
+import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
+import de.chojo.lyna.web.api.v1.products.Wizard;
+import de.chojo.lyna.web.api.v1.releases.Releases;
+import de.chojo.lyna.web.api.v1.update.Update;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -125,14 +130,26 @@ class LynaModuleTest {
     void daosAreBuiltOnce() {
         Injector injector = injector();
 
-        for (Class<?> dao : List.of(Accounts.class, AccountLicenses.class, LicenseInvites.class,
-                AccountSessions.class, RevokedJtis.class, DownloadLog.class, DemoArtifacts.class,
-                InstanceSettingsAccess.class, InstanceOperators.class, PasswordResetTokens.class,
-                EmailVerificationTokens.class, KioskProducts.class, Guilds.class, Products.class,
-                Mailings.class, KoFiProducts.class)) {
+        for (Class<?> dao : List.of(
+                Accounts.class,
+                AccountLicenses.class,
+                LicenseInvites.class,
+                AccountSessions.class,
+                RevokedJtis.class,
+                DownloadLog.class,
+                DemoArtifacts.class,
+                InstanceSettingsAccess.class,
+                InstanceOperators.class,
+                PasswordResetTokens.class,
+                EmailVerificationTokens.class,
+                KioskProducts.class,
+                Guilds.class,
+                Products.class,
+                Mailings.class,
+                KoFiProducts.class)) {
             assertNotNull(injector.getInstance(dao), dao.getSimpleName() + " could not be built");
-            assertSame(injector.getInstance(dao), injector.getInstance(dao),
-                    dao.getSimpleName() + " should be held once");
+            assertSame(
+                    injector.getInstance(dao), injector.getInstance(dao), dao.getSimpleName() + " should be held once");
         }
     }
 
@@ -224,7 +241,9 @@ class LynaModuleTest {
     void guildsKnowsItsRoleSync() {
         Injector injector = injector();
 
-        assertSame(injector.getInstance(RoleSync.class), injector.getInstance(Guilds.class).roles());
+        assertSame(
+                injector.getInstance(RoleSync.class),
+                injector.getInstance(Guilds.class).roles());
     }
 
     /**
@@ -237,9 +256,21 @@ class LynaModuleTest {
     void webLayerIsBuildable() {
         Injector injector = injector();
 
-        for (Class<?> part : List.of(WebService.class, de.chojo.lyna.web.api.Api.class, V1.class, Download.class,
-                Proxy.class, Direct.class, Update.class, KoFiApi.class, Releases.class,
-                Wizard.class, DemoApi.class, Account.class, Admin.class, Theme.class,
+        for (Class<?> part : List.of(
+                WebService.class,
+                de.chojo.lyna.web.api.Api.class,
+                V1.class,
+                Download.class,
+                Proxy.class,
+                Direct.class,
+                Update.class,
+                KoFiApi.class,
+                Releases.class,
+                Wizard.class,
+                DemoApi.class,
+                Account.class,
+                Admin.class,
+                Theme.class,
                 de.chojo.lyna.web.api.auth.Auth.class)) {
             assertNotNull(injector.getInstance(part), part.getSimpleName() + " could not be built");
         }
@@ -264,10 +295,11 @@ class LynaModuleTest {
         Injector injector = injector();
 
         Set<SlashProvider<Slash>> commands =
-                injector.getInstance(Key.get(new TypeLiteral<Set<SlashProvider<Slash>>>() {
-                }));
+                injector.getInstance(Key.get(new TypeLiteral<Set<SlashProvider<Slash>>>() {}));
 
         assertEquals(11, commands.size());
-        assertEquals(11, commands.stream().map(c -> c.getClass().getName()).distinct().count());
+        assertEquals(
+                11,
+                commands.stream().map(c -> c.getClass().getName()).distinct().count());
     }
 }

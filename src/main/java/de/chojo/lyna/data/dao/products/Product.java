@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
@@ -102,7 +107,6 @@ public class Product {
                 .insert();
     }
 
-
     public boolean canDownload(Member member) {
         if (free) return true;
         return !availableReleaseTypes(member).isEmpty();
@@ -112,17 +116,18 @@ public class Product {
         if (free) {
             return Set.of(ReleaseType.values());
         }
-        List<ReleaseType> byUser =
-                query("SELECT release_type FROM user_product_access WHERE user_id = ? AND product_id = ?")
-                        .single(call().bind(member.getIdLong()).bind(id))
-                        .map(row -> row.getEnum("release_type", ReleaseType.class))
-                        .all();
+        List<ReleaseType> byUser = query(
+                        "SELECT release_type FROM user_product_access WHERE user_id = ? AND product_id = ?")
+                .single(call().bind(member.getIdLong()).bind(id))
+                .map(row -> row.getEnum("release_type", ReleaseType.class))
+                .all();
 
-        List<ReleaseType> byRole =
-                query("SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
-                        .single(call().bind(id).bind(member.getRoles().stream().map(Role::getIdLong).toList(), PostgreSqlTypes.BIGINT))
-                        .map(row -> row.getEnum("release_type", ReleaseType.class))
-                        .all();
+        List<ReleaseType> byRole = query(
+                        "SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
+                .single(call().bind(id)
+                        .bind(member.getRoles().stream().map(Role::getIdLong).toList(), PostgreSqlTypes.BIGINT))
+                .map(row -> row.getEnum("release_type", ReleaseType.class))
+                .all();
         var result = EnumSet.noneOf(ReleaseType.class);
         result.addAll(byUser);
         result.addAll(byRole);
@@ -189,7 +194,11 @@ public class Product {
 
         List<Version> assets = new ArrayList<>();
         for (Download download : downloads) {
-            PageComponentXO complete = products().nexus().v1().search().search()
+            PageComponentXO complete = products()
+                    .nexus()
+                    .v1()
+                    .search()
+                    .search()
                     .repository(download.repository())
                     .mavenGroupId(download.groupId())
                     .mavenArtifactId(download.artifactId())
@@ -247,7 +256,8 @@ public class Product {
                 SET %s = ?
                 WHERE
                     id = ?""", column)
-                .single(consumer.apply(call()).bind(id)).update()
+                .single(consumer.apply(call()).bind(id))
+                .update()
                 .changed();
     }
 

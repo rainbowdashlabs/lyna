@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.account;
 
 import java.util.List;
@@ -22,8 +27,7 @@ public record AccountLicense(
         Role role,
         int ownerAccountId,
         int shareesUsed,
-        int shareesCap
-) {
+        int shareesCap) {
     public enum Role {
         OWNER,
         SHAREE

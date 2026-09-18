@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration;
 
 import de.chojo.lyna.configuration.elements.Api;
@@ -5,8 +10,8 @@ import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.Demo;
-import de.chojo.lyna.configuration.elements.Downloads;
 import de.chojo.lyna.configuration.elements.Discord;
+import de.chojo.lyna.configuration.elements.Downloads;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
@@ -43,6 +48,7 @@ public class ConfigFile {
     public License license() {
         return license;
     }
+
     public Nexus nexus() {
         return nexus;
     }
@@ -54,6 +60,7 @@ public class ConfigFile {
     public Mailing mailing() {
         return mailing;
     }
+
     public Kofi kofi() {
         return kofi;
     }

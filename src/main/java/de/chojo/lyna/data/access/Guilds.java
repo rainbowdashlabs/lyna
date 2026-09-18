@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import com.google.common.cache.Cache;
@@ -13,7 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Guilds {
     private final NexusRest nexus;
-    private final Cache<Long, LicenseGuild> guilds = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
+    private final Cache<Long, LicenseGuild> guilds =
+            CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
     private final Conf configuration;
 
     /**

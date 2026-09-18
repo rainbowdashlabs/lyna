@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.products.downloads;
 
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
@@ -20,7 +25,8 @@ public class Downloads {
     }
 
     public List<Download> downloads() {
-        return query("SELECT id, type_id, group_id, artifact_id, classifier, repository FROM download WHERE product_id =?;")
+        return query(
+                        "SELECT id, type_id, group_id, artifact_id, classifier, repository FROM download WHERE product_id =?;")
                 .single(call().bind(product.id()))
                 .map(row -> Download.build(product, row))
                 .all();
@@ -47,7 +53,8 @@ public class Downloads {
                 .first();
     }
 
-    public Optional<Download> create(DownloadType type, String repository, String groupId, String artifactId, @Nullable String classifier) {
+    public Optional<Download> create(
+            DownloadType type, String repository, String groupId, String artifactId, @Nullable String classifier) {
         return query("""
                 INSERT
                 INTO
@@ -56,7 +63,12 @@ public class Downloads {
                 	(?, ?, ?, ?, ?, ?)
                 ON CONFLICT DO NOTHING
                 RETURNING id, type_id, repository, group_id, artifact_id, classifier""")
-                .single(call().bind(product.id()).bind(type.id()).bind(repository).bind(groupId).bind(artifactId).bind(classifier))
+                .single(call().bind(product.id())
+                        .bind(type.id())
+                        .bind(repository)
+                        .bind(groupId)
+                        .bind(artifactId)
+                        .bind(classifier))
                 .map(row -> Download.build(product, row))
                 .first();
     }
@@ -85,7 +97,8 @@ public class Downloads {
     }
 
     public boolean grant(Role role, ReleaseType type) {
-        return query("INSERT INTO role_access(role_id, product_id, release_type) VALUES (?,?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
+        return query(
+                        "INSERT INTO role_access(role_id, product_id, release_type) VALUES (?,?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
                 .single(call().bind(role.getIdLong()).bind(product.id()).bind(type))
                 .insert()
                 .changed();

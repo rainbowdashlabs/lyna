@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.InstanceOperator;
@@ -58,10 +63,7 @@ public class InstanceOperators {
                 INSERT INTO instance_operator (discord_id, added_by)
                 VALUES (?, ?)
                 ON CONFLICT (discord_id) DO NOTHING
-                """)
-                .single(call().bind(discordId).bind(addedBy))
-                .insert()
-                .changed();
+                """).single(call().bind(discordId).bind(addedBy)).insert().changed();
     }
 
     /**

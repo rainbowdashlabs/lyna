@@ -1,12 +1,16 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.admin;
 
-import com.google.inject.Inject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Accounts;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
@@ -14,26 +18,26 @@ import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import de.chojo.lyna.gateway.Gateway;
 import org.slf4j.Logger;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.time.Instant;
 import java.util.List;
-import java.util.stream.Stream;
 import java.util.Optional;
 import java.util.Set;
-
-import java.time.Duration;
+import java.util.stream.Stream;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -61,10 +65,17 @@ public class Admin {
     private final Gateway gateway;
 
     @Inject
-    public Admin(Auth auth, Conf configuration, Accounts accounts, Guilds guilds,
-                 InstanceSettingsAccess instanceSettings, KoFiProducts kofi,
-                 KioskProducts kioskProducts, InstanceOperators operators,
-                 de.chojo.lyna.mail.MailingService mailingService, Gateway gateway) {
+    public Admin(
+            Auth auth,
+            Conf configuration,
+            Accounts accounts,
+            Guilds guilds,
+            InstanceSettingsAccess instanceSettings,
+            KoFiProducts kofi,
+            KioskProducts kioskProducts,
+            InstanceOperators operators,
+            de.chojo.lyna.mail.MailingService mailingService,
+            Gateway gateway) {
         this.gateway = gateway;
         this.auth = auth;
         this.configuration = configuration;
@@ -76,7 +87,6 @@ public class Admin {
         this.operators = operators;
         this.mailingService = mailingService;
     }
-
 
     public void init() {
         path("admin", () -> {
@@ -129,7 +139,12 @@ public class Admin {
                         product -> java.util.Optional.ofNullable(product.iconUrl())));
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream()
-                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(),
+                .map(p -> new ProductSummary(
+                        p.id(),
+                        p.name(),
+                        p.url(),
+                        p.role(),
+                        p.free(),
                         icons.getOrDefault(p.id(), java.util.Optional.empty()).orElse(null)))
                 .toList());
     }
@@ -170,8 +185,10 @@ public class Admin {
         }
         String blocks = body == null ? null : body.blocks();
         try {
-            blockRenderer.render(blocks, de.chojo.lyna.mail.blocks.MailBlockRenderer
-                    .sampleValues(mailing.product().name()));
+            blockRenderer.render(
+                    blocks,
+                    de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(
+                            mailing.product().name()));
         } catch (IllegalArgumentException e) {
             ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
             return;
@@ -197,7 +214,8 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return;
         }
-        var values = de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(mailing.product().name());
+        var values = de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(
+                mailing.product().name());
         String rendered;
         try {
             rendered = body == null || body.blocks() == null
@@ -227,15 +245,22 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return;
         }
-        String address = body == null || body.address() == null ? "" : body.address().trim();
+        String address =
+                body == null || body.address() == null ? "" : body.address().trim();
         if (!address.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not an email address");
             return;
         }
-        var sample = de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(mailing.product().name());
-        var mail = de.chojo.lyna.mail.MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
-                sample.get("key").toString(), sample.get("name").toString(), address,
-                mailing.product().url(), de.chojo.lyna.mail.PurchaseRecipient.UNSTATED);
+        var sample = de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(
+                mailing.product().name());
+        var mail = de.chojo.lyna.mail.MailCreator.createLicenseMessage(
+                mailingService.renderer(),
+                mailing,
+                sample.get("key").toString(),
+                sample.get("name").toString(),
+                address,
+                mailing.product().url(),
+                de.chojo.lyna.mail.PurchaseRecipient.UNSTATED);
         mailingService.sendMail(mail);
         ctx.status(HttpStatus.ACCEPTED);
     }
@@ -267,7 +292,8 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return;
         }
-        String url = body == null || body.iconUrl() == null ? "" : body.iconUrl().trim();
+        String url =
+                body == null || body.iconUrl() == null ? "" : body.iconUrl().trim();
         if (!url.isBlank()) {
             var rejection = iconUrls.reject(url);
             if (rejection.isPresent()) {
@@ -297,7 +323,9 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("roleId required");
             return;
         }
-        var role = discordGuild(resolved.guild().guildId()).map(g -> g.getRoleById(body.roleId())).orElse(null);
+        var role = discordGuild(resolved.guild().guildId())
+                .map(g -> g.getRoleById(body.roleId()))
+                .orElse(null);
         if (role == null) {
             ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
             return;
@@ -316,8 +344,8 @@ public class Admin {
         if (resolved == null) return;
         List<LicenseSummary> out = new ArrayList<>();
         for (License l : resolved.guild().licenses().all()) {
-            out.add(new LicenseSummary(l.id(), l.product().id(), l.product().name(),
-                    l.userIdentifier(), l.owner(), l.shareCount()));
+            out.add(new LicenseSummary(
+                    l.id(), l.product().id(), l.product().name(), l.userIdentifier(), l.owner(), l.shareCount()));
         }
         ctx.json(out);
     }
@@ -332,7 +360,9 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return;
         }
-        if (body.productId() == null || body.identifier() == null || body.identifier().isBlank()) {
+        if (body.productId() == null
+                || body.identifier() == null
+                || body.identifier().isBlank()) {
             ctx.status(HttpStatus.BAD_REQUEST).result("productId and identifier required");
             return;
         }
@@ -347,9 +377,15 @@ public class Admin {
             return;
         }
         var l = license.get();
-        ctx.status(HttpStatus.CREATED).json(new LicenseDetail(l.id(), l.product().id(), l.product().name(),
-                l.userIdentifier(), l.key(), l.owner(),
-                l.sharees().stream().map(License.Sharee::name).toList()));
+        ctx.status(HttpStatus.CREATED)
+                .json(new LicenseDetail(
+                        l.id(),
+                        l.product().id(),
+                        l.product().name(),
+                        l.userIdentifier(),
+                        l.key(),
+                        l.owner(),
+                        l.sharees().stream().map(License.Sharee::name).toList()));
     }
 
     private void registrationInfo(Context ctx) {
@@ -362,14 +398,16 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid discord id");
             return;
         }
-        Member member = discordGuild(resolved.guild().guildId()).map(g -> g.getMemberById(discordId)).orElse(null);
+        Member member = discordGuild(resolved.guild().guildId())
+                .map(g -> g.getMemberById(discordId))
+                .orElse(null);
         var owned = resolved.guild().licenses().byOwner(discordId).stream()
-                .map(l -> new LicenseSummary(l.id(), l.product().id(), l.product().name(),
-                        l.userIdentifier(), l.owner(), l.shareCount()))
+                .map(l -> new LicenseSummary(
+                        l.id(), l.product().id(), l.product().name(), l.userIdentifier(), l.owner(), l.shareCount()))
                 .toList();
         var shared = resolved.guild().licenses().bySharee(discordId).stream()
-                .map(l -> new LicenseSummary(l.id(), l.product().id(), l.product().name(),
-                        l.userIdentifier(), l.owner(), l.shareCount()))
+                .map(l -> new LicenseSummary(
+                        l.id(), l.product().id(), l.product().name(), l.userIdentifier(), l.owner(), l.shareCount()))
                 .toList();
         ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null, owned, shared));
     }
@@ -452,7 +490,8 @@ public class Admin {
         var products = resolved.guild().products().all().stream()
                 .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null))
                 .toList();
-        ctx.json(new TrialInfo((int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
+        ctx.json(new TrialInfo(
+                (int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
     }
 
     private void listMailing(Context ctx) {
@@ -460,8 +499,10 @@ public class Admin {
         if (resolved == null) return;
         var out = new ArrayList<MailingTemplate>();
         for (Product p : resolved.guild().products().all()) {
-            p.mailings().get().ifPresent(m -> out.add(
-                    new MailingTemplate(m.id(), p.id(), p.name(), m.name(), m.blocks(), m.mailText())));
+            p.mailings()
+                    .get()
+                    .ifPresent(m ->
+                            out.add(new MailingTemplate(m.id(), p.id(), p.name(), m.name(), m.blocks(), m.mailText())));
         }
         ctx.json(out);
     }
@@ -469,22 +510,18 @@ public class Admin {
     /**
      * @param adminRoleId the role whose members administer this guild here, or nothing for none
      */
-    public record GuildSettings(int shares, int trialServerMinutes, int trialAccountMinutes, String adminRoleId) {
-    }
+    public record GuildSettings(int shares, int trialServerMinutes, int trialAccountMinutes, String adminRoleId) {}
 
-    public record KofiMapping(String linkCode, Integer productId, String productName) {
-    }
+    public record KofiMapping(String linkCode, Integer productId, String productName) {}
 
-    public record TrialInfo(int serverMinutes, int accountMinutes, List<ProductSummary> products) {
-    }
+    public record TrialInfo(int serverMinutes, int accountMinutes, List<ProductSummary> products) {}
 
     /**
      * @param blocks   the mail as its operator composed it, or nothing for one written before
      * @param mailText the HTML a mail written before blocks still carries
      */
-    public record MailingTemplate(int id, int productId, String productName, String name, String blocks,
-                                  String mailText) {
-    }
+    public record MailingTemplate(
+            int id, int productId, String productName, String name, String blocks, String mailText) {}
 
     private void instanceSystem(Context ctx) {
         if (!requireOperator(ctx)) return;
@@ -535,8 +572,7 @@ public class Admin {
      *                     leaving an operator to infer it from a guild count of zero, now that
      *                     running without a bot is a supported way to run.
      */
-    public record SystemInfo(String version, int guildCount, boolean botConnected) {
-    }
+    public record SystemInfo(String version, int guildCount, boolean botConnected) {}
 
     /**
      * The guild the path names, and only for somebody entitled to administer it.
@@ -636,8 +672,12 @@ public class Admin {
         }
         Long addedBy = resolveDiscordId(auth.currentSession(ctx).orElseThrow());
         operators.add(discordId, addedBy);
-        ctx.status(HttpStatus.CREATED).json(new OperatorView(Long.toString(discordId),
-                addedBy == null ? null : Long.toString(addedBy), Instant.now(), false));
+        ctx.status(HttpStatus.CREATED)
+                .json(new OperatorView(
+                        Long.toString(discordId),
+                        addedBy == null ? null : Long.toString(addedBy),
+                        Instant.now(),
+                        false));
     }
 
     /**
@@ -734,57 +774,53 @@ public class Admin {
         return result;
     }
 
-    public record AdminGuild(String id, String name, String iconUrl, String role) {
-    }
+    public record AdminGuild(String id, String name, String iconUrl, String role) {}
 
-    public record ProductSummary(int id, String name, String url, long roleId, boolean free, String iconUrl) {
-    }
+    public record ProductSummary(int id, String name, String url, long roleId, boolean free, String iconUrl) {}
 
     /**
      * @param configured whether the id holds the instance by configuration, and so cannot be
      *                   withdrawn here
      */
-    public record OperatorView(String discordId, String addedBy, Instant addedAt, boolean configured) {
-    }
+    public record OperatorView(String discordId, String addedBy, Instant addedAt, boolean configured) {}
 
-    public record OperatorRequest(String discordId) {
-    }
+    public record OperatorRequest(String discordId) {}
 
-    public record MailingBlocks(String blocks) {
-    }
+    public record MailingBlocks(String blocks) {}
 
-    public record MailingTest(String address) {
-    }
+    public record MailingTest(String address) {}
 
-    public record ProductIcon(String iconUrl) {
-    }
+    public record ProductIcon(String iconUrl) {}
 
-    public record CreateProduct(String name, String url, Long roleId, boolean free, boolean trial) {
-    }
+    public record CreateProduct(String name, String url, Long roleId, boolean free, boolean trial) {}
 
     /**
      * @param shareeCount everybody holding a place on the licence, including invites nobody has
      *                    answered and sharees who have no Discord id
      */
-    public record LicenseSummary(int id, int productId, String productName, String identifier, long owner,
-                                 int shareeCount) {
-    }
+    public record LicenseSummary(
+            int id, int productId, String productName, String identifier, long owner, int shareeCount) {}
 
     /**
      * @param sharees everybody holding a place on the licence, including invites nobody has answered
      *                and sharees who have no Discord id
      */
-    public record LicenseDetail(int id, int productId, String productName, String identifier, String key,
-                                long owner, List<String> sharees) {
-    }
+    public record LicenseDetail(
+            int id,
+            int productId,
+            String productName,
+            String identifier,
+            String key,
+            long owner,
+            List<String> sharees) {}
 
-    public record CreateLicense(Integer productId, String identifier) {
-    }
+    public record CreateLicense(Integer productId, String identifier) {}
 
-    public record RegistrationInfo(long discordId, String memberName, List<LicenseSummary> ownedLicenses,
-                                   List<LicenseSummary> sharedLicenses) {
-    }
+    public record RegistrationInfo(
+            long discordId,
+            String memberName,
+            List<LicenseSummary> ownedLicenses,
+            List<LicenseSummary> sharedLicenses) {}
 
-    private record Resolved(LicenseGuild guild, Long callerDiscordId, boolean operator) {
-    }
+    private record Resolved(LicenseGuild guild, Long callerDiscordId, boolean operator) {}
 }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao;
 
 import de.chojo.lyna.data.dao.licenses.License;
@@ -28,7 +33,6 @@ public class LicenseUser {
         id = member.getIdLong();
     }
 
-
     public long id() {
         return id;
     }
@@ -38,14 +42,16 @@ public class LicenseUser {
     }
 
     public Optional<License> licenseByProduct(Product product) {
-        return query("SELECT product_id, user_identifier, id, key FROM user_guild_license WHERE product_id = ? AND user_id = ?")
+        return query(
+                        "SELECT product_id, user_identifier, id, key FROM user_guild_license WHERE product_id = ? AND user_id = ?")
                 .single(call().bind(product.id()).bind(id()))
                 .map(row -> licenseGuild.licenses().buildLicense(row))
                 .first();
     }
 
     public Optional<License> subLicenseByProduct(Product product) {
-        return query("SELECT product_id, user_identifier, id, key FROM user_guild_sub_license WHERE product_id = ? AND user_id = ?")
+        return query(
+                        "SELECT product_id, user_identifier, id, key FROM user_guild_sub_license WHERE product_id = ? AND user_id = ?")
                 .single(call().bind(product.id()).bind(id()))
                 .map(licenseGuild.licenses()::buildLicense)
                 .first();
@@ -87,31 +93,44 @@ public class LicenseUser {
                          WHERE guild_id = ?
                              AND user_id = ?
                              AND product_id = ?) AS exists
-                """).single(call().bind(guildId()).bind(id()).bind(product.id())
-                        .bind(guildId()).bind(id()).bind(product.id()))
+                """)
+                .single(call().bind(guildId())
+                        .bind(id())
+                        .bind(product.id())
+                        .bind(guildId())
+                        .bind(id())
+                        .bind(product.id()))
                 .map(row -> row.getBoolean("exists"))
                 .first()
                 .orElse(false);
     }
 
     public List<Command.Choice> completeOwnProducts(String value) {
-        return query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
+        return query(
+                        "SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(id()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();
     }
 
     public List<Command.Choice> completeDownloadableProducts(String value) {
-        List<Command.Choice> byLicense = query("SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
+        List<Command.Choice> byLicense = query(
+                        "SELECT id, name FROM user_products WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(id()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();
-        List<Command.Choice> byRole =
-                query("SELECT product_id, name FROM role_access a LEFT JOIN product p ON a.product_id = p.id WHERE ARRAY[role_id] && ? AND name ILIKE ('%' || ? || '%')")
-                        .single(call().bind(member.getRoles().stream().map(ISnowflake::getIdLong).toList(), PostgreSqlTypes.BIGINT).bind(value))
-                        .map(row -> new Command.Choice(row.getString("name"), row.getInt("product_id")))
-                        .all();
-        List<Command.Choice> free = query("SELECT id, name FROM product WHERE free AND guild_id = ? AND name ILIKE ('%' || ? || '%')")
+        List<Command.Choice> byRole = query(
+                        "SELECT product_id, name FROM role_access a LEFT JOIN product p ON a.product_id = p.id WHERE ARRAY[role_id] && ? AND name ILIKE ('%' || ? || '%')")
+                .single(call().bind(
+                                member.getRoles().stream()
+                                        .map(ISnowflake::getIdLong)
+                                        .toList(),
+                                PostgreSqlTypes.BIGINT)
+                        .bind(value))
+                .map(row -> new Command.Choice(row.getString("name"), row.getInt("product_id")))
+                .all();
+        List<Command.Choice> free = query(
+                        "SELECT id, name FROM product WHERE free AND guild_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();
@@ -123,7 +142,8 @@ public class LicenseUser {
     }
 
     public List<Command.Choice> completeAllProducts(String value) {
-        return query("SELECT id, name FROM user_products_all WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
+        return query(
+                        "SELECT id, name FROM user_products_all WHERE guild_id = ? AND user_id = ? AND name ILIKE ('%' || ? || '%')")
                 .single(call().bind(guildId()).bind(id()).bind(value))
                 .map(row -> new Command.Choice(row.getString("name"), row.getInt("id")))
                 .all();

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.register.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -33,11 +38,15 @@ public class Default implements SlashHandler {
 
         LicenseUser user = guild.user(event.getMember());
         if (user.licenseByProduct(license.get().product()).isPresent()) {
-            event.reply("The user already owns a license for this product.").setEphemeral(true).queue();
+            event.reply("The user already owns a license for this product.")
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
         license.get().claim(event.getMember());
-        event.reply("License claimed. Roles have been assigned.").setEphemeral(true).queue();
+        event.reply("License claimed. Roles have been assigned.")
+                .setEphemeral(true)
+                .queue();
     }
 }

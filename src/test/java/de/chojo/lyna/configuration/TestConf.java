@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration;
 
 import java.io.IOException;
@@ -11,8 +16,7 @@ import java.nio.file.Files;
  * fresh directory gives the real thing, and a value a test cares about is set by writing it.
  */
 public final class TestConf {
-    private TestConf() {
-    }
+    private TestConf() {}
 
     /**
      * @return a configuration holding nothing but the defaults

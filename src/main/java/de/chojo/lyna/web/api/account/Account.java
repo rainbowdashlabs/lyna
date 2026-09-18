@@ -1,25 +1,30 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.account;
 
-import com.google.inject.Inject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.AccountEmails;
 import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
-import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
+import de.chojo.lyna.data.access.EmailVerificationTokens;
+import de.chojo.lyna.data.access.InstanceSettingsAccess;
+import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.RevokedJtis;
-import de.chojo.lyna.data.dao.account.AccountLicense;
 import de.chojo.lyna.data.dao.InstanceSettings;
-import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.data.dao.account.AccountLicense;
+import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
-import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -62,20 +67,21 @@ public class Account {
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Inject
-    public Account(Auth auth,
-                   Accounts accounts,
-                   AccountLicenses licenses,
-                   AccountEmails accountEmails,
-                   LicenseInvites invites,
-                   InstanceSettingsAccess instanceSettings,
-                   MailingService mailingService,
-                   EmailVerificationTokens emailTokens,
-                   Conf configuration,
-                   AccountSessions sessions,
-                   RevokedJtis revokedJtis,
-                   DownloadLog downloadLog,
-                   PasswordHasher passwordHasher,
-                   JwtService jwtService) {
+    public Account(
+            Auth auth,
+            Accounts accounts,
+            AccountLicenses licenses,
+            AccountEmails accountEmails,
+            LicenseInvites invites,
+            InstanceSettingsAccess instanceSettings,
+            MailingService mailingService,
+            EmailVerificationTokens emailTokens,
+            Conf configuration,
+            AccountSessions sessions,
+            RevokedJtis revokedJtis,
+            DownloadLog downloadLog,
+            PasswordHasher passwordHasher,
+            JwtService jwtService) {
         this.auth = auth;
         this.accounts = accounts;
         this.licenses = licenses;
@@ -193,7 +199,12 @@ public class Account {
         List<AccountSession> active = sessions.activeForAccount(session.get().accountId());
         String currentJti = session.get().jti();
         ctx.json(active.stream()
-                .map(s -> new SessionInfo(s.jti(), s.issuedAt(), s.lastSeenAt(), s.userAgent(), s.jti().equals(currentJti)))
+                .map(s -> new SessionInfo(
+                        s.jti(),
+                        s.issuedAt(),
+                        s.lastSeenAt(),
+                        s.userAgent(),
+                        s.jti().equals(currentJti)))
                 .toList());
     }
 
@@ -285,8 +296,7 @@ public class Account {
         List<DownloadLogEntry> rows = downloadLog.page(
                 scopedAccount, licenseId, productId, source, from, to, pageSize, (page - 1) * pageSize);
         int total = downloadLog.count(scopedAccount, licenseId, productId, source, from, to);
-        ctx.json(new DownloadPage(rows, total, page, pageSize,
-                downloadLog.productsForAccount(accountId)));
+        ctx.json(new DownloadPage(rows, total, page, pageSize, downloadLog.productsForAccount(accountId)));
     }
 
     /**
@@ -322,7 +332,9 @@ public class Account {
         String raw = ctx.queryParam(name);
         if (raw == null || raw.isBlank()) return null;
         try {
-            return raw.length() == 10 ? LocalDate.parse(raw).atStartOfDay(ZoneOffset.UTC).toInstant() : Instant.parse(raw);
+            return raw.length() == 10
+                    ? LocalDate.parse(raw).atStartOfDay(ZoneOffset.UTC).toInstant()
+                    : Instant.parse(raw);
         } catch (DateTimeParseException e) {
             return null;
         }
@@ -359,7 +371,8 @@ public class Account {
             ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
             return;
         }
-        String email = body == null || body.address() == null ? "" : body.address().trim();
+        String email =
+                body == null || body.address() == null ? "" : body.address().trim();
         if (!email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not an email address");
             return;
@@ -407,7 +420,9 @@ public class Account {
         try {
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of("url", link);
-            mailingService.send(email, renderer.subject("verify-email", "en", values),
+            mailingService.send(
+                    email,
+                    renderer.subject("verify-email", "en", values),
                     renderer.render("verify-email", "en", values));
         } catch (Exception e) {
             log.warn("Could not send the verification mail for account {}", accountId, e);
@@ -447,9 +462,8 @@ public class Account {
             theme = body.theme().isBlank() ? null : body.theme();
         }
 
-        String darkMode = body.darkMode() == null
-                ? acc.get().darkMode()
-                : body.darkMode().isBlank() ? null : body.darkMode();
+        String darkMode =
+                body.darkMode() == null ? acc.get().darkMode() : body.darkMode().isBlank() ? null : body.darkMode();
 
         accounts.setAppearance(acc.get().id(), theme, darkMode);
         ctx.json(new Appearance(theme, darkMode));
@@ -503,16 +517,17 @@ public class Account {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        List<ShareeView> sharees = license.get().role() == AccountLicense.Role.OWNER
-                ? shareesOf(licenseId)
-                : List.of();
+        List<ShareeView> sharees = license.get().role() == AccountLicense.Role.OWNER ? shareesOf(licenseId) : List.of();
         ctx.json(new LicenseDetail(
                 toView(license.get()),
                 licenses.keyForHolder(licenseId, session.get().accountId()).orElse(null),
                 sharees,
-                downloadLog.recentForLicense(licenseId, license.get().role() == AccountLicense.Role.OWNER
-                        ? null
-                        : session.get().accountId(), 10)));
+                downloadLog.recentForLicense(
+                        licenseId,
+                        license.get().role() == AccountLicense.Role.OWNER
+                                ? null
+                                : session.get().accountId(),
+                        10)));
     }
 
     /**
@@ -524,7 +539,9 @@ public class Account {
     private List<ShareeView> shareesOf(int licenseId) {
         List<ShareeView> views = new java.util.ArrayList<>();
         for (int shareeId : licenses.sharees(licenseId)) {
-            String name = accounts.findById(shareeId).map(de.chojo.lyna.data.dao.account.Account::displayName).orElse(null);
+            String name = accounts.findById(shareeId)
+                    .map(de.chojo.lyna.data.dao.account.Account::displayName)
+                    .orElse(null);
             views.add(new ShareeView("a" + shareeId, name == null ? "a" + shareeId : name, false));
         }
         for (var invite : invites.standing(licenseId)) {
@@ -550,7 +567,8 @@ public class Account {
             ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
             return;
         }
-        String subject = body == null || body.subject() == null ? "" : body.subject().trim();
+        String subject =
+                body == null || body.subject() == null ? "" : body.subject().trim();
         if (subject.isEmpty()) {
             ctx.status(HttpStatus.BAD_REQUEST).result("Name somebody by username, or give an address");
             return;
@@ -560,9 +578,8 @@ public class Account {
             return;
         }
 
-        Optional<de.chojo.lyna.data.dao.account.Account> target = subject.contains("@")
-                ? accounts.findByEmail(subject)
-                : accounts.findByUsername(subject);
+        Optional<de.chojo.lyna.data.dao.account.Account> target =
+                subject.contains("@") ? accounts.findByEmail(subject) : accounts.findByUsername(subject);
 
         if (target.isEmpty() && !subject.contains("@")) {
             ctx.status(HttpStatus.NOT_FOUND).result("Nobody here goes by that name");
@@ -640,11 +657,9 @@ public class Account {
                     .orElse("the owner");
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of(
-                    "owner", owner == null ? "the owner" : owner,
-                    "product", license.productName());
-            mailingService.send(sharee.email(),
-                    renderer.subject(template, "en", values),
-                    renderer.render(template, "en", values));
+                    "owner", owner == null ? "the owner" : owner, "product", license.productName());
+            mailingService.send(
+                    sharee.email(), renderer.subject(template, "en", values), renderer.render(template, "en", values));
         } catch (Exception e) {
             log.warn("Could not tell account {} about the licence for {}", sharee.id(), license.productName(), e);
         }
@@ -702,68 +717,74 @@ public class Account {
      * @param verified whether a link sent to it was followed. Everything an address is good for hangs
      *                 off this.
      */
-    public record EmailView(String address, boolean verified, boolean primary) {
-    }
+    public record EmailView(String address, boolean verified, boolean primary) {}
 
-    public record NewEmail(String address) {
-    }
+    public record NewEmail(String address) {}
 
     /**
      * @param username    the name as it is shown, digits and all
      * @param nameIsTheirs whether this account may change its own name, which it may not while a
      *                     provider is the one supplying it
      */
-    public record AccountInfo(int id, String email, boolean emailVerified,
-                              boolean hasPassword, String discordId, Instant discordLinkedAt,
-                              String username, boolean nameIsTheirs,
-                              String theme, String darkMode) {
-    }
+    public record AccountInfo(
+            int id,
+            String email,
+            boolean emailVerified,
+            boolean hasPassword,
+            String discordId,
+            Instant discordLinkedAt,
+            String username,
+            boolean nameIsTheirs,
+            String theme,
+            String darkMode) {}
 
-    public record Username(String username) {
-    }
+    public record Username(String username) {}
 
-    public record Overview(AccountInfo account, int activeSessions, Instant lastSignInAt, List<DownloadLogEntry> recentDownloads) {
-    }
+    public record Overview(
+            AccountInfo account, int activeSessions, Instant lastSignInAt, List<DownloadLogEntry> recentDownloads) {}
 
-    public record SessionInfo(String jti, Instant issuedAt, Instant lastSeenAt, String userAgent, boolean current) {
-    }
+    public record SessionInfo(String jti, Instant issuedAt, Instant lastSeenAt, String userAgent, boolean current) {}
 
-    public record ChangePassword(String currentPassword, String newPassword) {
-    }
+    public record ChangePassword(String currentPassword, String newPassword) {}
 
-    public record Confirm(String confirmEmail) {
-    }
+    public record Confirm(String confirmEmail) {}
 
-    public record LicenseView(int id, String guildId, int productId, String productName, String productUrl,
-                              String userIdentifier, List<String> releaseTypes, String role, String ownerAccountId,
-                              int shareesUsed, int shareesCap) {
-    }
+    public record LicenseView(
+            int id,
+            String guildId,
+            int productId,
+            String productName,
+            String productUrl,
+            String userIdentifier,
+            List<String> releaseTypes,
+            String role,
+            String ownerAccountId,
+            int shareesUsed,
+            int shareesCap) {}
 
-    public record LicenseList(List<LicenseView> owned, List<LicenseView> shared) {
-    }
+    public record LicenseList(List<LicenseView> owned, List<LicenseView> shared) {}
 
-    public record LicenseDetail(LicenseView license, String key, List<ShareeView> sharees,
-                                List<DownloadLogEntry> recentDownloads) {
-    }
+    public record LicenseDetail(
+            LicenseView license, String key, List<ShareeView> sharees, List<DownloadLogEntry> recentDownloads) {}
 
-    public record DownloadPage(List<DownloadLogEntry> rows, int totalRows, int page, int pageSize,
-                               List<DownloadLog.ProductOption> products) {
-    }
+    public record DownloadPage(
+            List<DownloadLogEntry> rows,
+            int totalRows,
+            int page,
+            int pageSize,
+            List<DownloadLog.ProductOption> products) {}
 
-    public record Appearance(String theme, String darkMode) {
-    }
+    public record Appearance(String theme, String darkMode) {}
 
     /**
      * @param subject a username, with or without its digits, or an email address
      */
-    public record Sharee(String subject) {
-    }
+    public record Sharee(String subject) {}
 
     /**
      * @param ref     how to address this sharee when revoking, opaque to the page
      * @param name    what to show: a username, or the address of an invite the owner typed
      * @param pending whether this is an invite still waiting to be answered
      */
-    public record ShareeView(String ref, String name, boolean pending) {
-    }
+    public record ShareeView(String ref, String name, boolean pending) {}
 }

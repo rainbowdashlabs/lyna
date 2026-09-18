@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.account.Account;
@@ -34,7 +39,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         assertNotNull(created.createdAt());
 
         assertEquals(created.id(), accounts.findById(created.id()).orElseThrow().id());
-        assertEquals(created.id(), accounts.findByEmail("someone@example.invalid").orElseThrow().id());
+        assertEquals(
+                created.id(),
+                accounts.findByEmail("someone@example.invalid").orElseThrow().id());
     }
 
     @Test
@@ -42,8 +49,12 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     void findByEmailIsCaseInsensitive() {
         Account created = accounts.create("Mixed.Case@example.invalid", "hash");
 
-        assertEquals(created.id(), accounts.findByEmail("mixed.case@example.invalid").orElseThrow().id());
-        assertEquals(created.id(), accounts.findByEmail("MIXED.CASE@EXAMPLE.INVALID").orElseThrow().id());
+        assertEquals(
+                created.id(),
+                accounts.findByEmail("mixed.case@example.invalid").orElseThrow().id());
+        assertEquals(
+                created.id(),
+                accounts.findByEmail("MIXED.CASE@EXAMPLE.INVALID").orElseThrow().id());
     }
 
     @Test
@@ -79,7 +90,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
 
         accounts.link(created.id(), 1234567890L, AccountIdentity.Verification.OAUTH);
 
-        assertEquals(created.id(), accounts.findByDiscordId(1234567890L).orElseThrow().id());
+        assertEquals(
+                created.id(),
+                accounts.findByDiscordId(1234567890L).orElseThrow().id());
         AccountIdentity link = accounts.findLinkByAccountId(created.id()).orElseThrow();
         assertEquals(1234567890L, link.externalIdAsLong());
         assertEquals("oauth", link.verifiedVia());
@@ -101,7 +114,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
 
         assertTrue(accounts.findByDiscordId(111L).isEmpty());
         assertEquals(created.id(), accounts.findByDiscordId(222L).orElseThrow().id());
-        assertEquals("bot_dm_code", accounts.findLinkByAccountId(created.id()).orElseThrow().verifiedVia());
+        assertEquals(
+                "bot_dm_code",
+                accounts.findLinkByAccountId(created.id()).orElseThrow().verifiedVia());
     }
 
     @Test
@@ -112,8 +127,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
 
         accounts.link(first.id(), 999L, AccountIdentity.Verification.OAUTH);
 
-        assertThrows(RuntimeException.class,
-                () -> accounts.link(second.id(), 999L, AccountIdentity.Verification.OAUTH));
+        assertThrows(
+                RuntimeException.class, () -> accounts.link(second.id(), 999L, AccountIdentity.Verification.OAUTH));
     }
 
     @Test
@@ -181,7 +196,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         accounts.link(account.id(), 4003L, AccountIdentity.Verification.OAUTH, "ada");
         accounts.link(account.id(), 4003L, AccountIdentity.Verification.BOT_DM_CODE);
 
-        assertEquals("ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+        assertEquals(
+                "ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
     }
 
     @Test
@@ -191,7 +207,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         accounts.link(account.id(), 4004L, AccountIdentity.Verification.OAUTH, "ada");
         accounts.link(account.id(), 4004L, AccountIdentity.Verification.OAUTH, "ada.lovelace");
 
-        assertEquals("ada.lovelace", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+        assertEquals(
+                "ada.lovelace",
+                accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
     }
 
     @Test
@@ -205,7 +223,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         assertFalse(accounts.rememberHandle(4005L, "  "));
         assertFalse(accounts.rememberHandle(9999L, "nobody"));
 
-        assertEquals("ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+        assertEquals(
+                "ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
     }
 
     @Test
@@ -231,17 +250,18 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("A provider nobody has taught us about yet is stored like any other")
     void anyProviderCanBeLinked() {
         Account account = accounts.create("multi@example.invalid", "hash");
-        accounts.link(account.id(), AccountIdentity.DISCORD, "5001",
-                AccountIdentity.Verification.OAUTH, "ada");
-        accounts.link(account.id(), "github", "octocat-1",
-                AccountIdentity.Verification.OAUTH, "octocat");
+        accounts.link(account.id(), AccountIdentity.DISCORD, "5001", AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(account.id(), "github", "octocat-1", AccountIdentity.Verification.OAUTH, "octocat");
 
         assertEquals(2, accounts.identities(account.id()).size());
-        assertEquals("octocat",
+        assertEquals(
+                "octocat",
                 accounts.findIdentity(account.id(), "github").orElseThrow().handle());
-        assertEquals(account.id(),
+        assertEquals(
+                account.id(),
                 accounts.findByIdentity("github", "octocat-1").orElseThrow().id());
-        assertEquals("ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
+        assertEquals(
+                "ada", accounts.findLinkByAccountId(account.id()).orElseThrow().handle());
     }
 
     @Test
@@ -252,7 +272,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         accounts.link(account.id(), 5102L, AccountIdentity.Verification.OAUTH, "grace");
 
         assertEquals(1, accounts.identities(account.id()).size());
-        assertEquals("5102", accounts.findLinkByAccountId(account.id()).orElseThrow().externalId());
+        assertEquals(
+                "5102", accounts.findLinkByAccountId(account.id()).orElseThrow().externalId());
         assertTrue(accounts.findByIdentity(AccountIdentity.DISCORD, "5101").isEmpty());
     }
 
@@ -260,15 +281,15 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     @DisplayName("Unlinking one provider leaves the others alone")
     void unlinkIsPerProvider() {
         Account account = accounts.create("unlink@example.invalid", "hash");
-        accounts.link(account.id(), AccountIdentity.DISCORD, "5201",
-                AccountIdentity.Verification.OAUTH, "ada");
-        accounts.link(account.id(), "github", "octocat-2",
-                AccountIdentity.Verification.OAUTH, "octocat");
+        accounts.link(account.id(), AccountIdentity.DISCORD, "5201", AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(account.id(), "github", "octocat-2", AccountIdentity.Verification.OAUTH, "octocat");
 
         accounts.unlink(account.id());
 
         assertTrue(accounts.findLinkByAccountId(account.id()).isEmpty());
-        assertEquals("octocat", accounts.findIdentity(account.id(), "github").orElseThrow().handle());
+        assertEquals(
+                "octocat",
+                accounts.findIdentity(account.id(), "github").orElseThrow().handle());
     }
 
     @Test
@@ -276,12 +297,17 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     void providersDoNotShareAnIdSpace() {
         Account first = accounts.create("prov-a@example.invalid", "hash");
         Account second = accounts.create("prov-b@example.invalid", "hash");
-        accounts.link(first.id(), AccountIdentity.DISCORD, "5301",
-                AccountIdentity.Verification.OAUTH, "ada");
+        accounts.link(first.id(), AccountIdentity.DISCORD, "5301", AccountIdentity.Verification.OAUTH, "ada");
         accounts.link(second.id(), "github", "5301", AccountIdentity.Verification.OAUTH, "grace");
 
-        assertEquals(first.id(), accounts.findByIdentity(AccountIdentity.DISCORD, "5301").orElseThrow().id());
-        assertEquals(second.id(), accounts.findByIdentity("github", "5301").orElseThrow().id());
+        assertEquals(
+                first.id(),
+                accounts.findByIdentity(AccountIdentity.DISCORD, "5301")
+                        .orElseThrow()
+                        .id());
+        assertEquals(
+                second.id(),
+                accounts.findByIdentity("github", "5301").orElseThrow().id());
     }
 
     @Test
@@ -308,8 +334,10 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         String two = accounts.setUsername(second.id(), "ada");
 
         assertNotEquals(one, two);
-        assertEquals(first.id(), accounts.findByUsername("ada#" + one).orElseThrow().id());
-        assertEquals(second.id(), accounts.findByUsername("ada#" + two).orElseThrow().id());
+        assertEquals(
+                first.id(), accounts.findByUsername("ada#" + one).orElseThrow().id());
+        assertEquals(
+                second.id(), accounts.findByUsername("ada#" + two).orElseThrow().id());
     }
 
     @Test
@@ -348,7 +376,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
 
         accounts.rememberHandle(6002L, "ada.lovelace");
 
-        assertEquals("ada.lovelace", accounts.findById(account.id()).orElseThrow().username());
+        assertEquals(
+                "ada.lovelace", accounts.findById(account.id()).orElseThrow().username());
     }
 
     @Test
@@ -374,7 +403,9 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         String discriminator = accounts.setUsername(chosen.id(), "grace");
 
         assertEquals(linked.id(), accounts.findByUsername("grace").orElseThrow().id());
-        assertEquals(chosen.id(), accounts.findByUsername("grace#" + discriminator).orElseThrow().id());
+        assertEquals(
+                chosen.id(),
+                accounts.findByUsername("grace#" + discriminator).orElseThrow().id());
         assertTrue(accounts.findByUsername("grace#0000").isEmpty());
         assertTrue(accounts.findByUsername("nobody").isEmpty());
     }
@@ -384,18 +415,20 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     void badNamesAreRefused() {
         Account account = accounts.create("badname@example.invalid", "hash");
 
-        for (String bad : List.of("ab", "a b", "ada!", ".ada", "ada.", "", "   ",
-                "a".repeat(33))) {
-            assertThrows(IllegalArgumentException.class, () -> accounts.setUsername(account.id(), bad),
+        for (String bad : List.of("ab", "a b", "ada!", ".ada", "ada.", "", "   ", "a".repeat(33))) {
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> accounts.setUsername(account.id(), bad),
                     "should have refused " + bad);
         }
     }
 
     private static void writeName(int accountId, String username, String discriminator) {
-        de.chojo.sadu.queries.api.query.Query
-                .query("UPDATE account SET username = ?, discriminator = ? WHERE id = ?")
+        de.chojo.sadu.queries.api.query.Query.query("UPDATE account SET username = ?, discriminator = ? WHERE id = ?")
                 .single(de.chojo.sadu.queries.api.call.Call.call()
-                        .bind(username).bind(discriminator).bind(accountId))
+                        .bind(username)
+                        .bind(discriminator)
+                        .bind(accountId))
                 .update();
     }
 }

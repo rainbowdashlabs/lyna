@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.theme;
 
 import com.google.inject.Inject;
@@ -37,8 +42,9 @@ public class Theme {
                 settings.customThemeColorsJson()));
     }
 
-    public record PublicTheme(String defaultTheme, boolean allowUserTheme,
-                              java.util.List<String> enabledThemes,
-                              String customThemeColors) {
-    }
+    public record PublicTheme(
+            String defaultTheme,
+            boolean allowUserTheme,
+            java.util.List<String> enabledThemes,
+            String customThemeColors) {}
 }

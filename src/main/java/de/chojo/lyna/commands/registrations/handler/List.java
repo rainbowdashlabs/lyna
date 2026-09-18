@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.registrations.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -13,7 +18,5 @@ public class List implements SlashHandler {
     }
 
     @Override
-    public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
-
-    }
+    public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {}
 }

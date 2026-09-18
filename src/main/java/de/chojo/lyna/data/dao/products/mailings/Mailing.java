@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.products.mailings;
 
 import de.chojo.lyna.data.dao.products.Product;
@@ -72,10 +77,7 @@ public class Mailing {
 
     public void blocks(String blocks) {
         if (query("""
-                UPDATE mail_products SET blocks = ?::JSONB WHERE id = ?""")
-                .single(call().bind(blocks).bind(id))
-                .update()
-                .changed()) {
+                UPDATE mail_products SET blocks = ?::JSONB WHERE id = ?""").single(call().bind(blocks).bind(id)).update().changed()) {
             this.blocks = blocks;
         }
     }

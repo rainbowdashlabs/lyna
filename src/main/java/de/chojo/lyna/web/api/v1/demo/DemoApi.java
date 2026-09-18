@@ -1,12 +1,17 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.demo;
 
-import com.google.inject.Inject;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
-import de.chojo.lyna.demo.DemoService;
-import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.demo.DemoService;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -84,7 +89,8 @@ public class DemoApi {
             return;
         }
         String email = body == null || body.email() == null ? "" : body.email().trim();
-        boolean seeded = demo.accounts().stream().anyMatch(account -> account.email().equalsIgnoreCase(email));
+        boolean seeded =
+                demo.accounts().stream().anyMatch(account -> account.email().equalsIgnoreCase(email));
         if (!seeded) {
             ctx.status(HttpStatus.UNAUTHORIZED).result("That is not one of the demo accounts");
             return;
@@ -115,9 +121,7 @@ public class DemoApi {
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
-    public record DemoLogin(String email) {
-    }
+    public record DemoLogin(String email) {}
 
-    public record DemoSession(String token, String expiresAt) {
-    }
+    public record DemoSession(String token, String expiresAt) {}
 }

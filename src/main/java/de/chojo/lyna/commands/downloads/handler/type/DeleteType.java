@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.downloads.handler.type;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -17,7 +22,8 @@ public class DeleteType implements SlashHandler {
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
-        var type = guilds.guild(event.getGuild()).downloadTypes().byId(event.getOption("name", OptionMapping::getAsInt));
+        var type =
+                guilds.guild(event.getGuild()).downloadTypes().byId(event.getOption("name", OptionMapping::getAsInt));
 
         if (type.isEmpty()) {
             event.reply("Invalid type").setEphemeral(true).queue();
@@ -35,7 +41,8 @@ public class DeleteType implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("name")) {
-            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue()))
+                    .queue();
         }
     }
 }

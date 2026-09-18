@@ -1,60 +1,190 @@
 name: Docker Build
 
 on:
+  release:
+    types:
+      - published
   push:
-    tags:
     branches:
       - main
-      - development
+      - 'feature/**'
 
 jobs:
-  docker-build:
+  wait:
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-
+    name: Wait for verification
     steps:
       - name: Wait for checks to succeed
         uses: lewagon/wait-on-check-action@master
         with:
           ref: ${{ github.ref }}
-          check-name: 'Docker build'
-          running-workflow-name: 'Verify'
+          check-regexp: "Verify.*"
+          ignore-checks: "Verify Docker Build"
+          running-workflow-name: 'Wait for verification'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          allowed-conclusions: success
-      - name: Checkout
-        uses: actions/checkout@v7
+          allowed-conclusions: success,skipped
+          checks-discovery-timeout: 300
+
+  # Native runners rather than emulation: building under QEMU takes the better part of an hour.
+  build:
+    needs: wait
+    runs-on: ${{ matrix.runner }}
+    name: Build ${{ matrix.name }} (${{ matrix.arch }})
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [backend, frontend]
+        arch: [amd64, arm64]
+        include:
+          - name: backend
+            file: docker/backend.Dockerfile
+            image: ghcr.io/rainbowdashlabs/lyna-backend
+          - name: frontend
+            file: docker/frontend.Dockerfile
+            image: ghcr.io/rainbowdashlabs/lyna-frontend
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v7
       - uses: gradle/actions/wrapper-validation@v6
-      - name: Login to GitHub Packages
-        uses: docker/login-action@v4
+        if: matrix.name == 'backend'
+
+      - name: Set up buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push image
-        uses: docker/build-push-action@v7
+
+      - name: Build Image
+        id: build
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/backend.Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-      - name: Tag & Push branch image
-        uses: docker/build-push-action@v7
+          file: ${{ matrix.file }}
+          platforms: linux/${{ matrix.arch }}
+          outputs: type=image,name=${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+
+      # Named after the digest, holding the architecture, so the publish job can check what was
+      # built without being told the list a second time.
+      - name: Record the digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          mkdir -p /tmp/digests
+          printf '%s' "$ARCH" > "/tmp/digests/${DIGEST#sha256:}"
+
+      - name: Upload the digest
+        uses: actions/upload-artifact@v7
         with:
-          context: .
-          file: docker/backend.Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-      - name: Tag & Push latest image
-        if: github.ref_name == 'main'
-        uses: docker/build-push-action@v7
+          name: digests-${{ matrix.name }}-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # The build jobs push untagged images. Every tag is created here in one call, so a tag is never
+  # briefly single-architecture.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Publish ${{ matrix.name }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            image: ghcr.io/rainbowdashlabs/lyna-backend
+          - name: frontend
+            image: ghcr.io/rainbowdashlabs/lyna-frontend
+
+    steps:
+      # No buildx setup here: imagetools talks to the registry directly and never reaches a builder.
+      - name: Download the digests
+        uses: actions/download-artifact@v8
         with:
-          context: .
-          file: docker/backend.Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}:latest
+          path: /tmp/digests
+          pattern: digests-${{ matrix.name }}-*
+          merge-multiple: true
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Work out which tags this is
+        id: tags
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          tags="$COMMIT_SHA"
+
+          if [ "$REF_NAME" = "main" ] && [ "$EVENT_NAME" = "push" ]; then
+            tags="$tags dev"
+          fi
+
+          case "$REF_NAME" in
+            feature/*)
+              branch_tag="${REF_NAME#feature/}"
+              tags="$tags snapshot ${branch_tag//[^a-zA-Z0-9._-]/-}"
+              ;;
+          esac
+
+          if [ "$EVENT_NAME" = "release" ]; then
+            version="${REF_NAME#v}"
+            major="${version%%.*}"
+            minor="${version#*.}"
+            minor="${minor%%.*}"
+            tags="$tags latest v$major v$major.$minor v$version"
+          fi
+
+          echo "Tagging with: $tags"
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+
+      - name: Create the manifest list
+        uses: nick-fields/retry@v4
+        env:
+          IMAGE: ${{ matrix.image }}
+          TAGS: ${{ steps.tags.outputs.tags }}
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          shell: bash
+          command: |
+            arguments=()
+            for tag in $TAGS; do
+              arguments+=(-t "$IMAGE:$tag")
+            done
+            for digest in /tmp/digests/*; do
+              arguments+=("$IMAGE@sha256:$(basename "$digest")")
+            done
+            docker buildx imagetools create "${arguments[@]}"
+
+      - name: Check every architecture is there
+        env:
+          IMAGE: ${{ matrix.image }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          published=$(docker buildx imagetools inspect "$IMAGE:$COMMIT_SHA")
+          echo "$published"
+          for digest in /tmp/digests/*; do
+            arch=$(cat "$digest")
+            echo "$published" | grep -q "Platform:.*linux/$arch" \
+              || { echo "::error::$IMAGE:$COMMIT_SHA carries no linux/$arch image."; exit 1; }
+          done

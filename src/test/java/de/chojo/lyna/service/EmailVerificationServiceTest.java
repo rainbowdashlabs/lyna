@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.data.dao.account.Account;
@@ -78,7 +83,8 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
 
         assertEquals("first@example.invalid", reload().email(), "the address it is written to is unchanged");
         assertEquals(2, accountEmails.of(account.id()).size());
-        assertTrue(accountEmails.byAddress("second@example.invalid").orElseThrow().verified());
+        assertTrue(
+                accountEmails.byAddress("second@example.invalid").orElseThrow().verified());
     }
 
     @Test
@@ -88,7 +94,9 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
 
         accounts.confirmEmail(bare.id(), "only@example.invalid");
 
-        assertEquals("only@example.invalid", accounts.findById(bare.id()).orElseThrow().email());
+        assertEquals(
+                "only@example.invalid",
+                accounts.findById(bare.id()).orElseThrow().email());
         assertTrue(accountEmails.primary(bare.id()).orElseThrow().verified());
     }
 
@@ -98,8 +106,7 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
         Account other = accounts.create("taken@example.invalid", "hash");
         assertTrue(other.id() != account.id());
 
-        assertThrows(IllegalStateException.class,
-                () -> accounts.confirmEmail(account.id(), "taken@example.invalid"));
+        assertThrows(IllegalStateException.class, () -> accounts.confirmEmail(account.id(), "taken@example.invalid"));
     }
 
     @Test
@@ -147,14 +154,16 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
 
         issueFor("second@example.invalid");
 
-        assertEquals("second@example.invalid", emailVerificationTokens.pendingEmail(account.id()).orElseThrow());
+        assertEquals(
+                "second@example.invalid",
+                emailVerificationTokens.pendingEmail(account.id()).orElseThrow());
     }
 
     @Test
     @DisplayName("An expired link is not an address still waiting to be confirmed")
     void expiredTokenIsNotPending() {
-        emailVerificationTokens.issue(account.id(), "second@example.invalid",
-                Instant.now().minus(Duration.ofMinutes(1)));
+        emailVerificationTokens.issue(
+                account.id(), "second@example.invalid", Instant.now().minus(Duration.ofMinutes(1)));
 
         assertTrue(emailVerificationTokens.pendingEmail(account.id()).isEmpty());
     }
@@ -163,8 +172,8 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
     @DisplayName("Pruning drops the links that can no longer be followed")
     void pruneRemovesExpiredOnly() {
         Account other = accounts.create("other@example.invalid", "hash");
-        emailVerificationTokens.issue(other.id(), "other@example.invalid",
-                Instant.now().minus(Duration.ofHours(1)));
+        emailVerificationTokens.issue(
+                other.id(), "other@example.invalid", Instant.now().minus(Duration.ofHours(1)));
         String live = issueFor("second@example.invalid").orElseThrow();
 
         assertEquals(1, emailVerificationTokens.prune());

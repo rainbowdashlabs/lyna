@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.data.dao.account.Account;
@@ -33,9 +38,18 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void seed() throws SQLException {
-        clear("license_invite", "user_sub_license", "user_license", "license_access", "license",
-                "product", "account_email", "account_identity", "account");
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        clear(
+                "license_invite",
+                "user_sub_license",
+                "user_license",
+                "license_access",
+                "license",
+                "product",
+                "account_email",
+                "account_identity",
+                "account");
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             try (var rows = statement.executeQuery(
                     "INSERT INTO %s.product (guild_id, name, role) VALUES (%d, 'Chatty', 1) RETURNING id"
                             .formatted(schemaName, GUILD))) {
@@ -50,8 +64,10 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
      * nobody.
      */
     private int purchase(String payingAddress) throws SQLException {
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement();
-             var rows = statement.executeQuery("""
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement();
+                var rows = statement.executeQuery(
+                        """
                      INSERT INTO %s.license (product_id, user_identifier, key, source)
                      VALUES (%d, '%s', '%s', 'KOFI') RETURNING id
                      """.formatted(schemaName, productId, payingAddress, "KEY-" + payingAddress.hashCode()))) {
@@ -78,7 +94,10 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
         purchase("Mixed.Case@Example.invalid");
         Account account = accounts.create("signed-up@example.invalid", "hash");
 
-        assertEquals(1, accounts.confirmEmail(account.id(), "mixed.case@example.invalid").size());
+        assertEquals(
+                1,
+                accounts.confirmEmail(account.id(), "mixed.case@example.invalid")
+                        .size());
     }
 
     @Test
@@ -86,7 +105,8 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     void anAlreadyHeldLicenceIsNotTakenAway() throws SQLException {
         int licenseId = purchase("paid-with@example.invalid");
         Account holder = accounts.create("holder@example.invalid", "hash");
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
                     .formatted(schemaName, holder.id(), licenseId));
         }
@@ -122,8 +142,11 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
         int receipt = issued("MAIL", "buyer@example.invalid", "KEY-MAIL");
 
         assertTrue(accounts.handOver(receipt, "buyer@example.invalid"));
-        assertEquals(List.of(receipt),
-                accountLicenses.owned(account.id()).stream().map(AccountLicense::id).toList());
+        assertEquals(
+                List.of(receipt),
+                accountLicenses.owned(account.id()).stream()
+                        .map(AccountLicense::id)
+                        .toList());
     }
 
     @Test
@@ -133,7 +156,8 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
         accountEmails.add(account.id(), "buyer@example.invalid");
         int shop = purchase("buyer@example.invalid");
 
-        assertFalse(accounts.handOver(shop, "buyer@example.invalid"),
+        assertFalse(
+                accounts.handOver(shop, "buyer@example.invalid"),
                 "claiming an address would otherwise be a way to take what was bought with it");
         assertTrue(accountLicenses.owned(account.id()).isEmpty());
     }
@@ -143,7 +167,8 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     void handOverDoesNotTake() throws SQLException {
         int shop = purchase("buyer@example.invalid");
         Account holder = accounts.create("holder@example.invalid", "hash");
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
                     .formatted(schemaName, holder.id(), shop));
         }
@@ -156,8 +181,9 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
 
     /** A licence naming an address, from somewhere that is not the shop. */
     private int issued(String source, String identifier, String key) throws SQLException {
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement();
-             var rows = statement.executeQuery("""
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement();
+                var rows = statement.executeQuery("""
                      INSERT INTO %s.license (product_id, user_identifier, key, source)
                      VALUES (%d, '%s', '%s', '%s') RETURNING id
                      """.formatted(schemaName, productId, identifier, key, source))) {

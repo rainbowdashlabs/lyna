@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import com.google.common.hash.Hashing;
@@ -104,9 +109,7 @@ public class EmailVerificationTokens {
         return Hashing.sha256().hashString(token, StandardCharsets.UTF_8).toString();
     }
 
-    public record Issued(String token, String email, Instant expiresAt) {
-    }
+    public record Issued(String token, String email, Instant expiresAt) {}
 
-    public record Confirmed(int accountId, String email) {
-    }
+    public record Confirmed(int accountId, String email) {}
 }

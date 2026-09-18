@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.products;
 
 /**
@@ -12,12 +17,4 @@ package de.chojo.lyna.data.dao.products;
  * @param purchaseUrl where to buy it, when a Ko-fi code has been mapped to it
  */
 public record KioskProduct(
-        int id,
-        long guildId,
-        String name,
-        String url,
-        String iconUrl,
-        boolean free,
-        String purchaseUrl
-) {
-}
+        int id, long guildId, String name, String url, String iconUrl, boolean free, String purchaseUrl) {}

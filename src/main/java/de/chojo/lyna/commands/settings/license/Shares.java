@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.settings.license;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -22,6 +27,8 @@ public class Shares implements SlashHandler {
             license.shares(shares.getAsInt());
         }
 
-        event.reply("Maximum license shares are set to %d.".formatted(license.shares())).setEphemeral(true).queue();
+        event.reply("Maximum license shares are set to %d.".formatted(license.shares()))
+                .setEphemeral(true)
+                .queue();
     }
 }

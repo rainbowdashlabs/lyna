@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.account;
 
 import java.time.Instant;
@@ -19,8 +24,7 @@ public record Account(
         String username,
         String discriminator,
         Instant createdAt,
-        Instant lastLoginAt
-) {
+        Instant lastLoginAt) {
     public boolean hasPassword() {
         return passwordHash != null && !passwordHash.isBlank();
     }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.settings;
 
 import de.chojo.sadu.queries.api.call.Call;
@@ -56,5 +61,4 @@ public class Trial {
                 .update()
                 .changed();
     }
-
 }

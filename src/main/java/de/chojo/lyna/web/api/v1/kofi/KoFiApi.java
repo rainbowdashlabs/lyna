@@ -1,22 +1,27 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.kofi;
 
-import com.google.inject.Inject;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.google.inject.Inject;
+import de.chojo.lyna.configuration.elements.Kofi;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.MailCreator;
-import de.chojo.lyna.mail.PurchaseRecipient;
 import de.chojo.lyna.mail.MailingService;
+import de.chojo.lyna.mail.PurchaseRecipient;
 import de.chojo.lyna.util.Urls;
-import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.web.api.v1.kofi.payloads.DataType;
 import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
 import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
@@ -57,8 +62,7 @@ public class KoFiApi {
                 var json = results.get("data");
                 var post = mapper.readValue(json, KofiPost.class);
                 var presented = post.verificationToken();
-                if (presented == null
-                        || !presented.toString().equals(kofiSettings.verificationToken())) {
+                if (presented == null || !presented.toString().equals(kofiSettings.verificationToken())) {
                     ctx.status(HttpStatus.FORBIDDEN);
                     return;
                 }
@@ -76,10 +80,14 @@ public class KoFiApi {
                         if (license.isEmpty()) continue;
                         license.get().grantAccess(ReleaseType.STABLE);
                         boolean handedOver = accounts.handOver(license.get().id(), post.email());
-                        var mail = MailCreator.createLicenseMessage(mailing.renderer(), productMail,
-                                license.get().key(), post.from(), post.email(), product.url(),
-                                handedOver ? PurchaseRecipient.WITH_ACCOUNT
-                                        : PurchaseRecipient.WITHOUT_ACCOUNT);
+                        var mail = MailCreator.createLicenseMessage(
+                                mailing.renderer(),
+                                productMail,
+                                license.get().key(),
+                                post.from(),
+                                post.email(),
+                                product.url(),
+                                handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
                         mailing.sendMail(mail);
                     }
                 } else {

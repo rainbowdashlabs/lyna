@@ -1,8 +1,13 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountLicense;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.data.dao.account.AccountLicense;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,20 +43,33 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void seed() throws SQLException {
-        clear("download_log", "license_invite", "user_sub_license", "user_license", "license_access", "license",
-                "license_settings", "download", "download_type", "product",
-                "account_identity", "account");
+        clear(
+                "download_log",
+                "license_invite",
+                "user_sub_license",
+                "user_license",
+                "license_access",
+                "license",
+                "license_settings",
+                "download",
+                "download_type",
+                "product",
+                "account_identity",
+                "account");
 
         owner = accounts.create("owner@example.invalid", "hash");
         sharee = accounts.create("sharee@example.invalid", "hash");
         accounts.link(owner.id(), OWNER_DISCORD, AccountIdentity.Verification.OAUTH);
         accounts.link(sharee.id(), SHAREE_DISCORD, AccountIdentity.Verification.OAUTH);
 
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-            statement.execute("INSERT INTO %s.license_settings (guild_id, shares) VALUES (%d, 2)"
-                    .formatted(schemaName, GUILD));
-            productId = insert(statement, "INSERT INTO product (guild_id, name, role) VALUES (%d, 'Chatty', 1) RETURNING id"
-                    .formatted(GUILD));
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "INSERT INTO %s.license_settings (guild_id, shares) VALUES (%d, 2)".formatted(schemaName, GUILD));
+            productId = insert(
+                    statement,
+                    "INSERT INTO product (guild_id, name, role) VALUES (%d, 'Chatty', 1) RETURNING id"
+                            .formatted(GUILD));
             int typeId = insert(statement, """
                     INSERT INTO download_type (guild_id, name, description, release_type)
                     VALUES (%d, 'Jar', 'Plain jar', 'STABLE') RETURNING id
@@ -112,7 +130,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         assertTrue(accountLicenses.addSharee(licenseId, webOnly.id()));
 
         assertEquals(1, accountLicenses.shared(webOnly.id()).size());
-        assertEquals("KEY-1", accountLicenses.keyForHolder(licenseId, webOnly.id()).orElseThrow());
+        assertEquals(
+                "KEY-1", accountLicenses.keyForHolder(licenseId, webOnly.id()).orElseThrow());
         assertTrue(discordIdOf(webOnly).isEmpty());
     }
 
@@ -156,7 +175,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     void shareeIsNotTheOwner() {
         accountLicenses.addSharee(licenseId, sharee.id());
 
-        AccountLicense asSharee = accountLicenses.forHolder(licenseId, sharee.id()).orElseThrow();
+        AccountLicense asSharee =
+                accountLicenses.forHolder(licenseId, sharee.id()).orElseThrow();
 
         assertEquals(AccountLicense.Role.SHAREE, asSharee.role());
         assertEquals(owner.id(), asSharee.ownerAccountId());
@@ -175,40 +195,50 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @DisplayName("The owner sees every holder's downloads on the license")
     void ownerSeesEveryDownload() {
         downloadLog.record(owner.id(), OWNER_DISCORD, licenseId, productId, downloadId, "1.0.0", "license", null, null);
-        downloadLog.record(sharee.id(), SHAREE_DISCORD, licenseId, productId, downloadId, "1.0.1", "sub_license", null, null);
+        downloadLog.record(
+                sharee.id(), SHAREE_DISCORD, licenseId, productId, downloadId, "1.0.1", "sub_license", null, null);
 
         List<DownloadLogEntry> seen = downloadLog.recentForLicense(licenseId, null, 10);
 
         assertEquals(2, seen.size());
-        assertEquals(List.of("1.0.1", "1.0.0"), seen.stream().map(DownloadLogEntry::version).toList());
+        assertEquals(
+                List.of("1.0.1", "1.0.0"),
+                seen.stream().map(DownloadLogEntry::version).toList());
     }
 
     @Test
     @DisplayName("A sharee sees only their own downloads on the license")
     void shareeSeesOnlyTheirOwn() {
         downloadLog.record(owner.id(), OWNER_DISCORD, licenseId, productId, downloadId, "1.0.0", "license", null, null);
-        downloadLog.record(sharee.id(), SHAREE_DISCORD, licenseId, productId, downloadId, "1.0.1", "sub_license", null, null);
+        downloadLog.record(
+                sharee.id(), SHAREE_DISCORD, licenseId, productId, downloadId, "1.0.1", "sub_license", null, null);
 
         List<DownloadLogEntry> seen = downloadLog.recentForLicense(licenseId, sharee.id(), 10);
 
-        assertEquals(List.of("1.0.1"), seen.stream().map(DownloadLogEntry::version).toList());
+        assertEquals(
+                List.of("1.0.1"), seen.stream().map(DownloadLogEntry::version).toList());
     }
 
     @Test
     @DisplayName("Downloads on another license are not mixed in")
     void otherLicensesAreNotMixedIn() throws SQLException {
         int otherLicense;
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             otherLicense = insert(statement, """
                     INSERT INTO license (product_id, user_identifier, key)
                     VALUES (%d, 'someone@example.invalid', 'KEY-2') RETURNING id
                     """.formatted(productId));
         }
         downloadLog.record(owner.id(), OWNER_DISCORD, licenseId, productId, downloadId, "mine", "license", null, null);
-        downloadLog.record(owner.id(), OWNER_DISCORD, otherLicense, productId, downloadId, "other", "license", null, null);
+        downloadLog.record(
+                owner.id(), OWNER_DISCORD, otherLicense, productId, downloadId, "other", "license", null, null);
 
-        assertEquals(List.of("mine"), downloadLog.recentForLicense(licenseId, null, 10).stream()
-                .map(DownloadLogEntry::version).toList());
+        assertEquals(
+                List.of("mine"),
+                downloadLog.recentForLicense(licenseId, null, 10).stream()
+                        .map(DownloadLogEntry::version)
+                        .toList());
     }
 
     @Test
@@ -222,7 +252,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
 
         Account returning = accounts.create("returning@example.invalid", "hash");
         assertTrue(accountLicenses.addSharee(licenseId, returning.id()));
-        assertEquals("KEY-1", accountLicenses.keyForHolder(licenseId, returning.id()).orElseThrow());
+        assertEquals(
+                "KEY-1", accountLicenses.keyForHolder(licenseId, returning.id()).orElseThrow());
     }
 
     @Test
@@ -242,7 +273,9 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         assertTrue(licenseInvites.invite(licenseId, "newcomer@example.invalid"));
 
         assertEquals(1, licenseInvites.standing(licenseId).size());
-        assertEquals("newcomer@example.invalid", licenseInvites.standing(licenseId).getFirst().email());
+        assertEquals(
+                "newcomer@example.invalid",
+                licenseInvites.standing(licenseId).getFirst().email());
     }
 
     @Test
@@ -257,7 +290,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
 
         assertEquals(List.of(licenseId), bound);
         assertEquals(1, accountLicenses.shared(newcomer.id()).size());
-        assertEquals("KEY-1", accountLicenses.keyForHolder(licenseId, newcomer.id()).orElseThrow());
+        assertEquals(
+                "KEY-1", accountLicenses.keyForHolder(licenseId, newcomer.id()).orElseThrow());
         assertTrue(licenseInvites.standing(licenseId).isEmpty());
     }
 
@@ -288,8 +322,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         licenseInvites.invite(licenseId, "Mixed.Case@Example.invalid");
         Account newcomer = accounts.create("mixed.case@example.invalid", "hash");
 
-        assertEquals(List.of(licenseId),
-                accounts.confirmEmail(newcomer.id(), "mixed.case@example.invalid"));
+        assertEquals(List.of(licenseId), accounts.confirmEmail(newcomer.id(), "mixed.case@example.invalid"));
     }
 
     @Test
@@ -339,8 +372,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     }
 
     private static void expireInvites() {
-        de.chojo.sadu.queries.api.query.Query
-                .query("UPDATE license_invite SET expires_at = now() - INTERVAL '1 day'")
+        de.chojo.sadu.queries.api.query.Query.query("UPDATE license_invite SET expires_at = now() - INTERVAL '1 day'")
                 .single(de.chojo.sadu.queries.api.call.Call.call())
                 .update();
     }

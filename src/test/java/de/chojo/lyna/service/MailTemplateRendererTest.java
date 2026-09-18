@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.mail.MailTemplateRenderer;
@@ -31,10 +36,13 @@ class MailTemplateRendererTest {
     @Test
     @DisplayName("Every variable a template names is filled in")
     void variablesAreSubstituted() {
-        String html = renderer.render("licence-issued", "en", Map.of(
-                "name", "Ada",
-                "product", "Chatty",
-                "key", "ABCD-1234"));
+        String html = renderer.render(
+                "licence-issued",
+                "en",
+                Map.of(
+                        "name", "Ada",
+                        "product", "Chatty",
+                        "key", "ABCD-1234"));
 
         assertTrue(html.contains("Ada"));
         assertTrue(html.contains("Chatty"));
@@ -44,23 +52,35 @@ class MailTemplateRendererTest {
     @Test
     @DisplayName("A part of a template nothing was given for is left out rather than left empty")
     void optionalBlocksAreOmitted() {
-        String without = renderer.render("licence-issued", "en", Map.of(
-                "name", "Ada", "product", "Chatty", "key", "ABCD-1234"));
+        String without =
+                renderer.render("licence-issued", "en", Map.of("name", "Ada", "product", "Chatty", "key", "ABCD-1234"));
         assertFalse(without.contains("Download Chatty"));
 
-        String with = renderer.render("licence-issued", "en", Map.of(
-                "name", "Ada", "product", "Chatty", "key", "ABCD-1234",
-                "downloadUrl", "https://example.invalid/d"));
+        String with = renderer.render(
+                "licence-issued",
+                "en",
+                Map.of(
+                        "name",
+                        "Ada",
+                        "product",
+                        "Chatty",
+                        "key",
+                        "ABCD-1234",
+                        "downloadUrl",
+                        "https://example.invalid/d"));
         assertTrue(with.contains("Download Chatty"));
     }
 
     @Test
     @DisplayName("What a variable carries is escaped, so a product name cannot write markup")
     void variablesAreEscaped() {
-        String html = renderer.render("licence-issued", "en", Map.of(
-                "name", "Ada",
-                "product", "<script>alert(1)</script>",
-                "key", "ABCD-1234"));
+        String html = renderer.render(
+                "licence-issued",
+                "en",
+                Map.of(
+                        "name", "Ada",
+                        "product", "<script>alert(1)</script>",
+                        "key", "ABCD-1234"));
 
         assertFalse(html.contains("<script>alert(1)</script>"));
         assertTrue(html.contains("&lt;script&gt;"));
@@ -69,9 +89,9 @@ class MailTemplateRendererTest {
     @Test
     @DisplayName("Subjects come from the catalogue, with their placeholders filled in")
     void subjectsAreLookedUp() {
-        assertEquals("Your Chatty licence",
-                renderer.subject("licence-issued", "en", Map.of("product", "Chatty")));
-        assertEquals("Ada shared their Chatty licence with you",
+        assertEquals("Your Chatty licence", renderer.subject("licence-issued", "en", Map.of("product", "Chatty")));
+        assertEquals(
+                "Ada shared their Chatty licence with you",
                 renderer.subject("licence-shared", "en", Map.of("owner", "Ada", "product", "Chatty")));
     }
 
@@ -93,8 +113,8 @@ class MailTemplateRendererTest {
     @Test
     @DisplayName("The per-product body is placed inside the layout rather than sent bare")
     void customBodyIsWrappedInTheLayout() {
-        String html = renderer.render("licence-custom", "en",
-                Map.of("body", "<p>Anything the operator wrote</p>", "senderName", "Lyna"));
+        String html = renderer.render(
+                "licence-custom", "en", Map.of("body", "<p>Anything the operator wrote</p>", "senderName", "Lyna"));
 
         assertTrue(html.startsWith("<!DOCTYPE html>"));
         assertTrue(html.contains("<p>Anything the operator wrote</p>"));
@@ -104,12 +124,22 @@ class MailTemplateRendererTest {
     @DisplayName("Every mail the application sends renders")
     void everyTemplateRenders() {
         Map<String, Object> everything = Map.of(
-                "name", "Ada", "product", "Chatty", "key", "ABCD-1234", "owner", "Grace",
-                "url", "https://example.invalid/u", "licencesUrl", "https://example.invalid/l",
-                "downloadUrl", "https://example.invalid/d");
+                "name",
+                "Ada",
+                "product",
+                "Chatty",
+                "key",
+                "ABCD-1234",
+                "owner",
+                "Grace",
+                "url",
+                "https://example.invalid/u",
+                "licencesUrl",
+                "https://example.invalid/l",
+                "downloadUrl",
+                "https://example.invalid/d");
 
-        for (String template : new String[]{
-                "licence-issued", "reset-password", "licence-shared", "licence-revoked"}) {
+        for (String template : new String[] {"licence-issued", "reset-password", "licence-shared", "licence-revoked"}) {
             String html = renderer.render(template, "en", everything);
             assertTrue(html.contains("</html>"), template + " did not render");
             assertFalse(html.contains("{{"), template + " left a placeholder unrendered");

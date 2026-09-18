@@ -1,7 +1,12 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api;
 
-import de.chojo.lyna.configuration.Conf;
 import com.google.inject.Inject;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.auth.Auth;
@@ -25,8 +30,7 @@ public class Api {
     private static final Logger log = getLogger(Api.class);
 
     @Inject
-    public Api(Conf configuration, NexusRest nexus, V1 v1, Auth auth, Account account, Theme theme,
-               Admin admin) {
+    public Api(Conf configuration, NexusRest nexus, V1 v1, Auth auth, Account account, Theme theme, Admin admin) {
         this.configuration = configuration;
         this.nexus = nexus;
         this.v1 = v1;
@@ -45,10 +49,6 @@ public class Api {
             admin.init();
         });
     }
-
-
-
-
 
     public Auth auth() {
         return auth;

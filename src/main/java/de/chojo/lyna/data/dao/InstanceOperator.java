@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao;
 
 import java.time.Instant;
@@ -7,5 +12,4 @@ import java.time.Instant;
  *
  * @param addedBy who granted it, or nothing when the row predates the record being kept
  */
-public record InstanceOperator(long discordId, Long addedBy, Instant addedAt) {
-}
+public record InstanceOperator(long discordId, Long addedBy, Instant addedAt) {}

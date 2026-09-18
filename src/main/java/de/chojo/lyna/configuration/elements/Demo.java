@@ -1,10 +1,14 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration.elements;
 
 import dev.chojo.ocular.override.Env;
 import dev.chojo.ocular.override.Overwrite;
-import dev.chojo.ocular.override.Prop;
 import dev.chojo.ocular.override.OverwritePrefix;
-
+import dev.chojo.ocular.override.Prop;
 
 /**
  * Demo mode: an instance that seeds itself with something to look at, and lets anybody sign in as
@@ -22,6 +26,7 @@ import dev.chojo.ocular.override.OverwritePrefix;
 public class Demo {
     @Overwrite(env = @Env, prop = @Prop)
     private boolean enabled = false;
+
     @Overwrite(env = @Env, prop = @Prop)
     private int resetIntervalMinutes = 60;
 

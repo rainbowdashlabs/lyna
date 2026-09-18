@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.auth;
 
 import com.auth0.jwt.JWT;
@@ -47,16 +52,16 @@ public class JwtService {
         try {
             DecodedJWT decoded = verifier.verify(token);
             int accountId = Integer.parseInt(decoded.getSubject());
-            Long discordId = decoded.getClaim("discord_id").isNull() ? null : decoded.getClaim("discord_id").asLong();
+            Long discordId = decoded.getClaim("discord_id").isNull()
+                    ? null
+                    : decoded.getClaim("discord_id").asLong();
             return Optional.of(new Verified(accountId, discordId, decoded.getId(), decoded.getExpiresAtAsInstant()));
         } catch (JWTVerificationException | NumberFormatException e) {
             return Optional.empty();
         }
     }
 
-    public record Issued(String token, String jti, Instant expiresAt) {
-    }
+    public record Issued(String token, String jti, Instant expiresAt) {}
 
-    public record Verified(int accountId, Long discordId, String jti, Instant expiresAt) {
-    }
+    public record Verified(int accountId, Long discordId, String jti, Instant expiresAt) {}
 }

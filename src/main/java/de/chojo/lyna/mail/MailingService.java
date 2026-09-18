@@ -1,13 +1,18 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail;
 
-import de.chojo.jdautil.consumer.ThrowingConsumer;
 import com.google.inject.Inject;
+import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
+import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Mailings;
-import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
 import jakarta.mail.Address;
@@ -50,7 +55,8 @@ public class MailingService {
         this.mailings = mailings;
         this.accounts = accounts;
         this.configuration = configuration;
-        this.renderer = new MailTemplateRenderer(configuration.main().mailing().senderName(),
+        this.renderer = new MailTemplateRenderer(
+                configuration.main().mailing().senderName(),
                 configuration.main().links().frontend());
     }
 
@@ -75,7 +81,10 @@ public class MailingService {
     }
 
     private void init() throws MessagingException {
-        threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.main().mailing().pollSeconds(), TimeUnit.SECONDS);
+        threading
+                .botWorker()
+                .scheduleAtFixedRate(
+                        this::loop, 10, configuration.main().mailing().pollSeconds(), TimeUnit.SECONDS);
         registerMessageListener(new MailHandler(mailings, this, accounts, configuration));
     }
 
@@ -155,7 +164,6 @@ public class MailingService {
         receivedListener.add(listener);
     }
 
-
     public void send(String to, String subject, String body) {
         sendMail(new Mail(to, subject, body));
     }
@@ -174,12 +182,10 @@ public class MailingService {
             return;
         }
 
-        Optional<Boolean> sendResult = Retry.retryAndReturn(3,
-                () -> sendMessage(mimeMessage),
-                err -> {
-                    log.error(LogNotify.NOTIFY_ADMIN, "Could not sent mail", err);
-                    sendMail(mail);
-                });
+        Optional<Boolean> sendResult = Retry.retryAndReturn(3, () -> sendMessage(mimeMessage), err -> {
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not sent mail", err);
+            sendMail(mail);
+        });
 
         if (sendResult.isEmpty()) {
             log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
@@ -187,12 +193,10 @@ public class MailingService {
         }
 
         try (IMAPStore imapStore = createImapStore(session)) {
-            Optional<Boolean> result = Retry.retryAndReturn(3,
-                    () -> storeMessage(imapStore, mimeMessage),
-                    err -> {
-                        log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
-                        sendMail(mail);
-                    });
+            Optional<Boolean> result = Retry.retryAndReturn(3, () -> storeMessage(imapStore, mimeMessage), err -> {
+                log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
+                sendMail(mail);
+            });
 
             if (result.isPresent() && result.get()) {
                 log.debug("Mail stored");
@@ -206,7 +210,10 @@ public class MailingService {
 
     private boolean sendMessage(MimeMessage message) throws MessagingException {
         log.info("Sending mail to {}", ((InternetAddress) message.getAllRecipients()[0]).getAddress());
-        Transport.send(message, configuration.main().mailing().user(), configuration.main().mailing().password());
+        Transport.send(
+                message,
+                configuration.main().mailing().user(),
+                configuration.main().mailing().password());
         log.info("Mail sent.");
         return true;
     }
@@ -217,7 +224,7 @@ public class MailingService {
         if (!sent.exists()) {
             sent.create(Folder.HOLDS_MESSAGES);
         }
-        sent.appendMessages(new Message[]{message});
+        sent.appendMessages(new Message[] {message});
         return true;
     }
 
@@ -226,20 +233,26 @@ public class MailingService {
     }
 
     private IMAPFolder getFolder(IMAPStore store, String name) {
-        return Retry.retryAndReturn(3, () -> {
-            log.debug("Connecting to folder {}", name);
-            IMAPFolder folder = (IMAPFolder) store.getFolder(name);
-            folder.open(Folder.READ_WRITE);
-            return folder;
-        }, err -> {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to folder. Retrying.");
-            getFolder(store, name);
-        }).orElseThrow(() -> new RuntimeException("Reconnecting to folder failed."));
+        return Retry.retryAndReturn(
+                        3,
+                        () -> {
+                            log.debug("Connecting to folder {}", name);
+                            IMAPFolder folder = (IMAPFolder) store.getFolder(name);
+                            folder.open(Folder.READ_WRITE);
+                            return folder;
+                        },
+                        err -> {
+                            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to folder. Retrying.");
+                            getFolder(store, name);
+                        })
+                .orElseThrow(() -> new RuntimeException("Reconnecting to folder failed."));
     }
 
     private MimeMessage buildMessage(Session session, Mail mail) throws MessagingException {
         var message = new MimeMessage(session);
-        message.addFrom(new Address[]{new InternetAddress(configuration.main().mailing().user())});
+        message.addFrom(new Address[] {
+            new InternetAddress(configuration.main().mailing().user())
+        });
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(mail.address(), false));
         message.setDataHandler(new DataHandler(mail.text(), "text/html; charset=UTF-8"));
         message.setSubject(mail.subject());

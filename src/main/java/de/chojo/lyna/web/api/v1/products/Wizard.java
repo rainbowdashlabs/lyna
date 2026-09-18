@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.products;
 
 import com.google.inject.Inject;
@@ -11,8 +16,8 @@ import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.web.api.auth.Auth;
-import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
@@ -47,6 +52,7 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 public class Wizard {
     /** What the concept settles on: enough history to find a known-good build, not the whole archive. */
     private static final int DEFAULT_VERSION_LIMIT = 25;
+
     private static final int MAX_VERSION_LIMIT = 100;
 
     private final Proxy proxy;
@@ -57,8 +63,13 @@ public class Wizard {
     private final AccountLicenses licenses;
 
     @Inject
-    public Wizard(Proxy proxy, Products products, KioskProducts kiosk, Auth auth, Accounts accounts,
-                  AccountLicenses licenses) {
+    public Wizard(
+            Proxy proxy,
+            Products products,
+            KioskProducts kiosk,
+            Auth auth,
+            Accounts accounts,
+            AccountLicenses licenses) {
         this.proxy = proxy;
         this.products = products;
         this.kiosk = kiosk;
@@ -107,8 +118,12 @@ public class Wizard {
                 String version = asset.maven2().version();
                 VersionView existing = byVersion.get(version);
                 if (existing == null) {
-                    byVersion.put(version, new VersionView(version, asset.lastModified().toInstant(),
-                            new ArrayList<>(List.of(download.type().id()))));
+                    byVersion.put(
+                            version,
+                            new VersionView(
+                                    version,
+                                    asset.lastModified().toInstant(),
+                                    new ArrayList<>(List.of(download.type().id()))));
                 } else if (!existing.downloadTypeIds().contains(download.type().id())) {
                     existing.downloadTypeIds().add(download.type().id());
                 }
@@ -128,7 +143,8 @@ public class Wizard {
         String version = ctx.pathParam("version");
 
         List<DownloadTypeView> views = product.downloads().downloads().stream()
-                .filter(download -> allowed.contains(download.type().releaseType().name()))
+                .filter(download ->
+                        allowed.contains(download.type().releaseType().name()))
                 .filter(download -> download.assetByVersion(version).isPresent())
                 .map(download -> {
                     DownloadType type = download.type();
@@ -147,32 +163,41 @@ public class Wizard {
         String version = ctx.pathParam("version");
         int downloadTypeId = pathInt(ctx, "downloadType");
 
-        Download download = product.downloads().byType(downloadTypeId)
+        Download download = product.downloads()
+                .byType(downloadTypeId)
                 .orElseThrow(() -> new NotFoundResponse("Unknown download type"));
         if (!allowed.contains(download.type().releaseType().name())) {
             throw new ForbiddenResponse("You may not download that release type");
         }
-        AssetXO asset = download.assetByVersion(version)
-                .orElseThrow(() -> new NotFoundResponse("Unknown version"));
+        AssetXO asset = download.assetByVersion(version).orElseThrow(() -> new NotFoundResponse("Unknown version"));
 
         var session = auth.currentSession(ctx);
         Integer accountId = session.map(verified -> verified.accountId()).orElse(null);
         Long discordId = session.flatMap(verified -> accounts.findLinkByAccountId(verified.accountId()))
                 .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
-        String actor = discordId == null
-                ? "anonymous(%s)".formatted(ctx.ip())
-                : Long.toString(discordId);
+        String actor = discordId == null ? "anonymous(%s)".formatted(ctx.ip()) : Long.toString(discordId);
 
-        AssetDownload assetDownload = new AssetDownload(asset.id(), () -> download.downloaded(asset.maven2().version()), actor)
-                .withDownloadContext(product.id(), download.id(), asset.maven2().version(),
-                        product.free() ? "free" : "license", accountId, discordId, null);
+        AssetDownload assetDownload = new AssetDownload(
+                        asset.id(), () -> download.downloaded(asset.maven2().version()), actor)
+                .withDownloadContext(
+                        product.id(),
+                        download.id(),
+                        asset.maven2().version(),
+                        product.free() ? "free" : "license",
+                        accountId,
+                        discordId,
+                        null);
         String url = proxy.registerAsset(assetDownload);
 
-        String filename = "%s-%s.%s".formatted(asset.maven2().artifactId(), asset.maven2().version(),
-                asset.maven2().extension());
-        ctx.status(HttpStatus.CREATED).json(new IssuedDownload(url, filename, (long) asset.fileSize(),
-                Instant.now().plusSeconds(1800)));
+        String filename = "%s-%s.%s"
+                .formatted(
+                        asset.maven2().artifactId(),
+                        asset.maven2().version(),
+                        asset.maven2().extension());
+        ctx.status(HttpStatus.CREATED)
+                .json(new IssuedDownload(
+                        url, filename, (long) asset.fileSize(), Instant.now().plusSeconds(1800)));
     }
 
     /**
@@ -244,19 +269,15 @@ public class Wizard {
         }
     }
 
-    public record ReleaseTypeView(String id, String description) {
-    }
+    public record ReleaseTypeView(String id, String description) {}
 
-    public record VersionView(String version, Instant publishedAt, List<Integer> downloadTypeIds) {
-    }
+    public record VersionView(String version, Instant publishedAt, List<Integer> downloadTypeIds) {}
 
-    public record DownloadTypeView(int id, String name, String description) {
-    }
+    public record DownloadTypeView(int id, String name, String description) {}
 
     /**
      * @param url       the one-time address the browser is sent to
      * @param expiresAt when the address stops working if nobody uses it
      */
-    public record IssuedDownload(String url, String filename, Long sizeBytes, Instant expiresAt) {
-    }
+    public record IssuedDownload(String url, String filename, Long sizeBytes, Instant expiresAt) {}
 }

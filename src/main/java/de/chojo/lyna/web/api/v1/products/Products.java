@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.products;
 
 import com.google.inject.Inject;
@@ -62,8 +67,15 @@ public class Products {
     /**
      * @param entitled whether this visitor holds a license covering the product
      */
-    private record KioskEntry(int id, String guildId, String name, String url, String iconUrl, boolean free,
-                              String purchaseUrl, boolean entitled) {
+    private record KioskEntry(
+            int id,
+            String guildId,
+            String name,
+            String url,
+            String iconUrl,
+            boolean free,
+            String purchaseUrl,
+            boolean entitled) {
         static KioskEntry of(KioskProduct product, boolean entitled) {
             return new KioskEntry(
                     product.id(),

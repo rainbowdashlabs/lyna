@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.download;
 
 import com.google.inject.Inject;
@@ -26,5 +31,4 @@ public class Download {
     public Proxy proxy() {
         return proxy;
     }
-
 }

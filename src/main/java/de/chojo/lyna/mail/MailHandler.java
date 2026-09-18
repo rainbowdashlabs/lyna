@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail;
 
 import com.google.common.cache.Cache;
@@ -27,7 +32,8 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final Accounts accounts;
     private final Conf configuration;
 
-    private final Cache<String, String> cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
+    private final Cache<String, String> cache =
+            CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
     public MailHandler(Mailings mailings, MailingService mailingService, Accounts accounts, Conf configuration) {
         this.mailings = mailings;
@@ -38,7 +44,8 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
 
     @Override
     public void accept(Message message) throws Exception {
-        de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.main().mailing();
+        de.chojo.lyna.configuration.elements.Mailing mailConf =
+                configuration.main().mailing();
         InternetAddress address = (InternetAddress) message.getFrom()[0];
         if (!mailConf.skipVerify()) {
             // Check if address is from PayPal
@@ -52,7 +59,8 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
             String[] header = message.getHeader("X-Forwarded-For");
             if (header != null) {
                 if (mailConf.originMails().isEmpty()) {
-                    log.warn(LogNotify.NOTIFY_ADMIN,
+                    log.warn(
+                            LogNotify.NOTIFY_ADMIN,
                             "Refused a mail forwarded by {} because mailing.originMail is empty. "
                                     + "Name the addresses that forward receipts here to accept them.",
                             header[0]);
@@ -101,16 +109,24 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         }
         Optional<Mailing> optMailing = mailings.byName(parsed.product().get());
         if (optMailing.isEmpty()) {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not find a matching mailing entry for {}", parsed.product().get());
+            log.error(
+                    LogNotify.NOTIFY_ADMIN,
+                    "Could not find a matching mailing entry for {}",
+                    parsed.product().get());
             return;
         }
 
         Mailing mailing = optMailing.get();
-        Optional<License> license = mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
+        Optional<License> license =
+                mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
         license.get().grantAccess(ReleaseType.STABLE);
         boolean handedOver = accounts.handOver(license.get().id(), parsed.mail().get());
-        Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
-                license.get().key(), parsed.name().get(), parsed.mail().get(),
+        Mail mail = MailCreator.createLicenseMessage(
+                mailingService.renderer(),
+                mailing,
+                license.get().key(),
+                parsed.name().get(),
+                parsed.mail().get(),
                 mailing.product().url(),
                 handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
         mailingService.sendMail(mail);

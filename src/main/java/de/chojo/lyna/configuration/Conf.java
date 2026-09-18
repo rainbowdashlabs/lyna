@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration;
 
 import dev.chojo.ocular.Configurations;
@@ -48,8 +53,7 @@ public class Conf extends Configurations<ConfigFile> {
      * running it happens to hold.
      */
     public Conf(Path directory) {
-        super(adoptLegacyJson(directory), CONFIG, List.of(new YamlDataFormat()),
-                Conf.class.getClassLoader(), null);
+        super(adoptLegacyJson(directory), CONFIG, List.of(new YamlDataFormat()), Conf.class.getClassLoader(), null);
     }
 
     /**
@@ -79,12 +83,17 @@ public class Conf extends Configurations<ConfigFile> {
             JsonNode tree = JsonMapper.builder().build().readTree(Files.readString(json));
             Files.createDirectories(directory);
             Files.writeString(yaml, YAMLMapper.builder().build().writeValueAsString(tree));
-            log.info("Read the configuration from {} and wrote {} beside it. The old file is no "
-                    + "longer read and can be removed.", LEGACY_JSON, CONFIG.path());
+            log.info(
+                    "Read the configuration from {} and wrote {} beside it. The old file is no "
+                            + "longer read and can be removed.",
+                    LEGACY_JSON,
+                    CONFIG.path());
         } catch (IOException | RuntimeException e) {
             throw new IllegalStateException(
                     "Found %s but could not turn it into %s. Lyna now reads YAML; convert the file by "
-                            .formatted(json, yaml) + "hand, or move it aside to start on defaults.", e);
+                                    .formatted(json, yaml)
+                            + "hand, or move it aside to start on defaults.",
+                    e);
         }
         return directory;
     }

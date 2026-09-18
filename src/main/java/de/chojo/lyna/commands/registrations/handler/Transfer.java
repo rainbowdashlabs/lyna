@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.registrations.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -32,31 +37,40 @@ public class Transfer implements SlashHandler {
         Optional<License> license = user.licenseByProduct(product.get());
 
         if (license.isEmpty()) {
-            event.reply("You don't have a license for this product").setEphemeral(true).queue();
+            event.reply("You don't have a license for this product")
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
         var target = event.getOption("user", OptionMapping::getAsMember);
 
         if (guild.user(target).licenseByProduct(product.get()).isPresent()) {
-            event.reply("This user has a license for this product already.").setEphemeral(true).queue();
+            event.reply("This user has a license for this product already.")
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
         license.get().transfer(target);
 
         event.reply("License transferred").setEphemeral(true).queue();
-        target.getUser().openPrivateChannel().complete()
-              .sendMessage("A license for %s was transferred to you by %s.".formatted(
-                      product.get().name(), event.getMember().getAsMention()))
-              .queue();
+        target.getUser()
+                .openPrivateChannel()
+                .complete()
+                .sendMessage("A license for %s was transferred to you by %s."
+                        .formatted(product.get().name(), event.getMember().getAsMention()))
+                .queue();
     }
 
     @Override
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).user(event.getMember()).completeOwnProducts(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild())
+                            .user(event.getMember())
+                            .completeOwnProducts(focusedOption.getValue()))
+                    .queue();
         }
     }
 }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.products;
 
 import com.google.inject.Inject;
@@ -30,22 +35,22 @@ public class Products implements SlashProvider<Slash> {
                         .argument(Argument.role("role", "Role of product").asRequired())
                         .argument(Argument.text("url", "Url to product"))
                         .argument(Argument.bool("free", "Mark product as free"))
-                        .argument(Argument.bool("trial", "Allow trial download"))
-                )
+                        .argument(Argument.bool("trial", "Allow trial download")))
                 .subCommand(SubCommand.of("edit", "Edit a product")
                         .handler(new Edit(guilds))
-                        .argument(Argument.text("product", "Product").asRequired().withAutoComplete())
+                        .argument(
+                                Argument.text("product", "Product").asRequired().withAutoComplete())
                         .argument(Argument.text("name", "Product name"))
                         .argument(Argument.role("role", "Role of product"))
                         .argument(Argument.text("url", "Url to product"))
                         .argument(Argument.bool("free", "Mark product as free"))
-                        .argument(Argument.bool("trial", "Allow trial download"))
-                )
+                        .argument(Argument.bool("trial", "Allow trial download")))
                 .subCommand(SubCommand.of("delete", "Delete a product and everything connected to it")
                         .handler(new Delete(guilds))
-                        .argument(Argument.text("name", "Product name").asRequired().withAutoComplete())
-                        .argument(Argument.bool("confirm", "Confirm deletion").asRequired())
-                )
+                        .argument(Argument.text("name", "Product name")
+                                .asRequired()
+                                .withAutoComplete())
+                        .argument(Argument.bool("confirm", "Confirm deletion").asRequired()))
                 .build();
     }
 }

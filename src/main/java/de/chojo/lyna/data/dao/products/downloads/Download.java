@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.products.downloads;
 
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
@@ -26,10 +31,18 @@ public class Download implements Comparable<Download> {
     private String repository;
     private String groupId;
     private String artifactId;
+
     @Nullable
     private String classifier;
 
-    public Download(Product product, int id, int typeId, String repository, String groupId, String artifactId, @Nullable String classifier) {
+    public Download(
+            Product product,
+            int id,
+            int typeId,
+            String repository,
+            String groupId,
+            String artifactId,
+            @Nullable String classifier) {
         this.product = product;
         this.id = id;
         this.typeId = typeId;
@@ -40,14 +53,14 @@ public class Download implements Comparable<Download> {
     }
 
     public static Download build(Product product, Row row) throws SQLException {
-        return new Download(product,
+        return new Download(
+                product,
                 row.getInt("id"),
                 row.getInt("type_id"),
                 row.getString("repository"),
                 row.getString("group_id"),
                 row.getString("artifact_id"),
-                row.getString("classifier")
-        );
+                row.getString("classifier"));
     }
 
     public int id() {
@@ -104,7 +117,8 @@ public class Download implements Comparable<Download> {
 
     private boolean set(String column, Function<Call, Call> consumer) {
         return query("UPDATE download SET %s = ? WHERE product_id = ? AND type_id = ?", column)
-                .single(consumer.apply(call()).bind(product.id()).bind(typeId)).update()
+                .single(consumer.apply(call()).bind(product.id()).bind(typeId))
+                .update()
                 .changed();
     }
 
@@ -116,7 +130,11 @@ public class Download implements Comparable<Download> {
     }
 
     public List<AssetXO> latestAssets() {
-        SearchRequest jar = product.nexus().v1().search().assets().search()
+        SearchRequest jar = product.nexus()
+                .v1()
+                .search()
+                .assets()
+                .search()
                 .repository(repository)
                 .mavenGroupId(groupId)
                 .mavenArtifactId(artifactId)
@@ -128,17 +146,19 @@ public class Download implements Comparable<Download> {
         if (classifier != null) {
             jar.mavenClassifier(classifier);
         }
-        return jar.complete()
-                .items()
-                .stream()
+        return jar.complete().items().stream()
                 // We can not filter for null classifiers, so we do it afterward
                 .filter(e -> classifier != null || e.maven2().classifier() == null)
                 .toList();
     }
 
     public Optional<AssetXO> assetByVersion(String version) {
-        if("latest".equalsIgnoreCase(version)) return latestAssets().stream().findFirst();
-        SearchRequest jar = product.nexus().v1().search().assets().search()
+        if ("latest".equalsIgnoreCase(version)) return latestAssets().stream().findFirst();
+        SearchRequest jar = product.nexus()
+                .v1()
+                .search()
+                .assets()
+                .search()
                 .repository(repository)
                 .mavenGroupId(groupId)
                 .mavenArtifactId(artifactId)
@@ -151,9 +171,7 @@ public class Download implements Comparable<Download> {
         if (classifier != null) {
             jar.mavenClassifier(classifier);
         }
-        return jar.complete()
-                .items()
-                .stream()
+        return jar.complete().items().stream()
                 // We can not filter for null classifiers, so we do it afterward
                 .filter(e -> classifier != null || e.maven2().classifier() == null)
                 .findFirst();
@@ -167,14 +185,13 @@ public class Download implements Comparable<Download> {
                 VALUES
                 	(?, ?, 1)
                 ON CONFLICT (download_id, date, version) DO UPDATE SET
-                	count = d.count + 1""")
-                .single(call().bind(id).bind(version))
-                .insert();
+                	count = d.count + 1""").single(call().bind(id).bind(version)).insert();
     }
 
     @Override
     public int compareTo(@NotNull Download o) {
-        int compare = Integer.compare(type().releaseType().ordinal(), o.type().releaseType().ordinal());
+        int compare = Integer.compare(
+                type().releaseType().ordinal(), o.type().releaseType().ordinal());
         if (compare != 0) return compare;
 
         return String.CASE_INSENSITIVE_ORDER.compare(type().name(), o.type().name());
