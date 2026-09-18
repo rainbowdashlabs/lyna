@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.update;
 
 import com.google.inject.Inject;
@@ -34,23 +39,20 @@ public class Update {
                 try {
                     id = Integer.parseInt(ctx.queryParam("id"));
                 } catch (NumberFormatException e) {
-                    ctx.status(HttpStatus.BAD_REQUEST)
-                            .result("Invalid id");
+                    ctx.status(HttpStatus.BAD_REQUEST).result("Invalid id");
                     return;
                 }
 
                 Optional<Product> optProduct = products.byId(id);
 
                 if (optProduct.isEmpty()) {
-                    ctx.status(HttpStatus.NOT_FOUND)
-                            .result("Unknown id");
+                    ctx.status(HttpStatus.NOT_FOUND).result("Unknown id");
                     return;
                 }
                 Product product = optProduct.get();
                 String versionString = ctx.queryParam("version");
                 if (versionString == null) {
-                    ctx.status(HttpStatus.BAD_REQUEST)
-                            .result("Missing version");
+                    ctx.status(HttpStatus.BAD_REQUEST).result("Missing version");
                     return;
                 }
 
@@ -62,8 +64,7 @@ public class Update {
                 try {
                     unix = unixString == null ? 0 : Long.parseLong(unixString);
                 } catch (NumberFormatException e) {
-                    ctx.status(HttpStatus.BAD_REQUEST)
-                            .result("Invalid unix timestamp");
+                    ctx.status(HttpStatus.BAD_REQUEST).result("Invalid unix timestamp");
                     return;
                 }
 
@@ -105,10 +106,14 @@ public class Update {
         Version latest = Version.parse(latestAsset.maven2().version());
 
         // simply check if the latest version is newer than the current
-        return new UpdateResponse(latest.isNewer(current), latest.version(), latestAsset.lastModified().toEpochSecond());
+        return new UpdateResponse(
+                latest.isNewer(current),
+                latest.version(),
+                latestAsset.lastModified().toEpochSecond());
     }
 
-    private UpdateResponse handleDevBuild(Product product, @Nullable Instant created, Version current, @Nullable String artifact) {
+    private UpdateResponse handleDevBuild(
+            Product product, @Nullable Instant created, Version current, @Nullable String artifact) {
         UpdateResponse stableResponse = handleStableBuild(product, current, artifact);
         if (stableResponse.update()) {
             return stableResponse;
@@ -116,13 +121,14 @@ public class Update {
 
         // Find dev release with artifact
         return getDownload(product, ReleaseType.DEV, artifact)
-                .or(() -> product.downloads().byReleaseType(ReleaseType.DEV).stream().findFirst())
+                .or(() -> product.downloads().byReleaseType(ReleaseType.DEV).stream()
+                        .findFirst())
                 .map(value -> evaluateDevAndSnapshotVersion(value, current, created))
                 .orElseGet(() -> new UpdateResponse(false, current.version(), 0));
-
     }
 
-    private UpdateResponse handleSnapshotBuild(Product product, @Nullable Instant created, Version current, @Nullable String artifact) {
+    private UpdateResponse handleSnapshotBuild(
+            Product product, @Nullable Instant created, Version current, @Nullable String artifact) {
         UpdateResponse stableResponse = handleStableBuild(product, current, artifact);
         if (stableResponse.update()) {
             return stableResponse;
@@ -145,7 +151,8 @@ public class Update {
         return snapshotResponse;
     }
 
-    private UpdateResponse evaluateDevAndSnapshotVersion(Download download, Version current, @Nullable Instant created) {
+    private UpdateResponse evaluateDevAndSnapshotVersion(
+            Download download, Version current, @Nullable Instant created) {
         List<AssetXO> assetXOS = download.latestAssets();
 
         if (assetXOS.isEmpty()) {
@@ -181,7 +188,8 @@ public class Update {
     }
 
     private Optional<Download> getDownload(Product product, ReleaseType type, @Nullable String artifact) {
-        return product.downloads().byReleaseTypeAndArtifact(type, artifact)
+        return product.downloads()
+                .byReleaseTypeAndArtifact(type, artifact)
                 .or(() -> product.downloads().byReleaseType(type).stream().findFirst());
     }
 
@@ -189,7 +197,5 @@ public class Update {
         return assetXO.lastModified().toEpochSecond();
     }
 
-    public record UpdateResponse(boolean update, String latest, long published) {
-
-    }
+    public record UpdateResponse(boolean update, String latest, long published) {}
 }

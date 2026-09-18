@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.settings;
 
 import com.google.inject.Inject;
@@ -27,7 +32,9 @@ public class Settings implements SlashProvider<Slash> {
                 .group(Group.of("license", "Manage license settings")
                         .subCommand(SubCommand.of("shares", "Define how often a license can be shared")
                                 .handler(new Shares(guilds))
-                                .argument(Argument.integer("shares", "Number of shares").min(0).max(100))))
+                                .argument(Argument.integer("shares", "Number of shares")
+                                        .min(0)
+                                        .max(100))))
                 .build();
     }
 }

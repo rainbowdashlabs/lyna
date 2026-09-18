@@ -1,19 +1,23 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.core;
 
-import de.chojo.lyna.data.access.Guilds;
 import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
+import de.chojo.jdautil.interactions.slash.Slash;
+import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
-
-import de.chojo.jdautil.interactions.slash.Slash;
-import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 
 import java.util.Collections;
 import java.util.Set;
@@ -30,8 +34,12 @@ public class Bot {
     private ShardManager shardManager;
 
     @Inject
-    public Bot(Guilds guilds, Threading threading, Conf configuration, Set<SlashProvider<Slash>> commands,
-               MailingService mailingService) {
+    public Bot(
+            Guilds guilds,
+            Threading threading,
+            Conf configuration,
+            Set<SlashProvider<Slash>> commands,
+            MailingService mailingService) {
         this.guilds = guilds;
         this.threading = threading;
         this.configuration = configuration;
@@ -56,12 +64,11 @@ public class Bot {
         initInteractions();
     }
 
-    private void initServices() {
-    }
+    private void initServices() {}
 
     private void initShardManager() {
-        shardManager = DefaultShardManagerBuilder
-                .createDefault(configuration.main().baseSettings().token())
+        shardManager = DefaultShardManagerBuilder.createDefault(
+                        configuration.main().baseSettings().token())
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS)
                 .setEnableShutdownHook(false)
                 .setThreadFactory(Threading.createThreadFactory(threading.jdaGroup()))
@@ -75,11 +82,15 @@ public class Bot {
                 .testMode("true".equals(System.getProperty("bot.testmode", "false")))
                 .cleanGuildCommands("true".equals(System.getProperty("bot.cleancommand", "false")))
                 .withCommandErrorHandler((context, throwable) -> {
-                    log.error(LogNotify.NOTIFY_ADMIN, "Command execution of {} failed\n{}",
-                            context.interaction().meta().name(), context.args(), throwable);
+                    log.error(
+                            LogNotify.NOTIFY_ADMIN,
+                            "Command execution of {} failed\n{}",
+                            context.interaction().meta().name(),
+                            context.args(),
+                            throwable);
                 })
-                .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.main().baseSettings()
-                        .botGuild()))
+                .withGuildCommandMapper(cmd -> Collections.singletonList(
+                        configuration.main().baseSettings().botGuild()))
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
                 .withDefaultModalService()

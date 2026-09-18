@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.products.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -23,7 +28,7 @@ public class Delete implements SlashHandler {
         var id = event.getOption("name", OptionMapping::getAsInt);
         Optional<Product> product = guilds.guild(event.getGuild()).products().byId(id);
 
-        if(product.isEmpty()){
+        if (product.isEmpty()) {
             event.reply("Unknown product").setEphemeral(true).queue();
             return;
         }
@@ -37,7 +42,8 @@ public class Delete implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("name")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue()))
+                    .queue();
         }
     }
 }

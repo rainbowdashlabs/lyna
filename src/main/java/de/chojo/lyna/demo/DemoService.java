@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.demo;
 
 import com.google.inject.Inject;
@@ -10,7 +15,6 @@ import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
@@ -18,9 +22,9 @@ import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import de.chojo.lyna.gateway.Gateway;
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -60,10 +64,16 @@ public class DemoService {
     private final Gateway gateway;
 
     @Inject
-    public DemoService(Conf configuration, Gateway gateway, Guilds guilds, Accounts accounts,
-                       AccountLicenses accountLicenses, LicenseInvites licenseInvites,
-                       DownloadLog downloadLog, DemoArtifacts artifacts,
-                       InstanceOperators instanceOperators) {
+    public DemoService(
+            Conf configuration,
+            Gateway gateway,
+            Guilds guilds,
+            Accounts accounts,
+            AccountLicenses accountLicenses,
+            LicenseInvites licenseInvites,
+            DownloadLog downloadLog,
+            DemoArtifacts artifacts,
+            InstanceOperators instanceOperators) {
         this.configuration = configuration;
         this.gateway = gateway;
         this.guilds = guilds;
@@ -118,10 +128,9 @@ public class DemoService {
     public List<DemoAccount> accounts() {
         List<DemoAccount> out = new ArrayList<>();
         for (String id : artifacts.of(DemoArtifacts.ACCOUNT)) {
-            accounts.findById(Integer.parseInt(id)).ifPresent(account -> out.add(new DemoAccount(
-                    account.email(),
-                    roleOf(out.size()),
-                    describe(out.size()))));
+            accounts.findById(Integer.parseInt(id))
+                    .ifPresent(account ->
+                            out.add(new DemoAccount(account.email(), roleOf(out.size()), describe(out.size()))));
         }
         return out;
     }
@@ -133,20 +142,22 @@ public class DemoService {
             return Optional.empty();
         }
         Guild guild = gateway.guild(licenseGuild.get().guildId()).orElseThrow();
-        List<Member> members = guild.getMembers().stream().filter(member -> !member.getUser().isBot()).toList();
+        List<Member> members = guild.getMembers().stream()
+                .filter(member -> !member.getUser().isBot())
+                .toList();
         if (members.size() < 2) {
-            log.warn("[demo] the guild has {} member(s) to seed a cast from, and two are needed",
-                    members.size());
+            log.warn("[demo] the guild has {} member(s) to seed a cast from, and two are needed", members.size());
             return Optional.empty();
         }
 
-        var seeded = new DemoData(
-                seedCatalogue(licenseGuild.get(), guild),
-                seedAccounts(members));
+        var seeded = new DemoData(seedCatalogue(licenseGuild.get(), guild), seedAccounts(members));
         seedLicences(licenseGuild.get(), seeded, members);
         seedSettings(licenseGuild.get());
-        log.info("[demo] seeded {} product(s) and {} account(s) in {}",
-                seeded.products().size(), seeded.accounts().size(), guild.getName());
+        log.info(
+                "[demo] seeded {} product(s) and {} account(s) in {}",
+                seeded.products().size(),
+                seeded.accounts().size(),
+                guild.getName());
         return Optional.of(seeded);
     }
 
@@ -159,15 +170,17 @@ public class DemoService {
         DownloadType dev = create(licenseGuild, "Dev", "The next one, early", ReleaseType.DEV);
 
         List<Product> products = new ArrayList<>();
-        products.add(product(licenseGuild, guild, "Demo Free", "https://example.invalid/free", true, false,
-                stable, dev));
+        products.add(
+                product(licenseGuild, guild, "Demo Free", "https://example.invalid/free", true, false, stable, dev));
         products.add(product(licenseGuild, guild, "Demo Premium", null, false, true, stable, dev));
         products.add(product(licenseGuild, guild, "Demo Unsellable", null, false, false, stable));
         return products;
     }
 
     private DownloadType create(LicenseGuild licenseGuild, String name, String description, ReleaseType type) {
-        DownloadType created = licenseGuild.downloadTypes().create(name, description, type)
+        DownloadType created = licenseGuild
+                .downloadTypes()
+                .create(name, description, type)
                 .orElseThrow(() -> new IllegalStateException("Could not create the demo download type " + name));
         artifacts.record(DemoArtifacts.DOWNLOAD_TYPE, Integer.toString(created.id()));
         return created;
@@ -179,9 +192,17 @@ public class DemoService {
      * <p>The role is the guild's own everybody-role. A demo is not demonstrating role management, and
      * making roles in somebody's guild to show a storefront would be a poor trade.
      */
-    private Product product(LicenseGuild licenseGuild, Guild guild, String name, String url, boolean free,
-                            boolean trial, DownloadType... types) {
-        Product product = licenseGuild.products().create(name, guild.getPublicRole(), url, free, trial)
+    private Product product(
+            LicenseGuild licenseGuild,
+            Guild guild,
+            String name,
+            String url,
+            boolean free,
+            boolean trial,
+            DownloadType... types) {
+        Product product = licenseGuild
+                .products()
+                .create(name, guild.getPublicRole(), url, free, trial)
                 .orElseThrow(() -> new IllegalStateException("Could not create the demo product " + name));
         artifacts.record(DemoArtifacts.PRODUCT, Integer.toString(product.id()));
         for (DownloadType type : types) {
@@ -206,10 +227,13 @@ public class DemoService {
     private List<Account> seedAccounts(List<Member> members) {
         List<Account> cast = new ArrayList<>();
         for (int i = 0; i < Math.min(ROLES.length, members.size()); i++) {
-            Account account = accounts.create(
-                    "demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
+            Account account =
+                    accounts.create("demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
             accounts.confirmEmail(account.id(), account.email());
-            accounts.link(account.id(), members.get(i).getIdLong(), AccountIdentity.Verification.OAUTH,
+            accounts.link(
+                    account.id(),
+                    members.get(i).getIdLong(),
+                    AccountIdentity.Verification.OAUTH,
                     members.get(i).getUser().getName());
             artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
             cast.add(account);
@@ -237,19 +261,21 @@ public class DemoService {
     private void seedLicences(LicenseGuild licenseGuild, DemoData seeded, List<Member> members) {
         if (seeded.accounts().size() < 2) return;
         long owner = members.get(1).getIdLong();
-        long sharee = members.size() > 2 ? members.get(2).getIdLong() : members.get(0).getIdLong();
+        long sharee =
+                members.size() > 2 ? members.get(2).getIdLong() : members.get(0).getIdLong();
 
         for (Product product : seeded.products()) {
             if (product.free()) continue;
             Optional<License> licence = product.createLicense("demo-owner@example.invalid");
             if (licence.isEmpty()) continue;
             licence.get().grantAccess(ReleaseType.STABLE);
-            accountLicenses.addSharee(licence.get().id(),
-                    de.chojo.lyna.data.access.Accounts.accountIdForDiscord(sharee));
+            accountLicenses.addSharee(
+                    licence.get().id(), de.chojo.lyna.data.access.Accounts.accountIdForDiscord(sharee));
             seeded.accounts().stream()
                     .filter(account -> "demo-web-only@example.invalid".equals(account.email()))
                     .findFirst()
-                    .ifPresent(webOnly -> accountLicenses.addSharee(licence.get().id(), webOnly.id()));
+                    .ifPresent(
+                            webOnly -> accountLicenses.addSharee(licence.get().id(), webOnly.id()));
             licenseInvites.invite(licence.get().id(), "demo-invited@example.invalid");
             claim(licence.get(), owner);
             seedDownloads(product, seeded, licence.get());
@@ -261,8 +287,8 @@ public class DemoService {
      * state, not acting out somebody claiming one.
      */
     private void claim(License licence, long discordId) {
-        de.chojo.sadu.queries.api.query.Query
-                .query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
+        de.chojo.sadu.queries.api.query.Query.query(
+                        "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
                 .single(de.chojo.sadu.queries.api.call.Call.call()
                         .bind(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(discordId))
                         .bind(licence.id()))
@@ -276,8 +302,16 @@ public class DemoService {
         int downloadId = downloads.getFirst().id();
         for (int i = 0; i < 8; i++) {
             Account account = seeded.accounts().get(i % seeded.accounts().size());
-            downloadLog.record(account.id(), null, licence.id(), product.id(), downloadId,
-                    "1.%d.0".formatted(i), i % 2 == 0 ? "license" : "sub_license", "Demo seed", null);
+            downloadLog.record(
+                    account.id(),
+                    null,
+                    licence.id(),
+                    product.id(),
+                    downloadId,
+                    "1.%d.0".formatted(i),
+                    i % 2 == 0 ? "license" : "sub_license",
+                    "Demo seed",
+                    null);
         }
     }
 
@@ -315,11 +349,9 @@ public class DemoService {
      * @param email what to sign in as
      * @param role  a short name for the part this account plays
      */
-    public record DemoAccount(String email, String role, String description) {
-    }
+    public record DemoAccount(String email, String role, String description) {}
 
-    public record DemoData(List<Product> products, List<Account> accounts) {
-    }
+    public record DemoData(List<Product> products, List<Account> accounts) {}
 
     /**
      * @return when the data was last laid out, for saying so on the page

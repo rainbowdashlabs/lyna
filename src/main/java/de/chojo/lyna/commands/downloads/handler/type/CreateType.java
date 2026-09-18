@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.downloads.handler.type;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -9,7 +14,6 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-
 
 public class CreateType implements SlashHandler {
     private final Guilds guilds;
@@ -29,14 +33,17 @@ public class CreateType implements SlashHandler {
             event.reply("New type created").setEphemeral(true).queue();
             return;
         }
-        event.reply("Could not create new type. Maybe it already exists.").setEphemeral(true).queue();
+        event.reply("Could not create new type. Maybe it already exists.")
+                .setEphemeral(true)
+                .queue();
     }
 
     @Override
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("release_type")) {
-            event.replyChoices(Completion.complete(focusedOption.getValue(), ReleaseType.class)).queue();
+            event.replyChoices(Completion.complete(focusedOption.getValue(), ReleaseType.class))
+                    .queue();
         }
     }
 }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna;
 
 import com.google.inject.Guice;
@@ -5,10 +10,10 @@ import com.google.inject.Injector;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
-import de.chojo.lyna.web.WebService;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.inject.LynaModule;
 import de.chojo.lyna.mail.MailingService;
+import de.chojo.lyna.web.WebService;
 
 import java.io.IOException;
 import java.sql.SQLException;

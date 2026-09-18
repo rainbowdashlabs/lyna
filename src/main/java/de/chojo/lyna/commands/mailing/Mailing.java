@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.mailing;
 
 import com.google.inject.Inject;
@@ -21,22 +26,23 @@ public class Mailing extends SlashCommand {
                 .adminCommand()
                 .subCommand(SubCommand.of("create", "Create a new mailing setting")
                         .handler(new Create(guilds))
-                        .argument(Argument.text("product", "product").asRequired().withAutoComplete())
-                        .argument(Argument.text("mail_name", "Name of product in the mail").asRequired())
-                        .argument(Argument.attachment("mail", "A file containing the mail text"))
-                )
+                        .argument(
+                                Argument.text("product", "product").asRequired().withAutoComplete())
+                        .argument(Argument.text("mail_name", "Name of product in the mail")
+                                .asRequired())
+                        .argument(Argument.attachment("mail", "A file containing the mail text")))
                 .subCommand(SubCommand.of("send", "Send a mail to a person")
                         .handler(new Send(mailingService, configuration, guilds, accounts))
-                        .argument(Argument.text("product", "product").asRequired().withAutoComplete())
-                        .argument(Argument.text("address", "The receiver of the mail").asRequired())
-                        .argument(Argument.text("name", "name of the receiver").asRequired())
-                )
+                        .argument(
+                                Argument.text("product", "product").asRequired().withAutoComplete())
+                        .argument(Argument.text("address", "The receiver of the mail")
+                                .asRequired())
+                        .argument(Argument.text("name", "name of the receiver").asRequired()))
                 .subCommand(SubCommand.of("edit", "Edit a mailing setting")
                         .handler(new Edit(guilds))
-                        .argument(Argument.text("product", "product").asRequired().withAutoComplete())
+                        .argument(
+                                Argument.text("product", "product").asRequired().withAutoComplete())
                         .argument(Argument.text("mail_name", "Name of product in the mail"))
-                        .argument(Argument.attachment("mail", "A file containing the mail text"))
-                )
-        );
+                        .argument(Argument.attachment("mail", "A file containing the mail text"))));
     }
 }

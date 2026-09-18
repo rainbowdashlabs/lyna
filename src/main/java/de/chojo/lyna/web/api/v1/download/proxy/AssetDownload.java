@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.download.proxy;
 
 public record AssetDownload(
@@ -10,15 +15,20 @@ public record AssetDownload(
         String source,
         Integer accountId,
         Long discordId,
-        Integer licenseId
-) {
+        Integer licenseId) {
     public AssetDownload(String assetId, Runnable postDownload, String userId) {
         this(assetId, postDownload, userId, null, null, null, null, null, null, null);
     }
 
-    public AssetDownload withDownloadContext(int productId, int downloadId, String version, String source,
-                                              Integer accountId, Long discordId, Integer licenseId) {
-        return new AssetDownload(assetId, postDownload, userId, productId, downloadId, version, source,
-                accountId, discordId, licenseId);
+    public AssetDownload withDownloadContext(
+            int productId,
+            int downloadId,
+            String version,
+            String source,
+            Integer accountId,
+            Long discordId,
+            Integer licenseId) {
+        return new AssetDownload(
+                assetId, postDownload, userId, productId, downloadId, version, source, accountId, discordId, licenseId);
     }
 }

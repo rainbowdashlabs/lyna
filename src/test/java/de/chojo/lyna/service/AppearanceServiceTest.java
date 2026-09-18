@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.data.dao.InstanceSettings;
@@ -23,8 +28,7 @@ class AppearanceServiceTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("account_identity", "account");
-        instanceSettings.update(new InstanceSettings(
-                "lyna", true, List.of(), null));
+        instanceSettings.update(new InstanceSettings("lyna", true, List.of(), null));
         account = accounts.create("appearance@example.invalid", "hash");
     }
 
@@ -39,21 +43,19 @@ class AppearanceServiceTest extends RepositoryTestBase {
         Account current = accounts.findById(account.id()).orElseThrow();
 
         String nextTheme = current.theme();
-        if (policy.allowUserTheme() && theme != null
+        if (policy.allowUserTheme()
+                && theme != null
                 && (policy.enabledThemes().isEmpty() || policy.enabledThemes().contains(theme))) {
             nextTheme = theme.isBlank() ? null : theme;
         }
-        String nextDarkMode = darkMode == null
-                ? current.darkMode()
-                : darkMode.isBlank() ? null : darkMode;
+        String nextDarkMode = darkMode == null ? current.darkMode() : darkMode.isBlank() ? null : darkMode;
 
         accounts.setAppearance(account.id(), nextTheme, nextDarkMode);
         Account stored = accounts.findById(account.id()).orElseThrow();
         return new Stored(stored.theme(), stored.darkMode());
     }
 
-    private record Stored(String theme, String darkMode) {
-    }
+    private record Stored(String theme, String darkMode) {}
 
     @Test
     @DisplayName("A fresh account has chosen nothing, so it follows the operator's defaults")
@@ -98,8 +100,7 @@ class AppearanceServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A theme outside the operator's whitelist is not taken")
     void themeOutsideTheWhitelistIsRefused() {
-        instanceSettings.update(new InstanceSettings(
-                "lyna", true, List.of("lyna", "forest"), null));
+        instanceSettings.update(new InstanceSettings("lyna", true, List.of("lyna", "forest"), null));
 
         assertNull(apply("midnight", null).theme());
         assertEquals("forest", apply("forest", null).theme());
@@ -108,18 +109,15 @@ class AppearanceServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("With the theme forced for everyone, the account's pick is ignored")
     void lockedThemeIgnoresThePick() {
-        instanceSettings.update(new InstanceSettings(
-                "lyna", false, List.of(), null));
+        instanceSettings.update(new InstanceSettings("lyna", false, List.of(), null));
 
         assertNull(apply("midnight", null).theme());
     }
 
-
     @Test
     @DisplayName("Dark mode is the account's own, whatever the operator locked")
     void darkModeIsAlwaysTheAccountsOwn() {
-        instanceSettings.update(new InstanceSettings(
-                "lyna", false, List.of(), null));
+        instanceSettings.update(new InstanceSettings("lyna", false, List.of(), null));
 
         assertEquals("dark", apply(null, "dark").darkMode());
     }

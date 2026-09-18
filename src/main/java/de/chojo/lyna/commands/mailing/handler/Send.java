@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.mailing.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -11,8 +16,8 @@ import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
-import de.chojo.lyna.mail.PurchaseRecipient;
 import de.chojo.lyna.mail.MailingService;
+import de.chojo.lyna.mail.PurchaseRecipient;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -51,12 +56,12 @@ public class Send implements SlashHandler {
             return;
         }
 
-
-
         Optional<License> license = product.get().createLicense(address);
 
         if (license.isEmpty()) {
-            event.reply("A license does already exist for this address").setEphemeral(true).queue();
+            event.reply("A license does already exist for this address")
+                    .setEphemeral(true)
+                    .queue();
             return;
         }
 
@@ -64,8 +69,13 @@ public class Send implements SlashHandler {
 
         Mailing mailing = optMailing.get();
         boolean handedOver = accounts.handOver(license.get().id(), address);
-        Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
-                license.get().key(), name, address, mailing.product().url(),
+        Mail mail = MailCreator.createLicenseMessage(
+                mailingService.renderer(),
+                mailing,
+                license.get().key(),
+                name,
+                address,
+                mailing.product().url(),
                 handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
 
         mailingService.sendMail(mail);
@@ -76,7 +86,8 @@ public class Send implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue(), false)).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue(), false))
+                    .queue();
         }
     }
 }

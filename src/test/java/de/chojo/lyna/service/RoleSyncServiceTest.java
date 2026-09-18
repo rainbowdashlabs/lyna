@@ -1,9 +1,14 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
@@ -61,15 +66,23 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         }
 
         private boolean stillEntitled(long discordId, int productId) {
-            return accountLicenses.entitledProductIds(Accounts.accountIdForDiscord(discordId))
+            return accountLicenses
+                    .entitledProductIds(Accounts.accountIdForDiscord(discordId))
                     .contains(productId);
         }
     }
 
     @BeforeEach
     void seed() throws SQLException {
-        clear("license_invite", "user_sub_license", "user_license", "license_access", "license", "product",
-                "account_identity", "account");
+        clear(
+                "license_invite",
+                "user_sub_license",
+                "user_license",
+                "license_access",
+                "license",
+                "product",
+                "account_identity",
+                "account");
         roles = new RecordingRoleSync();
 
         Conf configuration = TestConf.defaults();
@@ -77,7 +90,8 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         guilds.roles(roles);
         licenseGuild = guilds.guild(GUILD);
 
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             int productId = insert(statement, """
                     INSERT INTO product (guild_id, name, role, free) VALUES (%d, 'Roles', 77, FALSE) RETURNING id
                     """.formatted(GUILD));
@@ -161,8 +175,12 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     void ownerIsUnaffectedByAShareBeingCleared() {
         license().clearSubUsers();
 
-        assertTrue(accountLicenses.entitledProductIds(Accounts.accountIdForDiscord(OWNER)).contains(license().product().id()));
-        assertTrue(accountLicenses.entitledProductIds(Accounts.accountIdForDiscord(SHAREE)).isEmpty());
+        assertTrue(accountLicenses
+                .entitledProductIds(Accounts.accountIdForDiscord(OWNER))
+                .contains(license().product().id()));
+        assertTrue(accountLicenses
+                .entitledProductIds(Accounts.accountIdForDiscord(SHAREE))
+                .isEmpty());
     }
 
     @Test
@@ -190,7 +208,8 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         assertEquals(2, sharees.size());
         assertEquals(1, license().subUsers().size());
         assertTrue(sharees.stream().anyMatch(s -> s.discordId() != null && s.discordId() == SHAREE));
-        var web = sharees.stream().filter(s -> s.discordId() == null).findFirst().orElseThrow();
+        var web =
+                sharees.stream().filter(s -> s.discordId() == null).findFirst().orElseThrow();
         assertTrue(web.name().startsWith("ada#"));
         assertEquals(web.name(), web.display());
     }
@@ -217,7 +236,10 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         var unnamed = accounts.create("unnamed@example.invalid", "hash");
         accountLicenses.addSharee(licenseId, unnamed.id());
 
-        var web = license().sharees().stream().filter(s -> s.discordId() == null).findFirst().orElseThrow();
+        var web = license().sharees().stream()
+                .filter(s -> s.discordId() == null)
+                .findFirst()
+                .orElseThrow();
 
         assertEquals("account " + unnamed.id(), web.name());
     }

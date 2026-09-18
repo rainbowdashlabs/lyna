@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 import {readonly, ref} from 'vue'
 import {listAdminGuilds, type AdminGuild} from '~/api/admin'
 

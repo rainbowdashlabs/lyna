@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
@@ -23,16 +28,21 @@ public class Products {
 
     public Optional<Product> create(String name, Role role, @Nullable String url, boolean free, boolean trial) {
         return query("INSERT INTO product(guild_id, name, url, role, free) VALUES (?,?,?,?,?) RETURNING id")
-                .single(call().bind(licenseGuild.guildId()).bind(name).bind(url)
-                        .bind(role.getIdLong()).bind(free))
-                .map(row -> new Product(this, row.getInt("id"), name, url, role.isPublicRole() ? 0 : role.getIdLong(), free, trial))
+                .single(call().bind(licenseGuild.guildId())
+                        .bind(name)
+                        .bind(url)
+                        .bind(role.getIdLong())
+                        .bind(free))
+                .map(row -> new Product(
+                        this, row.getInt("id"), name, url, role.isPublicRole() ? 0 : role.getIdLong(), free, trial))
                 .first();
     }
 
     public List<Product> all() {
         return query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ?")
                 .single(call().bind(licenseGuild.guildId()))
-                .map(row -> new Product(this,
+                .map(row -> new Product(
+                        this,
                         row.getInt("id"),
                         row.getString("name"),
                         row.getString("url"),
@@ -43,16 +53,16 @@ public class Products {
     }
 
     public List<Command.Choice> complete(String value) {
-        return all().stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
+        return all().stream()
+                .filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
                 .map(p -> new Command.Choice(p.name(), p.id()))
                 .limit(25)
                 .toList();
-
-
     }
 
     public List<Command.Choice> complete(String value, boolean free) {
-        return all().stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
+        return all().stream()
+                .filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
                 .filter(p -> p.free() == free)
                 .map(p -> new Command.Choice(p.name(), p.id()))
                 .limit(25)
@@ -60,7 +70,8 @@ public class Products {
     }
 
     public List<Command.Choice> completeTrials(String value) {
-        return all().stream().filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
+        return all().stream()
+                .filter(p -> p.name().toLowerCase().startsWith(value) || value.isBlank())
                 .filter(p -> p.trial() && !p.free())
                 .map(p -> new Command.Choice(p.name(), p.id()))
                 .limit(25)
@@ -70,7 +81,8 @@ public class Products {
     public Optional<Product> byId(int id) {
         return query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ? AND id = ?")
                 .single(call().bind(licenseGuild.guildId()).bind(id))
-                .map(row -> new Product(this,
+                .map(row -> new Product(
+                        this,
                         row.getInt("id"),
                         row.getString("name"),
                         row.getString("url"),

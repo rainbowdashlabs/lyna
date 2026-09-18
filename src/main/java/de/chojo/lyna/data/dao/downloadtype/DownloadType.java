@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.downloadtype;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
@@ -26,7 +31,8 @@ public class DownloadType {
     }
 
     public static DownloadType build(LicenseGuild guild, Row row) throws SQLException {
-        return new DownloadType(guild,
+        return new DownloadType(
+                guild,
                 row.getInt("id"),
                 row.getString("name"),
                 row.getString("description"),
@@ -69,7 +75,8 @@ public class DownloadType {
 
     private boolean set(String column, Function<Call, Call> consumer) {
         return query("UPDATE download_type SET %s = ? WHERE id = ?", column)
-                .single(consumer.apply(call()).bind(id)).update()
+                .single(consumer.apply(call()).bind(id))
+                .update()
                 .changed();
     }
 

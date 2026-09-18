@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail.blocks;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,10 +61,12 @@ public class MailBlockRenderer {
     private String renderBlock(JsonNode block, Map<String, Object> values) {
         String type = block.path("type").asText("");
         return switch (type) {
-            case "heading" -> "<h2 style=\"color:#1a1a1a;margin:0 0 16px;font-size:19px;\">%s</h2>"
-                    .formatted(text(block.path("text").asText(""), values));
-            case "paragraph" -> "<p style=\"color:#555;font-size:15px;line-height:1.6;\">%s</p>"
-                    .formatted(text(block.path("text").asText(""), values));
+            case "heading" ->
+                "<h2 style=\"color:#1a1a1a;margin:0 0 16px;font-size:19px;\">%s</h2>"
+                        .formatted(text(block.path("text").asText(""), values));
+            case "paragraph" ->
+                "<p style=\"color:#555;font-size:15px;line-height:1.6;\">%s</p>"
+                        .formatted(text(block.path("text").asText(""), values));
             case "key" -> renderKey(block, values);
             case "button" -> renderButton(block, values);
             case "list" -> renderList(block, values);
@@ -73,10 +80,11 @@ public class MailBlockRenderer {
         String label = text(block.path("label").asText("Your licence key"), values);
         String key = escape(String.valueOf(values.getOrDefault("key", "")));
         return ("<p style=\"color:#888;font-size:12px;text-transform:uppercase;letter-spacing:.06em;"
-                + "margin:0 0 6px;text-align:center;\">%s</p>"
-                + "<code style=\"display:block;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;"
-                + "padding:14px 16px;margin:20px 0;font-family:'Courier New',Courier,monospace;font-size:16px;"
-                + "color:#1a1a1a;word-break:break-all;text-align:center;\">%s</code>").formatted(label, key);
+                        + "margin:0 0 6px;text-align:center;\">%s</p>"
+                        + "<code style=\"display:block;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;"
+                        + "padding:14px 16px;margin:20px 0;font-family:'Courier New',Courier,monospace;font-size:16px;"
+                        + "color:#1a1a1a;word-break:break-all;text-align:center;\">%s</code>")
+                .formatted(label, key);
     }
 
     /**
@@ -92,15 +100,16 @@ public class MailBlockRenderer {
         String url = substitutePlain(block.path("url").asText(""), values).trim();
         if (!url.startsWith("http://") && !url.startsWith("https://")) return "";
         return ("<div style=\"text-align:center;margin:24px 0;\">"
-                + "<a style=\"display:inline-block;background:#E92063;color:#fff;padding:12px 32px;border-radius:6px;"
-                + "text-decoration:none;font-weight:bold;font-size:15px;\" href=\"%s\">%s</a></div>")
+                        + "<a style=\"display:inline-block;background:#E92063;color:#fff;padding:12px 32px;border-radius:6px;"
+                        + "text-decoration:none;font-weight:bold;font-size:15px;\" href=\"%s\">%s</a></div>")
                 .formatted(escape(url), label);
     }
 
     private String renderList(JsonNode block, Map<String, Object> values) {
         JsonNode items = block.path("items");
         if (!items.isArray() || items.isEmpty()) return "";
-        StringBuilder out = new StringBuilder("<ul style=\"color:#555;font-size:15px;line-height:1.6;padding-left:20px;\">");
+        StringBuilder out =
+                new StringBuilder("<ul style=\"color:#555;font-size:15px;line-height:1.6;padding-left:20px;\">");
         for (JsonNode item : items) {
             out.append("<li>").append(text(item.asText(""), values)).append("</li>");
         }
@@ -123,8 +132,8 @@ public class MailBlockRenderer {
         Matcher matcher = LINK.matcher(escaped);
         StringBuilder out = new StringBuilder();
         while (matcher.find()) {
-            String replacement = "<a style=\"color:#E92063;\" href=\"%s\">%s</a>"
-                    .formatted(matcher.group(2), matcher.group(1));
+            String replacement =
+                    "<a style=\"color:#E92063;\" href=\"%s\">%s</a>".formatted(matcher.group(2), matcher.group(1));
             matcher.appendReplacement(out, Matcher.quoteReplacement(replacement));
         }
         return matcher.appendTail(out).toString();

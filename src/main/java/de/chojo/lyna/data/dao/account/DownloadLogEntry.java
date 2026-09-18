@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.account;
 
 import java.time.Instant;
@@ -12,6 +17,4 @@ public record DownloadLogEntry(
         int downloadId,
         String version,
         String source,
-        Instant downloadedAt
-) {
-}
+        Instant downloadedAt) {}

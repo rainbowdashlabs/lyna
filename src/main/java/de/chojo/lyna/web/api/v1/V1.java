@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1;
 
 import com.google.inject.Inject;
@@ -29,8 +34,14 @@ public class V1 {
     private final DemoApi demoApi;
 
     @Inject
-    public V1(Download download, Update update, KoFiApi kofi, Products products, Releases releases,
-              Wizard wizard, DemoApi demoApi) {
+    public V1(
+            Download download,
+            Update update,
+            KoFiApi kofi,
+            Products products,
+            Releases releases,
+            Wizard wizard,
+            DemoApi demoApi) {
         this.download = download;
         this.update = update;
         this.kofi = kofi;

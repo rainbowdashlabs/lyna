@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -126,11 +131,13 @@ public class MailTemplateRenderer {
 
     private Map<String, String> loadSubjects(String locale) {
         Map<String, String> loaded = new HashMap<>();
-        try (InputStream in = MailTemplateRenderer.class.getClassLoader()
-                .getResourceAsStream("i18n/mail_" + locale + ".json")) {
+        try (InputStream in =
+                MailTemplateRenderer.class.getClassLoader().getResourceAsStream("i18n/mail_" + locale + ".json")) {
             if (in == null) return loaded;
             JsonNode subject = json.readTree(in).path("subject");
-            subject.fieldNames().forEachRemaining(field -> loaded.put(field, subject.path(field).asText()));
+            subject.fieldNames()
+                    .forEachRemaining(
+                            field -> loaded.put(field, subject.path(field).asText()));
         } catch (IOException e) {
             throw new IllegalStateException("Could not read the mail subjects for " + locale, e);
         }

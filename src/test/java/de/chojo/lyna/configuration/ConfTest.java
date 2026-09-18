@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration;
 
 import org.junit.jupiter.api.DisplayName;
@@ -61,7 +66,8 @@ class ConfTest {
 
         assertEquals("from-the-old-file", conf.main().database().host());
         assertEquals(9, conf.main().database().poolSize());
-        assertTrue(Files.exists(directory.resolve("config.yaml")),
+        assertTrue(
+                Files.exists(directory.resolve("config.yaml")),
                 "the values should have been written on in the format that is now read");
         assertTrue(Files.readString(directory.resolve("config.yaml")).contains("from-the-old-file"));
     }
@@ -170,7 +176,8 @@ class ConfTest {
 
         String written = Files.readString(directory.resolve("config.yaml"));
         assertTrue(written.contains("password"), "the file should still carry the key");
-        assertFalse(written.contains("never-write-me-down"),
+        assertFalse(
+                written.contains("never-write-me-down"),
                 "a secret supplied from outside the file must not be saved into it");
     }
 

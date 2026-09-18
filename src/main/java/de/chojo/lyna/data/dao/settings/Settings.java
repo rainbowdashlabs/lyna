@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.settings;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
@@ -27,7 +32,9 @@ public class Settings {
         if (license == null) {
             license = query("SELECT * FROM license_settings WHERE guild_id = ?")
                     .single(call().bind(guildId()))
-                    .map(row -> new License(this, row.getInt("shares"),
+                    .map(row -> new License(
+                            this,
+                            row.getInt("shares"),
                             row.getObject("admin_role_id") == null ? null : row.getLong("admin_role_id")))
                     .first()
                     .orElseGet(() -> new License(this));

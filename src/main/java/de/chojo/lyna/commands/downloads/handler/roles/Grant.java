@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.downloads.handler.roles;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -22,7 +27,8 @@ public class Grant implements SlashHandler {
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
-        var optProduct = guilds.guild(event.getGuild()).products().byId(event.getOption("product", OptionMapping::getAsInt));
+        var optProduct =
+                guilds.guild(event.getGuild()).products().byId(event.getOption("product", OptionMapping::getAsInt));
         if (optProduct.isEmpty()) {
             event.reply("Invalid Product").setEphemeral(true).queue();
             return;
@@ -42,10 +48,12 @@ public class Grant implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue()))
+                    .queue();
         }
         if (focusedOption.getName().equals("type")) {
-            event.replyChoices(Completion.complete(focusedOption.getValue(), ReleaseType.class)).queue();
+            event.replyChoices(Completion.complete(focusedOption.getValue(), ReleaseType.class))
+                    .queue();
         }
     }
 }

@@ -1,11 +1,15 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration.elements;
 
+import de.chojo.lyna.util.LicenseCreator;
 import dev.chojo.ocular.override.Env;
 import dev.chojo.ocular.override.Overwrite;
-import dev.chojo.ocular.override.Prop;
 import dev.chojo.ocular.override.OverwritePrefix;
-
-import de.chojo.lyna.util.LicenseCreator;
+import dev.chojo.ocular.override.Prop;
 
 @OverwritePrefix("LICENSE")
 public class License {

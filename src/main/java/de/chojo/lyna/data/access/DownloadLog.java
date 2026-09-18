@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
@@ -34,16 +39,22 @@ public class DownloadLog {
               AND (?::TIMESTAMP IS NULL OR dl.downloaded_at <= ?::TIMESTAMP)
             """;
 
-
-    public void record(Integer accountId, Long discordId, Integer licenseId, int productId,
-                       int downloadId, String version, String source, String userAgent, String ipHash) {
+    public void record(
+            Integer accountId,
+            Long discordId,
+            Integer licenseId,
+            int productId,
+            int downloadId,
+            String version,
+            String source,
+            String userAgent,
+            String ipHash) {
         query("""
                 INSERT INTO download_log
                     (account_id, discord_id, license_id, product_id, download_id, version, source, user_agent, ip_hash)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """)
-                .single(call()
-                        .bind(accountId)
+                .single(call().bind(accountId)
                         .bind(discordId)
                         .bind(licenseId)
                         .bind(productId)
@@ -113,8 +124,15 @@ public class DownloadLog {
      * @param offset    rows to skip
      * @return the page, newest first
      */
-    public List<DownloadLogEntry> page(Integer accountId, Integer licenseId, Integer productId, String source,
-                                       Instant from, Instant to, int limit, int offset) {
+    public List<DownloadLogEntry> page(
+            Integer accountId,
+            Integer licenseId,
+            Integer productId,
+            String source,
+            Instant from,
+            Instant to,
+            int limit,
+            int offset) {
         return query(SELECT_ENTRY + FILTERS + """
                 ORDER BY dl.downloaded_at DESC
                 LIMIT ? OFFSET ?
@@ -129,8 +147,7 @@ public class DownloadLog {
     /**
      * @return how many rows the same filters match, which is what the page control counts
      */
-    public int count(Integer accountId, Integer licenseId, Integer productId, String source,
-                     Instant from, Instant to) {
+    public int count(Integer accountId, Integer licenseId, Integer productId, String source, Instant from, Instant to) {
         return query("SELECT count(*) AS total FROM download_log dl\n" + FILTERS)
                 .single(bindFilters(accountId, licenseId, productId, source, from, to))
                 .map(row -> row.getInt("total"))
@@ -154,20 +171,23 @@ public class DownloadLog {
                 .all();
     }
 
-    private static de.chojo.sadu.queries.api.call.Call bindFilters(Integer accountId, Integer licenseId,
-                                                                   Integer productId, String source,
-                                                                   Instant from, Instant to) {
-        return call()
-                .bind(accountId).bind(accountId)
-                .bind(licenseId).bind(licenseId)
-                .bind(productId).bind(productId)
-                .bind(source).bind(source)
-                .bind(from == null ? null : Timestamp.from(from)).bind(from == null ? null : Timestamp.from(from))
-                .bind(to == null ? null : Timestamp.from(to)).bind(to == null ? null : Timestamp.from(to));
+    private static de.chojo.sadu.queries.api.call.Call bindFilters(
+            Integer accountId, Integer licenseId, Integer productId, String source, Instant from, Instant to) {
+        return call().bind(accountId)
+                .bind(accountId)
+                .bind(licenseId)
+                .bind(licenseId)
+                .bind(productId)
+                .bind(productId)
+                .bind(source)
+                .bind(source)
+                .bind(from == null ? null : Timestamp.from(from))
+                .bind(from == null ? null : Timestamp.from(from))
+                .bind(to == null ? null : Timestamp.from(to))
+                .bind(to == null ? null : Timestamp.from(to));
     }
 
-    public record ProductOption(int id, String name) {
-    }
+    public record ProductOption(int id, String name) {}
 
     private static DownloadLogEntry readEntry(Row row) throws SQLException {
         return new DownloadLogEntry(

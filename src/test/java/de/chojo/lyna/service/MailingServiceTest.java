@@ -1,11 +1,16 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetup;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.core.Threading;
+import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.mail.MailingService;
 import jakarta.mail.Message;
 import org.junit.jupiter.api.AfterEach;
@@ -37,15 +42,17 @@ class MailingServiceTest {
 
     @BeforeEach
     void startMailServer() {
-        greenMail = new GreenMail(new ServerSetup[]{
-                ServerSetup.SMTP.dynamicPort(),
-                ServerSetup.IMAP.dynamicPort(),
+        greenMail = new GreenMail(new ServerSetup[] {
+            ServerSetup.SMTP.dynamicPort(), ServerSetup.IMAP.dynamicPort(),
         });
         greenMail.start();
         greenMail.setUser(USER, USER, PASSWORD);
 
-        service = new MailingService(Mockito.mock(Threading.class), Mockito.mock(Mailings.class),
-                Mockito.mock(de.chojo.lyna.data.access.Accounts.class), configuration());
+        service = new MailingService(
+                Mockito.mock(Threading.class),
+                Mockito.mock(Mailings.class),
+                Mockito.mock(de.chojo.lyna.data.access.Accounts.class),
+                configuration());
     }
 
     @AfterEach
@@ -72,8 +79,11 @@ class MailingServiceTest {
                     "mail.smtp.auth": "true"
                     "mail.imap.host": "127.0.0.1"
                     "mail.imap.port": "%d"
-                """.formatted(USER, PASSWORD,
-                greenMail.getSmtp().getPort(), greenMail.getImap().getPort()));
+                """.formatted(
+                        USER,
+                        PASSWORD,
+                        greenMail.getSmtp().getPort(),
+                        greenMail.getImap().getPort()));
     }
 
     /**

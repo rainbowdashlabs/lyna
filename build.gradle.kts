@@ -1,6 +1,7 @@
 plugins {
     application
     java
+    alias(libs.plugins.spotless)
 }
 
 group = "de.chojo"
@@ -158,5 +159,48 @@ tasks {
             excludeTestsMatching("*.service.*")
         }
         maxParallelForks = testForks()
+    }
+}
+
+spotless {
+    java {
+        target("src/**/*.java")
+        licenseHeaderFile(rootProject.file("HEADER.txt"))
+        trimTrailingWhitespace()
+        endWithNewline()
+        palantirJavaFormat("2.84.0")
+            .formatJavadoc(false)
+        removeUnusedImports()
+        importOrder("", "java", "javax", "\\#")
+        encoding("UTF-8")
+    }
+
+    format("typescript") {
+        licenseHeaderFile(
+            rootProject.file("HEADER.txt"),
+            "(import|const|let|var|export|function|type|interface|enum|class|abstract|async|declare|//|/\\*\\*)",
+        )
+        target("frontend/src/**/*.js", "frontend/src/**/*.ts")
+        targetExclude("frontend/node_modules/**", "frontend/.output/**", "frontend/.nuxt/**")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    format("vue") {
+        licenseHeaderFile(rootProject.file("HEADER.txt"), "(<template|<script|<style)")
+        target("frontend/src/**/*.vue")
+        targetExclude("frontend/node_modules/**", "frontend/.output/**", "frontend/.nuxt/**")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    format("frontendLocales") {
+        encoding("UTF-8")
+        target("frontend/src/i18n/locales/*.json")
+    }
+
+    format("backendLocales") {
+        encoding("UTF-8")
+        target("src/main/resources/i18n/*.json")
     }
 }

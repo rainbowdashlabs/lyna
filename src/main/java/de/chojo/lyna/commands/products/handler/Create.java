@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.products.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -25,10 +30,9 @@ public class Create implements SlashHandler {
         boolean free = event.getOption("free", () -> false, OptionMapping::getAsBoolean);
         boolean trial = event.getOption("trial", () -> false, OptionMapping::getAsBoolean);
 
-        Optional<Product> product = guilds.guild(event.getGuild()).products()
-                .create(name, role, url, free, trial);
+        Optional<Product> product = guilds.guild(event.getGuild()).products().create(name, role, url, free, trial);
 
-        if(product.isEmpty()){
+        if (product.isEmpty()) {
             event.reply("Product name is taken").setEphemeral(true).queue();
             return;
         }

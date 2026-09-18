@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.AccountEmail;
@@ -110,9 +115,7 @@ public class AccountEmails {
         query("""
                 INSERT INTO account_email (account_id, email, is_primary)
                 VALUES (?, ?, ?)
-                """)
-                .single(call().bind(accountId).bind(trimmed).bind(first))
-                .insert();
+                """).single(call().bind(accountId).bind(trimmed).bind(first)).insert();
     }
 
     /**
@@ -127,7 +130,9 @@ public class AccountEmails {
     public boolean verify(int accountId, String email) {
         if (email == null || email.isBlank()) return false;
         Optional<AccountEmail> owner = byAddress(email);
-        if (owner.isPresent() && owner.get().accountId() != accountId && owner.get().verified()) {
+        if (owner.isPresent()
+                && owner.get().accountId() != accountId
+                && owner.get().verified()) {
             throw new IllegalStateException("That address belongs to another account");
         }
         return query("""
@@ -158,9 +163,7 @@ public class AccountEmails {
         query("""
                 UPDATE account_email SET is_primary = TRUE
                 WHERE account_id = ? AND LOWER(email) = LOWER(?)
-                """)
-                .single(call().bind(accountId).bind(email.trim()))
-                .update();
+                """).single(call().bind(accountId).bind(email.trim())).update();
         return true;
     }
 

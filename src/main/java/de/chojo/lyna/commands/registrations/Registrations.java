@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.registrations;
 
 import com.google.inject.Inject;
@@ -28,23 +33,32 @@ public class Registrations implements SlashProvider<Slash> {
                 .group(Group.of("share", "Share your registrations")
                         .subCommand(SubCommand.of("add", "Add a user to your license")
                                 .handler(new Add(guilds))
-                                .argument(Argument.text("product", "The product to share").asRequired()
-                                                  .withAutoComplete())
-                                .argument(Argument.user("user", "User to share the license with.").asRequired()))
+                                .argument(Argument.text("product", "The product to share")
+                                        .asRequired()
+                                        .withAutoComplete())
+                                .argument(Argument.user("user", "User to share the license with.")
+                                        .asRequired()))
                         .subCommand(SubCommand.of("remove", "Remove user from a license")
                                 .handler(new Remove(guilds))
-                                .argument(Argument.text("product", "Product name").asRequired().withAutoComplete())
+                                .argument(Argument.text("product", "Product name")
+                                        .asRequired()
+                                        .withAutoComplete())
                                 .argument(Argument.user("user", "User to remove sharing"))
                                 .argument(Argument.text("user_id", "User id to remove sharing"))))
                 .subCommand(SubCommand.of("info", "Information about a license")
                         .handler(new Info(guilds))
-                        .argument(Argument.text("product", "The product name").asRequired().withAutoComplete()))
-//                .subCommand(SubCommand.of("list", "List your licenses")
-//                        .handler(new List(guilds)))
+                        .argument(Argument.text("product", "The product name")
+                                .asRequired()
+                                .withAutoComplete()))
+                //                .subCommand(SubCommand.of("list", "List your licenses")
+                //                        .handler(new List(guilds)))
                 .subCommand(SubCommand.of("transfer", "Transfer a license to another user.")
                         .handler(new Transfer(guilds))
-                        .argument(Argument.text("product", "The product to transfer").asRequired().withAutoComplete())
-                        .argument(Argument.user("user", "User to transfer the license to.").asRequired()))
+                        .argument(Argument.text("product", "The product to transfer")
+                                .asRequired()
+                                .withAutoComplete())
+                        .argument(Argument.user("user", "User to transfer the license to.")
+                                .asRequired()))
                 .build();
     }
 }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.account;
 
 import java.time.Instant;
@@ -9,10 +14,4 @@ import java.time.Instant;
  *              sharee list names people by username precisely so that one person's address is never
  *              handed to another.
  */
-public record LicenseInvite(
-        int licenseId,
-        String email,
-        Instant invitedAt,
-        Instant expiresAt
-) {
-}
+public record LicenseInvite(int licenseId, String email, Instant invitedAt, Instant expiresAt) {}

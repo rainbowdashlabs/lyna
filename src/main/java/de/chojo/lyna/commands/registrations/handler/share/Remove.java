@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.registrations.handler.share;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -36,12 +41,19 @@ public class Remove implements SlashHandler {
         Optional<License> license = licenseUser.licenseByProduct(product.get());
 
         if (license.get().removeSubUser(target)) {
-            event.reply("Access to your license was revoked.").setEphemeral(true).queue();
-            target.getUser().openPrivateChannel().complete()
-                  .sendMessage("Your access to the %s license of %s was revoked."
-                          .formatted(product.get().name(), event.getMember().getAsMention())).queue();
+            event.reply("Access to your license was revoked.")
+                    .setEphemeral(true)
+                    .queue();
+            target.getUser()
+                    .openPrivateChannel()
+                    .complete()
+                    .sendMessage("Your access to the %s license of %s was revoked."
+                            .formatted(product.get().name(), event.getMember().getAsMention()))
+                    .queue();
         } else {
-            event.reply("This user has no access to your license.").setEphemeral(true).queue();
+            event.reply("This user has no access to your license.")
+                    .setEphemeral(true)
+                    .queue();
         }
     }
 
@@ -49,8 +61,9 @@ public class Remove implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            var choices = guilds.guild(event.getGuild()).user(event.getMember())
-                                .completeOwnProducts(focusedOption.getValue());
+            var choices = guilds.guild(event.getGuild())
+                    .user(event.getMember())
+                    .completeOwnProducts(focusedOption.getValue());
             event.replyChoices(choices).queue();
         }
     }

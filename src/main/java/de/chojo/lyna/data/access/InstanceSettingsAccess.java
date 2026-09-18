@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.InstanceSettings;
@@ -36,8 +41,7 @@ public class InstanceSettingsAccess {
                     custom_theme_colors = ?::JSONB
                 WHERE id = 1
                 """)
-                .single(call()
-                        .bind(next.defaultTheme())
+                .single(call().bind(next.defaultTheme())
                         .bind(next.allowUserTheme())
                         .bind(next.enabledThemes(), PostgreSqlTypes.TEXT)
                         .bind(next.customThemeColorsJson()))

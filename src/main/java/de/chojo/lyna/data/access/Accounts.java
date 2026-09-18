@@ -1,9 +1,13 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.sadu.mapper.wrapper.Row;
-
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 
 import java.sql.SQLException;
@@ -25,7 +29,6 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 public class Accounts {
     private final LicenseInvites invites = new LicenseInvites();
     private final AccountEmails emails = new AccountEmails();
-
 
     /**
      * Creates an account, claiming an address for it if one was given.
@@ -193,8 +196,8 @@ public class Accounts {
      *
      * @throws IllegalStateException if the identity belongs to a different account
      */
-    public void link(int accountId, String provider, String externalId,
-                     AccountIdentity.Verification via, String handle) {
+    public void link(
+            int accountId, String provider, String externalId, AccountIdentity.Verification via, String handle) {
         Optional<Account> holder = findByIdentity(provider, externalId);
         if (holder.isPresent() && holder.get().id() != accountId) {
             throw new IllegalStateException(
@@ -215,8 +218,12 @@ public class Accounts {
                     handle         = COALESCE(EXCLUDED.handle, account_identity.handle),
                     handle_seen_at = COALESCE(EXCLUDED.handle_seen_at, account_identity.handle_seen_at)
                 """)
-                .single(call().bind(provider).bind(externalId).bind(accountId).bind(via.dbValue())
-                        .bind(handle).bind(handle))
+                .single(call().bind(provider)
+                        .bind(externalId)
+                        .bind(accountId)
+                        .bind(via.dbValue())
+                        .bind(handle)
+                        .bind(handle))
                 .insert();
         if (AccountIdentity.DISCORD.equals(provider)) {
             syncUsernameFromHandle(accountId, handle);
@@ -245,8 +252,7 @@ public class Accounts {
                 .update()
                 .changed();
         if (changed && AccountIdentity.DISCORD.equals(provider)) {
-            findByIdentity(provider, externalId)
-                    .ifPresent(account -> syncUsernameFromHandle(account.id(), handle));
+            findByIdentity(provider, externalId).ifPresent(account -> syncUsernameFromHandle(account.id(), handle));
         }
         return changed;
     }
@@ -258,7 +264,8 @@ public class Accounts {
      * @return the handles that are known, by id; an id nobody has linked is simply absent
      */
     public Map<Long, String> handles(Collection<Long> discordIds) {
-        var byId = handles(AccountIdentity.DISCORD,
+        var byId = handles(
+                AccountIdentity.DISCORD,
                 discordIds.stream().map(id -> Long.toString(id)).toList());
         var result = new HashMap<Long, String>();
         byId.forEach((externalId, handle) -> result.put(Long.parseLong(externalId), handle));
@@ -328,12 +335,14 @@ public class Accounts {
                 ON CONFLICT (provider, external_id) DO UPDATE SET external_id = EXCLUDED.external_id
                 RETURNING account_id
                 """)
-                .single(call().bind(AccountIdentity.DISCORD).bind(externalId).bind(accountId)
+                .single(call().bind(AccountIdentity.DISCORD)
+                        .bind(externalId)
+                        .bind(accountId)
                         .bind(AccountIdentity.Verification.BOT_DM_CODE.dbValue()))
                 .map(row -> row.getInt("account_id"))
                 .first();
-        int resolved = linked.orElseThrow(
-                () -> new IllegalStateException("Could not link an account for " + externalId));
+        int resolved =
+                linked.orElseThrow(() -> new IllegalStateException("Could not link an account for " + externalId));
         if (resolved != accountId) {
             delete(accountId);
         }
@@ -572,9 +581,7 @@ public class Accounts {
             query("""
                     INSERT INTO user_license (account_id, license_id) VALUES (?, ?)
                     ON CONFLICT (license_id) DO NOTHING
-                    """)
-                    .single(call().bind(accountId).bind(licenseId))
-                    .insert();
+                    """).single(call().bind(accountId).bind(licenseId)).insert();
             collected.add(licenseId);
         }
         return collected;
@@ -620,9 +627,7 @@ public class Accounts {
     }
 
     public static void delete(int accountId) {
-        query("DELETE FROM account WHERE id = ?")
-                .single(call().bind(accountId))
-                .delete();
+        query("DELETE FROM account WHERE id = ?").single(call().bind(accountId)).delete();
     }
 
     private static Instant toInstant(Timestamp ts) {

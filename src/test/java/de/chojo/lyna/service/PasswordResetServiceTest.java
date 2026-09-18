@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.PasswordHasher;
@@ -35,7 +40,8 @@ class PasswordResetServiceTest extends RepositoryTestBase {
      */
     private Optional<String> requestReset(String email) {
         return accounts.findByEmail(email)
-                .map(found -> passwordResetTokens.issue(found.id(), Instant.now().plus(Duration.ofHours(1))))
+                .map(found ->
+                        passwordResetTokens.issue(found.id(), Instant.now().plus(Duration.ofHours(1))))
                 .map(PasswordResetTokens.Issued::token);
     }
 
@@ -91,8 +97,8 @@ class PasswordResetServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An expired link is refused and leaves the password alone")
     void expiredLinkIsRefused() {
-        PasswordResetTokens.Issued issued = passwordResetTokens.issue(
-                account.id(), Instant.now().minus(Duration.ofMinutes(1)));
+        PasswordResetTokens.Issued issued =
+                passwordResetTokens.issue(account.id(), Instant.now().minus(Duration.ofMinutes(1)));
 
         assertFalse(confirmReset(issued.token(), "too late"));
 

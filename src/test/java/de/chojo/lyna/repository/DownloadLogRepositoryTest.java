@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.access.DownloadLog;
@@ -29,7 +34,8 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
         clear("download_log", "download", "download_type", "product", "account_identity", "account");
         account = accounts.create("downloads@example.invalid", "hash");
 
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             productId = insert(statement, """
                     INSERT INTO product (guild_id, name, role) VALUES (%d, 'Chatty', 1) RETURNING id
                     """.formatted(GUILD_ID));
@@ -97,8 +103,11 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
         downloadLog.record(account.id(), null, null, productId, downloadId, "mine", "free", null, null);
         downloadLog.record(other.id(), null, null, productId, downloadId, "theirs", "free", null, null);
 
-        assertEquals(List.of("mine"), downloadLog.recentForAccount(account.id(), 25).stream()
-                .map(DownloadLogEntry::version).toList());
+        assertEquals(
+                List.of("mine"),
+                downloadLog.recentForAccount(account.id(), 25).stream()
+                        .map(DownloadLogEntry::version)
+                        .toList());
     }
 
     @Test
@@ -118,8 +127,16 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
             downloadLog.record(account.id(), null, null, productId, downloadId, "1.0." + i, "free", null, null);
         }
 
-        assertEquals(3, downloadLog.page(account.id(), null, null, null, null, null, 3, 0).size());
-        assertEquals(1, downloadLog.page(account.id(), null, null, null, null, null, 3, 6).size());
+        assertEquals(
+                3,
+                downloadLog
+                        .page(account.id(), null, null, null, null, null, 3, 0)
+                        .size());
+        assertEquals(
+                1,
+                downloadLog
+                        .page(account.id(), null, null, null, null, null, 3, 6)
+                        .size());
         assertEquals(7, downloadLog.count(account.id(), null, null, null, null, null));
     }
 
@@ -131,7 +148,9 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
 
         List<DownloadLogEntry> paid = downloadLog.page(account.id(), null, null, "license", null, null, 25, 0);
 
-        assertEquals(List.of("paid-one"), paid.stream().map(DownloadLogEntry::version).toList());
+        assertEquals(
+                List.of("paid-one"),
+                paid.stream().map(DownloadLogEntry::version).toList());
         assertEquals(1, downloadLog.count(account.id(), null, null, "license", null, null));
     }
 
@@ -150,12 +169,12 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
         downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.0", "free", null, null);
 
         Instant now = Instant.now();
-        assertEquals(1, downloadLog.count(account.id(), null, null, null,
-                now.minus(Duration.ofDays(1)), now.plus(Duration.ofDays(1))));
-        assertEquals(0, downloadLog.count(account.id(), null, null, null,
-                now.plus(Duration.ofDays(1)), null));
-        assertEquals(0, downloadLog.count(account.id(), null, null, null,
-                null, now.minus(Duration.ofDays(1))));
+        assertEquals(
+                1,
+                downloadLog.count(
+                        account.id(), null, null, null, now.minus(Duration.ofDays(1)), now.plus(Duration.ofDays(1))));
+        assertEquals(0, downloadLog.count(account.id(), null, null, null, now.plus(Duration.ofDays(1)), null));
+        assertEquals(0, downloadLog.count(account.id(), null, null, null, null, now.minus(Duration.ofDays(1))));
     }
 
     @Test

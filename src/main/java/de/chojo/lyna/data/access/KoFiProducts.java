@@ -1,8 +1,13 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
+import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
 import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
-import de.chojo.lyna.data.dao.products.Product;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -24,9 +29,7 @@ public class KoFiProducts {
         query("""
                 INSERT INTO kofi_products(link_code, product_id) VALUES (?,?)
                 ON CONFLICT(link_code) DO UPDATE SET product_id = excluded.product_id;
-                """)
-                .single(call().bind(linkCode).bind(product.id()))
-                .insert();
+                """).single(call().bind(linkCode).bind(product.id())).insert();
     }
 
     public List<Mapping> listForGuild(long guildId) {
@@ -42,8 +45,7 @@ public class KoFiProducts {
                 .all();
     }
 
-    public record Mapping(String linkCode, int productId, String productName) {
-    }
+    public record Mapping(String linkCode, int productId, String productName) {}
 
     public Optional<Product> byCode(String name) {
         var id = query("""
@@ -51,10 +53,7 @@ public class KoFiProducts {
                 FROM kofi_products kp
                          LEFT JOIN product p ON kp.product_id = p.id
                 WHERE ? = link_code
-                """)
-                .single(call().bind(name))
-                .map(row -> row.getInt(1))
-                .first();
+                """).single(call().bind(name)).map(row -> row.getInt(1)).first();
 
         return id.flatMap(products::byId);
     }

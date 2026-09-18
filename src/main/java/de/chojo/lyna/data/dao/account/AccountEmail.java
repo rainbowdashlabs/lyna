@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.account;
 
 import java.time.Instant;
@@ -10,13 +15,7 @@ import java.time.Instant;
  *                   it - hangs off this being set. An unverified address is a claim.
  * @param primary    whether this is the one the application sends to
  */
-public record AccountEmail(
-        int accountId,
-        String email,
-        Instant verifiedAt,
-        Instant addedAt,
-        boolean primary
-) {
+public record AccountEmail(int accountId, String email, Instant verifiedAt, Instant addedAt, boolean primary) {
     public boolean verified() {
         return verifiedAt != null;
     }

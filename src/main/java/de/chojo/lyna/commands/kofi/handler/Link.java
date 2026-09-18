@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.kofi.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -25,7 +30,8 @@ public class Link implements SlashHandler {
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext ctx) {
         Optional<Product> product;
         try {
-            product = guilds.guild(event.getGuild()).products().byId(event.getOption("product", OptionMapping::getAsInt));
+            product =
+                    guilds.guild(event.getGuild()).products().byId(event.getOption("product", OptionMapping::getAsInt));
         } catch (NumberFormatException e) {
             event.reply("Invalid product.").setEphemeral(true).queue();
             return;
@@ -42,7 +48,8 @@ public class Link implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue()))
+                    .queue();
         }
     }
 }

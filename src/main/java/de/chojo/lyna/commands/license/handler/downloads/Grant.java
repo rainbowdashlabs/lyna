@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.license.handler.downloads;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -31,7 +36,6 @@ public class Grant implements SlashHandler {
             return;
         }
 
-
         Optional<License> license = guild.licenses().byDetails(product.get(), userIdentifier);
 
         if (license.isEmpty()) {
@@ -47,15 +51,16 @@ public class Grant implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue()))
+                    .queue();
         }
         if (focusedOption.getName().equals("user_identifier")) {
             event.replyChoices(guilds.guild(event.getGuild()).licenses().completeIdentifier(focusedOption.getValue()))
                     .queue();
         }
         if (focusedOption.getName().equals("type")) {
-            event.replyChoices(Completion.complete(focusedOption.getValue(), ReleaseType.class)).queue();
+            event.replyChoices(Completion.complete(focusedOption.getValue(), ReleaseType.class))
+                    .queue();
         }
-
     }
 }

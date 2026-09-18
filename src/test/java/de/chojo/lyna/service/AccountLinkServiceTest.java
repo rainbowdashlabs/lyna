@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.PasswordHasher;
@@ -42,8 +47,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
         return new Callback(created, true);
     }
 
-    private record Callback(Account account, boolean created) {
-    }
+    private record Callback(Account account, boolean created) {}
 
     @Test
     @DisplayName("The first time through OAuth an account is created for the Discord id")
@@ -52,7 +56,9 @@ class AccountLinkServiceTest extends RepositoryTestBase {
 
         assertTrue(first.created());
         assertFalse(first.account().hasPassword());
-        assertEquals(DISCORD_ID, accounts.findLinkByAccountId(first.account().id()).orElseThrow().externalIdAsLong());
+        assertEquals(
+                DISCORD_ID,
+                accounts.findLinkByAccountId(first.account().id()).orElseThrow().externalIdAsLong());
     }
 
     @Test
@@ -73,7 +79,8 @@ class AccountLinkServiceTest extends RepositoryTestBase {
 
         accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
 
-        assertEquals(created.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
+        assertEquals(
+                created.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
         assertTrue(accounts.findById(created.id()).orElseThrow().hasPassword());
     }
 
@@ -100,7 +107,8 @@ class AccountLinkServiceTest extends RepositoryTestBase {
 
         accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
 
-        assertEquals(created.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
+        assertEquals(
+                created.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
     }
 
     @Test
@@ -112,7 +120,8 @@ class AccountLinkServiceTest extends RepositoryTestBase {
 
         assertThrowsOnLink(newcomer.id());
 
-        assertEquals(holder.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
+        assertEquals(
+                holder.id(), accounts.findByDiscordId(DISCORD_ID).orElseThrow().id());
     }
 
     /**

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.util;
 
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
@@ -13,7 +18,6 @@ import java.util.regex.Pattern;
 
 public record Version(String version, List<Integer> nums, ReleaseType type) implements Comparable<Version> {
     private static final Pattern NUMBER = Pattern.compile("([0-9]+)");
-
 
     public static Version parse(String version) {
         List<Integer> nums = new ArrayList<>();
@@ -55,7 +59,8 @@ public record Version(String version, List<Integer> nums, ReleaseType type) impl
     public int compareTo(@NotNull Version version) {
         int numbers = Math.max(version.nums().size(), nums().size());
         for (int i = 0; i < numbers; i++) {
-            int compare = Integer.compare(nums().size() > i ? nums().get(i) : 0,
+            int compare = Integer.compare(
+                    nums().size() > i ? nums().get(i) : 0,
                     version.nums().size() > i ? version.nums().get(i) : 0);
             if (compare != 0) return compare;
         }

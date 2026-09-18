@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.InstanceSettings;
@@ -23,7 +28,8 @@ class InstanceSettingsRepositoryTest extends RepositoryTestBase {
      */
     @BeforeEach
     void freshRow() throws SQLException {
-        try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement()) {
             statement.execute("DELETE FROM %s.instance_settings".formatted(schemaName));
             statement.execute("INSERT INTO %s.instance_settings (id) VALUES (1)".formatted(schemaName));
         }
@@ -44,8 +50,7 @@ class InstanceSettingsRepositoryTest extends RepositoryTestBase {
     @DisplayName("Every field survives a write and a read, the array and the JSON included")
     void updateRoundTrips() {
         instanceSettings.update(new InstanceSettings(
-                "midnight", false,
-                List.of("lyna", "midnight"), "{\"light\":{\"primary\":\"#123456\"}}"));
+                "midnight", false, List.of("lyna", "midnight"), "{\"light\":{\"primary\":\"#123456\"}}"));
 
         InstanceSettings settings = instanceSettings.get();
         assertEquals("midnight", settings.defaultTheme());
@@ -57,14 +62,10 @@ class InstanceSettingsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Clearing the theme whitelist means every theme is available again")
     void enabledThemesCanBeEmptied() {
-        instanceSettings.update(new InstanceSettings(
-                "lyna", true,
-                List.of("lyna"), null));
+        instanceSettings.update(new InstanceSettings("lyna", true, List.of("lyna"), null));
         assertEquals(List.of("lyna"), instanceSettings.get().enabledThemes());
 
-        instanceSettings.update(new InstanceSettings(
-                "lyna", true,
-                List.of(), null));
+        instanceSettings.update(new InstanceSettings("lyna", true, List.of(), null));
 
         assertTrue(instanceSettings.get().enabledThemes().isEmpty());
     }
@@ -72,14 +73,10 @@ class InstanceSettingsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Custom colours can be taken away again")
     void customColoursCanBeCleared() {
-        instanceSettings.update(new InstanceSettings(
-                "lyna", true,
-                List.of(), "{\"light\":{}}"));
+        instanceSettings.update(new InstanceSettings("lyna", true, List.of(), "{\"light\":{}}"));
         assertNotNull(instanceSettings.get().customThemeColorsJson());
 
-        instanceSettings.update(new InstanceSettings(
-                "lyna", true,
-                List.of(), null));
+        instanceSettings.update(new InstanceSettings("lyna", true, List.of(), null));
 
         assertNull(instanceSettings.get().customThemeColorsJson());
     }

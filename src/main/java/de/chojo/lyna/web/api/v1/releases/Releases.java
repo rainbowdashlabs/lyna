@@ -1,13 +1,18 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.v1.releases;
 
 import com.google.inject.Inject;
 import de.chojo.lyna.data.access.AccountLicenses;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
-import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
+import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
@@ -28,8 +33,12 @@ public class Releases {
     private final KioskProducts kiosk;
 
     @Inject
-    public Releases(de.chojo.lyna.data.access.Products products, Auth auth, Accounts accounts,
-                    AccountLicenses licenses, KioskProducts kiosk) {
+    public Releases(
+            de.chojo.lyna.data.access.Products products,
+            Auth auth,
+            Accounts accounts,
+            AccountLicenses licenses,
+            KioskProducts kiosk) {
         this.products = products;
         this.auth = auth;
         this.accounts = accounts;
@@ -48,7 +57,8 @@ public class Releases {
         if (kiosk.isFree(productId)) return;
         var session = auth.currentSession(ctx);
         if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
-        boolean entitled = licenses.entitledProductIds(session.get().accountId()).contains(productId);
+        boolean entitled =
+                licenses.entitledProductIds(session.get().accountId()).contains(productId);
         if (!entitled) throw new ForbiddenResponse("You do not hold a license for this product");
     }
 
@@ -57,12 +67,10 @@ public class Releases {
             get("{product}", ctx -> {
                 int productId = Integer.parseInt(ctx.pathParam("product"));
                 requireAccess(ctx, productId);
-                Product product = products.byId(productId)
-                        .orElseThrow(() -> new NotFoundResponse("Invalid product id"));
+                Product product =
+                        products.byId(productId).orElseThrow(() -> new NotFoundResponse("Invalid product id"));
 
-                List<SimpleType> downloads = product.downloads()
-                        .downloads()
-                        .stream()
+                List<SimpleType> downloads = product.downloads().downloads().stream()
                         .sorted()
                         .map(SimpleType::create)
                         .toList();
@@ -72,13 +80,13 @@ public class Releases {
             get("{product}/{type}", ctx -> {
                 int productId = Integer.parseInt(ctx.pathParam("product"));
                 requireAccess(ctx, productId);
-                Product product = products.byId(productId)
-                        .orElseThrow(() -> new NotFoundResponse("Invalid product id"));
+                Product product =
+                        products.byId(productId).orElseThrow(() -> new NotFoundResponse("Invalid product id"));
 
-                Download download = product.downloads().byType(Integer.parseInt(ctx.pathParam("type")))
+                Download download = product.downloads()
+                        .byType(Integer.parseInt(ctx.pathParam("type")))
                         .orElseThrow(() -> new NotFoundResponse("Invalid type id"));
-                var assets = download.latestAssets()
-                        .stream()
+                var assets = download.latestAssets().stream()
                         .map(e -> SimpleAsset.create(download.type().id(), e))
                         .toList();
                 ctx.json(assets);
@@ -94,8 +102,9 @@ public class Releases {
     }
 
     private record SimpleAsset(String version, int type, Instant published) {
-        public static SimpleAsset create(int type, AssetXO asset){
-            return new SimpleAsset(asset.maven2().version(), type, asset.lastModified().toInstant());
+        public static SimpleAsset create(int type, AssetXO asset) {
+            return new SimpleAsset(
+                    asset.maven2().version(), type, asset.lastModified().toInstant());
         }
     }
 }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail;
 
 import de.chojo.lyna.configuration.Conf;
@@ -38,8 +43,8 @@ class MailHandlerTest {
     private Mailings handle(String from, String forwardedBy, String yaml) throws Exception {
         Mockito.when(mailings.byName(anyString())).thenReturn(Optional.empty());
         Conf configuration = TestConf.from(yaml);
-        var handler = new MailHandler(mailings, Mockito.mock(MailingService.class),
-                Mockito.mock(Accounts.class), configuration);
+        var handler = new MailHandler(
+                mailings, Mockito.mock(MailingService.class), Mockito.mock(Accounts.class), configuration);
         handler.accept(receipt(from, forwardedBy));
         return mailings;
     }
@@ -95,7 +100,8 @@ class MailHandlerTest {
     @Test
     @DisplayName("A receipt forwarded by somebody else is refused even so")
     void forwardedBySomebodyElseIsRefused() throws Exception {
-        verify(handle(PAYPAL, "someone@example.invalid", TRUSTS_FORWARDER), never()).byName(anyString());
+        verify(handle(PAYPAL, "someone@example.invalid", TRUSTS_FORWARDER), never())
+                .byName(anyString());
     }
 
     @Test

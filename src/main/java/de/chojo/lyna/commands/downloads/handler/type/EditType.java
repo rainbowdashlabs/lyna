@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.downloads.handler.type;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -20,7 +25,8 @@ public class EditType implements SlashHandler {
         String name = event.getOption("new_name", OptionMapping::getAsString);
         String description = event.getOption("new_description", OptionMapping::getAsString);
 
-        var optType = guilds.guild(event.getGuild()).downloadTypes().byId(event.getOption("name", OptionMapping::getAsInt));
+        var optType =
+                guilds.guild(event.getGuild()).downloadTypes().byId(event.getOption("name", OptionMapping::getAsInt));
 
         if (optType.isEmpty()) {
             event.reply("Invalid type").setEphemeral(true).queue();
@@ -44,7 +50,8 @@ public class EditType implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("name")) {
-            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).downloadTypes().complete(focusedOption.getValue()))
+                    .queue();
         }
     }
 }

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.AccountSession;
@@ -18,8 +23,7 @@ public class AccountSessions {
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT (jti) DO NOTHING
                 """)
-                .single(call()
-                        .bind(jti)
+                .single(call().bind(jti)
                         .bind(accountId)
                         .bind(Timestamp.from(expiresAt))
                         .bind(userAgent))

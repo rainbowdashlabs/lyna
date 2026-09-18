@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.util;
 
 import de.chojo.lyna.data.dao.products.Product;
@@ -12,7 +17,8 @@ public class LicenseCreator {
         var prod = generateRandomSequence((seed << 12) + product.id() + guildId + 13, 8);
         var plat = generateRandomSequence((seed << 16) + identifier.hashCode() + guildId + 17, 6);
         var user = generateRandomSequence((seed << 24) + identifier.hashCode() + guildId + 23, 12);
-        var check = generateRandomSequence((seed << 20) + (product.id() + 31) + (identifier.hashCode() + 41) + guildId, 4);
+        var check =
+                generateRandomSequence((seed << 20) + (product.id() + 31) + (identifier.hashCode() + 41) + guildId, 4);
 
         return "%s-%s-%s-%s".formatted(prod, plat, user, check);
     }
@@ -25,6 +31,7 @@ public class LicenseCreator {
         }
         return builder.toString();
     }
+
     public static String generateRandomSequence(int length) {
         Random rand = new Random();
         StringBuilder builder = new StringBuilder();

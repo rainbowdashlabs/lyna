@@ -1,10 +1,14 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.configuration.elements;
 
 import dev.chojo.ocular.override.Env;
 import dev.chojo.ocular.override.Overwrite;
-import dev.chojo.ocular.override.Prop;
 import dev.chojo.ocular.override.OverwritePrefix;
-
+import dev.chojo.ocular.override.Prop;
 
 import java.util.List;
 
@@ -13,16 +17,22 @@ import java.util.List;
 public class Api {
     @Overwrite(env = @Env, prop = @Prop)
     private String hostname;
+
     @Overwrite(env = @Env, prop = @Prop)
     private String url;
+
     @Overwrite(env = @Env, prop = @Prop)
     private String host;
+
     @Overwrite(env = @Env, prop = @Prop)
     private int port;
+
     @Overwrite(env = @Env, prop = @Prop)
     private List<String> allowedOrigins = List.of();
+
     @Overwrite(env = @Env, prop = @Prop)
     private List<String> iconHosts = List.of();
+
     @Overwrite(env = @Env, prop = @Prop)
     private boolean staticUi = false;
 

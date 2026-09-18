@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.core;
 
 import de.chojo.logutil.marker.LogNotify;
@@ -18,10 +23,11 @@ public class Threading {
     private final ThreadGroup workerGroup = new ThreadGroup("Bot Worker");
 
     private final ExecutorService jdaWorker = Executors.newCachedThreadPool(createThreadFactory(jdaGroup));
-    private final ScheduledExecutorService botWorker = Executors.newScheduledThreadPool(3, createThreadFactory(workerGroup));
+    private final ScheduledExecutorService botWorker =
+            Executors.newScheduledThreadPool(3, createThreadFactory(workerGroup));
 
-    private static final Thread.UncaughtExceptionHandler EXCEPTION_HANDLER =
-            (t, e) -> log.error(LogNotify.NOTIFY_ADMIN, "An uncaught exception occurred in " + t.getName() + "-" + t.getId() + ".", e);
+    private static final Thread.UncaughtExceptionHandler EXCEPTION_HANDLER = (t, e) -> log.error(
+            LogNotify.NOTIFY_ADMIN, "An uncaught exception occurred in " + t.getName() + "-" + t.getId() + ".", e);
 
     public static ThreadFactory createThreadFactory(ThreadGroup group) {
         return r -> {

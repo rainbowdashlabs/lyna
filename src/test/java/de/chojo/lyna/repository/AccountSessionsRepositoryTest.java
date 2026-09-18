@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.account.Account;
@@ -65,10 +70,16 @@ class AccountSessionsRepositoryTest extends RepositoryTestBase {
         accountSessions.record("mine", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
         accountSessions.record("theirs", other.id(), Instant.now().plus(Duration.ofHours(1)), null);
 
-        assertEquals(List.of("mine"), accountSessions.activeForAccount(account.id()).stream()
-                .map(AccountSession::jti).toList());
-        assertEquals(List.of("theirs"), accountSessions.activeForAccount(other.id()).stream()
-                .map(AccountSession::jti).toList());
+        assertEquals(
+                List.of("mine"),
+                accountSessions.activeForAccount(account.id()).stream()
+                        .map(AccountSession::jti)
+                        .toList());
+        assertEquals(
+                List.of("theirs"),
+                accountSessions.activeForAccount(other.id()).stream()
+                        .map(AccountSession::jti)
+                        .toList());
     }
 
     @Test

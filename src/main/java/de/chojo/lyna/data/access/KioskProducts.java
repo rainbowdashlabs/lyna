@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.products.KioskProduct;
@@ -69,7 +74,8 @@ public class KioskProducts {
      */
     public void iconUrl(int productId, String iconUrl) {
         query("UPDATE product SET icon_url = ? WHERE id = ?")
-                .single(call().bind(iconUrl == null || iconUrl.isBlank() ? null : iconUrl.trim()).bind(productId))
+                .single(call().bind(iconUrl == null || iconUrl.isBlank() ? null : iconUrl.trim())
+                        .bind(productId))
                 .update();
     }
 }

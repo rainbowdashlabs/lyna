@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.account;
 
 import java.time.Instant;
@@ -16,13 +21,7 @@ import java.time.Instant;
  *                   being able to - so a page holding only this row can still name somebody.
  */
 public record AccountIdentity(
-        int accountId,
-        String provider,
-        String externalId,
-        Instant linkedAt,
-        String verifiedVia,
-        String handle
-) {
+        int accountId, String provider, String externalId, Instant linkedAt, String verifiedVia, String handle) {
     public static final String DISCORD = "discord";
 
     /**

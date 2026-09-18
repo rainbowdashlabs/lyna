@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.LicenseInvite;
@@ -99,9 +104,7 @@ public class LicenseInvites {
                     INSERT INTO user_sub_license (account_id, license_id)
                     VALUES (?, ?)
                     ON CONFLICT (account_id, license_id) DO NOTHING
-                    """)
-                    .single(call().bind(accountId).bind(licenseId))
-                    .insert();
+                    """).single(call().bind(accountId).bind(licenseId)).insert();
         }
         query("DELETE FROM license_invite WHERE lower(email) = lower(?)")
                 .single(call().bind(email.trim()))

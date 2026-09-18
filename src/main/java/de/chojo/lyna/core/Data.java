@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.core;
 
 import com.google.inject.Inject;
@@ -73,8 +78,11 @@ public class Data {
                 dataSource = getConnectionPool();
                 return;
             } catch (Exception e) {
-                log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to database. Retrying in {}s.",
-                        CONNECT_RETRY_DELAY.toSeconds(), e);
+                log.error(
+                        LogNotify.NOTIFY_ADMIN,
+                        "Could not connect to database. Retrying in {}s.",
+                        CONNECT_RETRY_DELAY.toSeconds(),
+                        e);
             }
             Thread.sleep(CONNECT_RETRY_DELAY.toMillis());
         }
@@ -93,7 +101,8 @@ public class Data {
         log.info("Configuring QueryBuilder");
         var logger = getLogger("DbLogger");
         QueryConfiguration.setDefault(QueryConfiguration.builder(dataSource)
-                .setExceptionHandler(err -> logger.error(LogNotify.NOTIFY_ADMIN, "An error occurred during a database request", err))
+                .setExceptionHandler(
+                        err -> logger.error(LogNotify.NOTIFY_ADMIN, "An error occurred during a database request", err))
                 .build());
     }
 
@@ -101,8 +110,7 @@ public class Data {
         log.info("Creating connection pool.");
         var data = configuration.main().database();
         return DataSourceCreator.create(PostgreSql.get())
-                .configure(config -> config
-                        .host(data.host())
+                .configure(config -> config.host(data.host())
                         .port(data.port())
                         .user(data.user())
                         .password(data.password())
@@ -121,5 +129,4 @@ public class Data {
     public HikariDataSource dataSource() {
         return dataSource;
     }
-
 }

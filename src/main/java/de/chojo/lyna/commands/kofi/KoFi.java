@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.kofi;
 
 import com.google.inject.Inject;
@@ -20,7 +25,6 @@ public class KoFi implements SlashProvider<Slash> {
         this.products = products;
     }
 
-
     @Override
     public Slash slash() {
         return Slash.of("kofi", "Manage kofi products")
@@ -30,7 +34,9 @@ public class KoFi implements SlashProvider<Slash> {
                 .subCommand(SubCommand.of("link", "link a link to a produce")
                         .handler(new Link(products, guilds))
                         .argument(Argument.text("link", "kofi link code").asRequired())
-                        .argument(Argument.text("product", "product you want to link").asRequired().withAutoComplete()))
+                        .argument(Argument.text("product", "product you want to link")
+                                .asRequired()
+                                .withAutoComplete()))
                 .build();
     }
 }

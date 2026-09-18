@@ -1,10 +1,14 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import com.zaxxer.hikari.HikariDataSource;
 import de.chojo.lyna.TestContainers;
 import de.chojo.lyna.data.access.AccountEmails;
 import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.AccountSessions;
 import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DemoArtifacts;
@@ -13,6 +17,7 @@ import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.KioskProducts;
+import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.sadu.datasource.DataSourceCreator;
@@ -82,8 +87,7 @@ public abstract class RepositoryTestBase {
         String schema = "lyna_t" + SCHEMA_COUNTER.incrementAndGet();
 
         dataSource = DataSourceCreator.create(PostgreSql.get())
-                .configure(config -> config
-                        .host(PG.getHost())
+                .configure(config -> config.host(PG.getHost())
                         .port(PG.getFirstMappedPort())
                         .user(PG.getUsername())
                         .password(PG.getPassword())
@@ -133,15 +137,16 @@ public abstract class RepositoryTestBase {
      */
     protected static int countRows(String table) throws SQLException {
         try (var connection = dataSource.getConnection();
-             var statement = connection.createStatement();
-             var rows = statement.executeQuery("SELECT count(*) FROM %s.%s".formatted(schemaName, table))) {
+                var statement = connection.createStatement();
+                var rows = statement.executeQuery("SELECT count(*) FROM %s.%s".formatted(schemaName, table))) {
             rows.next();
             return rows.getInt(1);
         }
     }
 
     protected static void clear(String... tables) throws SQLException {
-        try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement()) {
             for (String table : tables) {
                 statement.execute("DELETE FROM %s.%s".formatted(schemaName, table));
             }

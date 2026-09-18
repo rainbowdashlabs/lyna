@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.util;
 
 import java.io.*;
@@ -11,7 +16,8 @@ public class JarUtil {
     // Made by goldmensch (contact goldmensch on discord, or write email to nickhensel25@icloud.com if it breaks)
     public static byte[] replaceStringsInJar(InputStream stream, Map<String, String> replacements) throws IOException {
         var bytesOut = new ByteArrayOutputStream();
-        try(var outputZip = new ZipOutputStream(bytesOut); var inputZip = new ZipInputStream(stream)) {
+        try (var outputZip = new ZipOutputStream(bytesOut);
+                var inputZip = new ZipInputStream(stream)) {
             ZipEntry entry;
             while ((entry = inputZip.getNextEntry()) != null) {
                 if (!entry.isDirectory()) {
@@ -31,7 +37,8 @@ public class JarUtil {
     }
 
     // Made by goldmensch (contact goldmensch on discord, or write email to nickhensel25@icloud.com if it breaks)
-    public static byte[] replaceStringsInClass(InputStream inputStream, Map<String, String> replacements) throws IOException {
+    public static byte[] replaceStringsInClass(InputStream inputStream, Map<String, String> replacements)
+            throws IOException {
         DataInputStream input = new DataInputStream(inputStream);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream output = new DataOutputStream(byteArrayOutputStream);
@@ -49,22 +56,22 @@ public class JarUtil {
                 var out = replacements.getOrDefault(str, str);
                 output.writeUTF(out);
             } else {
-                var skip = switch (tag) {
-                    case 3, 4, 9, 10, 11, 12, 17, 18 -> 4;
-                    case 7, 8, 16, 19, 20 -> 2;
-                    case 5, 6 -> {
-                        i++;
-                        yield 8;
-                    }
-                    case 15 -> 3;
-                    default -> throw new IllegalArgumentException("No tag found for %s".formatted(tag));
-                };
+                var skip =
+                        switch (tag) {
+                            case 3, 4, 9, 10, 11, 12, 17, 18 -> 4;
+                            case 7, 8, 16, 19, 20 -> 2;
+                            case 5, 6 -> {
+                                i++;
+                                yield 8;
+                            }
+                            case 15 -> 3;
+                            default -> throw new IllegalArgumentException("No tag found for %s".formatted(tag));
+                        };
                 output.write(input.readNBytes(skip));
             }
         }
 
         output.write(input.readAllBytes());
         return byteArrayOutputStream.toByteArray();
-
     }
 }

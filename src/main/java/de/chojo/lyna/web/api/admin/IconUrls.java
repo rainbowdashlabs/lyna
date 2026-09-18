@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.admin;
 
 import java.io.IOException;
@@ -41,10 +46,12 @@ public class IconUrls {
         }
         HttpResponse<Void> response;
         try {
-            response = client.send(HttpRequest.newBuilder(uri)
-                    .method("HEAD", HttpRequest.BodyPublishers.noBody())
-                    .timeout(Duration.ofSeconds(5))
-                    .build(), HttpResponse.BodyHandlers.discarding());
+            response = client.send(
+                    HttpRequest.newBuilder(uri)
+                            .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                            .timeout(Duration.ofSeconds(5))
+                            .build(),
+                    HttpResponse.BodyHandlers.discarding());
         } catch (IOException e) {
             return Optional.of("Nothing answered at that address");
         } catch (InterruptedException e) {

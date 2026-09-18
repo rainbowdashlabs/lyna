@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.commands.license.handler.delete;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
@@ -31,7 +36,7 @@ public class Identifier implements SlashHandler {
 
         Optional<License> license = guild.licenses().byDetails(product.get(), userIdentifier);
 
-        if(license.isEmpty()){
+        if (license.isEmpty()) {
             event.reply("Invalid license").queue();
             return;
         }
@@ -45,11 +50,12 @@ public class Identifier implements SlashHandler {
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         AutoCompleteQuery focusedOption = event.getFocusedOption();
         if (focusedOption.getName().equals("product")) {
-            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue())).queue();
+            event.replyChoices(guilds.guild(event.getGuild()).products().complete(focusedOption.getValue()))
+                    .queue();
         }
         if (focusedOption.getName().equals("user_identifier")) {
             event.replyChoices(guilds.guild(event.getGuild()).licenses().completeIdentifier(focusedOption.getValue()))
-                 .queue();
+                    .queue();
         }
     }
 }

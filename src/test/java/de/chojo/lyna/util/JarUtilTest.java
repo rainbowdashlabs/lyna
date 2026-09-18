@@ -1,5 +1,9 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.util;
-
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -10,7 +14,8 @@ import java.util.Map;
 
 public class JarUtilTest {
 
-    Map<String, String> replacements = Map.of("%%__USER__%%", "testId", "%%__RESOURCE__%%", "testResource", "%%__NONCE__%%", "testNonce");
+    Map<String, String> replacements =
+            Map.of("%%__USER__%%", "testId", "%%__RESOURCE__%%", "testResource", "%%__NONCE__%%", "testNonce");
 
     @Test
     void testClass() throws IOException {

@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.products.mailings;
 
 import de.chojo.lyna.data.dao.products.Product;
@@ -29,8 +34,12 @@ public class Mailings {
                 SELECT id, product_id, name, mail_text, blocks FROM mail_products WHERE product_id = ?
                 """)
                 .single(call().bind(product.id()))
-                .map(row -> new Mailing(row.getInt("id"), product, row.getString("name"),
-                        row.getString("mail_text"), row.getString("blocks")))
+                .map(row -> new Mailing(
+                        row.getInt("id"),
+                        product,
+                        row.getString("name"),
+                        row.getString("mail_text"),
+                        row.getString("blocks")))
                 .first();
     }
 }

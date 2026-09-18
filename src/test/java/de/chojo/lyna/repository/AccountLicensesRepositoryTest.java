@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.account.AccountLicense;
@@ -26,18 +31,30 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
 
     @BeforeEach
     void seedLicenses() throws SQLException {
-        clear("user_sub_license", "user_license", "license_access", "license",
-                "license_settings", "product", "account_identity", "account");
+        clear(
+                "user_sub_license",
+                "user_license",
+                "license_access",
+                "license",
+                "license_settings",
+                "product",
+                "account_identity",
+                "account");
         owner = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(OWNER_DISCORD);
         sharee = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(SHAREE_DISCORD);
 
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-            statement.execute("INSERT INTO %s.license_settings (guild_id, shares) VALUES (%d, 3)"
-                    .formatted(schemaName, GUILD_A));
-            int chatty = insert(statement, "INSERT INTO product (guild_id, name, url, role) VALUES (%d, 'Chatty', 'https://example.invalid/chatty', 1) RETURNING id"
-                    .formatted(GUILD_A));
-            int elsewhere = insert(statement, "INSERT INTO product (guild_id, name, role) VALUES (%d, 'Elsewhere', 2) RETURNING id"
-                    .formatted(GUILD_B));
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "INSERT INTO %s.license_settings (guild_id, shares) VALUES (%d, 3)".formatted(schemaName, GUILD_A));
+            int chatty = insert(
+                    statement,
+                    "INSERT INTO product (guild_id, name, url, role) VALUES (%d, 'Chatty', 'https://example.invalid/chatty', 1) RETURNING id"
+                            .formatted(GUILD_A));
+            int elsewhere = insert(
+                    statement,
+                    "INSERT INTO product (guild_id, name, role) VALUES (%d, 'Elsewhere', 2) RETURNING id"
+                            .formatted(GUILD_B));
 
             chattyLicense = insert(statement, """
                     INSERT INTO license (product_id, user_identifier, key)
@@ -50,8 +67,9 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
 
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d), (%d, %d)"
                     .formatted(schemaName, owner, chattyLicense, owner, otherGuildLicense));
-            statement.execute("INSERT INTO %s.license_access (license_id, release_type) VALUES (%d, 'STABLE'), (%d, 'DEV')"
-                    .formatted(schemaName, chattyLicense, chattyLicense));
+            statement.execute(
+                    "INSERT INTO %s.license_access (license_id, release_type) VALUES (%d, 'STABLE'), (%d, 'DEV')"
+                            .formatted(schemaName, chattyLicense, chattyLicense));
         }
     }
 
@@ -67,9 +85,12 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     void ownedIsCrossGuild() {
         List<AccountLicense> owned = accountLicenses.owned(owner);
 
-        assertEquals(List.of("Chatty", "Elsewhere"),
+        assertEquals(
+                List.of("Chatty", "Elsewhere"),
                 owned.stream().map(AccountLicense::productName).toList());
-        assertEquals(List.of(GUILD_A, GUILD_B), owned.stream().map(AccountLicense::guildId).toList());
+        assertEquals(
+                List.of(GUILD_A, GUILD_B),
+                owned.stream().map(AccountLicense::guildId).toList());
         assertTrue(owned.stream().allMatch(license -> license.role() == AccountLicense.Role.OWNER));
     }
 
@@ -154,9 +175,11 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     void forHolderReportsTheRole() {
         accountLicenses.addSharee(chattyLicense, sharee);
 
-        assertEquals(AccountLicense.Role.OWNER,
+        assertEquals(
+                AccountLicense.Role.OWNER,
                 accountLicenses.forHolder(chattyLicense, owner).orElseThrow().role());
-        assertEquals(AccountLicense.Role.SHAREE,
+        assertEquals(
+                AccountLicense.Role.SHAREE,
                 accountLicenses.forHolder(chattyLicense, sharee).orElseThrow().role());
     }
 
@@ -172,8 +195,11 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     void keyGoesToHoldersOnly() {
         accountLicenses.addSharee(chattyLicense, sharee);
 
-        assertEquals("KEY-CHATTY", accountLicenses.keyForHolder(chattyLicense, owner).orElseThrow());
-        assertEquals("KEY-CHATTY", accountLicenses.keyForHolder(chattyLicense, sharee).orElseThrow());
+        assertEquals(
+                "KEY-CHATTY", accountLicenses.keyForHolder(chattyLicense, owner).orElseThrow());
+        assertEquals(
+                "KEY-CHATTY",
+                accountLicenses.keyForHolder(chattyLicense, sharee).orElseThrow());
         assertTrue(accountLicenses.keyForHolder(chattyLicense, stranger()).isEmpty());
     }
 

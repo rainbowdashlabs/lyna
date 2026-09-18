@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail;
 
 import org.junit.jupiter.api.Assertions;
@@ -20,8 +25,9 @@ class PayPalMailTest {
 
     @Test
     void extractProduct() {
-        Assertions.assertEquals("Schematic Brush Reborn 2 - Schematic pasting reinvented", mail.product().get());
-
+        Assertions.assertEquals(
+                "Schematic Brush Reborn 2 - Schematic pasting reinvented",
+                mail.product().get());
     }
 
     private String read(String path) {

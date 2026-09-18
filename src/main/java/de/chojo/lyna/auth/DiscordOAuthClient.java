@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,7 +29,8 @@ public class DiscordOAuthClient {
 
     public DiscordOAuthClient(OAuth config) {
         this.config = config;
-        this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        this.http =
+                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     }
 
     public String buildAuthorizeUrl(String state) {
@@ -100,7 +106,6 @@ public class DiscordOAuthClient {
             if (username != null && !username.isBlank()) return username;
             return globalName == null || globalName.isBlank() ? null : globalName;
         }
-
     }
 
     public static class OAuthException extends Exception {

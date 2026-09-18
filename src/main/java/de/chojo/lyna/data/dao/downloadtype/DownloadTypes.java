@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.downloadtype;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
@@ -76,7 +81,10 @@ public class DownloadTypes {
                 	(?, ?, ?, ?::release_type)
                 ON CONFLICT DO NOTHING
                 RETURNING id, name, description, release_type""")
-                .single(call().bind(guild.guildId()).bind(name).bind(description).bind(releaseType))
+                .single(call().bind(guild.guildId())
+                        .bind(name)
+                        .bind(description)
+                        .bind(releaseType))
                 .map(row -> DownloadType.build(guild, row))
                 .first();
     }

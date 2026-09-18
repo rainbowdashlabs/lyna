@@ -1,8 +1,13 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.web.api.auth;
 
-import com.google.inject.Inject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import de.chojo.lyna.auth.DiscordOAuthClient;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
@@ -12,9 +17,9 @@ import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.RevokedJtis;
-import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -47,16 +52,17 @@ public class Auth {
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Inject
-    public Auth(Conf configuration,
-                Accounts accounts,
-                AccountSessions accountSessions,
-                RevokedJtis revokedJtis,
-                PasswordResetTokens passwordResetTokens,
-                EmailVerificationTokens emailTokens,
-                PasswordHasher passwordHasher,
-                JwtService jwtService,
-                DiscordOAuthClient oauthClient,
-                MailingService mailingService) {
+    public Auth(
+            Conf configuration,
+            Accounts accounts,
+            AccountSessions accountSessions,
+            RevokedJtis revokedJtis,
+            PasswordResetTokens passwordResetTokens,
+            EmailVerificationTokens emailTokens,
+            PasswordHasher passwordHasher,
+            JwtService jwtService,
+            DiscordOAuthClient oauthClient,
+            MailingService mailingService) {
         this.configuration = configuration;
         this.accounts = accounts;
         this.accountSessions = accountSessions;
@@ -101,13 +107,14 @@ public class Auth {
         if (body.email() == null || body.email().isBlank()) return;
         var account = accounts.findByEmail(body.email());
         if (account.isEmpty()) return;
-        var issued = passwordResetTokens.issue(account.get().id(),
-                java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+        var issued = passwordResetTokens.issue(
+                account.get().id(), java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
         String link = configuration.main().links().frontend() + "/reset-password?token=" + issued.token();
         var renderer = mailingService.renderer();
         var values = java.util.Map.<String, Object>of("url", link);
         try {
-            mailingService.send(body.email(),
+            mailingService.send(
+                    body.email(),
                     renderer.subject("reset-password", "en", values),
                     renderer.render("reset-password", "en", values));
         } catch (Exception e) {
@@ -127,7 +134,9 @@ public class Auth {
         String link = configuration.main().links().frontend() + "/verify-email?token=" + issued.token();
         try {
             var values = java.util.Map.<String, Object>of("url", link);
-            mailingService.send(email, mailingService.renderer().subject("verify-email", "en", values),
+            mailingService.send(
+                    email,
+                    mailingService.renderer().subject("verify-email", "en", values),
                     mailingService.renderer().render("verify-email", "en", values));
         } catch (Exception e) {
             log.warn("Could not send the verification mail for account {}", accountId, e);
@@ -162,8 +171,7 @@ public class Auth {
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
-    public record VerifyEmail(String token) {
-    }
+    public record VerifyEmail(String token) {}
 
     private void passwordResetConfirm(Context ctx) {
         ResetConfirm body;
@@ -173,7 +181,9 @@ public class Auth {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return;
         }
-        if (body.token() == null || body.newPassword() == null || body.newPassword().length() < 8) {
+        if (body.token() == null
+                || body.newPassword() == null
+                || body.newPassword().length() < 8) {
             ctx.status(HttpStatus.BAD_REQUEST).result("token and an 8+ character newPassword are required");
             return;
         }
@@ -186,11 +196,9 @@ public class Auth {
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
-    public record ResetRequest(String email) {
-    }
+    public record ResetRequest(String email) {}
 
-    public record ResetConfirm(String token, String newPassword) {
-    }
+    public record ResetConfirm(String token, String newPassword) {}
 
     private void signup(Context ctx) {
         Credentials creds = readCredentials(ctx);
@@ -210,7 +218,8 @@ public class Auth {
         if (creds == null) return;
 
         Optional<Account> opt = accounts.findByEmail(creds.email());
-        if (opt.isEmpty() || !opt.get().hasPassword()
+        if (opt.isEmpty()
+                || !opt.get().hasPassword()
                 || !passwordHasher.verify(creds.password(), opt.get().passwordHash())) {
             ctx.status(HttpStatus.UNAUTHORIZED).result("Invalid credentials");
             return;
@@ -244,7 +253,8 @@ public class Auth {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
         }
-        Optional<AccountIdentity> link = accounts.findLinkByAccountId(account.get().id());
+        Optional<AccountIdentity> link =
+                accounts.findLinkByAccountId(account.get().id());
         ctx.json(toMePayload(account.get(), link.orElse(null)));
     }
 
@@ -307,7 +317,10 @@ public class Auth {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return null;
         }
-        if (creds.email() == null || creds.email().isBlank() || creds.password() == null || creds.password().isBlank()) {
+        if (creds.email() == null
+                || creds.email().isBlank()
+                || creds.password() == null
+                || creds.password().isBlank()) {
             ctx.status(HttpStatus.BAD_REQUEST).result("email and password are required");
             return null;
         }
@@ -317,10 +330,11 @@ public class Auth {
     private void issueAndWrite(Context ctx, Account account, Long discordId, HttpStatus status) {
         JwtService.Issued issued = jwtService.issue(account.id(), discordId);
         accountSessions.record(issued.jti(), account.id(), issued.expiresAt(), ctx.header("User-Agent"));
-        ctx.status(status).json(new LoginResponse(
-                issued.token(),
-                issued.expiresAt().toString(),
-                toMePayload(account, discordId == null ? null : new MiniLink(discordId))));
+        ctx.status(status)
+                .json(new LoginResponse(
+                        issued.token(),
+                        issued.expiresAt().toString(),
+                        toMePayload(account, discordId == null ? null : new MiniLink(discordId))));
     }
 
     private Object toMePayload(Account account, AccountIdentity link) {
@@ -378,16 +392,19 @@ public class Auth {
         return HexFormat.of().formatHex(buf);
     }
 
-    public record Credentials(String email, String password) {
-    }
+    public record Credentials(String email, String password) {}
 
-    public record LoginResponse(String token, String expiresAt, Object account) {
-    }
+    public record LoginResponse(String token, String expiresAt, Object account) {}
 
-    public record AccountResponse(int id, String email, boolean emailVerified, boolean hasPassword, String discordId,
-                                  String username, String theme, String darkMode) {
-    }
+    public record AccountResponse(
+            int id,
+            String email,
+            boolean emailVerified,
+            boolean hasPassword,
+            String discordId,
+            String username,
+            String theme,
+            String darkMode) {}
 
-    private record MiniLink(long discordUserId) {
-    }
+    private record MiniLink(long discordUserId) {}
 }

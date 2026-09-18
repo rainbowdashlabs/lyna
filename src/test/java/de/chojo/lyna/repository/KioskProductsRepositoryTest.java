@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.products.KioskProduct;
@@ -29,12 +34,20 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
 
     @BeforeEach
     void seedCatalog() throws SQLException {
-        clear("user_sub_license", "user_license", "license_access", "license",
-                "kofi_products", "product", "account_identity", "account");
+        clear(
+                "user_sub_license",
+                "user_license",
+                "license_access",
+                "license",
+                "kofi_products",
+                "product",
+                "account_identity",
+                "account");
         buyer = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(BUYER_DISCORD);
         sharee = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(SHAREE_DISCORD);
 
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             freeProduct = insert(statement, """
                     INSERT INTO product (guild_id, name, url, role, free)
                     VALUES (%d, 'Freebie', 'https://example.invalid/freebie', 1, TRUE) RETURNING id
@@ -66,8 +79,12 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     void catalogueIsCrossGuild() {
         List<KioskProduct> all = kioskProducts.all();
 
-        assertEquals(List.of("Freebie", "Premium"), all.stream().map(KioskProduct::name).toList());
-        assertEquals(List.of(GUILD_A, GUILD_B), all.stream().map(KioskProduct::guildId).toList());
+        assertEquals(
+                List.of("Freebie", "Premium"),
+                all.stream().map(KioskProduct::name).toList());
+        assertEquals(
+                List.of(GUILD_A, GUILD_B),
+                all.stream().map(KioskProduct::guildId).toList());
     }
 
     @Test
@@ -90,14 +107,17 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A product with several Ko-fi codes is still one entry, offered at one of them")
     void severalKofiCodesStayOneProduct() throws SQLException {
-        try (var connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.kofi_products (link_code, product_id) VALUES ('zzz999', %d)"
                     .formatted(schemaName, premiumProduct));
         }
 
         List<KioskProduct> all = kioskProducts.all();
 
-        assertEquals(List.of("Freebie", "Premium"), all.stream().map(KioskProduct::name).toList());
+        assertEquals(
+                List.of("Freebie", "Premium"),
+                all.stream().map(KioskProduct::name).toList());
         assertEquals("https://ko-fi.com/s/abc123", all.getLast().purchaseUrl());
     }
 
@@ -113,7 +133,9 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
         assertNull(kioskProducts.all().getFirst().iconUrl());
 
         kioskProducts.iconUrl(freeProduct, "https://cdn.example.invalid/freebie.png");
-        assertEquals("https://cdn.example.invalid/freebie.png", kioskProducts.all().getFirst().iconUrl());
+        assertEquals(
+                "https://cdn.example.invalid/freebie.png",
+                kioskProducts.all().getFirst().iconUrl());
 
         kioskProducts.iconUrl(freeProduct, "  ");
         assertNull(kioskProducts.all().getFirst().iconUrl());
@@ -124,7 +146,9 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     void iconUrlIsTrimmed() {
         kioskProducts.iconUrl(freeProduct, "  https://cdn.example.invalid/f.png  ");
 
-        assertEquals("https://cdn.example.invalid/f.png", kioskProducts.all().getFirst().iconUrl());
+        assertEquals(
+                "https://cdn.example.invalid/f.png",
+                kioskProducts.all().getFirst().iconUrl());
     }
 
     @Test
@@ -144,7 +168,9 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Somebody holding no license is entitled to nothing")
     void strangerIsEntitledToNothing() {
-        assertTrue(accountLicenses.entitledProductIds(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(999L)).isEmpty());
+        assertTrue(accountLicenses
+                .entitledProductIds(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(999L))
+                .isEmpty());
     }
 
     @Test

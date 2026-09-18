@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.demo;
 
 import com.google.inject.Inject;
@@ -47,13 +52,19 @@ public final class DemoSchedule {
             return;
         }
         int minutes = configuration.main().demo().resetIntervalMinutes();
-        log.info("[demo] demo mode is on. The data is laid out shortly, {}",
+        log.info(
+                "[demo] demo mode is on. The data is laid out shortly, {}",
                 minutes > 0 ? "and again every %d minutes".formatted(minutes) : "and not reset again on its own");
 
         threading.botWorker().schedule(this::reseed, FIRST_RUN_DELAY_SECONDS, TimeUnit.SECONDS);
         if (minutes > 0) {
-            threading.botWorker().scheduleAtFixedRate(this::reseed,
-                    (long) minutes * 60 + FIRST_RUN_DELAY_SECONDS, (long) minutes * 60, TimeUnit.SECONDS);
+            threading
+                    .botWorker()
+                    .scheduleAtFixedRate(
+                            this::reseed,
+                            (long) minutes * 60 + FIRST_RUN_DELAY_SECONDS,
+                            (long) minutes * 60,
+                            TimeUnit.SECONDS);
         }
     }
 

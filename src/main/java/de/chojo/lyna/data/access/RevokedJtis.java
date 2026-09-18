@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.access;
 
 import java.sql.Timestamp;
@@ -13,9 +18,7 @@ public class RevokedJtis {
                 INSERT INTO revoked_jti (jti, expires_at)
                 VALUES (?, ?)
                 ON CONFLICT (jti) DO NOTHING
-                """)
-                .single(call().bind(jti).bind(Timestamp.from(expiresAt)))
-                .insert();
+                """).single(call().bind(jti).bind(Timestamp.from(expiresAt))).insert();
     }
 
     public boolean isRevoked(String jti) {

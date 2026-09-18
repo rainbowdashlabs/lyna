@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.jdautil.util.Choice;
@@ -36,10 +41,16 @@ public class Licenses {
      *                   holds it
      */
     public Optional<License> create(Product product, String identifier, LicenseSource source) {
-        String key = LicenseCreator.create(licenseGuild.configuration().main().license().baseSeed(), product, identifier);
-        log.info(LogNotify.STATUS, "Creating license key for {} purchased by {} via {}",
-                product.name(), identifier, source);
-        return query("INSERT INTO license(product_id, user_identifier, key, source) VALUES(?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
+        String key = LicenseCreator.create(
+                licenseGuild.configuration().main().license().baseSeed(), product, identifier);
+        log.info(
+                LogNotify.STATUS,
+                "Creating license key for {} purchased by {} via {}",
+                product.name(),
+                identifier,
+                source);
+        return query(
+                        "INSERT INTO license(product_id, user_identifier, key, source) VALUES(?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
                 .single(call().bind(product.id()).bind(identifier).bind(key).bind(source.name()))
                 .map(row -> new License(product, identifier, row.getInt("id"), key))
                 .first()
@@ -69,7 +80,8 @@ public class Licenses {
     }
 
     public Collection<Command.Choice> completeIdentifier(String value) {
-        return query("SELECT user_identifier FROM guild_license WHERE user_identifier ILIKE (? || '%') AND guild_id = ? LIMIT 25")
+        return query(
+                        "SELECT user_identifier FROM guild_license WHERE user_identifier ILIKE (? || '%') AND guild_id = ? LIMIT 25")
                 .single(call().bind(value).bind(guildId()))
                 .map(row -> Choice.toChoice(row.getString("user_identifier")))
                 .all();
@@ -92,10 +104,7 @@ public class Licenses {
                 FROM guild_license
                 WHERE guild_id = ?
                 ORDER BY id DESC
-                """)
-                .single(call().bind(guildId()))
-                .map(this::buildLicense)
-                .all();
+                """).single(call().bind(guildId())).map(this::buildLicense).all();
     }
 
     public List<License> byOwner(long discordId) {

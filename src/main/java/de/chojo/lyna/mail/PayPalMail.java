@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.mail;
 
 import org.jsoup.Jsoup;
@@ -55,6 +60,5 @@ public record PayPalMail(Optional<String> mail, Optional<String> name, Optional<
         return html.getElementsByTag("table").stream()
                 .filter(e -> e.id().equals("cartDetails"))
                 .toList();
-
     }
 }

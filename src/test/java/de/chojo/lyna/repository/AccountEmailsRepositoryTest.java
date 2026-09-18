@@ -1,3 +1,8 @@
+/*
+ *     SPDX-License-Identifier: AGPL-3.0-only
+ *
+ *     Copyright (C) RainbowDashLabs and Contributor
+ */
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.dao.account.Account;
@@ -31,7 +36,9 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
     @DisplayName("The address an account is created with is its first, and the one it is written to")
     void theFirstAddressIsThePrimary() {
         assertEquals(1, accountEmails.of(account.id()).size());
-        assertEquals("first@example.invalid", accountEmails.primary(account.id()).orElseThrow().email());
+        assertEquals(
+                "first@example.invalid",
+                accountEmails.primary(account.id()).orElseThrow().email());
     }
 
     @Test
@@ -41,7 +48,10 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
 
         accountEmails.add(account.id(), "second@example.invalid");
 
-        assertFalse(accountEmails.heldBy(account.id(), "second@example.invalid").orElseThrow().verified());
+        assertFalse(accountEmails
+                .heldBy(account.id(), "second@example.invalid")
+                .orElseThrow()
+                .verified());
     }
 
     @Test
@@ -58,9 +68,10 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
     void anAddressBelongsToOneAccount() {
         Account other = accounts.create("other@example.invalid", "hash");
 
-        assertThrows(IllegalStateException.class,
-                () -> accountEmails.add(other.id(), "FIRST@example.invalid"));
-        assertEquals(account.id(), accountEmails.byAddress("first@example.invalid").orElseThrow().accountId());
+        assertThrows(IllegalStateException.class, () -> accountEmails.add(other.id(), "FIRST@example.invalid"));
+        assertEquals(
+                account.id(),
+                accountEmails.byAddress("first@example.invalid").orElseThrow().accountId());
     }
 
     /**
@@ -88,9 +99,13 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
 
         assertTrue(accountEmails.verify(account.id(), "contested@example.invalid"));
 
-        assertEquals(account.id(), accountEmails.byAddress("contested@example.invalid").orElseThrow().accountId());
-        assertThrows(IllegalStateException.class,
-                () -> accountEmails.verify(other.id(), "contested@example.invalid"));
+        assertEquals(
+                account.id(),
+                accountEmails
+                        .byAddress("contested@example.invalid")
+                        .orElseThrow()
+                        .accountId());
+        assertThrows(IllegalStateException.class, () -> accountEmails.verify(other.id(), "contested@example.invalid"));
     }
 
     @Test
@@ -111,7 +126,9 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
         accountEmails.verify(account.id(), "second@example.invalid");
 
         assertTrue(accountEmails.makePrimary(account.id(), "second@example.invalid"));
-        assertEquals("second@example.invalid", accountEmails.primary(account.id()).orElseThrow().email());
+        assertEquals(
+                "second@example.invalid",
+                accountEmails.primary(account.id()).orElseThrow().email());
     }
 
     @Test
@@ -121,7 +138,9 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
         accountEmails.verify(account.id(), "second@example.invalid");
         accountEmails.makePrimary(account.id(), "second@example.invalid");
 
-        assertEquals(1, accountEmails.of(account.id()).stream().filter(e -> e.primary()).count());
+        assertEquals(
+                1,
+                accountEmails.of(account.id()).stream().filter(e -> e.primary()).count());
     }
 
     @Test
