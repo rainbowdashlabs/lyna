@@ -10,7 +10,7 @@ import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashCommand;
 import de.chojo.lyna.commands.download.handler.Default;
-import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 

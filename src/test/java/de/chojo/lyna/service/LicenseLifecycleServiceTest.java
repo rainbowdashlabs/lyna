@@ -7,9 +7,9 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import de.chojo.nexus.NexusRest;

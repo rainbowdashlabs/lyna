@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.data.dao.settings;
 
-import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;

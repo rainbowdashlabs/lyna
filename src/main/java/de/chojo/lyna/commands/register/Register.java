@@ -10,7 +10,7 @@ import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.lyna.commands.register.handler.Default;
-import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.license.service.LicenseService;
 
 public class Register implements SlashProvider<Slash> {

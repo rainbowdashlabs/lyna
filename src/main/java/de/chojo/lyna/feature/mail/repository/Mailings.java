@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products.mailings;
+package de.chojo.lyna.feature.mail.repository;
 
 import de.chojo.lyna.feature.mail.entity.Mailing;
 import de.chojo.lyna.feature.product.entity.Product;

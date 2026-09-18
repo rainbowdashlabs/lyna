@@ -7,9 +7,9 @@ package de.chojo.lyna.commands.kofi.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.KoFiProducts;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -18,10 +18,10 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import java.util.Optional;
 
 public class Link implements SlashHandler {
-    private final KoFiProducts koFiProducts;
+    private final KoFiProductRepository koFiProducts;
     private final Guilds guilds;
 
-    public Link(KoFiProducts koFiProducts, Guilds guilds) {
+    public Link(KoFiProductRepository koFiProducts, Guilds guilds) {
         this.koFiProducts = koFiProducts;
         this.guilds = guilds;
     }

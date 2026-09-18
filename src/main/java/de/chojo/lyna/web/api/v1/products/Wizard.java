@@ -6,7 +6,6 @@
 package de.chojo.lyna.web.api.v1.products;
 
 import com.google.inject.Inject;
-import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
@@ -15,6 +14,7 @@ import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
 import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
@@ -56,7 +56,7 @@ public class Wizard {
     private static final int MAX_VERSION_LIMIT = 100;
 
     private final Proxy proxy;
-    private final Products products;
+    private final ProductLookup products;
     private final KioskProductRepository kiosk;
     private final Auth auth;
     private final AccountRepository accounts;
@@ -65,7 +65,7 @@ public class Wizard {
     @Inject
     public Wizard(
             Proxy proxy,
-            Products products,
+            ProductLookup products,
             KioskProductRepository kiosk,
             Auth auth,
             AccountRepository accounts,

@@ -3,11 +3,11 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.licenses;
+package de.chojo.lyna.feature.license.repository;
 
 import de.chojo.jdautil.util.Choice;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.product.entity.Product;

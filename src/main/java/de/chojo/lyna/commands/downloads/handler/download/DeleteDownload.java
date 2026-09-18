@@ -7,9 +7,9 @@ package de.chojo.lyna.commands.downloads.handler.download;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.product.entity.Product;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

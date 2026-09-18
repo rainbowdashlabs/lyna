@@ -5,8 +5,8 @@
  */
 package de.chojo.lyna.feature.download.entity;
 
-import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.feature.download.repository.DownloadTypeRepository;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.sadu.mapper.wrapper.Row;
 import de.chojo.sadu.queries.api.call.Call;
 

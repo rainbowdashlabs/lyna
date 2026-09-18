@@ -26,7 +26,7 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Releases {
-    private final de.chojo.lyna.data.access.Products products;
+    private final de.chojo.lyna.feature.product.repository.ProductLookup products;
     private final Auth auth;
     private final AccountRepository accounts;
     private final AccountLicenseRepository licenses;
@@ -34,7 +34,7 @@ public class Releases {
 
     @Inject
     public Releases(
-            de.chojo.lyna.data.access.Products products,
+            de.chojo.lyna.feature.product.repository.ProductLookup products,
             Auth auth,
             AccountRepository accounts,
             AccountLicenseRepository licenses,

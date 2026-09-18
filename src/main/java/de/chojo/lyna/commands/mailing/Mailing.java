@@ -14,7 +14,7 @@ import de.chojo.lyna.commands.mailing.handler.Create;
 import de.chojo.lyna.commands.mailing.handler.Edit;
 import de.chojo.lyna.commands.mailing.handler.Send;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.MailingService;

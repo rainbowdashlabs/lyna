@@ -6,10 +6,10 @@
 package de.chojo.lyna.web.api.v1.update;
 
 import com.google.inject.Inject;
-import de.chojo.lyna.data.access.Products;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.HttpStatus;
@@ -24,10 +24,10 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Update {
-    private final Products products;
+    private final ProductLookup products;
 
     @Inject
-    public Update(Products products) {
+    public Update(ProductLookup products) {
         this.products = products;
     }
 

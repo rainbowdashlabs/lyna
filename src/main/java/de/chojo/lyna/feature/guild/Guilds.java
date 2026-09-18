@@ -3,12 +3,11 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.guild;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.nexus.NexusRest;

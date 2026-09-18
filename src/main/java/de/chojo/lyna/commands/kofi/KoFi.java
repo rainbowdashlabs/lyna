@@ -11,16 +11,16 @@ import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.lyna.commands.kofi.handler.Link;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.KoFiProducts;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 
 public class KoFi implements SlashProvider<Slash> {
     private final Guilds guilds;
 
-    private final KoFiProducts products;
+    private final KoFiProductRepository products;
 
     @Inject
-    public KoFi(Guilds guilds, KoFiProducts products) {
+    public KoFi(Guilds guilds, KoFiProductRepository products) {
         this.guilds = guilds;
         this.products = products;
     }

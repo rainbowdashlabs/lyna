@@ -11,7 +11,6 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.lyna.feature.account.entity.AccountSession;
@@ -27,6 +26,7 @@ import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -58,7 +58,7 @@ public class Account {
     private final AccountLinkService accountLinkService;
     private final AccountLicenseRepository licenses;
     private final AccountEmailRepository accountEmails;
-    private final LicenseInvites invites;
+    private final LicenseInviteRepository invites;
     private final InstanceSettingsRepository instanceSettings;
     private final MailingService mailingService;
     private final EmailVerificationTokenRepository emailTokens;
@@ -78,7 +78,7 @@ public class Account {
             AccountLinkService accountLinkService,
             AccountLicenseRepository licenses,
             AccountEmailRepository accountEmails,
-            LicenseInvites invites,
+            LicenseInviteRepository invites,
             InstanceSettingsRepository instanceSettings,
             MailingService mailingService,
             EmailVerificationTokenRepository emailTokens,

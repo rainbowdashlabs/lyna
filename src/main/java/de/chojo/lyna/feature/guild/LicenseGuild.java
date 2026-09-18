@@ -3,17 +3,17 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao;
+package de.chojo.lyna.feature.guild;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.dao.downloadtype.DownloadTypes;
-import de.chojo.lyna.data.dao.licenses.Licenses;
-import de.chojo.lyna.data.dao.products.Products;
 import de.chojo.lyna.data.dao.settings.Settings;
 import de.chojo.lyna.data.roles.RoleSync;
+import de.chojo.lyna.feature.download.repository.DownloadTypes;
+import de.chojo.lyna.feature.license.repository.LicenseUser;
+import de.chojo.lyna.feature.license.repository.Licenses;
+import de.chojo.lyna.feature.product.repository.Products;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Member;
 

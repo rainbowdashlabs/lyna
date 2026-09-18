@@ -17,7 +17,7 @@ import de.chojo.lyna.commands.license.handler.delete.Key;
 import de.chojo.lyna.commands.license.handler.downloads.Grant;
 import de.chojo.lyna.commands.license.handler.downloads.Revoke;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.license.service.LicenseService;
 
 public class License implements SlashProvider<Slash> {

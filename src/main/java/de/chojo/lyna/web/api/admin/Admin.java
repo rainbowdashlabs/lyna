@@ -10,11 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.KoFiProducts;
-import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
@@ -24,6 +23,7 @@ import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -59,7 +59,7 @@ public class Admin {
     private final AccountRepository accounts;
     private final Guilds guilds;
     private final InstanceSettingsRepository instanceSettings;
-    private final KoFiProducts kofi;
+    private final KoFiProductRepository kofi;
     private final KioskProductRepository kioskProducts;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
@@ -76,7 +76,7 @@ public class Admin {
             AccountRepository accounts,
             Guilds guilds,
             InstanceSettingsRepository instanceSettings,
-            KoFiProducts kofi,
+            KoFiProductRepository kofi,
             KioskProductRepository kioskProducts,
             InstanceOperatorRepository operators,
             de.chojo.lyna.mail.MailingService mailingService,

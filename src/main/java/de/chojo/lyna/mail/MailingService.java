@@ -12,8 +12,8 @@ import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
@@ -44,7 +44,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class MailingService {
     private final Threading threading;
-    private final Mailings mailings;
+    private final MailingLookup mailings;
     /**
      * Asked for lazily, and that is load-bearing: the purchase flow sends mail through this service,
      * and this service builds the handler that runs the purchase flow. Asking for it when the
@@ -61,7 +61,7 @@ public class MailingService {
     @Inject
     public MailingService(
             Threading threading,
-            Mailings mailings,
+            MailingLookup mailings,
             Provider<PurchaseService> purchases,
             Conf configuration,
             LicenseService licenseService) {
