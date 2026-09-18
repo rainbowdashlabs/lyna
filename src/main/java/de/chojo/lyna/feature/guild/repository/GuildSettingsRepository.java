@@ -58,6 +58,6 @@ public class GuildSettingsRepository {
                 VALUES
                 	(?, ?)
                 ON CONFLICT(guild_id) DO UPDATE SET
-                	%s = ?""", column).single(value.apply(call())).insert().changed();
+                	%s = ?""", column, column).single(value.apply(call())).insert().changed();
     }
 }

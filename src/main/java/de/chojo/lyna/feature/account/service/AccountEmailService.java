@@ -31,17 +31,14 @@ public class AccountEmailService {
      * <p>The collecting happens here rather than at the call site, so that every way of proving an
      * address lets somebody onto the licences waiting for them.
      *
-     * <p>An account with no address to be written to is given this one, because an account nothing
-     * can be sent to is one nobody can be reached at.
+     * <p>The first address an account holds is the one it is written to, which the repository decides
+     * as it adds it.
      *
      * @return the licences the account was let onto by proving this address
      */
     public List<Integer> confirm(int accountId, String email) {
         emails.add(accountId, email);
         emails.verify(accountId, email);
-        if (emails.primary(accountId).isEmpty()) {
-            emails.makePrimary(accountId, email);
-        }
         return purchases.collect(accountId, email);
     }
 }
