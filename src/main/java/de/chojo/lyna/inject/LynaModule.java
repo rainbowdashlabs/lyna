@@ -72,6 +72,7 @@ import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.feature.product.service.TrialService;
+import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
@@ -269,6 +270,7 @@ public class LynaModule extends AbstractModule {
         bind(ProductRoleService.class).in(Singleton.class);
         bind(TrialService.class).in(Singleton.class);
         bind(DownloadRepository.class).in(Singleton.class);
+        bind(PurchaseService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);
         bind(LicenseInvites.class).in(Singleton.class);

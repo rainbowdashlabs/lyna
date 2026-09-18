@@ -15,8 +15,8 @@ import de.chojo.lyna.commands.mailing.handler.Edit;
 import de.chojo.lyna.commands.mailing.handler.Send;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.MailingService;
 
 public class Mailing extends SlashCommand {
@@ -25,7 +25,7 @@ public class Mailing extends SlashCommand {
             Guilds guilds,
             Conf configuration,
             MailingService mailingService,
-            PurchaseCollectionService purchases,
+            PurchaseService purchases,
             LicenseService licenseService) {
         super(Slash.of("mailing", "Configure mailing")
                 .unlocalized()

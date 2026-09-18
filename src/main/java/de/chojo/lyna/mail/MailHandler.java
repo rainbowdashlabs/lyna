@@ -11,12 +11,10 @@ import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Mailings;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
-import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
-import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import jakarta.mail.Message;
 import jakarta.mail.internet.InternetAddress;
 import org.slf4j.Logger;
@@ -31,7 +29,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final Mailings mailings;
     private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
-    private final PurchaseCollectionService purchases;
+    private final PurchaseService purchases;
     private final Conf configuration;
 
     private final Cache<String, String> cache =
@@ -40,7 +38,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     public MailHandler(
             Mailings mailings,
             MailingService mailingService,
-            PurchaseCollectionService purchases,
+            PurchaseService purchases,
             Conf configuration,
             LicenseService licenseService) {
         this.licenseService = licenseService;
@@ -125,19 +123,6 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         }
 
         Mailing mailing = optMailing.get();
-        Optional<License> license =
-                mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
-        licenseService.grantAccess(license.get(), ReleaseType.STABLE);
-        boolean handedOver =
-                purchases.handOver(license.get().id(), parsed.mail().get());
-        Mail mail = MailCreator.createLicenseMessage(
-                mailingService.renderer(),
-                mailing,
-                license.get().key(),
-                parsed.name().get(),
-                parsed.mail().get(),
-                mailing.product().url(),
-                handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
-        mailingService.sendMail(mail);
+        purchases.issue(mailing.product(), parsed.mail().get(), parsed.name().get(), LicenseSource.MAIL);
     }
 }

@@ -12,16 +12,11 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.data.access.KoFiProducts;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
-import de.chojo.lyna.data.dao.products.mailings.Mailing;
-import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
-import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.license.service.LicenseService;
-import de.chojo.lyna.mail.MailCreator;
+import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.MailingService;
-import de.chojo.lyna.mail.PurchaseRecipient;
 import de.chojo.lyna.util.Urls;
 import de.chojo.lyna.web.api.v1.kofi.payloads.DataType;
 import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
@@ -42,7 +37,7 @@ public class KoFiApi {
 
     private final KoFiProducts kofi;
     private final MailingService mailing;
-    private final PurchaseCollectionService purchases;
+    private final PurchaseService purchases;
     private final ObjectMapper mapper = JsonMapper.builder()
             .configure(JsonReadFeature.ALLOW_MISSING_VALUES, true)
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
@@ -54,7 +49,7 @@ public class KoFiApi {
             Kofi kofiSettings,
             KoFiProducts kofi,
             MailingService mailing,
-            PurchaseCollectionService purchases,
+            PurchaseService purchases,
             LicenseService licenseService) {
         this.licenseService = licenseService;
         this.kofiSettings = kofiSettings;
@@ -80,23 +75,7 @@ public class KoFiApi {
                         kofi.logTransaction(post, json, shopItem);
                         Optional<Product> optProduct = kofi.byCode(shopItem.directLinkCode());
                         if (optProduct.isEmpty()) continue;
-                        Product product = optProduct.get();
-                        Optional<Mailing> optProductMail = product.mailings().get();
-                        if (optProductMail.isEmpty()) continue;
-                        Mailing productMail = optProductMail.get();
-                        Optional<License> license = product.createLicense(post.email(), LicenseSource.KOFI);
-                        if (license.isEmpty()) continue;
-                        licenseService.grantAccess(license.get(), ReleaseType.STABLE);
-                        boolean handedOver = purchases.handOver(license.get().id(), post.email());
-                        var mail = MailCreator.createLicenseMessage(
-                                mailing.renderer(),
-                                productMail,
-                                license.get().key(),
-                                post.from(),
-                                post.email(),
-                                product.url(),
-                                handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
-                        mailing.sendMail(mail);
+                        purchases.issue(optProduct.get(), post.email(), post.from(), LicenseSource.KOFI);
                     }
                 } else {
                     kofi.logTransaction(post, json, null);
