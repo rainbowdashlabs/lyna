@@ -16,12 +16,18 @@ import de.chojo.lyna.commands.registrations.handler.Transfer;
 import de.chojo.lyna.commands.registrations.handler.share.Add;
 import de.chojo.lyna.commands.registrations.handler.share.Remove;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.license.service.LicenseSharingService;
 
 public class Registrations implements SlashProvider<Slash> {
+    private final LicenseSharingService licenseSharing;
+    private final LicenseService licenseService;
     private final Guilds guilds;
 
     @Inject
-    public Registrations(Guilds guilds) {
+    public Registrations(Guilds guilds, LicenseService licenseService, LicenseSharingService licenseSharing) {
+        this.licenseSharing = licenseSharing;
+        this.licenseService = licenseService;
         this.guilds = guilds;
     }
 
@@ -32,28 +38,28 @@ public class Registrations implements SlashProvider<Slash> {
                 .guildOnly()
                 .group(Group.of("share", "Share your registrations")
                         .subCommand(SubCommand.of("add", "Add a user to your license")
-                                .handler(new Add(guilds))
+                                .handler(new Add(guilds, licenseSharing))
                                 .argument(Argument.text("product", "The product to share")
                                         .asRequired()
                                         .withAutoComplete())
                                 .argument(Argument.user("user", "User to share the license with.")
                                         .asRequired()))
                         .subCommand(SubCommand.of("remove", "Remove user from a license")
-                                .handler(new Remove(guilds))
+                                .handler(new Remove(guilds, licenseSharing))
                                 .argument(Argument.text("product", "Product name")
                                         .asRequired()
                                         .withAutoComplete())
                                 .argument(Argument.user("user", "User to remove sharing"))
                                 .argument(Argument.text("user_id", "User id to remove sharing"))))
                 .subCommand(SubCommand.of("info", "Information about a license")
-                        .handler(new Info(guilds))
+                        .handler(new Info(guilds, licenseService, licenseSharing))
                         .argument(Argument.text("product", "The product name")
                                 .asRequired()
                                 .withAutoComplete()))
                 //                .subCommand(SubCommand.of("list", "List your licenses")
                 //                        .handler(new List(guilds)))
                 .subCommand(SubCommand.of("transfer", "Transfer a license to another user.")
-                        .handler(new Transfer(guilds))
+                        .handler(new Transfer(guilds, licenseService))
                         .argument(Argument.text("product", "The product to transfer")
                                 .asRequired()
                                 .withAutoComplete())

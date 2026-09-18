@@ -12,9 +12,11 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.LicenseUser;
-import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.Sharee;
+import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -26,10 +28,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Info implements SlashHandler {
+    private final LicenseService licenseService;
+    private final LicenseSharingService licenseSharing;
     private final Guilds guilds;
 
-    public Info(Guilds guilds) {
+    public Info(Guilds guilds, LicenseService licenseService, LicenseSharingService licenseSharing) {
         this.guilds = guilds;
+        this.licenseService = licenseService;
+        this.licenseSharing = licenseSharing;
     }
 
     @Override
@@ -54,7 +60,7 @@ public class Info implements SlashHandler {
                     .setColor(Colors.Pastel.DARK_PINK)
                     .addField("Key", "|| %s ||".formatted(license.key()), true);
 
-            List<Sharee> sharees = license.sharees();
+            List<Sharee> sharees = licenseSharing.sharees(license);
             if (!sharees.isEmpty()) {
                 var shared = sharees.stream().map(Sharee::display).collect(Collectors.joining("\n"));
                 builder.addField("Shared with:", shared, true);
@@ -70,7 +76,7 @@ public class Info implements SlashHandler {
                     .setTitle(product.get().name(), product.get().url())
                     .setAuthor("Shared license")
                     .setColor(Colors.Pastel.DARK_PINK)
-                    .addField("License owner:", MentionUtil.user(license.owner()), true);
+                    .addField("License owner:", MentionUtil.user(licenseService.owner(license)), true);
             event.replyEmbeds(builder.build()).setEphemeral(true).queue();
             return;
         }

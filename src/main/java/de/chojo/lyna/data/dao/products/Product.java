@@ -6,11 +6,11 @@
 package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.licenses.License;
-import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.lyna.data.dao.products.mailings.Mailings;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.NexusRest;
 import de.chojo.nexus.entities.PageComponentXO;

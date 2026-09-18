@@ -16,7 +16,6 @@ import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
@@ -26,6 +25,8 @@ import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -51,6 +52,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * was invented. A guild too small to take a cast from is said so rather than half-seeded.
  */
 public class DemoService {
+    private final LicenseService licenseService;
     private static final Logger log = getLogger(DemoService.class);
 
     /** What every seeded account signs in with, when a password is used at all. */
@@ -85,7 +87,9 @@ public class DemoService {
             LicenseInvites licenseInvites,
             DownloadLog downloadLog,
             DemoArtifacts artifacts,
-            InstanceOperators instanceOperators) {
+            InstanceOperators instanceOperators,
+            LicenseService licenseService) {
+        this.licenseService = licenseService;
         this.configuration = configuration;
         this.gateway = gateway;
         this.guilds = guilds;
@@ -284,7 +288,7 @@ public class DemoService {
             if (product.free()) continue;
             Optional<License> licence = product.createLicense("demo-owner@example.invalid");
             if (licence.isEmpty()) continue;
-            licence.get().grantAccess(ReleaseType.STABLE);
+            licenseService.grantAccess(licence.get(), ReleaseType.STABLE);
             accountLicenses.addSharee(licence.get().id(), accountLinkService.accountIdForDiscord(sharee));
             seeded.accounts().stream()
                     .filter(account -> "demo-web-only@example.invalid".equals(account.email()))

@@ -8,7 +8,8 @@ package de.chojo.lyna.commands.license.handler.delete;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -17,10 +18,12 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import java.util.Optional;
 
 public class Identifier implements SlashHandler {
+    private final LicenseService licenseService;
     private final Guilds guilds;
 
-    public Identifier(Guilds guilds) {
+    public Identifier(Guilds guilds, LicenseService licenseService) {
         this.guilds = guilds;
+        this.licenseService = licenseService;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class Identifier implements SlashHandler {
             return;
         }
 
-        if (license.get().delete()) {
+        if (licenseService.delete(license.get())) {
             event.reply("Deleted").setEphemeral(true).queue();
         }
     }

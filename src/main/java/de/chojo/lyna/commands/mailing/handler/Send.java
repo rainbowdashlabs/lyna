@@ -11,9 +11,10 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
@@ -26,16 +27,23 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import java.util.Optional;
 
 public class Send implements SlashHandler {
+    private final LicenseService licenseService;
     private final MailingService mailingService;
     private final Conf configuration;
     private final Guilds guilds;
     private final PurchaseCollectionService purchases;
 
-    public Send(MailingService mailingService, Conf configuration, Guilds guilds, PurchaseCollectionService purchases) {
+    public Send(
+            MailingService mailingService,
+            Conf configuration,
+            Guilds guilds,
+            PurchaseCollectionService purchases,
+            LicenseService licenseService) {
         this.mailingService = mailingService;
         this.configuration = configuration;
         this.guilds = guilds;
         this.purchases = purchases;
+        this.licenseService = licenseService;
     }
 
     @Override
@@ -65,7 +73,7 @@ public class Send implements SlashHandler {
             return;
         }
 
-        license.get().grantAccess(ReleaseType.STABLE);
+        licenseService.grantAccess(license.get(), ReleaseType.STABLE);
 
         Mailing mailing = optMailing.get();
         boolean handedOver = purchases.handOver(license.get().id(), address);

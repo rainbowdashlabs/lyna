@@ -9,6 +9,8 @@ import de.chojo.jdautil.util.Choice;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.util.LicenseCreator;
 import de.chojo.sadu.mapper.wrapper.Row;
 import net.dv8tion.jda.api.interactions.commands.Command;

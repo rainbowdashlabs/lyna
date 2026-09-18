@@ -9,7 +9,8 @@ import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseUser;
-import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -18,10 +19,12 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import java.util.Optional;
 
 public class Transfer implements SlashHandler {
+    private final LicenseService licenseService;
     private final Guilds guilds;
 
-    public Transfer(Guilds guilds) {
+    public Transfer(Guilds guilds, LicenseService licenseService) {
         this.guilds = guilds;
+        this.licenseService = licenseService;
     }
 
     @Override
@@ -52,7 +55,7 @@ public class Transfer implements SlashHandler {
             return;
         }
 
-        license.get().transfer(target);
+        licenseService.transfer(license.get(), target);
 
         event.reply("License transferred").setEphemeral(true).queue();
         target.getUser()

@@ -10,7 +10,8 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -19,10 +20,12 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import java.util.Optional;
 
 public class Create implements SlashHandler {
+    private final LicenseService licenseService;
     private final Guilds guilds;
 
-    public Create(Guilds guilds) {
+    public Create(Guilds guilds, LicenseService licenseService) {
         this.guilds = guilds;
+        this.licenseService = licenseService;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class Create implements SlashHandler {
             return;
         }
 
-        license.get().grantAccess(ReleaseType.STABLE);
+        licenseService.grantAccess(license.get(), ReleaseType.STABLE);
 
         event.reply("License created.\n`%s`".formatted(license.get().key()))
                 .setEphemeral(true)

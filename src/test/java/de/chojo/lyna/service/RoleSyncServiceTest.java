@@ -9,9 +9,9 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.roles.RoleSync;
+import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import de.chojo.nexus.NexusRest;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,7 +119,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Clearing the shares asks about every sharee, and about nobody else")
     void clearAsksAboutEverySharee() {
-        license().clearSubUsers();
+        licenseSharing.clearSharees(license());
 
         assertEquals(List.of("revokeIfUnentitled:" + SHAREE), roles.calls);
     }
@@ -127,7 +127,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A sharee is asked about only once their share is gone")
     void shareeIsAskedAfterTheRowsGo() {
-        license().clearSubUsers();
+        licenseSharing.clearSharees(license());
 
         // False is the whole point: asked while the share was still there, the answer was always
         // "entitled" and the role was never taken back.
@@ -137,7 +137,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Clearing the shares takes the rows with it")
     void clearRemovesTheRows() throws SQLException {
-        license().clearSubUsers();
+        licenseSharing.clearSharees(license());
 
         assertEquals(0, countRows("user_sub_license"));
         assertTrue(
@@ -147,7 +147,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Deleting a license takes the owner's role back whatever else is true")
     void deleteRevokesTheOwnerUnconditionally() {
-        license().delete();
+        licenseService.delete(license());
 
         assertTrue(roles.calls.contains("revoke:" + OWNER));
     }
@@ -155,7 +155,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Deleting clears the shares first, so a sharee is asked about too")
     void deleteClearsTheSharesFirst() {
-        license().delete();
+        licenseService.delete(license());
 
         assertEquals(List.of("revokeIfUnentitled:" + SHAREE, "revoke:" + OWNER), roles.calls);
     }
@@ -163,7 +163,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Deleting takes the license and everything hanging off it")
     void deleteRemovesEverything() throws SQLException {
-        license().delete();
+        licenseService.delete(license());
 
         assertEquals(0, countRows("license"));
         assertEquals(0, countRows("user_license"));
@@ -173,7 +173,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Somebody who owns a license of their own keeps it when a share is cleared")
     void ownerIsUnaffectedByAShareBeingCleared() {
-        license().clearSubUsers();
+        licenseSharing.clearSharees(license());
 
         assertTrue(accountLicenses
                 .entitledProductIds(accountLinks.accountIdForDiscord(OWNER))
@@ -190,7 +190,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         Guilds botless = new Guilds(Mockito.mock(NexusRest.class), configuration, accountLinks);
         assertFalse(botless.roles() == roles);
 
-        botless.guild(GUILD).licenses().byId(licenseId).orElseThrow().delete();
+        licenseService.delete(botless.guild(GUILD).licenses().byId(licenseId).orElseThrow());
 
         assertEquals(0, countRows("license"));
         assertTrue(roles.calls.isEmpty());
@@ -203,10 +203,10 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         usernameService.setUsername(webOnly.id(), "ada");
         accountLicenses.addSharee(licenseId, webOnly.id());
 
-        var sharees = license().sharees();
+        var sharees = licenseSharing.sharees(license());
 
         assertEquals(2, sharees.size());
-        assertEquals(1, license().subUsers().size());
+        assertEquals(1, licenseSharing.shareeDiscordIds(license()).size());
         assertTrue(sharees.stream().anyMatch(s -> s.discordId() != null && s.discordId() == SHAREE));
         var web =
                 sharees.stream().filter(s -> s.discordId() == null).findFirst().orElseThrow();
@@ -217,17 +217,17 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("The cap counts web-only sharees and standing invites, not just Discord ones")
     void shareCountCoversEverybody() {
-        assertEquals(1, license().shareCount());
+        assertEquals(1, licenseSharing.shareCount(license()));
 
         var webOnly = accountService.register("counted@example.invalid", "hash");
         accountLicenses.addSharee(licenseId, webOnly.id());
-        assertEquals(2, license().shareCount());
+        assertEquals(2, licenseSharing.shareCount(license()));
 
         licenseInvites.invite(licenseId, "waiting@example.invalid");
-        assertEquals(3, license().shareCount());
+        assertEquals(3, licenseSharing.shareCount(license()));
 
         licenseInvites.withdraw(licenseId, "waiting@example.invalid");
-        assertEquals(2, license().shareCount());
+        assertEquals(2, licenseSharing.shareCount(license()));
     }
 
     @Test
@@ -236,7 +236,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         var unnamed = accountService.register("unnamed@example.invalid", "hash");
         accountLicenses.addSharee(licenseId, unnamed.id());
 
-        var web = license().sharees().stream()
+        var web = licenseSharing.sharees(license()).stream()
                 .filter(s -> s.discordId() == null)
                 .findFirst()
                 .orElseThrow();
