@@ -406,10 +406,7 @@ public class Account {
         String link = configuration.main().links().frontend() + "/verify-email?token=" + issued.token();
         try {
             var renderer = mailingService.renderer();
-            var values = java.util.Map.<String, Object>of(
-                    "url", link,
-                    "senderName", "Lyna",
-                    "baseUrl", configuration.main().links().frontend());
+            var values = java.util.Map.<String, Object>of("url", link);
             mailingService.send(email, renderer.subject("verify-email", "en", values),
                     renderer.render("verify-email", "en", values));
         } catch (Exception e) {
@@ -644,8 +641,7 @@ public class Account {
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of(
                     "owner", owner == null ? "the owner" : owner,
-                    "product", license.productName(),
-                    "senderName", "Lyna");
+                    "product", license.productName());
             mailingService.send(sharee.email(),
                     renderer.subject(template, "en", values),
                     renderer.render(template, "en", values));

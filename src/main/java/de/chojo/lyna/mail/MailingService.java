@@ -40,13 +40,15 @@ public class MailingService {
     private final Conf configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
-    private final MailTemplateRenderer renderer = new MailTemplateRenderer();
+    private final MailTemplateRenderer renderer;
 
     @Inject
     public MailingService(Threading threading, Mailings mailings, Conf configuration) {
         this.threading = threading;
         this.mailings = mailings;
         this.configuration = configuration;
+        this.renderer = new MailTemplateRenderer(configuration.main().mailing().senderName(),
+                configuration.main().links().frontend());
     }
 
     /**

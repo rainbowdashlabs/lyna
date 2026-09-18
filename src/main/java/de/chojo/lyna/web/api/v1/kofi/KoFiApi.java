@@ -79,7 +79,7 @@ public class KoFiApi {
                         license.get().grantAccess(ReleaseType.STABLE);
                         handOver(license.get().id(), post.email());
                         var mail = MailCreator.createLicenseMessage(mailing.renderer(), productMail,
-                                license.get().key(), post.from(), post.email(), null);
+                                license.get().key(), post.from(), post.email(), product.url());
                         mailing.sendMail(mail);
                     }
                 } else {

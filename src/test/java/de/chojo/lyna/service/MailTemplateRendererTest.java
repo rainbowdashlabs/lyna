@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * seen once, by somebody who is not looking for bugs in it.
  */
 class MailTemplateRendererTest {
-    private final MailTemplateRenderer renderer = new MailTemplateRenderer();
+    private final MailTemplateRenderer renderer = new MailTemplateRenderer("Lyna", "https://example.invalid");
 
     @Test
     @DisplayName("A rendered mail carries the layout's chrome around its own body")

@@ -31,6 +31,11 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Autoescaping is on. Anything that is HTML on purpose has to say so with {@code | raw}, which
  * makes each of those a decision somebody wrote down.
+ *
+ * <p>What the instance is called and where it lives are merged into every mail here rather than
+ * passed by whoever sends one. A caller that has to remember them is a caller that can forget them,
+ * and the licence mail did: it was the one mail going out signed with the default name and with no
+ * link in its footer.
  */
 public class MailTemplateRenderer {
     private static final String TEMPLATE_ROOT = "mail/";
@@ -39,8 +44,14 @@ public class MailTemplateRenderer {
     private final PebbleEngine engine;
     private final ObjectMapper json = new ObjectMapper();
     private final Map<String, Map<String, String>> subjects = new ConcurrentHashMap<>();
+    private final Map<String, Object> instanceValues;
 
-    public MailTemplateRenderer() {
+    /**
+     * @param senderName what the instance signs its mail with
+     * @param baseUrl    where the instance lives, for the footer and for links back into it
+     */
+    public MailTemplateRenderer(String senderName, String baseUrl) {
+        this.instanceValues = Map.of("senderName", senderName, "baseUrl", baseUrl);
         ClasspathLoader loader = new ClasspathLoader(MailTemplateRenderer.class.getClassLoader());
         loader.setPrefix(TEMPLATE_ROOT);
         loader.setSuffix("");
@@ -64,6 +75,7 @@ public class MailTemplateRenderer {
         String effective = resolveLocale(name, locale);
         PebbleTemplate template = engine.getTemplate(effective + "/" + name + ".html");
         Map<String, Object> context = new HashMap<>(variables);
+        instanceValues.forEach(context::putIfAbsent);
         context.putIfAbsent("lang", effective);
         try (StringWriter writer = new StringWriter()) {
             template.evaluate(writer, context);
@@ -88,8 +100,10 @@ public class MailTemplateRenderer {
         String template = lookupSubject(locale, name);
         if (template == null) template = lookupSubject(FALLBACK_LOCALE, name);
         if (template == null) return name;
+        Map<String, Object> values = new HashMap<>(placeholders);
+        instanceValues.forEach(values::putIfAbsent);
         String result = template;
-        for (Map.Entry<String, Object> entry : placeholders.entrySet()) {
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
             if (entry.getValue() == null) continue;
             result = result.replace("{" + entry.getKey() + "}", entry.getValue().toString());
         }

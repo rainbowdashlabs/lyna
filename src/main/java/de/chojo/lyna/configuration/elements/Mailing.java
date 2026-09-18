@@ -36,6 +36,12 @@ public class Mailing {
     private int pollSeconds = 300;
     @Overwrite(env = @Env, prop = @Prop)
     private boolean enabled = true;
+    /**
+     * The name the instance signs its mail with, in the header, the footer and the subjects that
+     * name it.
+     */
+    @Overwrite(env = @Env, prop = @Prop)
+    private String senderName = "Lyna";
     // While we do no use javamail, we use angus and both implement jakarta.mail
     // Most of the parameters of javamail can be applied here as well
     // https://www.tutorialspoint.com/javamail_api/javamail_api_imap_servers.htm
@@ -61,6 +67,10 @@ public class Mailing {
      */
     public boolean enabled() {
         return enabled;
+    }
+
+    public String senderName() {
+        return senderName;
     }
 
     public String user() {
