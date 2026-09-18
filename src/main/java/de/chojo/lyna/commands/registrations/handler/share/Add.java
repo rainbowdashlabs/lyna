@@ -13,6 +13,7 @@ import de.chojo.lyna.data.dao.LicenseUser;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
+import de.chojo.lyna.feature.product.service.ProductRoleService;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -23,10 +24,12 @@ import java.util.List;
 import java.util.Optional;
 
 public class Add implements SlashHandler {
+    private final ProductRoleService productRoles;
     private final LicenseSharingService licenseSharing;
     private final Guilds guilds;
 
-    public Add(Guilds guilds, LicenseSharingService licenseSharing) {
+    public Add(Guilds guilds, LicenseSharingService licenseSharing, ProductRoleService productRoles) {
+        this.productRoles = productRoles;
         this.guilds = guilds;
         this.licenseSharing = licenseSharing;
     }
@@ -50,8 +53,8 @@ public class Add implements SlashHandler {
             return;
         }
 
-        if (product.get().canAccess(target)) {
-            product.get().assign(target);
+        if (productRoles.canAccess(product.get(), target)) {
+            productRoles.assign(product.get(), target);
             event.reply("This user has already access to this product.")
                     .setEphemeral(true)
                     .queue();
@@ -63,7 +66,7 @@ public class Add implements SlashHandler {
             event.reply("This user has already access to your license.")
                     .setEphemeral(true)
                     .queue();
-            product.get().assign(target);
+            productRoles.assign(product.get(), target);
             return;
         }
 

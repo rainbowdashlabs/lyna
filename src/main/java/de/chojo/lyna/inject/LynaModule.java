@@ -68,6 +68,9 @@ import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
+import de.chojo.lyna.feature.product.repository.ProductRepository;
+import de.chojo.lyna.feature.product.service.ProductRoleService;
+import de.chojo.lyna.feature.product.service.TrialService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
@@ -261,6 +264,9 @@ public class LynaModule extends AbstractModule {
         bind(LicenseRepository.class).in(Singleton.class);
         bind(LicenseSharingService.class).in(Singleton.class);
         bind(LicenseService.class).in(Singleton.class);
+        bind(ProductRepository.class).in(Singleton.class);
+        bind(ProductRoleService.class).in(Singleton.class);
+        bind(TrialService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);
         bind(LicenseInvites.class).in(Singleton.class);
@@ -302,8 +308,8 @@ public class LynaModule extends AbstractModule {
 
     @Provides
     @Singleton
-    RoleSync roleSync(BaseSettings settings, Gateway gateway) {
-        return settings.botEnabled() ? new JdaRoleSync(gateway) : RoleSync.NOOP;
+    RoleSync roleSync(BaseSettings settings, Gateway gateway, ProductRoleService productRoles) {
+        return settings.botEnabled() ? new JdaRoleSync(gateway, productRoles) : RoleSync.NOOP;
     }
 
     /**

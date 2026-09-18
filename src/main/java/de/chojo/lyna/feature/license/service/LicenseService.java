@@ -12,6 +12,7 @@ import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
+import de.chojo.lyna.feature.product.service.ProductRoleService;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
 
@@ -28,6 +29,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Singleton
 public class LicenseService {
+    private final ProductRoleService productRoles;
     private static final Logger log = getLogger(LicenseService.class);
 
     private final LicenseRepository licenses;
@@ -35,7 +37,12 @@ public class LicenseService {
     private final LicenseSharingService sharing;
 
     @Inject
-    public LicenseService(LicenseRepository licenses, AccountLinkService accountLinks, LicenseSharingService sharing) {
+    public LicenseService(
+            LicenseRepository licenses,
+            AccountLinkService accountLinks,
+            LicenseSharingService sharing,
+            ProductRoleService productRoles) {
+        this.productRoles = productRoles;
         this.licenses = licenses;
         this.accountLinks = accountLinks;
         this.sharing = sharing;
@@ -69,7 +76,7 @@ public class LicenseService {
                 license.id(),
                 license.product().name());
         license.cachedOwner(member.getIdLong());
-        license.product().assign(member);
+        productRoles.assign(license.product(), member);
         return true;
     }
 
@@ -83,17 +90,17 @@ public class LicenseService {
         sharing.clearSharees(license);
         if (!licenses.transfer(accountLinks.accountIdForDiscord(member.getIdLong()), license.id())) return false;
         Member oldOwner = member.getGuild().retrieveMemberById(previous).complete();
-        if (oldOwner != null && !license.product().canAccess(oldOwner)) {
+        if (oldOwner != null && !productRoles.canAccess(license.product(), oldOwner)) {
             log.info(
                     LogNotify.STATUS,
                     "{} transferred license for {} to {}",
                     oldOwner.getEffectiveName(),
                     license.product().name(),
                     member.getEffectiveName());
-            license.product().revoke(oldOwner);
+            productRoles.revoke(license.product(), oldOwner);
         }
         license.cachedOwner(member.getIdLong());
-        license.product().assign(member);
+        productRoles.assign(license.product(), member);
         return true;
     }
 

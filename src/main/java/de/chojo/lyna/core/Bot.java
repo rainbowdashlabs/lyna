@@ -12,6 +12,7 @@ import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -25,6 +26,7 @@ import java.util.Set;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Bot {
+    private final ProductRoleService productRoles;
     private static final Logger log = getLogger(Bot.class);
     private final Guilds guilds;
     private final Threading threading;
@@ -39,7 +41,9 @@ public class Bot {
             Threading threading,
             Conf configuration,
             Set<SlashProvider<Slash>> commands,
-            MailingService mailingService) {
+            MailingService mailingService,
+            ProductRoleService productRoles) {
+        this.productRoles = productRoles;
         this.guilds = guilds;
         this.threading = threading;
         this.configuration = configuration;
@@ -73,7 +77,7 @@ public class Bot {
                 .setEnableShutdownHook(false)
                 .setThreadFactory(Threading.createThreadFactory(threading.jdaGroup()))
                 .setEventPool(threading.jdaWorker())
-                .addEventListeners(new RoleListener(guilds))
+                .addEventListeners(new RoleListener(guilds, productRoles))
                 .build();
     }
 
