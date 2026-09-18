@@ -64,14 +64,14 @@ public class Conf extends Configurations<ConfigFile> {
     /**
      * Refused, always.
      *
-     * <p>Ocular applies the overrides into the same object it would serialise, so saving writes
-     * whatever the environment supplied into the file - a database password, a mail password, the
-     * sign-in secret. It has happened: a call added here wrote the secret from the environment onto
-     * disk on a running instance.
+     * <p>Two reasons. It rewrites the whole file from the loaded object, so the layout and any
+     * comments an operator left go; and Ocular applies the overrides into that same object, so a
+     * value supplied from the environment is written into the file as though somebody had put it
+     * there. A call added here did exactly that on a running instance.
      *
-     * <p>Settings a newer version understands are added by {@link #fillInMissingKeys}, which merges
-     * documents before any override is applied and is the only thing that should ever write this
-     * file after it exists.
+     * <p>Nothing needs it. Settings a newer version understands are added by
+     * {@link #fillInMissingKeys}, which merges documents before any override is applied and is the
+     * only thing that should write this file after it exists.
      *
      * @throws UnsupportedOperationException always
      */
