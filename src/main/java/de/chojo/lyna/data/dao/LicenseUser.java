@@ -5,8 +5,8 @@
  */
 package de.chojo.lyna.data.dao;
 
-import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.Member;

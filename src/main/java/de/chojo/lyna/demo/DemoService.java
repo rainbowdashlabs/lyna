@@ -9,14 +9,9 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.DemoArtifacts;
-import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.downloadtype.DownloadType;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
@@ -25,8 +20,13 @@ import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.download.entity.DownloadType;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
+import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -66,8 +66,8 @@ public class DemoService {
     private final AccountEmailService accountEmails;
     private final AccountLicenseRepository accountLicenses;
     private final LicenseInvites licenseInvites;
-    private final DownloadLog downloadLog;
-    private final InstanceOperators instanceOperators;
+    private final DownloadLogRepository downloadLog;
+    private final InstanceOperatorRepository instanceOperators;
     private final Conf configuration;
     private final DemoArtifacts artifacts;
     private final PasswordHasher passwordHasher = new PasswordHasher();
@@ -85,9 +85,9 @@ public class DemoService {
             AccountEmailService accountEmails,
             AccountLicenseRepository accountLicenses,
             LicenseInvites licenseInvites,
-            DownloadLog downloadLog,
+            DownloadLogRepository downloadLog,
             DemoArtifacts artifacts,
-            InstanceOperators instanceOperators,
+            InstanceOperatorRepository instanceOperators,
             LicenseService licenseService) {
         this.licenseService = licenseService;
         this.configuration = configuration;

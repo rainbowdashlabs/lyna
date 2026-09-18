@@ -7,9 +7,9 @@ package de.chojo.lyna.web.api.v1.update;
 
 import com.google.inject.Inject;
 import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.products.Product;
-import de.chojo.lyna.data.dao.products.downloads.Download;
+import de.chojo.lyna.feature.download.entity.Download;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.HttpStatus;

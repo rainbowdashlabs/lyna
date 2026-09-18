@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.mail;
 
-import de.chojo.lyna.data.dao.products.mailings.Mailing;
+import de.chojo.lyna.feature.mail.entity.Mailing;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

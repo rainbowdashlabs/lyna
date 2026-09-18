@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.downloadtype;
+package de.chojo.lyna.feature.download.entity;
 
 import de.chojo.lyna.util.Enums;
 

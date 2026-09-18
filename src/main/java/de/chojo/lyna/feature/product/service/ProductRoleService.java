@@ -7,8 +7,8 @@ package de.chojo.lyna.feature.product.service;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;

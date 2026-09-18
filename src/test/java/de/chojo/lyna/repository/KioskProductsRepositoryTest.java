@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.repository;
 
-import de.chojo.lyna.data.dao.products.KioskProduct;
+import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

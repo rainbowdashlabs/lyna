@@ -3,12 +3,13 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products;
+package de.chojo.lyna.feature.product.entity;
 
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.products.downloads.Download;
+import de.chojo.lyna.data.dao.products.Products;
 import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.lyna.data.dao.products.mailings.Mailings;
+import de.chojo.lyna.feature.download.entity.Download;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.product.repository.ProductRepository;

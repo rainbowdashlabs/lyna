@@ -3,19 +3,19 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.downloadtype;
+package de.chojo.lyna.feature.download.entity;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.feature.download.repository.DownloadTypeRepository;
 import de.chojo.sadu.mapper.wrapper.Row;
 import de.chojo.sadu.queries.api.call.Call;
 
 import java.sql.SQLException;
 import java.util.function.Function;
 
-import static de.chojo.sadu.queries.api.call.Call.call;
-import static de.chojo.sadu.queries.api.query.Query.query;
-
 public class DownloadType {
+    private static final DownloadTypeRepository REPOSITORY = new DownloadTypeRepository();
+
     LicenseGuild guild;
     int id;
     String name;
@@ -74,16 +74,10 @@ public class DownloadType {
     }
 
     private boolean set(String column, Function<Call, Call> consumer) {
-        return query("UPDATE download_type SET %s = ? WHERE id = ?", column)
-                .single(consumer.apply(call()).bind(id))
-                .update()
-                .changed();
+        return REPOSITORY.set(id, column, consumer);
     }
 
     public boolean delete() {
-        return query("DELETE FROM download_type WHERE guild_id = ? AND id =  ?")
-                .single(call().bind(guild.guildId()).bind(id))
-                .delete()
-                .changed();
+        return REPOSITORY.delete(guild.guildId(), id);
     }
 }

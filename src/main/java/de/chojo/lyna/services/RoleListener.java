@@ -8,7 +8,7 @@ package de.chojo.lyna.services;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.LicenseUser;
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;

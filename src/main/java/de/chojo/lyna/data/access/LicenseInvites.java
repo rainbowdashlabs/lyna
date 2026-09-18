@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.data.access;
 
-import de.chojo.lyna.data.dao.account.LicenseInvite;
+import de.chojo.lyna.feature.license.entity.LicenseInvite;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import java.sql.SQLException;

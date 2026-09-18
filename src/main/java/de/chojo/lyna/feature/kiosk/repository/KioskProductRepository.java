@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.kiosk.repository;
 
-import de.chojo.lyna.data.dao.products.KioskProduct;
+import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * storefront never picks a guild. Nothing here touches the gateway, which is what lets the page
  * answer to somebody who is not signed in.
  */
-public class KioskProducts {
+public class KioskProductRepository {
     /** Ko-fi serves a shop item at this address followed by its direct link code. */
     private static final String KOFI_SHOP_URL = "https://ko-fi.com/s/";
 

@@ -7,13 +7,13 @@ package de.chojo.lyna.feature.purchase.service;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.products.Product;
-import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.mail.entity.Mailing;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;

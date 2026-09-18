@@ -5,7 +5,8 @@
  */
 package de.chojo.lyna.data.dao.products.mailings;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.mail.entity.Mailing;
+import de.chojo.lyna.feature.product.entity.Product;
 
 import java.util.Optional;
 

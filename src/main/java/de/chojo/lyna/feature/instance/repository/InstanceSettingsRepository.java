@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.instance.repository;
 
-import de.chojo.lyna.data.dao.InstanceSettings;
+import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 
 import java.sql.Array;
@@ -15,7 +15,7 @@ import java.util.List;
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
-public class InstanceSettingsAccess {
+public class InstanceSettingsRepository {
 
     public InstanceSettings get() {
         return query("""

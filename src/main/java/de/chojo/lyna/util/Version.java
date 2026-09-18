@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.util;
 
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

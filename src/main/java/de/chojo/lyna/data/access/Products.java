@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.data.access;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import java.sql.SQLException;

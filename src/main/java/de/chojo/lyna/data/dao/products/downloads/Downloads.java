@@ -5,10 +5,11 @@
  */
 package de.chojo.lyna.data.dao.products.downloads;
 
-import de.chojo.lyna.data.dao.downloadtype.DownloadType;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.download.entity.Download;
+import de.chojo.lyna.feature.download.entity.DownloadType;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.download.repository.DownloadRepository;
+import de.chojo.lyna.feature.product.entity.Product;
 import net.dv8tion.jda.api.entities.Role;
 import org.jetbrains.annotations.Nullable;
 

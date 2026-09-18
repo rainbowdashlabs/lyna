@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.util;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.product.entity.Product;
 import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;

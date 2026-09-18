@@ -6,7 +6,7 @@
 package de.chojo.lyna.feature.product.repository;
 
 import com.google.inject.Singleton;
-import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 
 import java.util.List;

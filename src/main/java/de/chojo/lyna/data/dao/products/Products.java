@@ -6,6 +6,7 @@
 package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.Command;

@@ -11,11 +11,7 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.dao.InstanceSettings;
-import de.chojo.lyna.data.dao.account.DownloadLogEntry;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.lyna.feature.account.entity.AccountSession;
@@ -27,6 +23,10 @@ import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
+import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
+import de.chojo.lyna.feature.instance.entity.InstanceSettings;
+import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -59,13 +59,13 @@ public class Account {
     private final AccountLicenseRepository licenses;
     private final AccountEmailRepository accountEmails;
     private final LicenseInvites invites;
-    private final InstanceSettingsAccess instanceSettings;
+    private final InstanceSettingsRepository instanceSettings;
     private final MailingService mailingService;
     private final EmailVerificationTokenRepository emailTokens;
     private final Conf configuration;
     private final AccountSessionRepository sessions;
     private final RevokedJtiRepository revokedJtis;
-    private final DownloadLog downloadLog;
+    private final DownloadLogRepository downloadLog;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -79,13 +79,13 @@ public class Account {
             AccountLicenseRepository licenses,
             AccountEmailRepository accountEmails,
             LicenseInvites invites,
-            InstanceSettingsAccess instanceSettings,
+            InstanceSettingsRepository instanceSettings,
             MailingService mailingService,
             EmailVerificationTokenRepository emailTokens,
             Conf configuration,
             AccountSessionRepository sessions,
             RevokedJtiRepository revokedJtis,
-            DownloadLog downloadLog,
+            DownloadLogRepository downloadLog,
             PasswordHasher passwordHasher,
             JwtService jwtService) {
         this.auth = auth;
@@ -784,7 +784,7 @@ public class Account {
             int totalRows,
             int page,
             int pageSize,
-            List<DownloadLog.ProductOption> products) {}
+            List<DownloadLogRepository.ProductOption> products) {}
 
     public record Appearance(String theme, String darkMode) {}
 

@@ -5,10 +5,11 @@
  */
 package de.chojo.lyna.data.dao.settings;
 
-import static de.chojo.sadu.queries.api.call.Call.call;
-import static de.chojo.sadu.queries.api.query.Query.query;
+import de.chojo.lyna.feature.guild.repository.GuildSettingsRepository;
 
 public class License {
+    private static final GuildSettingsRepository REPOSITORY = new GuildSettingsRepository();
+
     private final Settings settings;
     int shares = 0;
     Long adminRoleId;
@@ -28,12 +29,7 @@ public class License {
     }
 
     public void shares(int shares) {
-        if (query("""
-                INSERT INTO license_settings(guild_id, shares) VALUES(?,?)
-                ON CONFLICT(guild_id)
-                     DO UPDATE
-                         SET shares = excluded.shares
-                """).single(call().bind(guildId()).bind(shares)).insert().changed()) {
+        if (REPOSITORY.setShares(guildId(), shares)) {
             this.shares = shares;
         }
     }
@@ -51,12 +47,7 @@ public class License {
     }
 
     public void adminRoleId(Long adminRoleId) {
-        if (query("""
-                INSERT INTO license_settings(guild_id, admin_role_id) VALUES(?,?)
-                ON CONFLICT(guild_id)
-                     DO UPDATE
-                         SET admin_role_id = excluded.admin_role_id
-                """).single(call().bind(guildId()).bind(adminRoleId)).insert().changed()) {
+        if (REPOSITORY.setAdminRole(guildId(), adminRoleId)) {
             this.adminRoleId = adminRoleId;
         }
     }

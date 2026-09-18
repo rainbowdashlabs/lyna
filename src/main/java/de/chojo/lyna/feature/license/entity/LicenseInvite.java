@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.account;
+package de.chojo.lyna.feature.license.entity;
 
 import java.time.Instant;
 

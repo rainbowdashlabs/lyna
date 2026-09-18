@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.data.roles;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.product.entity.Product;
 
 /**
  * Keeps the Discord roles a product grants in step with what its licenses say.

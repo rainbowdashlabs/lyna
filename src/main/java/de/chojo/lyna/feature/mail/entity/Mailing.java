@@ -3,17 +3,17 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products.mailings;
+package de.chojo.lyna.feature.mail.entity;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.mail.repository.MailingRepository;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.sadu.queries.api.call.Call;
 
 import java.util.function.Function;
 
-import static de.chojo.sadu.queries.api.call.Call.call;
-import static de.chojo.sadu.queries.api.query.Query.query;
-
 public class Mailing {
+    private static final MailingRepository REPOSITORY = new MailingRepository();
+
     private final int id;
     private final Product product;
     private String name;
@@ -55,15 +55,7 @@ public class Mailing {
     }
 
     private boolean set(String column, Function<Call, Call> consumer) {
-        return query("""
-                UPDATE
-                    mail_products
-                SET %s = ?
-                WHERE
-                    id = ?""", column)
-                .single(consumer.apply(call()).bind(id))
-                .update()
-                .changed();
+        return REPOSITORY.set(id, column, consumer);
     }
 
     /**
@@ -76,8 +68,7 @@ public class Mailing {
     }
 
     public void blocks(String blocks) {
-        if (query("""
-                UPDATE mail_products SET blocks = ?::JSONB WHERE id = ?""").single(call().bind(blocks).bind(id)).update().changed()) {
+        if (REPOSITORY.setBlocks(id, blocks)) {
             this.blocks = blocks;
         }
     }

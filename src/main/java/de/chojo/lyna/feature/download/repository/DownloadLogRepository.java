@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.download.repository;
 
-import de.chojo.lyna.data.dao.account.DownloadLogEntry;
+import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import java.sql.SQLException;
@@ -16,7 +16,7 @@ import java.util.List;
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
-public class DownloadLog {
+public class DownloadLogRepository {
     private static final String SELECT_ENTRY = """
             SELECT dl.id, dl.account_id, dl.discord_id, dl.license_id,
                    dl.product_id, p.name AS product_name,
@@ -78,7 +78,7 @@ public class DownloadLog {
                 LIMIT ?
                 """)
                 .single(call().bind(accountId).bind(limit))
-                .map(DownloadLog::readEntry)
+                .map(DownloadLogRepository::readEntry)
                 .all();
     }
 
@@ -104,7 +104,7 @@ public class DownloadLog {
                 LIMIT ?
                 """)
                 .single(call().bind(licenseId).bind(accountId).bind(accountId).bind(limit))
-                .map(DownloadLog::readEntry)
+                .map(DownloadLogRepository::readEntry)
                 .all();
     }
 
@@ -140,7 +140,7 @@ public class DownloadLog {
                 .single(bindFilters(accountId, licenseId, productId, source, from, to)
                         .bind(limit)
                         .bind(offset))
-                .map(DownloadLog::readEntry)
+                .map(DownloadLogRepository::readEntry)
                 .all();
     }
 

@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.data.roles;
 
-import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.gateway.Gateway;
 
