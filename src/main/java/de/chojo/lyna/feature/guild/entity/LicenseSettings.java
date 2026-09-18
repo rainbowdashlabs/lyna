@@ -3,22 +3,22 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.settings;
+package de.chojo.lyna.feature.guild.entity;
 
 import de.chojo.lyna.feature.guild.repository.GuildSettingsRepository;
 
-public class License {
+public class LicenseSettings {
     private static final GuildSettingsRepository REPOSITORY = new GuildSettingsRepository();
 
     private final Settings settings;
     int shares = 0;
     Long adminRoleId;
 
-    public License(Settings settings) {
+    public LicenseSettings(Settings settings) {
         this.settings = settings;
     }
 
-    public License(Settings settings, int shares, Long adminRoleId) {
+    public LicenseSettings(Settings settings, int shares, Long adminRoleId) {
         this.settings = settings;
         this.shares = shares;
         this.adminRoleId = adminRoleId;

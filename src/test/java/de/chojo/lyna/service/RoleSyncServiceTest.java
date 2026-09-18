@@ -7,9 +7,9 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
+import de.chojo.lyna.feature.guild.roles.RoleSync;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.repository.RepositoryTestBase;

@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.roles;
+package de.chojo.lyna.feature.guild.roles;
 
 import de.chojo.lyna.feature.product.entity.Product;
 

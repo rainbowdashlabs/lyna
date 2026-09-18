@@ -8,8 +8,8 @@ package de.chojo.lyna.feature.guild;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.guild.roles.RoleSync;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 

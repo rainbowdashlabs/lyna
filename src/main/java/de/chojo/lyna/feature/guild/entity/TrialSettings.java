@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.settings;
+package de.chojo.lyna.feature.guild.entity;
 
 import de.chojo.lyna.feature.guild.repository.GuildSettingsRepository;
 import de.chojo.sadu.queries.api.call.Call;
@@ -11,18 +11,18 @@ import de.chojo.sadu.queries.api.call.Call;
 import java.time.Duration;
 import java.util.function.Function;
 
-public class Trial {
+public class TrialSettings {
     private static final GuildSettingsRepository REPOSITORY = new GuildSettingsRepository();
 
     private final Settings settings;
     private int serverTime = 30;
     private int accountTime = 43200;
 
-    public Trial(Settings settings) {
+    public TrialSettings(Settings settings) {
         this.settings = settings;
     }
 
-    public Trial(Settings settings, int serverTime, int accountTime) {
+    public TrialSettings(Settings settings, int serverTime, int accountTime) {
         this.settings = settings;
         this.serverTime = serverTime;
         this.accountTime = accountTime;
