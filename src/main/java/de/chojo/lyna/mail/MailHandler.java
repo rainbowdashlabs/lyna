@@ -5,7 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Mailings;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
@@ -24,13 +24,15 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final Mailings mailings;
     private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
+    private final Accounts accounts;
     private final Conf configuration;
 
     private final Cache<String, String> cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
-    public MailHandler(Mailings mailings, MailingService mailingService, Conf configuration) {
+    public MailHandler(Mailings mailings, MailingService mailingService, Accounts accounts, Conf configuration) {
         this.mailings = mailings;
         this.mailingService = mailingService;
+        this.accounts = accounts;
         this.configuration = configuration;
     }
 
@@ -99,9 +101,11 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         Mailing mailing = optMailing.get();
         Optional<License> license = mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
         license.get().grantAccess(ReleaseType.STABLE);
+        boolean handedOver = accounts.handOver(license.get().id(), parsed.mail().get());
         Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
                 license.get().key(), parsed.name().get(), parsed.mail().get(),
-                mailing.product().url(), PurchaseRecipient.UNSTATED);
+                mailing.product().url(),
+                handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
         mailingService.sendMail(mail);
     }
 }

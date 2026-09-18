@@ -2,7 +2,6 @@ package de.chojo.lyna.data.access;
 
 import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.AccountIdentity;
-import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
@@ -545,13 +544,16 @@ public class Accounts {
     /**
      * Hands the account what was waiting on that address.
      *
-     * <p>Two things arrive this way: a licence somebody invited the address onto, and a licence bought
-     * with it in the shop. The second is the point of an account holding more than one address at all
-     * - somebody who paid from one address and signed up with another otherwise has to carry the key
-     * across by hand.
+     * <p>Two things arrive this way: a licence somebody invited the address onto, and a licence issued
+     * against it - bought in the shop, parsed out of a payment receipt, or written down by an operator.
+     * That second kind is the point of an account holding more than one address at all: somebody who
+     * paid from one address and signed up with another otherwise has to carry the key across by hand.
      *
-     * <p>Only a licence nobody holds. One that has already been claimed stays with whoever claimed it:
-     * proving an address is a way to find a purchase, not a way to take one.
+     * <p>Where the licence came from does not change who it belongs to, so this does not ask. What it
+     * asks is the same either way, and it is what makes this safe: the address must have been
+     * <em>proved</em>, which is the caller's business, and the licence must be one nobody holds. One
+     * that has already been claimed stays with whoever claimed it - proving an address is a way to
+     * find a purchase, not a way to take one.
      *
      * @return the licences the account now holds because of this address
      */
@@ -560,11 +562,10 @@ public class Accounts {
         List<Integer> bought = query("""
                 SELECT l.id
                 FROM license l
-                WHERE l.source = ?
-                  AND LOWER(l.user_identifier) = LOWER(?)
+                WHERE LOWER(l.user_identifier) = LOWER(?)
                   AND NOT EXISTS (SELECT 1 FROM user_license u WHERE u.license_id = l.id)
                 """)
-                .single(call().bind(LicenseSource.KOFI.name()).bind(email.trim()))
+                .single(call().bind(email.trim()))
                 .map(row -> row.getInt("id"))
                 .all();
         for (int licenseId : bought) {
@@ -577,6 +578,35 @@ public class Accounts {
             collected.add(licenseId);
         }
         return collected;
+    }
+
+    /**
+     * Gives a licence to whoever has already proved the address it was issued against.
+     *
+     * <p>The mirror of {@link #collect}: that runs when somebody proves an address and looks for
+     * licences waiting on it, this runs when a licence is issued and looks for somebody who has
+     * already proved the address. Between them the two find each other whichever happens first.
+     *
+     * <p>Only a proved address, and only a licence nobody holds. The address arrives from a shop, a
+     * receipt or an operator, so the thing standing between a payment and somebody else's licence is
+     * that the account followed a link sent to that address. An address that has merely been claimed
+     * counts as nobody - otherwise claiming one would be a way to take what was bought with it, and
+     * the mail sent afterwards would tell whoever claimed it that a purchase had been made.
+     *
+     * @return whether the licence was handed to an account, which is what the mail then says
+     */
+    public boolean handOver(int licenseId, String address) {
+        return emails.byAddress(address)
+                .filter(de.chojo.lyna.data.dao.account.AccountEmail::verified)
+                .map(held -> query("""
+                        INSERT INTO user_license (account_id, license_id)
+                        VALUES (?, ?)
+                        ON CONFLICT (license_id) DO NOTHING
+                        """)
+                        .single(call().bind(held.accountId()).bind(licenseId))
+                        .insert()
+                        .changed())
+                .orElse(false);
     }
 
     /**

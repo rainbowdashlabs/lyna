@@ -8,11 +8,8 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
-import de.chojo.lyna.data.access.AccountEmails;
-import de.chojo.lyna.data.dao.account.AccountEmail;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.licenses.LicenseSource;
-import de.chojo.sadu.queries.api.call.Call;
-import de.chojo.sadu.queries.api.query.Query;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.MailCreator;
@@ -38,7 +35,7 @@ public class KoFiApi {
 
     private final KoFiProducts kofi;
     private final MailingService mailing;
-    private final AccountEmails accountEmails;
+    private final Accounts accounts;
     private final ObjectMapper mapper = JsonMapper.builder()
             .configure(JsonReadFeature.ALLOW_MISSING_VALUES, true)
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
@@ -46,11 +43,11 @@ public class KoFiApi {
             .build();
 
     @Inject
-    public KoFiApi(Kofi kofiSettings, KoFiProducts kofi, MailingService mailing, AccountEmails accountEmails) {
+    public KoFiApi(Kofi kofiSettings, KoFiProducts kofi, MailingService mailing, Accounts accounts) {
         this.kofiSettings = kofiSettings;
         this.kofi = kofi;
         this.mailing = mailing;
-        this.accountEmails = accountEmails;
+        this.accounts = accounts;
     }
 
     public void init() {
@@ -78,7 +75,7 @@ public class KoFiApi {
                         Optional<License> license = product.createLicense(post.email(), LicenseSource.KOFI);
                         if (license.isEmpty()) continue;
                         license.get().grantAccess(ReleaseType.STABLE);
-                        boolean handedOver = handOver(license.get().id(), post.email());
+                        boolean handedOver = accounts.handOver(license.get().id(), post.email());
                         var mail = MailCreator.createLicenseMessage(mailing.renderer(), productMail,
                                 license.get().key(), post.from(), post.email(), product.url(),
                                 handedOver ? PurchaseRecipient.WITH_ACCOUNT
@@ -91,36 +88,5 @@ public class KoFiApi {
                 ctx.status(HttpStatus.OK);
             });
         });
-    }
-
-    /**
-     * Gives the licence to whoever has already proved the address it was paid from.
-     *
-     * <p>The key still goes out by mail, because most buyers have no account here and that mail is
-     * the only thing they get. This is for the ones who do: somebody who paid from an address they
-     * have proved finds the licence waiting rather than a key to paste in.
-     *
-     * <p>Only a proved address, and only a licence nobody holds. The address arrives from the shop,
-     * so the thing standing between a payment and somebody else's licence is that the account
-     * followed a link sent to that address.
-     *
-     * <p>An address that has merely been claimed counts as nobody: the mail would otherwise tell
-     * whoever claimed it that a purchase was made against an address they have not proved is theirs.
-     *
-     * @return whether the licence was handed to an account, which is what the mail then says
-     */
-    private boolean handOver(int licenseId, String payingAddress) {
-        return accountEmails.byAddress(payingAddress)
-                .filter(AccountEmail::verified)
-                .map(held -> Query
-                        .query("""
-                                INSERT INTO user_license (account_id, license_id)
-                                VALUES (?, ?)
-                                ON CONFLICT (license_id) DO NOTHING
-                                """)
-                        .single(Call.call().bind(held.accountId()).bind(licenseId))
-                        .insert()
-                        .changed())
-                .orElse(false);
     }
 }
