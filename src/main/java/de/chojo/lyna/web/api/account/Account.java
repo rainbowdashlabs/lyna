@@ -25,6 +25,8 @@ import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -52,6 +54,8 @@ public class Account {
 
     private final Auth auth;
     private final AccountRepository accounts;
+    private final UsernameService usernameService;
+    private final AccountLinkService accountLinkService;
     private final AccountLicenseRepository licenses;
     private final AccountEmailRepository accountEmails;
     private final LicenseInvites invites;
@@ -70,6 +74,8 @@ public class Account {
     public Account(
             Auth auth,
             AccountRepository accounts,
+            UsernameService usernameService,
+            AccountLinkService accountLinkService,
             AccountLicenseRepository licenses,
             AccountEmailRepository accountEmails,
             LicenseInvites invites,
@@ -84,6 +90,8 @@ public class Account {
             JwtService jwtService) {
         this.auth = auth;
         this.accounts = accounts;
+        this.usernameService = usernameService;
+        this.accountLinkService = accountLinkService;
         this.licenses = licenses;
         this.accountEmails = accountEmails;
         this.invites = invites;
@@ -237,7 +245,7 @@ public class Account {
     private void unlinkDiscord(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
-        accounts.unlink(session.get().accountId());
+        accountLinkService.unlink(session.get().accountId());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -495,7 +503,7 @@ public class Account {
             return;
         }
         try {
-            accounts.setUsername(session.get().accountId(), body == null ? null : body.username());
+            usernameService.setUsername(session.get().accountId(), body == null ? null : body.username());
         } catch (IllegalArgumentException e) {
             ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
             return;

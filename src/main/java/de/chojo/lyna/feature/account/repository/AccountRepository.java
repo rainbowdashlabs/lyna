@@ -13,15 +13,12 @@ import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.regex.Pattern;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -175,40 +172,29 @@ public class AccountRepository {
                 .all();
     }
 
-    public void link(int accountId, long discordUserId, AccountIdentity.Verification via) {
-        link(accountId, discordUserId, via, null);
-    }
-
-    public void link(int accountId, long discordUserId, AccountIdentity.Verification via, String handle) {
-        link(accountId, AccountIdentity.DISCORD, Long.toString(discordUserId), via, handle);
-    }
-
     /**
-     * Links an account to an identity at some provider, and records what that provider calls it.
+     * Drops any other identity this account held at the same provider.
      *
-     * <p>A link made without a handle keeps whatever one was recorded before rather than clearing it:
-     * the bot-DM path never learns a name, and losing the one an OAuth round trip found would put the
-     * pages back to showing raw ids.
-     *
-     * <p>An identity another account already holds is refused rather than moved. Whoever controls a
-     * provider account could otherwise walk it onto a second account here, and once licences hang off
-     * accounts that would be a way to carry them across.
-     *
-     * @throws IllegalStateException if the identity belongs to a different account
+     * <p>One identity per provider per account: the column pair is unique, so an account moving from
+     * one identity to another has to let go of the first.
      */
-    public void link(
-            int accountId, String provider, String externalId, AccountIdentity.Verification via, String handle) {
-        Optional<Account> holder = findByIdentity(provider, externalId);
-        if (holder.isPresent() && holder.get().id() != accountId) {
-            throw new IllegalStateException(
-                    "That %s identity is already linked to another account".formatted(provider));
-        }
+    public void dropOtherIdentities(int accountId, String provider, String externalId) {
         query("""
                 DELETE FROM account_identity
                 WHERE provider = ? AND account_id = ? AND external_id <> ?
                 """)
                 .single(call().bind(provider).bind(accountId).bind(externalId))
                 .delete();
+    }
+
+    /**
+     * Writes an identity, keeping whatever handle was recorded before when none is given.
+     *
+     * <p>The bot-DM path never learns a name, and clearing the one an OAuth round trip found would
+     * put the pages back to showing raw ids.
+     */
+    public void upsertIdentity(
+            int accountId, String provider, String externalId, AccountIdentity.Verification via, String handle) {
         query("""
                 INSERT INTO account_identity (provider, external_id, account_id, verified_via, handle, handle_seen_at)
                 VALUES (?, ?, ?, ?, ?, CASE WHEN ?::TEXT IS NULL THEN NULL ELSE now() END)
@@ -225,9 +211,6 @@ public class AccountRepository {
                         .bind(handle)
                         .bind(handle))
                 .insert();
-        if (AccountIdentity.DISCORD.equals(provider)) {
-            syncUsernameFromHandle(accountId, handle);
-        }
     }
 
     public boolean rememberHandle(long discordUserId, String handle) {
@@ -251,9 +234,6 @@ public class AccountRepository {
                 .single(call().bind(handle).bind(provider).bind(externalId).bind(handle))
                 .update()
                 .changed();
-        if (changed && AccountIdentity.DISCORD.equals(provider)) {
-            findByIdentity(provider, externalId).ifPresent(account -> syncUsernameFromHandle(account.id(), handle));
-        }
         return changed;
     }
 
@@ -290,113 +270,43 @@ public class AccountRepository {
         return result;
     }
 
-    public void unlink(int accountId) {
-        unlink(accountId, AccountIdentity.DISCORD);
-    }
-
-    public void unlink(int accountId, String provider) {
+    /**
+     * Forgets an account's identity at one provider.
+     */
+    public void deleteIdentity(int accountId, String provider) {
         query("DELETE FROM account_identity WHERE account_id = ? AND provider = ?")
                 .single(call().bind(accountId).bind(provider))
                 .delete();
-        if (AccountIdentity.DISCORD.equals(provider)) {
-            detachUsername(accountId);
-        }
     }
 
     /**
-     * The account a Discord id belongs to, making one if it does not have any yet.
-     *
-     * <p>The bot hands licences to whoever is in front of it, and most of those people have never
-     * opened the web at all. Licences hang off accounts, so one is minted for them: no address, no
-     * password, nothing but the identity. Signing in through Discord later lands on that same
-     * account and finds the licences already there, because it is reached by the same identity.
-     *
-     * @param discordUserId the Discord id
-     * @return the account id, never zero
+     * Forgets every identity an account holds.
      */
-    public static int accountIdForDiscord(long discordUserId) {
-        String externalId = Long.toString(discordUserId);
-        Optional<Integer> existing = query("""
-                SELECT account_id FROM account_identity WHERE provider = ? AND external_id = ?
-                """)
-                .single(call().bind(AccountIdentity.DISCORD).bind(externalId))
+    public void deleteIdentities(int accountId) {
+        query("DELETE FROM account_identity WHERE account_id = ?")
+                .single(call().bind(accountId))
+                .delete();
+    }
+
+    /**
+     * @return the account an identity belongs to, without reading the account itself
+     */
+    public Optional<Integer> accountIdForIdentity(String provider, String externalId) {
+        return query("SELECT account_id FROM account_identity WHERE provider = ? AND external_id = ?")
+                .single(call().bind(provider).bind(externalId))
                 .map(row -> row.getInt("account_id"))
                 .first();
-        if (existing.isPresent()) return existing.get();
-
-        int accountId = query("INSERT INTO account (password_hash) VALUES (NULL) RETURNING id")
-                .single(call())
-                .map(row -> row.getInt("id"))
-                .first()
-                .orElseThrow(() -> new IllegalStateException("Could not create an account for " + externalId));
-        Optional<Integer> linked = query("""
-                INSERT INTO account_identity (provider, external_id, account_id, verified_via)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT (provider, external_id) DO UPDATE SET external_id = EXCLUDED.external_id
-                RETURNING account_id
-                """)
-                .single(call().bind(AccountIdentity.DISCORD)
-                        .bind(externalId)
-                        .bind(accountId)
-                        .bind(AccountIdentity.Verification.BOT_DM_CODE.dbValue()))
-                .map(row -> row.getInt("account_id"))
-                .first();
-        int resolved =
-                linked.orElseThrow(() -> new IllegalStateException("Could not link an account for " + externalId));
-        if (resolved != accountId) {
-            delete(accountId);
-        }
-        return resolved;
     }
 
     /**
-     * What somebody may call themselves, before the digits are added.
+     * Writes a name and its digits.
      *
-     * <p>Letters, digits, and the three separators people expect in a handle. No spaces and no
-     * punctuation that could make one name read as another.
-     */
-    private static final Pattern USERNAME = Pattern.compile("^[A-Za-z0-9](?:[A-Za-z0-9._-]{1,30})[A-Za-z0-9]$");
-
-    private static final int DISCRIMINATOR_ATTEMPTS = 12;
-
-    /**
-     * Gives an account a name of its own choosing.
+     * <p>The clash is caught here because it is the database that decides it: the unique index over
+     * name and digits is what makes two people called "ada" distinguishable.
      *
-     * <p>Refused while a Discord identity is linked: that name is Discord's to change, and letting
-     * both sides write it would mean the next sign-in quietly undid whatever was typed here.
-     *
-     * <p>The four digits are allocated here rather than asked for, so two people may both be "ada"
-     * without either of them finding out what the other picked.
-     *
-     * @param accountId the account to name
-     * @param username  the name, without digits
-     * @return the discriminator it was given
-     * @throws IllegalArgumentException if the name is not one somebody may take
-     * @throws IllegalStateException    if the account is linked, or the name has no free digits left
-     */
-    public String setUsername(int accountId, String username) {
-        String trimmed = username == null ? "" : username.trim();
-        if (!USERNAME.matcher(trimmed).matches()) {
-            throw new IllegalArgumentException(
-                    "A username is 3 to 32 characters of letters, digits, dots, dashes or underscores");
-        }
-        if (findLinkByAccountId(accountId).isPresent()) {
-            throw new IllegalStateException("This account is named by Discord. Unlink it to choose a name.");
-        }
-        for (int attempt = 0; attempt < DISCRIMINATOR_ATTEMPTS; attempt++) {
-            String discriminator = "%04d".formatted(ThreadLocalRandom.current().nextInt(1, 10_000));
-            if (writeUsername(accountId, trimmed, discriminator)) return discriminator;
-        }
-        for (String discriminator : freeDiscriminators(trimmed)) {
-            if (writeUsername(accountId, trimmed, discriminator)) return discriminator;
-        }
-        throw new IllegalStateException("Every discriminator for that username is taken. Pick another.");
-    }
-
-    /**
      * @return false when those four digits are already taken for that name
      */
-    private boolean writeUsername(int accountId, String username, String discriminator) {
+    public boolean writeUsername(int accountId, String username, String discriminator) {
         try {
             query("UPDATE account SET username = ?, discriminator = ? WHERE id = ?")
                     .single(call().bind(username).bind(discriminator).bind(accountId))
@@ -417,56 +327,25 @@ public class AccountRepository {
     }
 
     /**
-     * @return the digits nobody holds for that name, so a name that is nearly full still resolves
+     * Writes a name that a provider guarantees is unique, so it carries no digits.
      */
-    private List<String> freeDiscriminators(String username) {
-        Set<String> taken = Set.copyOf(query("""
+    public void writeProvidedUsername(int accountId, String handle) {
+        query("UPDATE account SET username = ?, discriminator = NULL WHERE id = ?")
+                .single(call().bind(handle).bind(accountId))
+                .update();
+    }
+
+    /**
+     * @return the digits already taken for that name
+     */
+    public Set<String> takenDiscriminators(String username) {
+        return Set.copyOf(query("""
                 SELECT discriminator FROM account
                 WHERE lower(username) = lower(?) AND discriminator IS NOT NULL
                 """)
                 .single(call().bind(username))
                 .map(row -> row.getString("discriminator"))
                 .all());
-        List<String> free = new ArrayList<>();
-        for (int candidate = 1; candidate < 10_000; candidate++) {
-            String discriminator = "%04d".formatted(candidate);
-            if (!taken.contains(discriminator)) free.add(discriminator);
-        }
-        return free;
-    }
-
-    /**
-     * Takes the account's name from the provider that owns it.
-     *
-     * <p>The digits go: a handle is unique where it comes from, and keeping stale digits beside it
-     * would show a name that exists nowhere.
-     */
-    public void syncUsernameFromHandle(int accountId, String handle) {
-        if (handle == null || handle.isBlank()) return;
-        query("UPDATE account SET username = ?, discriminator = NULL WHERE id = ?")
-                .single(call().bind(handle.trim()).bind(accountId))
-                .update();
-    }
-
-    /**
-     * Gives an account's name digits of its own, for when the provider that guaranteed it was unique
-     * is no longer linked.
-     *
-     * <p>The name itself is left alone. Somebody who has been "ada" to their sharees stays "ada",
-     * and only gains the digits that keep them apart from the next one.
-     */
-    public void detachUsername(int accountId) {
-        Optional<Account> account = findById(accountId);
-        if (account.isEmpty()) return;
-        String username = account.get().username();
-        if (username == null || username.isBlank() || account.get().discriminator() != null) return;
-        for (int attempt = 0; attempt < DISCRIMINATOR_ATTEMPTS; attempt++) {
-            String discriminator = "%04d".formatted(ThreadLocalRandom.current().nextInt(1, 10_000));
-            if (writeUsername(accountId, username, discriminator)) return;
-        }
-        for (String discriminator : freeDiscriminators(username)) {
-            if (writeUsername(accountId, username, discriminator)) return;
-        }
     }
 
     /**

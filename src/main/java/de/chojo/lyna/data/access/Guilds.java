@@ -10,6 +10,7 @@ import com.google.common.cache.CacheBuilder;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.roles.RoleSync;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 
@@ -31,9 +32,19 @@ public class Guilds {
      */
     private volatile RoleSync roles = RoleSync.NOOP;
 
-    public Guilds(NexusRest nexus, Conf configuration) {
+    private final AccountLinkService accountLinks;
+
+    public Guilds(NexusRest nexus, Conf configuration, AccountLinkService accountLinks) {
         this.nexus = nexus;
         this.configuration = configuration;
+        this.accountLinks = accountLinks;
+    }
+
+    /**
+     * How a Discord member is resolved to the account that holds their licences.
+     */
+    public AccountLinkService accountLinks() {
+        return accountLinks;
     }
 
     public LicenseGuild guild(Guild guild) {

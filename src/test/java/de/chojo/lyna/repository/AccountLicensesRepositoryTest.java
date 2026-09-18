@@ -40,8 +40,8 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
                 "product",
                 "account_identity",
                 "account");
-        owner = de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(OWNER_DISCORD);
-        sharee = de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(SHAREE_DISCORD);
+        owner = accountLinks.accountIdForDiscord(OWNER_DISCORD);
+        sharee = accountLinks.accountIdForDiscord(SHAREE_DISCORD);
 
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement()) {
@@ -205,7 +205,7 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
 
     /** An account that holds nothing, minted fresh so it cannot collide with the cast. */
     private static int stranger() {
-        return de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(900_000L + counter++);
+        return accountLinks.accountIdForDiscord(900_000L + counter++);
     }
 
     private static long counter = 0;

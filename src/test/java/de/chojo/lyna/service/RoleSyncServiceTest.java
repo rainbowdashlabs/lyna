@@ -12,7 +12,6 @@ import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.roles.RoleSync;
-import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import de.chojo.nexus.NexusRest;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +66,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
 
         private boolean stillEntitled(long discordId, int productId) {
             return accountLicenses
-                    .entitledProductIds(AccountRepository.accountIdForDiscord(discordId))
+                    .entitledProductIds(accountLinks.accountIdForDiscord(discordId))
                     .contains(productId);
         }
     }
@@ -86,7 +85,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         roles = new RecordingRoleSync();
 
         Conf configuration = TestConf.defaults();
-        Guilds guilds = new Guilds(Mockito.mock(NexusRest.class), configuration);
+        Guilds guilds = new Guilds(Mockito.mock(NexusRest.class), configuration, accountLinks);
         guilds.roles(roles);
         licenseGuild = guilds.guild(GUILD);
 
@@ -100,9 +99,9 @@ class RoleSyncServiceTest extends RepositoryTestBase {
                     VALUES (%d, 'owner@example.invalid', 'ROLE-KEY') RETURNING id
                     """.formatted(productId));
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, AccountRepository.accountIdForDiscord(OWNER), licenseId));
+                    .formatted(schemaName, accountLinks.accountIdForDiscord(OWNER), licenseId));
             statement.execute("INSERT INTO %s.user_sub_license (account_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, AccountRepository.accountIdForDiscord(SHAREE), licenseId));
+                    .formatted(schemaName, accountLinks.accountIdForDiscord(SHAREE), licenseId));
         }
     }
 
@@ -141,9 +140,8 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         license().clearSubUsers();
 
         assertEquals(0, countRows("user_sub_license"));
-        assertTrue(accountLicenses
-                .shared(AccountRepository.accountIdForDiscord(SHAREE))
-                .isEmpty());
+        assertTrue(
+                accountLicenses.shared(accountLinks.accountIdForDiscord(SHAREE)).isEmpty());
     }
 
     @Test
@@ -178,10 +176,10 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         license().clearSubUsers();
 
         assertTrue(accountLicenses
-                .entitledProductIds(AccountRepository.accountIdForDiscord(OWNER))
+                .entitledProductIds(accountLinks.accountIdForDiscord(OWNER))
                 .contains(license().product().id()));
         assertTrue(accountLicenses
-                .entitledProductIds(AccountRepository.accountIdForDiscord(SHAREE))
+                .entitledProductIds(accountLinks.accountIdForDiscord(SHAREE))
                 .isEmpty());
     }
 
@@ -189,7 +187,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @DisplayName("Without a gateway nothing is asked of Discord, and the rows still go")
     void withoutAGatewayTheRowsStillGo() throws SQLException {
         Conf configuration = TestConf.defaults();
-        Guilds botless = new Guilds(Mockito.mock(NexusRest.class), configuration);
+        Guilds botless = new Guilds(Mockito.mock(NexusRest.class), configuration, accountLinks);
         assertFalse(botless.roles() == roles);
 
         botless.guild(GUILD).licenses().byId(licenseId).orElseThrow().delete();
@@ -202,7 +200,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @DisplayName("A sharee with no Discord is listed too, so nothing under-reports the shares")
     void shareesIncludeWebOnlyHolders() {
         var webOnly = accountService.register("web-only@example.invalid", "hash");
-        accounts.setUsername(webOnly.id(), "ada");
+        usernameService.setUsername(webOnly.id(), "ada");
         accountLicenses.addSharee(licenseId, webOnly.id());
 
         var sharees = license().sharees();

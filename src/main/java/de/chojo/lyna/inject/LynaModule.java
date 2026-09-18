@@ -60,6 +60,11 @@ import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
@@ -245,6 +250,11 @@ public class LynaModule extends AbstractModule {
         bind(Bot.class).in(Singleton.class);
 
         bind(AccountRepository.class).in(Singleton.class);
+        bind(AccountService.class).in(Singleton.class);
+        bind(AccountEmailService.class).in(Singleton.class);
+        bind(AccountLinkService.class).in(Singleton.class);
+        bind(UsernameService.class).in(Singleton.class);
+        bind(PurchaseCollectionService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);
         bind(LicenseInvites.class).in(Singleton.class);
@@ -296,8 +306,8 @@ public class LynaModule extends AbstractModule {
      */
     @Provides
     @Singleton
-    Guilds guilds(NexusRest nexus, Conf conf, RoleSync roleSync) {
-        Guilds guilds = new Guilds(nexus, conf);
+    Guilds guilds(NexusRest nexus, Conf conf, RoleSync roleSync, AccountLinkService accountLinks) {
+        Guilds guilds = new Guilds(nexus, conf, accountLinks);
         guilds.roles(roleSync);
         return guilds;
     }

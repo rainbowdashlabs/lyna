@@ -20,6 +20,7 @@ import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
@@ -43,6 +44,7 @@ public class Auth {
 
     private final Conf configuration;
     private final AccountRepository accounts;
+    private final AccountLinkService accountLinkService;
     private final AccountService accountService;
     private final AccountEmailService accountEmails;
     private final AccountSessionRepository accountSessions;
@@ -59,6 +61,7 @@ public class Auth {
     public Auth(
             Conf configuration,
             AccountRepository accounts,
+            AccountLinkService accountLinkService,
             AccountService accountService,
             AccountEmailService accountEmails,
             AccountSessionRepository accountSessions,
@@ -71,6 +74,7 @@ public class Auth {
             MailingService mailingService) {
         this.configuration = configuration;
         this.accounts = accounts;
+        this.accountLinkService = accountLinkService;
         this.accountService = accountService;
         this.accountEmails = accountEmails;
         this.accountSessions = accountSessions;
@@ -302,14 +306,16 @@ public class Auth {
                 return;
             }
             account = me.get();
-            accounts.link(account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
+            accountLinkService.link(
+                    account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
         } else {
             account = accounts.findByDiscordId(discordUser.id()).orElseGet(() -> {
                 Account created = accountService.register(null, null);
-                accounts.link(created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
+                accountLinkService.link(
+                        created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
                 return created;
             });
-            accounts.rememberHandle(discordUser.id(), discordUser.handle());
+            accountLinkService.rememberHandle(discordUser.id(), discordUser.handle());
             accounts.touchLastLogin(account.id());
         }
         JwtService.Issued issued = jwtService.issue(account.id(), discordUser.id());

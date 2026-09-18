@@ -54,6 +54,10 @@ public class LicenseGuild {
 
     private final Guilds guilds;
 
+    public Guilds guilds() {
+        return guilds;
+    }
+
     public LicenseGuild(long guildId, NexusRest nexus, Conf configuration, Guilds guilds) {
         this.guildId = guildId;
         this.guilds = guilds;

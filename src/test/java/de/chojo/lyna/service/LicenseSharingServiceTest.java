@@ -59,8 +59,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
 
         owner = accountService.register("owner@example.invalid", "hash");
         sharee = accountService.register("sharee@example.invalid", "hash");
-        accounts.link(owner.id(), OWNER_DISCORD, AccountIdentity.Verification.OAUTH);
-        accounts.link(sharee.id(), SHAREE_DISCORD, AccountIdentity.Verification.OAUTH);
+        accountLinks.link(owner.id(), OWNER_DISCORD, AccountIdentity.Verification.OAUTH);
+        accountLinks.link(sharee.id(), SHAREE_DISCORD, AccountIdentity.Verification.OAUTH);
 
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement()) {
@@ -116,7 +116,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     void unlinkKeepsTheLicenses() {
         assertEquals(1, accountLicenses.owned(owner.id()).size());
 
-        accounts.unlink(owner.id());
+        accountLinks.unlink(owner.id());
 
         assertTrue(discordIdOf(owner).isEmpty());
         assertEquals(1, accountLicenses.owned(owner.id()).size());

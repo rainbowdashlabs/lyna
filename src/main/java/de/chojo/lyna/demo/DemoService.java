@@ -23,7 +23,9 @@ import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -56,6 +58,8 @@ public class DemoService {
 
     private final Guilds guilds;
     private final AccountRepository accounts;
+    private final UsernameService usernameService;
+    private final AccountLinkService accountLinkService;
     private final AccountService accountService;
     private final AccountEmailService accountEmails;
     private final AccountLicenseRepository accountLicenses;
@@ -73,6 +77,8 @@ public class DemoService {
             Gateway gateway,
             Guilds guilds,
             AccountRepository accounts,
+            UsernameService usernameService,
+            AccountLinkService accountLinkService,
             AccountService accountService,
             AccountEmailService accountEmails,
             AccountLicenseRepository accountLicenses,
@@ -84,6 +90,8 @@ public class DemoService {
         this.gateway = gateway;
         this.guilds = guilds;
         this.accounts = accounts;
+        this.usernameService = usernameService;
+        this.accountLinkService = accountLinkService;
         this.accountService = accountService;
         this.accountEmails = accountEmails;
         this.accountLicenses = accountLicenses;
@@ -238,7 +246,7 @@ public class DemoService {
             Account account = accountService.register(
                     "demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
             accountEmails.confirm(account.id(), account.email());
-            accounts.link(
+            accountLinkService.link(
                     account.id(),
                     members.get(i).getIdLong(),
                     AccountIdentity.Verification.OAUTH,
@@ -258,7 +266,7 @@ public class DemoService {
     private Account seedWebOnlyAccount() {
         Account account = accountService.register("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
         accountEmails.confirm(account.id(), account.email());
-        accounts.setUsername(account.id(), "webonly");
+        usernameService.setUsername(account.id(), "webonly");
         artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
         return accounts.findById(account.id()).orElse(account);
     }
@@ -277,9 +285,7 @@ public class DemoService {
             Optional<License> licence = product.createLicense("demo-owner@example.invalid");
             if (licence.isEmpty()) continue;
             licence.get().grantAccess(ReleaseType.STABLE);
-            accountLicenses.addSharee(
-                    licence.get().id(),
-                    de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(sharee));
+            accountLicenses.addSharee(licence.get().id(), accountLinkService.accountIdForDiscord(sharee));
             seeded.accounts().stream()
                     .filter(account -> "demo-web-only@example.invalid".equals(account.email()))
                     .findFirst()
@@ -299,7 +305,7 @@ public class DemoService {
         de.chojo.sadu.queries.api.query.Query.query(
                         "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
                 .single(de.chojo.sadu.queries.api.call.Call.call()
-                        .bind(de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(discordId))
+                        .bind(accountLinkService.accountIdForDiscord(discordId))
                         .bind(licence.id()))
                 .insert();
     }

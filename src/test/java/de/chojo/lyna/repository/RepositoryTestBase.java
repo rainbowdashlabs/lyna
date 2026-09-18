@@ -21,8 +21,10 @@ import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.mapper.RowMapperRegistry;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
@@ -87,6 +89,8 @@ public abstract class RepositoryTestBase {
     protected static AccountService accountService;
     protected static AccountEmailService accountEmailService;
     protected static PurchaseCollectionService purchaseCollection;
+    protected static UsernameService usernameService;
+    protected static AccountLinkService accountLinks;
 
     @BeforeAll
     static void setupDatabase() throws Exception {
@@ -133,6 +137,8 @@ public abstract class RepositoryTestBase {
         accountService = new AccountService(accounts, accountEmails);
         purchaseCollection = new PurchaseCollectionService(accountEmails, accountLicenses, licenseInvites);
         accountEmailService = new AccountEmailService(accountEmails, purchaseCollection);
+        usernameService = new UsernameService(accounts);
+        accountLinks = new AccountLinkService(accounts, usernameService);
     }
 
     /**
