@@ -23,14 +23,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Reads the configuration out of a directory, and writes it back when it is not there.
  *
- * <p>Values may come from outside the file: every element carries {@code @Overwrite}, so a password
- * belongs in the environment of the process and the file holds a blank. That is what this is for,
- * rather than the format it happens to use.
+ * <p>Values may also come from outside the file: every element carries {@code @Overwrite}, so a
+ * setting can be supplied from the environment instead of written down. The file remains where
+ * credentials live; the environment is an alternative, not a requirement.
  *
- * <p><strong>Nothing may call {@link #save()} on a loaded configuration.</strong> Ocular applies the
- * overrides into the same object it would serialise, so saving writes whatever the environment
- * supplied into the file - which is the one thing overrides exist to avoid. The file is written when
- * it is missing, before any override is applied, and that is the only write there should be.
+ * <p>Settings a newer version understands are added by {@link #fillInMissingKeys} as the file is
+ * read. That is gentler than saving the loaded configuration back, which rewrites the whole file and
+ * takes the layout with it, so nothing here calls {@link #save()} - though there is no reason it
+ * cannot be called.
  */
 public class Conf extends Configurations<ConfigFile> {
     private static final Logger log = getLogger(Conf.class);
@@ -59,37 +59,6 @@ public class Conf extends Configurations<ConfigFile> {
                 List.of(new YamlDataFormat()),
                 Conf.class.getClassLoader(),
                 null);
-    }
-
-    /**
-     * Refused, always.
-     *
-     * <p>Two reasons. It rewrites the whole file from the loaded object, so the layout and any
-     * comments an operator left go; and Ocular applies the overrides into that same object, so a
-     * value supplied from the environment is written into the file as though somebody had put it
-     * there. A call added here did exactly that on a running instance.
-     *
-     * <p>Nothing needs it. Settings a newer version understands are added by
-     * {@link #fillInMissingKeys}, which merges documents before any override is applied and is the
-     * only thing that should write this file after it exists.
-     *
-     * @throws UnsupportedOperationException always
-     */
-    @Override
-    public void save() {
-        throw new UnsupportedOperationException(
-                "Saving would write the values the environment supplied into the file. New settings "
-                        + "are added when the configuration is read.");
-    }
-
-    /**
-     * Refused, for the same reason as {@link #save()}.
-     *
-     * @throws UnsupportedOperationException always
-     */
-    @Override
-    public void save(Key<?> key) {
-        save();
     }
 
     /**
