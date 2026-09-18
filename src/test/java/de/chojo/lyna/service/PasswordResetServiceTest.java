@@ -32,7 +32,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("password_reset_token", "account_session", "account_identity", "account");
-        account = accounts.create("forgetful@example.invalid", HASHER.hash("forgotten"));
+        account = accountService.register("forgetful@example.invalid", HASHER.hash("forgotten"));
     }
 
     /**
@@ -114,7 +114,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An account that never had a password can be given one through a reset")
     void resetGivesAPasswordToAnOAuthAccount() throws SQLException {
-        Account oauthOnly = accounts.create("discord-only@example.invalid", null);
+        Account oauthOnly = accountService.register("discord-only@example.invalid", null);
         assertFalse(oauthOnly.hasPassword());
 
         String token = requestReset("discord-only@example.invalid").orElseThrow();

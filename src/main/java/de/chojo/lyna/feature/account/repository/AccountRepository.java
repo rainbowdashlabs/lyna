@@ -5,7 +5,6 @@
  */
 package de.chojo.lyna.feature.account.repository;
 
-import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.sadu.mapper.wrapper.Row;
@@ -28,33 +27,33 @@ import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class AccountRepository {
-    private final LicenseInvites invites = new LicenseInvites();
-    private final AccountEmailRepository emails = new AccountEmailRepository();
 
     /**
-     * Creates an account, claiming an address for it if one was given.
+     * Writes an account with no address.
      *
-     * <p>The address arrives unverified: creating an account is not proof that somebody reads the
+     * @return the new account
+     */
+    public Account insert(String passwordHash) {
+        int id = query("INSERT INTO account (password_hash) VALUES (?) RETURNING id")
+                .single(call().bind(passwordHash))
+                .map(row -> row.getInt("id"))
+                .first()
+                .orElseThrow(() -> new IllegalStateException("Failed to insert account"));
+        return findById(id).orElseThrow(() -> new IllegalStateException("Failed to read the new account"));
+    }
+
+    /**
+     * Writes an account and the address it is written to, in one statement.
+     *
+     * <p>One statement rather than two, because each takes a connection of its own: a signup that
+     * spent four of them put a small pool under enough pressure to start failing requests.
+     *
+     * <p>The address arrives unverified. Creating an account is not proof that somebody reads the
      * inbox they typed.
      *
-     * <p>The account and its address are written by one statement. Each statement here takes a
-     * connection of its own, so a signup that spent four of them put a small pool under enough
-     * pressure to start failing requests.
-     *
-     * @throws IllegalStateException if the address already belongs to somebody
+     * @return the new account
      */
-    public Account create(String email, String passwordHash) {
-        if (email == null || email.isBlank()) {
-            int id = query("INSERT INTO account (password_hash) VALUES (?) RETURNING id")
-                    .single(call().bind(passwordHash))
-                    .map(row -> row.getInt("id"))
-                    .first()
-                    .orElseThrow(() -> new IllegalStateException("Failed to insert account"));
-            return findById(id).orElseThrow(() -> new IllegalStateException("Failed to read the new account"));
-        }
-        if (emails.byAddress(email).isPresent()) {
-            throw new IllegalStateException("That address belongs to another account");
-        }
+    public Account insertWithPrimaryEmail(String passwordHash, String email) {
         int id = query("""
                 WITH created AS (
                     INSERT INTO account (password_hash) VALUES (?) RETURNING id
@@ -534,89 +533,6 @@ public class AccountRepository {
      * the one somebody proved they could read. Setting the address without the flag, or the flag
      * without the address, is how an account ends up marked verified for a mailbox nobody read.
      */
-    /**
-     * Records that an account has proved an address is theirs.
-     *
-     * <p>Any licence invited to that address is bound here rather than at the call site, so that
-     * every way of verifying an address lets somebody onto the licences waiting for them.
-     *
-     * @return the licences the account was let onto by invites standing for that address
-     */
-    public List<Integer> confirmEmail(int accountId, String email) {
-        emails.add(accountId, email);
-        emails.verify(accountId, email);
-        if (emails.primary(accountId).isEmpty()) {
-            emails.makePrimary(accountId, email);
-        }
-        return collect(accountId, email);
-    }
-
-    /**
-     * Hands the account what was waiting on that address.
-     *
-     * <p>Two things arrive this way: a licence somebody invited the address onto, and a licence issued
-     * against it - bought in the shop, parsed out of a payment receipt, or written down by an operator.
-     * That second kind is the point of an account holding more than one address at all: somebody who
-     * paid from one address and signed up with another otherwise has to carry the key across by hand.
-     *
-     * <p>Where the licence came from does not change who it belongs to, so this does not ask. What it
-     * asks is the same either way, and it is what makes this safe: the address must have been
-     * <em>proved</em>, which is the caller's business, and the licence must be one nobody holds. One
-     * that has already been claimed stays with whoever claimed it - proving an address is a way to
-     * find a purchase, not a way to take one.
-     *
-     * @return the licences the account now holds because of this address
-     */
-    private List<Integer> collect(int accountId, String email) {
-        List<Integer> collected = new java.util.ArrayList<>(invites.bind(accountId, email));
-        List<Integer> bought = query("""
-                SELECT l.id
-                FROM license l
-                WHERE LOWER(l.user_identifier) = LOWER(?)
-                  AND NOT EXISTS (SELECT 1 FROM user_license u WHERE u.license_id = l.id)
-                """)
-                .single(call().bind(email.trim()))
-                .map(row -> row.getInt("id"))
-                .all();
-        for (int licenseId : bought) {
-            query("""
-                    INSERT INTO user_license (account_id, license_id) VALUES (?, ?)
-                    ON CONFLICT (license_id) DO NOTHING
-                    """).single(call().bind(accountId).bind(licenseId)).insert();
-            collected.add(licenseId);
-        }
-        return collected;
-    }
-
-    /**
-     * Gives a licence to whoever has already proved the address it was issued against.
-     *
-     * <p>The mirror of {@link #collect}: that runs when somebody proves an address and looks for
-     * licences waiting on it, this runs when a licence is issued and looks for somebody who has
-     * already proved the address. Between them the two find each other whichever happens first.
-     *
-     * <p>Only a proved address, and only a licence nobody holds. The address arrives from a shop, a
-     * receipt or an operator, so the thing standing between a payment and somebody else's licence is
-     * that the account followed a link sent to that address. An address that has merely been claimed
-     * counts as nobody - otherwise claiming one would be a way to take what was bought with it, and
-     * the mail sent afterwards would tell whoever claimed it that a purchase had been made.
-     *
-     * @return whether the licence was handed to an account, which is what the mail then says
-     */
-    public boolean handOver(int licenseId, String address) {
-        return emails.byAddress(address)
-                .filter(de.chojo.lyna.feature.account.entity.AccountEmail::verified)
-                .map(held -> query("""
-                        INSERT INTO user_license (account_id, license_id)
-                        VALUES (?, ?)
-                        ON CONFLICT (license_id) DO NOTHING
-                        """)
-                        .single(call().bind(held.accountId()).bind(licenseId))
-                        .insert()
-                        .changed())
-                .orElse(false);
-    }
-
     /**
      * Stores the account's own appearance choices. A null leaves that choice to the operator's
      * default rather than pinning it, which is what "use the default" means in this table.

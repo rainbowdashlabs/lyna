@@ -57,8 +57,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
                 "account_identity",
                 "account");
 
-        owner = accounts.create("owner@example.invalid", "hash");
-        sharee = accounts.create("sharee@example.invalid", "hash");
+        owner = accountService.register("owner@example.invalid", "hash");
+        sharee = accountService.register("sharee@example.invalid", "hash");
         accounts.link(owner.id(), OWNER_DISCORD, AccountIdentity.Verification.OAUTH);
         accounts.link(sharee.id(), SHAREE_DISCORD, AccountIdentity.Verification.OAUTH);
 
@@ -104,7 +104,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An account that never linked Discord holds nothing, rather than being refused")
     void unlinkedAccountHoldsNothing() {
-        Account unlinked = accounts.create("unlinked@example.invalid", "hash");
+        Account unlinked = accountService.register("unlinked@example.invalid", "hash");
 
         assertTrue(discordIdOf(unlinked).isEmpty());
         assertTrue(accountLicenses.owned(unlinked.id()).isEmpty());
@@ -125,7 +125,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An account with no Discord at all can be shared with, and reads the license")
     void shareeNeedsNoDiscord() {
-        Account webOnly = accounts.create("web-only@example.invalid", "hash");
+        Account webOnly = accountService.register("web-only@example.invalid", "hash");
 
         assertTrue(accountLicenses.addSharee(licenseId, webOnly.id()));
 
@@ -150,7 +150,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @DisplayName("The cap is the guild's, and it is reached when the sharees fill it")
     void capIsReported() {
         accountLicenses.addSharee(licenseId, sharee.id());
-        accountLicenses.addSharee(licenseId, accounts.create(null, null).id());
+        accountLicenses.addSharee(licenseId, accountService.register(null, null).id());
 
         AccountLicense license = accountLicenses.owned(owner.id()).getFirst();
         assertEquals(2, license.shareesUsed());
@@ -162,7 +162,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @DisplayName("Revoking takes the license back and frees a place under the cap")
     void revokingFreesAPlace() {
         accountLicenses.addSharee(licenseId, sharee.id());
-        accountLicenses.addSharee(licenseId, accounts.create(null, null).id());
+        accountLicenses.addSharee(licenseId, accountService.register(null, null).id());
 
         accountLicenses.removeSharee(licenseId, sharee.id());
 
@@ -185,7 +185,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Somebody holding no part of the license reads nothing about it")
     void strangerReadsNothing() {
-        Account stranger = accounts.create("stranger@example.invalid", "hash");
+        Account stranger = accountService.register("stranger@example.invalid", "hash");
 
         assertTrue(accountLicenses.forHolder(licenseId, stranger.id()).isEmpty());
         assertTrue(accountLicenses.keyForHolder(licenseId, stranger.id()).isEmpty());
@@ -250,7 +250,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         assertEquals(0, countRows("user_license"));
         assertEquals(1, countRows("license"));
 
-        Account returning = accounts.create("returning@example.invalid", "hash");
+        Account returning = accountService.register("returning@example.invalid", "hash");
         assertTrue(accountLicenses.addSharee(licenseId, returning.id()));
         assertEquals(
                 "KEY-1", accountLicenses.keyForHolder(licenseId, returning.id()).orElseThrow());
@@ -282,11 +282,11 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @DisplayName("Verifying the invited address hands the licence over")
     void verifyingBindsTheInvite() {
         licenseInvites.invite(licenseId, "newcomer@example.invalid");
-        Account newcomer = accounts.create("newcomer@example.invalid", "hash");
+        Account newcomer = accountService.register("newcomer@example.invalid", "hash");
 
         assertTrue(accountLicenses.shared(newcomer.id()).isEmpty());
 
-        List<Integer> bound = accounts.confirmEmail(newcomer.id(), "newcomer@example.invalid");
+        List<Integer> bound = accountEmailService.confirm(newcomer.id(), "newcomer@example.invalid");
 
         assertEquals(List.of(licenseId), bound);
         assertEquals(1, accountLicenses.shared(newcomer.id()).size());
@@ -299,7 +299,7 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @DisplayName("Merely registering the address is not enough: it has to be proved")
     void registeringDoesNotBind() {
         licenseInvites.invite(licenseId, "unproven@example.invalid");
-        Account unproven = accounts.create("unproven@example.invalid", "hash");
+        Account unproven = accountService.register("unproven@example.invalid", "hash");
 
         assertTrue(accountLicenses.shared(unproven.id()).isEmpty());
         assertEquals(1, licenseInvites.standing(licenseId).size());
@@ -309,9 +309,9 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @DisplayName("Verifying a different address does not collect somebody else's invite")
     void bindingIsPerAddress() {
         licenseInvites.invite(licenseId, "invited@example.invalid");
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
 
-        assertEquals(List.of(), accounts.confirmEmail(other.id(), "other@example.invalid"));
+        assertEquals(List.of(), accountEmailService.confirm(other.id(), "other@example.invalid"));
         assertTrue(accountLicenses.shared(other.id()).isEmpty());
         assertEquals(1, licenseInvites.standing(licenseId).size());
     }
@@ -320,9 +320,9 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     @DisplayName("The address is matched however it was capitalised")
     void bindingIgnoresCase() {
         licenseInvites.invite(licenseId, "Mixed.Case@Example.invalid");
-        Account newcomer = accounts.create("mixed.case@example.invalid", "hash");
+        Account newcomer = accountService.register("mixed.case@example.invalid", "hash");
 
-        assertEquals(List.of(licenseId), accounts.confirmEmail(newcomer.id(), "mixed.case@example.invalid"));
+        assertEquals(List.of(licenseId), accountEmailService.confirm(newcomer.id(), "mixed.case@example.invalid"));
     }
 
     @Test
@@ -366,8 +366,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         assertEquals(0, accountLicenses.owned(owner.id()).getFirst().shareesUsed());
         assertTrue(licenseInvites.standing(licenseId).isEmpty());
 
-        Account late = accounts.create("late@example.invalid", "hash");
-        assertEquals(List.of(), accounts.confirmEmail(late.id(), "late@example.invalid"));
+        Account late = accountService.register("late@example.invalid", "hash");
+        assertEquals(List.of(), accountEmailService.confirm(late.id(), "late@example.invalid"));
         assertTrue(accountLicenses.shared(late.id()).isEmpty());
     }
 

@@ -201,7 +201,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A sharee with no Discord is listed too, so nothing under-reports the shares")
     void shareesIncludeWebOnlyHolders() {
-        var webOnly = accounts.create("web-only@example.invalid", "hash");
+        var webOnly = accountService.register("web-only@example.invalid", "hash");
         accounts.setUsername(webOnly.id(), "ada");
         accountLicenses.addSharee(licenseId, webOnly.id());
 
@@ -221,7 +221,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     void shareCountCoversEverybody() {
         assertEquals(1, license().shareCount());
 
-        var webOnly = accounts.create("counted@example.invalid", "hash");
+        var webOnly = accountService.register("counted@example.invalid", "hash");
         accountLicenses.addSharee(licenseId, webOnly.id());
         assertEquals(2, license().shareCount());
 
@@ -235,7 +235,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A sharee nobody has named is listed by something, rather than by nothing")
     void unnamedShareeStillListed() {
-        var unnamed = accounts.create("unnamed@example.invalid", "hash");
+        var unnamed = accountService.register("unnamed@example.invalid", "hash");
         accountLicenses.addSharee(licenseId, unnamed.id());
 
         var web = license().sharees().stream()

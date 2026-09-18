@@ -19,6 +19,8 @@ import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -41,6 +43,8 @@ public class Auth {
 
     private final Conf configuration;
     private final AccountRepository accounts;
+    private final AccountService accountService;
+    private final AccountEmailService accountEmails;
     private final AccountSessionRepository accountSessions;
     private final RevokedJtiRepository revokedJtis;
     private final PasswordResetTokenRepository passwordResetTokens;
@@ -55,6 +59,8 @@ public class Auth {
     public Auth(
             Conf configuration,
             AccountRepository accounts,
+            AccountService accountService,
+            AccountEmailService accountEmails,
             AccountSessionRepository accountSessions,
             RevokedJtiRepository revokedJtis,
             PasswordResetTokenRepository passwordResetTokens,
@@ -65,6 +71,8 @@ public class Auth {
             MailingService mailingService) {
         this.configuration = configuration;
         this.accounts = accounts;
+        this.accountService = accountService;
+        this.accountEmails = accountEmails;
         this.accountSessions = accountSessions;
         this.revokedJtis = revokedJtis;
         this.passwordResetTokens = passwordResetTokens;
@@ -167,7 +175,7 @@ public class Auth {
             ctx.status(HttpStatus.BAD_REQUEST).result("That link has expired or has already been used");
             return;
         }
-        accounts.confirmEmail(confirmed.get().accountId(), confirmed.get().email());
+        accountEmails.confirm(confirmed.get().accountId(), confirmed.get().email());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -208,7 +216,7 @@ public class Auth {
             ctx.status(HttpStatus.CONFLICT).result("Email already registered");
             return;
         }
-        Account account = accounts.create(creds.email(), passwordHasher.hash(creds.password()));
+        Account account = accountService.register(creds.email(), passwordHasher.hash(creds.password()));
         sendVerification(account.id(), creds.email());
         issueAndWrite(ctx, account, null, HttpStatus.CREATED);
     }
@@ -297,7 +305,7 @@ public class Auth {
             accounts.link(account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
         } else {
             account = accounts.findByDiscordId(discordUser.id()).orElseGet(() -> {
-                Account created = accounts.create(null, null);
+                Account created = accountService.register(null, null);
                 accounts.link(created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
                 return created;
             });

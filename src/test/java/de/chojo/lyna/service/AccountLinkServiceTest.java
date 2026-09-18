@@ -42,7 +42,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     private Callback callback(long discordId) {
         Optional<Account> existing = accounts.findByDiscordId(discordId);
         if (existing.isPresent()) return new Callback(existing.get(), false);
-        Account created = accounts.create(null, null);
+        Account created = accountService.register(null, null);
         accounts.link(created.id(), discordId, AccountIdentity.Verification.OAUTH);
         return new Callback(created, true);
     }
@@ -75,7 +75,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An account that signed up with a password can add Discord afterwards")
     void passwordFirstThenLink() {
-        Account created = accounts.create("password-first@example.invalid", HASHER.hash("secret"));
+        Account created = accountService.register("password-first@example.invalid", HASHER.hash("secret"));
 
         accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
 
@@ -87,7 +87,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A code sent by the bot links just as an OAuth round trip does, and says so")
     void botDmCodeLinks() {
-        Account created = accounts.create("no-oauth@example.invalid", HASHER.hash("secret"));
+        Account created = accountService.register("no-oauth@example.invalid", HASHER.hash("secret"));
 
         accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.BOT_DM_CODE);
 
@@ -99,7 +99,7 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Unlinking hides the Discord id, and linking again restores it")
     void unlinkThenRelink() {
-        Account created = accounts.create("relinks@example.invalid", HASHER.hash("secret"));
+        Account created = accountService.register("relinks@example.invalid", HASHER.hash("secret"));
         accounts.link(created.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
 
         accounts.unlink(created.id());
@@ -114,9 +114,9 @@ class AccountLinkServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A Discord id another account already holds cannot be taken over")
     void discordIdCannotBeTakenOver() {
-        Account holder = accounts.create("holder@example.invalid", HASHER.hash("secret"));
+        Account holder = accountService.register("holder@example.invalid", HASHER.hash("secret"));
         accounts.link(holder.id(), DISCORD_ID, AccountIdentity.Verification.OAUTH);
-        Account newcomer = accounts.create("newcomer@example.invalid", HASHER.hash("secret"));
+        Account newcomer = accountService.register("newcomer@example.invalid", HASHER.hash("secret"));
 
         assertThrowsOnLink(newcomer.id());
 

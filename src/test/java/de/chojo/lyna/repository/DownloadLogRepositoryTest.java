@@ -32,7 +32,7 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
     @BeforeEach
     void seedCatalog() throws SQLException {
         clear("download_log", "download", "download_type", "product", "account_identity", "account");
-        account = accounts.create("downloads@example.invalid", "hash");
+        account = accountService.register("downloads@example.invalid", "hash");
 
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement()) {
@@ -99,7 +99,7 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Only the account's own downloads are listed")
     void scopedToTheAccount() {
-        Account other = accounts.create("other-downloads@example.invalid", "hash");
+        Account other = accountService.register("other-downloads@example.invalid", "hash");
         downloadLog.record(account.id(), null, null, productId, downloadId, "mine", "free", null, null);
         downloadLog.record(other.id(), null, null, productId, downloadId, "theirs", "free", null, null);
 
@@ -180,7 +180,7 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("No filters at all means every row, which is what an owner reading a license gets")
     void noAccountFilterMeansEveryRow() {
-        Account other = accounts.create("everyone@example.invalid", "hash");
+        Account other = accountService.register("everyone@example.invalid", "hash");
         downloadLog.record(account.id(), null, null, productId, downloadId, "mine", "free", null, null);
         downloadLog.record(other.id(), null, null, productId, downloadId, "theirs", "free", null, null);
 

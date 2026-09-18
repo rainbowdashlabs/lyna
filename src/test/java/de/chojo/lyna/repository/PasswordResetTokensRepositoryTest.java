@@ -25,7 +25,7 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("password_reset_token", "account_identity", "account");
-        account = accounts.create("reset@example.invalid", "hash");
+        account = accountService.register("reset@example.invalid", "hash");
     }
 
     @Test
@@ -79,7 +79,7 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Pruning drops the tokens that can no longer be redeemed")
     void pruneRemovesExpiredOnly() {
-        Account other = accounts.create("other-reset@example.invalid", "hash");
+        Account other = accountService.register("other-reset@example.invalid", "hash");
         PasswordResetTokenRepository.Issued live =
                 passwordResetTokens.issue(account.id(), Instant.now().plus(Duration.ofHours(1)));
         passwordResetTokens.issue(other.id(), Instant.now().minus(Duration.ofHours(1)));

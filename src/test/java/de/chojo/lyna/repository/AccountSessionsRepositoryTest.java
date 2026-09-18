@@ -27,7 +27,7 @@ class AccountSessionsRepositoryTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("account_session", "account_identity", "account");
-        account = accounts.create("sessions@example.invalid", "hash");
+        account = accountService.register("sessions@example.invalid", "hash");
     }
 
     @Test
@@ -66,7 +66,7 @@ class AccountSessionsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Only the account's own sessions are listed")
     void activeIsScopedToTheAccount() {
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
         accountSessions.record("mine", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
         accountSessions.record("theirs", other.id(), Instant.now().plus(Duration.ofHours(1)), null);
 

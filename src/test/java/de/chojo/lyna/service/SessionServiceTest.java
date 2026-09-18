@@ -39,7 +39,7 @@ class SessionServiceTest extends RepositoryTestBase {
         Mockito.when(config.jwtSecret()).thenReturn("service-test-secret");
         Mockito.when(config.jwtExpirySeconds()).thenReturn(3600L);
         jwt = new JwtService(config);
-        account = accounts.create("session@example.invalid", "hash");
+        account = accountService.register("session@example.invalid", "hash");
     }
 
     /**

@@ -22,6 +22,8 @@ import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -54,6 +56,8 @@ public class DemoService {
 
     private final Guilds guilds;
     private final AccountRepository accounts;
+    private final AccountService accountService;
+    private final AccountEmailService accountEmails;
     private final AccountLicenseRepository accountLicenses;
     private final LicenseInvites licenseInvites;
     private final DownloadLog downloadLog;
@@ -69,6 +73,8 @@ public class DemoService {
             Gateway gateway,
             Guilds guilds,
             AccountRepository accounts,
+            AccountService accountService,
+            AccountEmailService accountEmails,
             AccountLicenseRepository accountLicenses,
             LicenseInvites licenseInvites,
             DownloadLog downloadLog,
@@ -78,6 +84,8 @@ public class DemoService {
         this.gateway = gateway;
         this.guilds = guilds;
         this.accounts = accounts;
+        this.accountService = accountService;
+        this.accountEmails = accountEmails;
         this.accountLicenses = accountLicenses;
         this.licenseInvites = licenseInvites;
         this.downloadLog = downloadLog;
@@ -227,9 +235,9 @@ public class DemoService {
     private List<Account> seedAccounts(List<Member> members) {
         List<Account> cast = new ArrayList<>();
         for (int i = 0; i < Math.min(ROLES.length, members.size()); i++) {
-            Account account =
-                    accounts.create("demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
-            accounts.confirmEmail(account.id(), account.email());
+            Account account = accountService.register(
+                    "demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
+            accountEmails.confirm(account.id(), account.email());
             accounts.link(
                     account.id(),
                     members.get(i).getIdLong(),
@@ -248,8 +256,8 @@ public class DemoService {
      * account gets a name when no provider is supplying one.
      */
     private Account seedWebOnlyAccount() {
-        Account account = accounts.create("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
-        accounts.confirmEmail(account.id(), account.email());
+        Account account = accountService.register("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
+        accountEmails.confirm(account.id(), account.email());
         accounts.setUsername(account.id(), "webonly");
         artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
         return accounts.findById(account.id()).orElse(account);
