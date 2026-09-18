@@ -8,6 +8,7 @@ package de.chojo.lyna.data.dao.products.downloads;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.download.repository.DownloadRepository;
 import net.dv8tion.jda.api.entities.Role;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,8 @@ import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class Downloads {
+    private static final DownloadRepository REPOSITORY = new DownloadRepository();
+
     Product product;
 
     public Downloads(Product product) {
@@ -97,18 +100,11 @@ public class Downloads {
     }
 
     public boolean grant(Role role, ReleaseType type) {
-        return query(
-                        "INSERT INTO role_access(role_id, product_id, release_type) VALUES (?,?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
-                .single(call().bind(role.getIdLong()).bind(product.id()).bind(type))
-                .insert()
-                .changed();
+        return REPOSITORY.grantRole(role.getIdLong(), product.id(), type);
     }
 
     public boolean revoke(Role role, ReleaseType type) {
-        return query("DELETE FROM role_access WHERE role_id = ? AND product_id = ? AND release_type = ?::RELEASE_TYPE")
-                .single(call().bind(role.getIdLong()).bind(product.id()).bind(type))
-                .insert()
-                .changed();
+        return REPOSITORY.revokeRole(role.getIdLong(), product.id(), type);
     }
 
     public List<Download> byReleaseType(ReleaseType releaseType) {
