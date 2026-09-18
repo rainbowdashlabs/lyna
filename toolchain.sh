@@ -273,8 +273,14 @@ case "$cmd" in
         fe; run npx playwright test "${@:+--project=$1}"
         ;;
     fe-e2e-fresh)
+        # --force-recreate is what keeps the backend and its database the same age. Without it
+        # `up` reuses a container whose configuration has not changed, so a backend can survive the
+        # database being thrown away and carry on with a pool of connections to a schema that no
+        # longer holds its tables. Every request then fails with `relation "account" does not
+        # exist`, which points at the wrong thing entirely, and the backend never recovers: it
+        # migrates at startup and nothing restarts it.
         compose --profile e2e down -v
-        compose --profile e2e up -d --build
+        compose --profile e2e up -d --build --force-recreate
         fe; NODE_OPTIONS="$NODE_HEAP" run npm run build
         fe; run npx playwright test "${@:+--project=$1}"
         ;;
@@ -303,7 +309,7 @@ case "$cmd" in
 
     docker-e2e)         compose --profile e2e up -d --build "$@" ;;
     docker-e2e-down)    compose --profile e2e down "$@" ;;
-    docker-e2e-restart) compose --profile e2e up -d --build "$@" ;;
+    docker-e2e-restart) compose --profile e2e up -d --build --force-recreate "$@" ;;
     docker-e2e-logs)    compose --profile e2e logs -f "$@" ;;
     docker-e2e-ports)
         printf 'project  %s\n' "$COMPOSE_PROJECT_NAME"
