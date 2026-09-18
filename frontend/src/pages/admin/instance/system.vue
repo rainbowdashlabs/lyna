@@ -60,6 +60,14 @@ onMounted(async () => {
           {{ info.guildCount }}
         </dd>
       </div>
+      <div>
+        <dt class="text-xs uppercase tracking-wider opacity-60">
+          {{ t('page.admin.instance.system.discordSignIn') }}
+        </dt>
+        <dd class="text-sm">
+          {{ info.discordOauth ? t('common.configured') : t('page.admin.instance.system.notConfigured') }}
+        </dd>
+      </div>
     </dl>
   </div>
 </template>

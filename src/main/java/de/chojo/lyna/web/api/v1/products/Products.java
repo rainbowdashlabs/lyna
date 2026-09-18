@@ -12,6 +12,7 @@ import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 
 import java.util.List;
 import java.util.Set;
@@ -42,7 +43,10 @@ public class Products {
     }
 
     public void init() {
-        path("products", () -> get(this::list));
+        path("products", () -> {
+            get(this::list);
+            path("{productId}", () -> get(this::detail));
+        });
     }
 
     private void list(Context ctx) {
@@ -51,6 +55,27 @@ public class Products {
                 .map(product -> KioskEntry.of(product, entitled.contains(product.id())))
                 .toList();
         ctx.json(entries);
+    }
+
+    /**
+     * One product, with what it says about itself.
+     *
+     * <p>The description is here rather than in the catalogue because it is markdown and a grid of
+     * tiles has no use for it - a list of forty products would carry forty descriptions nobody reads.
+     */
+    private void detail(Context ctx) {
+        int productId;
+        try {
+            productId = Integer.parseInt(ctx.pathParam("productId"));
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return;
+        }
+        kiosk.byId(productId)
+                .ifPresentOrElse(
+                        product -> ctx.json(
+                                KioskDetail.of(product, entitlements(ctx).contains(product.id()))),
+                        () -> ctx.status(HttpStatus.NOT_FOUND));
     }
 
     /**
@@ -87,6 +112,35 @@ public class Products {
                     product.free(),
                     product.purchaseUrl(),
                     entitled);
+        }
+    }
+
+    /**
+     * A product on its own page: everything a tile shows, and the prose a tile has no room for.
+     *
+     * @param description markdown, rendered where it is shown; null when nobody has written any
+     */
+    private record KioskDetail(
+            int id,
+            String guildId,
+            String name,
+            String url,
+            String iconUrl,
+            boolean free,
+            String purchaseUrl,
+            boolean entitled,
+            String description) {
+        static KioskDetail of(KioskProduct product, boolean entitled) {
+            return new KioskDetail(
+                    product.id(),
+                    Long.toString(product.guildId()),
+                    product.name(),
+                    product.url(),
+                    product.iconUrl(),
+                    product.free(),
+                    product.purchaseUrl(),
+                    entitled,
+                    product.description());
         }
     }
 }

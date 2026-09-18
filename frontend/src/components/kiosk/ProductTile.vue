@@ -30,7 +30,9 @@ const action = computed(() => callToAction(props.product))
     <header class="flex items-start gap-3">
       <ProductIcon :icon-url="product.iconUrl" :name="product.name"/>
       <div class="min-w-0 flex-1">
-        <SectionHeader class="truncate">{{ product.name }}</SectionHeader>
+        <NuxtLink :to="`/products/${product.id}`" class="block truncate hover:underline">
+          <SectionHeader class="truncate">{{ product.name }}</SectionHeader>
+        </NuxtLink>
         <NeutralBadge v-if="product.free">{{ t('ui.productTile.free') }}</NeutralBadge>
         <SecondaryBadge v-else-if="product.entitled">{{ t('ui.productTile.owned') }}</SecondaryBadge>
         <NeutralBadge v-else>{{ t('ui.productTile.premium') }}</NeutralBadge>

@@ -53,7 +53,12 @@ public class Conf extends Configurations<ConfigFile> {
      * running it happens to hold.
      */
     public Conf(Path directory) {
-        super(adoptLegacyJson(directory), CONFIG, List.of(new YamlDataFormat()), Conf.class.getClassLoader(), null);
+        super(
+                fillInMissingKeys(adoptLegacyJson(directory)),
+                CONFIG,
+                List.of(new YamlDataFormat()),
+                Conf.class.getClassLoader(),
+                null);
     }
 
     /**
@@ -96,5 +101,77 @@ public class Conf extends Configurations<ConfigFile> {
                     e);
         }
         return directory;
+    }
+
+    /**
+     * Adds the settings a newer version understands to a file written by an older one.
+     *
+     * <p>Ocular writes the file when it is missing and never again, so an instance that has been
+     * running since before a setting existed has no line for it and no way to learn that it should.
+     * That is how an upgrade arrives with the sign-in secret and the Discord credentials silently
+     * absent: the values fall back to blanks, and nothing says so until somebody tries to use them.
+     *
+     * <p>Done as a merge of one document into another, for the same reason {@link #adoptLegacyJson}
+     * is: the loaded configuration carries whatever the environment supplied, and writing that back
+     * is how a password ends up on disk. This reads the file, takes the defaults from a fresh
+     * {@link ConfigFile} that no override has touched, and writes back only the keys the file did not
+     * have. What is already there is never changed.
+     *
+     * @param directory the directory holding the configuration
+     * @return that same directory
+     */
+    private static Path fillInMissingKeys(Path directory) {
+        Path yaml = directory.resolve(CONFIG.path());
+        if (!Files.exists(yaml)) return directory;
+        try {
+            // The same visibility Ocular reads and writes with: these classes keep their settings in
+            // private fields and offer no setters, so a mapper left on its defaults sees an empty
+            // object and would decide that nothing is missing.
+            YAMLMapper mapper = YAMLMapper.builder()
+                    .changeDefaultVisibility(checker -> checker.withFieldVisibility(
+                                    com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
+                            .withGetterVisibility(com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE))
+                    .build();
+            JsonNode existing = mapper.readTree(Files.readString(yaml));
+            if (!existing.isObject()) return directory;
+            JsonNode defaults = mapper.valueToTree(new ConfigFile());
+            List<String> added = new java.util.ArrayList<>();
+            merge((tools.jackson.databind.node.ObjectNode) existing, defaults, "", added);
+            if (added.isEmpty()) return directory;
+            Files.writeString(yaml, mapper.writeValueAsString(existing));
+            log.info(
+                    "Added {} setting(s) this version understands to {}: {}",
+                    added.size(),
+                    CONFIG.path(),
+                    String.join(", ", added));
+        } catch (IOException | RuntimeException e) {
+            log.warn(
+                    "Could not add the newer settings to {}. Anything missing falls back to its "
+                            + "default, which for a secret means it is not set.",
+                    yaml,
+                    e);
+        }
+        return directory;
+    }
+
+    /**
+     * Copies into {@code target} the keys {@code defaults} has and it does not, recursing into
+     * objects so a section that exists but lacks a setting gains only that setting.
+     *
+     * @param added the paths that were added, for saying so afterwards
+     */
+    private static void merge(
+            tools.jackson.databind.node.ObjectNode target, JsonNode defaults, String path, List<String> added) {
+        defaults.propertyNames().forEach(name -> {
+            JsonNode fallback = defaults.get(name);
+            String here = path.isEmpty() ? name : path + "." + name;
+            JsonNode present = target.get(name);
+            if (present == null) {
+                target.set(name, fallback);
+                added.add(here);
+            } else if (present.isObject() && fallback.isObject()) {
+                merge((tools.jackson.databind.node.ObjectNode) present, fallback, here, added);
+            }
+        });
     }
 }

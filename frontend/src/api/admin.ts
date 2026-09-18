@@ -100,6 +100,8 @@ export interface SystemInfo {
     version: string
     guildCount: number
     botConnected: boolean
+    /** Whether somebody can sign in with Discord. Without it the sign-in link goes nowhere useful. */
+    discordOauth: boolean
 }
 
 export async function getInstanceAppearance(): Promise<InstanceAppearance> {

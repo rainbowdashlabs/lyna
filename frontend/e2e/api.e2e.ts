@@ -73,3 +73,25 @@ test.describe('The HTTP API through the frontend proxy', () => {
         expect(await response.json()).toEqual([])
     })
 })
+
+/**
+ * Discord sign-in on an instance that has no Discord application configured.
+ *
+ * <p>The end-to-end stack configures none, which is the same position a fresh instance is in. The
+ * endpoint used to build an authorize URL with an empty client id and redirect to Discord, which
+ * refuses it on its own page where nothing here can explain why.
+ */
+test.describe('Discord sign-in without credentials', () => {
+    test('refuses rather than sending somebody to a Discord error page', async ({request}) => {
+        const response = await request.get('/api/auth/discord/start', {maxRedirects: 0})
+
+        expect(response.status()).toBe(503)
+        expect(await response.text()).toContain('not configured')
+    })
+
+    test('the callback refuses the same way', async ({request}) => {
+        const response = await request.get('/api/auth/discord/callback?code=x&state=y', {maxRedirects: 0})
+
+        expect(response.status()).toBe(503)
+    })
+})

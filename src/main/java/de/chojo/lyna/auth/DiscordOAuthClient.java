@@ -21,7 +21,12 @@ public class DiscordOAuthClient {
     private static final String AUTHORIZE_URL = "https://discord.com/oauth2/authorize";
     private static final String TOKEN_URL = "https://discord.com/api/oauth2/token";
     private static final String USER_URL = "https://discord.com/api/users/@me";
-    private static final String SCOPE = "identify";
+    /**
+     * {@code email} as well as {@code identify}, so that somebody signing in with Discord arrives
+     * with an address already attached. Discord says whether it has verified that address, and only
+     * an address it has verified is treated as proved here.
+     */
+    private static final String SCOPE = "identify email";
 
     private final OAuth config;
     private final HttpClient http;
@@ -86,7 +91,9 @@ public class DiscordOAuthClient {
         return new DiscordUser(
                 Long.parseLong(id),
                 node.path("username").asText(null),
-                node.path("global_name").asText(null));
+                node.path("global_name").asText(null),
+                node.path("email").asText(null),
+                node.path("verified").asBoolean(false));
     }
 
     private static String url(String value) {
@@ -94,11 +101,23 @@ public class DiscordOAuthClient {
     }
 
     /**
-     * @param username   the unique handle, which is what an account is named after
-     * @param globalName the display name, used only when an account predates unique handles and has
-     *                   none
+     * @param username      the unique handle, which is what an account is named after
+     * @param globalName    the display name, used only when an account predates unique handles and
+     *                      has none
+     * @param email         the address on the Discord account, when the scope was granted
+     * @param emailVerified whether Discord has verified that address. Only then is it worth
+     *                      anything: an unverified one is a string somebody typed into Discord, and
+     *                      treating it as proved here would hand them whatever was bought with it
      */
-    public record DiscordUser(long id, String username, String globalName) {
+    public record DiscordUser(long id, String username, String globalName, String email, boolean emailVerified) {
+        /**
+         * @return the address, but only when Discord has verified it
+         */
+        public java.util.Optional<String> provedEmail() {
+            if (!emailVerified || email == null || email.isBlank()) return java.util.Optional.empty();
+            return java.util.Optional.of(email.trim());
+        }
+
         /**
          * @return what to call this person, preferring the handle they are addressed by
          */

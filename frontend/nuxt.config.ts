@@ -22,6 +22,7 @@ export default defineNuxtConfig({
 
     routeRules: {
         '/': {ssr: true},
+        '/products/**': {ssr: true},
         '/login': {ssr: true},
         '/signup': {ssr: true},
         '/forgot-password': {ssr: true},

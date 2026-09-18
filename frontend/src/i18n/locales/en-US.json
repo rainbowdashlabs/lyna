@@ -10,7 +10,8 @@
     "revoke": "Revoke",
     "remove": "Remove",
     "download": "Download",
-    "product": "Product"
+    "product": "Product",
+    "configured": "Configured"
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -193,13 +194,25 @@
         "system": {
           "system": "System",
           "version": "Version",
-          "guilds": "Guilds"
+          "guilds": "Guilds",
+          "discordSignIn": "Discord sign-in",
+          "notConfigured": "Not configured"
         }
       },
       "select": {
         "selectAGuild": "Select a guild",
         "youAdministerMoreThanOneGuild": "You administer more than one guild. Pick one to continue.",
         "noAdminAccess": "No admin access."
+      }
+    },
+    "products": {
+      "id": {
+        "about": "About",
+        "projectPage": "Project page",
+        "noDescriptionYet": "Nothing has been written about this one yet.",
+        "noSuchProduct": "There is no such product.",
+        "couldNotLoad": "Could not load this product.",
+        "notAvailableHere": "This one is not offered here."
       }
     }
   },
@@ -405,6 +418,14 @@
       "sent": "Confirm it from the mail sent there. Nothing changes until you do.",
       "couldNotAdd": "Could not add that address.",
       "cannotRemovePrimary": "This is the address the account is written to. Choose another one first."
+    },
+    "appFooter": {
+      "source": "Source",
+      "discord": "Discord",
+      "addTheBot": "Add the bot",
+      "faq": "FAQ",
+      "terms": "Terms",
+      "license": "AGPL-3.0-only"
     }
   }
 }

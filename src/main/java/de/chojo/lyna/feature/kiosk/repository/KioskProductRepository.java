@@ -31,7 +31,7 @@ public class KioskProductRepository {
      */
     public List<KioskProduct> all() {
         return query("""
-                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, kp.link_code
+                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.description, kp.link_code
                 FROM product p
                 LEFT JOIN LATERAL (
                     SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
@@ -46,8 +46,49 @@ public class KioskProductRepository {
                         row.getString("url"),
                         row.getString("icon_url"),
                         row.getBoolean("free"),
-                        row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code")))
+                        row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
+                        row.getString("description")))
                 .all();
+    }
+
+    /**
+     * One product, for its own page.
+     *
+     * <p>Read the same way {@link #all} reads the catalogue, so the page answers to a visitor who is
+     * not signed in and to an instance whose bot is not connected.
+     *
+     * @param productId the product
+     * @return the product, or nothing when no such product exists
+     */
+    public java.util.Optional<KioskProduct> byId(int productId) {
+        return query("""
+                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.description, kp.link_code
+                FROM product p
+                LEFT JOIN LATERAL (
+                    SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
+                ) kp ON TRUE
+                WHERE p.id = ?
+                """)
+                .single(call().bind(productId))
+                .map(row -> new KioskProduct(
+                        row.getInt("id"),
+                        row.getLong("guild_id"),
+                        row.getString("name"),
+                        row.getString("url"),
+                        row.getString("icon_url"),
+                        row.getBoolean("free"),
+                        row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
+                        row.getString("description")))
+                .first();
+    }
+
+    /**
+     * Writes what a product says about itself.
+     */
+    public void description(int productId, String description) {
+        query("UPDATE product SET description = ? WHERE id = ?")
+                .single(call().bind(description).bind(productId))
+                .update();
     }
 
     /**

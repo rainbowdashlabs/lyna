@@ -72,6 +72,11 @@ jobs:
           context: .
           file: ${{ matrix.file }}
           platforms: linux/${{ matrix.arch }}
+          build-args: |
+            GITHUB_ACTIONS=true
+            GITHUB_REF_TYPE=${{ github.ref_type }}
+            GITHUB_REF_NAME=${{ github.ref_name }}
+            GITHUB_SHA=${{ github.sha }}
           outputs: type=image,name=${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
 
       # Named after the digest, holding the architecture, so the publish job can check what was
