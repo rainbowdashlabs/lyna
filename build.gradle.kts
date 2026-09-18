@@ -1,7 +1,7 @@
 plugins {
     application
     java
-    id("org.openrewrite.rewrite") version "7.18.0"
+    id("org.openrewrite.rewrite") version "7.39.0"
 }
 
 group = "de.chojo"
@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     //discord
-    implementation("de.chojo", "cjda-util", "2.12.0+jda-6.0.0") {
+    implementation("de.chojo", "cjda-util", "2.14.5+jda-6.3.0") {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
@@ -27,13 +27,13 @@ dependencies {
     annotationProcessor(libs.ocular)
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.8")
+    implementation("org.postgresql", "postgresql", "42.7.13")
     implementation(libs.bundles.sadu)
 
     // Download api
     implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
 
-    val openapi = "6.7.0-2"
+    val openapi = "7.2.3"
 
     annotationProcessor("io.javalin.community.openapi:openapi-annotation-processor:$openapi")
     implementation("io.javalin.community.openapi:javalin-openapi-plugin:$openapi") // for /openapi route with JSON scheme
@@ -45,8 +45,8 @@ dependencies {
 
     // Mailing
     implementation(libs.pebble)
-    implementation("org.eclipse.angus", "angus-mail", "2.0.3")
-    implementation("org.jsoup", "jsoup", "1.17.2")
+    implementation("org.eclipse.angus", "angus-mail", "2.0.5")
+    implementation("org.jsoup", "jsoup", "1.23.2")
 
 
     // Logging
