@@ -40,4 +40,15 @@ public class OAuth {
     public String redirectUri() {
         return redirectUri;
     }
+
+    /**
+     * Whether Discord can actually be signed in with.
+     *
+     * <p>All three or none: an authorize URL built from a blank client id is one Discord refuses,
+     * and it refuses it on its own page, where nothing here can explain why. An instance that does
+     * not want Discord sign-in leaves these empty and the endpoints say so.
+     */
+    public boolean configured() {
+        return !clientId.isBlank() && !clientSecret.isBlank() && !redirectUri.isBlank();
+    }
 }

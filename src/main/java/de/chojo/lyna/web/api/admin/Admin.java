@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.guild.Guilds;
@@ -50,6 +51,11 @@ import static io.javalin.apibuilder.ApiBuilder.put;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Admin {
+    /** Long enough for a page, short enough that nobody pastes a book into a text field. */
+    private static final int DESCRIPTION_LIMIT = 8000;
+
+    private final OAuth oauthConfig;
+
     private final LicenseService licenseService;
     private final LicenseSharingService licenseSharing;
     private static final Logger log = getLogger(Admin.class);
@@ -82,7 +88,9 @@ public class Admin {
             de.chojo.lyna.mail.MailingService mailingService,
             Gateway gateway,
             LicenseService licenseService,
-            LicenseSharingService licenseSharing) {
+            LicenseSharingService licenseSharing,
+            OAuth oauthConfig) {
+        this.oauthConfig = oauthConfig;
         this.licenseService = licenseService;
         this.licenseSharing = licenseSharing;
         this.gateway = gateway;
@@ -104,6 +112,7 @@ public class Admin {
                 get("products", this::listProducts);
                 post("products", this::createProduct);
                 put("products/{productId}/icon", this::setProductIcon);
+                put("products/{productId}/description", this::setProductDescription);
                 get("licenses", this::listLicenses);
                 post("licenses", this::createLicense);
                 get("registrations/{discordId}", this::registrationInfo);
@@ -142,10 +151,9 @@ public class Admin {
     private void listProducts(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
-        var icons = kioskProducts.all().stream()
+        var kioskById = kioskProducts.all().stream()
                 .collect(java.util.stream.Collectors.toMap(
-                        de.chojo.lyna.feature.kiosk.entity.KioskProduct::id,
-                        product -> java.util.Optional.ofNullable(product.iconUrl())));
+                        de.chojo.lyna.feature.kiosk.entity.KioskProduct::id, product -> product));
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream()
                 .map(p -> new ProductSummary(
@@ -154,7 +162,8 @@ public class Admin {
                         p.url(),
                         p.role(),
                         p.free(),
-                        icons.getOrDefault(p.id(), java.util.Optional.empty()).orElse(null)))
+                        kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
+                        kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null))
                 .toList());
     }
 
@@ -280,6 +289,45 @@ public class Admin {
      * <p>The address is checked before it is stored: an operator who mistypes it should be told so
      * here rather than by a storefront tile that has quietly lost its icon.
      */
+    /**
+     * Writes what a product says about itself on its own page.
+     *
+     * <p>Markdown, kept as it was written. It is rendered where it is shown rather than here, so
+     * nothing stored has already decided what markup a reader gets.
+     */
+    private void setProductDescription(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        int productId;
+        try {
+            productId = Integer.parseInt(ctx.pathParam("productId"));
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return;
+        }
+        if (resolved.guild().products().byId(productId).isEmpty()) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return;
+        }
+        ProductDescription body;
+        try {
+            body = json.readValue(ctx.body(), ProductDescription.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        String description = body == null || body.description() == null
+                ? ""
+                : body.description().strip();
+        if (description.length() > DESCRIPTION_LIMIT) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .result("A description is at most %d characters".formatted(DESCRIPTION_LIMIT));
+            return;
+        }
+        kioskProducts.description(productId, description.isBlank() ? null : description);
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
     private void setProductIcon(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
@@ -345,7 +393,8 @@ public class Admin {
             return;
         }
         var p = product.get();
-        ctx.status(HttpStatus.CREATED).json(new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null));
+        ctx.status(HttpStatus.CREATED)
+                .json(new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null, null));
     }
 
     private void listLicenses(Context ctx) {
@@ -512,7 +561,7 @@ public class Admin {
         if (resolved == null) return;
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
-                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null))
+                .map(p -> new ProductSummary(p.id(), p.name(), p.url(), p.role(), p.free(), null, null))
                 .toList();
         ctx.json(new TrialInfo(
                 (int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
@@ -556,7 +605,7 @@ public class Admin {
         } catch (Exception e) {
             version = "unknown";
         }
-        ctx.json(new SystemInfo(version, guildCount, gateway.connected()));
+        ctx.json(new SystemInfo(version, guildCount, gateway.connected(), oauthConfig.configured()));
     }
 
     private void instanceAppearance(Context ctx) {
@@ -596,7 +645,11 @@ public class Admin {
      *                     leaving an operator to infer it from a guild count of zero, now that
      *                     running without a bot is a supported way to run.
      */
-    public record SystemInfo(String version, int guildCount, boolean botConnected) {}
+    /**
+     * @param discordOauth whether somebody can sign in with Discord, which needs a client id, a
+     *                     secret and a redirect uri; without them the sign-in link goes nowhere useful
+     */
+    public record SystemInfo(String version, int guildCount, boolean botConnected, boolean discordOauth) {}
 
     /**
      * The guild the path names, and only for somebody entitled to administer it.
@@ -800,7 +853,10 @@ public class Admin {
 
     public record AdminGuild(String id, String name, String iconUrl, String role) {}
 
-    public record ProductSummary(int id, String name, String url, long roleId, boolean free, String iconUrl) {}
+    public record ProductSummary(
+            int id, String name, String url, long roleId, boolean free, String iconUrl, String description) {}
+
+    public record ProductDescription(String description) {}
 
     /**
      * @param configured whether the id holds the instance by configuration, and so cannot be

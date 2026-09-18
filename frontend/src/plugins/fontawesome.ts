@@ -34,7 +34,7 @@ import {
     faTriangleExclamation,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons'
-import {faGithub} from '@fortawesome/free-brands-svg-icons'
+import {faDiscord, faGithub} from '@fortawesome/free-brands-svg-icons'
 
 config.autoAddCss = false
 
@@ -67,7 +67,7 @@ library.add(faSun)
 library.add(faTrash)
 library.add(faTriangleExclamation)
 library.add(faXmark)
-library.add(faGithub)
+library.add(faGithub, faDiscord)
 
 /**
  * Registers the icon component globally.

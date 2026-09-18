@@ -12,6 +12,7 @@ import de.chojo.lyna.auth.DiscordOAuthClient;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
@@ -52,6 +53,7 @@ public class Auth {
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final DiscordOAuthClient oauthClient;
+    private final OAuth oauthConfig;
     private final MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
@@ -68,6 +70,7 @@ public class Auth {
             PasswordHasher passwordHasher,
             JwtService jwtService,
             DiscordOAuthClient oauthClient,
+            OAuth oauthConfig,
             MailingService mailingService) {
         this.configuration = configuration;
         this.accountLinkService = accountLinkService;
@@ -80,6 +83,7 @@ public class Auth {
         this.passwordHasher = passwordHasher;
         this.jwtService = jwtService;
         this.oauthClient = oauthClient;
+        this.oauthConfig = oauthConfig;
         this.mailingService = mailingService;
     }
 
@@ -268,12 +272,41 @@ public class Auth {
     }
 
     private void discordStart(Context ctx) {
+        if (!oauthConfig.configured()) {
+            ctx.status(HttpStatus.SERVICE_UNAVAILABLE).result("Discord sign-in is not configured on this instance.");
+            return;
+        }
         String state = randomState();
         ctx.cookie(STATE_COOKIE, state, 600);
         ctx.redirect(oauthClient.buildAuthorizeUrl(state));
     }
 
+    /**
+     * Gives the account the address Discord signed in with, as a proved one.
+     *
+     * <p>Only an address Discord says it has verified. An unverified one is a string somebody typed
+     * into Discord, and proving it here would hand them the licences bought with it - which is the
+     * whole point of a proved address.
+     *
+     * <p>An address another account already holds is left alone rather than taken, and the sign-in
+     * carries on: somebody arriving through Discord should not be refused because an address they
+     * also use belongs elsewhere.
+     */
+    private void attachDiscordEmail(int accountId, DiscordOAuthClient.DiscordUser discordUser) {
+        discordUser.provedEmail().ifPresent(email -> {
+            try {
+                accountEmails.confirm(accountId, email);
+            } catch (IllegalStateException e) {
+                log.info("Not attaching {} from Discord to account {}: {}", email, accountId, e.getMessage());
+            }
+        });
+    }
+
     private void discordCallback(Context ctx) {
+        if (!oauthConfig.configured()) {
+            ctx.status(HttpStatus.SERVICE_UNAVAILABLE).result("Discord sign-in is not configured on this instance.");
+            return;
+        }
         String state = ctx.queryParam("state");
         String code = ctx.queryParam("code");
         String cookieState = ctx.cookie(STATE_COOKIE);
@@ -303,8 +336,18 @@ public class Auth {
                 return;
             }
             account = me.get();
-            accountLinkService.link(
-                    account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
+            try {
+                accountLinkService.link(
+                        account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
+            } catch (IllegalStateException e) {
+                // Somebody else holds this Discord account. Refusing is the point - moving it would
+                // carry their licences across - so say so rather than fail with a server error.
+                ctx.status(HttpStatus.CONFLICT)
+                        .contentType("text/html; charset=utf-8")
+                        .result(bounceTo("/account/security?linked=taken"));
+                return;
+            }
+            attachDiscordEmail(account.id(), discordUser);
         } else {
             account = accountService.findByDiscordId(discordUser.id()).orElseGet(() -> {
                 Account created = accountService.register(null, null);
@@ -313,6 +356,7 @@ public class Auth {
                 return created;
             });
             accountLinkService.rememberHandle(discordUser.id(), discordUser.handle());
+            attachDiscordEmail(account.id(), discordUser);
             accountService.touchLastLogin(account.id());
         }
         JwtService.Issued issued = jwtService.issue(account.id(), discordUser.id());
@@ -373,6 +417,17 @@ public class Auth {
         if (verified.isEmpty()) return Optional.empty();
         if (revokedJtis.isRevoked(verified.get().jti())) return Optional.empty();
         return verified;
+    }
+
+    /**
+     * A page that sends the browser somewhere, for the paths that end without a session to store.
+     */
+    private static String bounceTo(String next) {
+        return """
+                <!doctype html>
+                <html><head><meta charset="utf-8"><title>Discord</title></head>
+                <body><script>window.location.replace('%s');</script></body></html>
+                """.formatted(next.replace("'", ""));
     }
 
     private void writeBounceHtml(Context ctx, String token, String next) {

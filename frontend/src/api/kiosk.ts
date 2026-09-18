@@ -18,6 +18,17 @@ export interface KioskProduct {
 }
 
 /**
+ * A product on its own page.
+ *
+ * <p>The catalogue does not carry the description, because a grid of tiles has no room for it and
+ * every tile would pay for prose nobody reads.
+ */
+export interface KioskProductDetail extends KioskProduct {
+    /** Markdown, as the operator wrote it. Rendered where it is shown. */
+    description: string | null
+}
+
+/**
  * What a tile offers this visitor: download it, buy it, or say where to buy it is not known.
  */
 export function callToAction(product: KioskProduct): 'download' | 'buy' | 'unavailable' {
@@ -51,6 +62,31 @@ export interface IssuedDownload {
 
 export async function listProducts(): Promise<KioskProduct[]> {
     const {data} = await client.get<KioskProduct[]>('/api/v1/products')
+    return data
+}
+
+/**
+ * What the instance says about itself: the build it is running, and the links it was configured with.
+ *
+ * <p>Public, because the footer is drawn where nobody has signed in.
+ */
+export interface InstanceInfo {
+    /** The version, carrying the commit and the build time when CI made it. */
+    version: string
+    website: string | null
+    discord: string | null
+    invite: string | null
+    faq: string | null
+    terms: string | null
+}
+
+export async function getInstanceInfo(): Promise<InstanceInfo> {
+    const {data} = await client.get<InstanceInfo>('/api/v1/instance')
+    return data
+}
+
+export async function getProduct(productId: number): Promise<KioskProductDetail> {
+    const {data} = await client.get<KioskProductDetail>(`/api/v1/products/${productId}`)
     return data
 }
 

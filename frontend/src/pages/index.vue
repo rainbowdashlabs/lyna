@@ -59,7 +59,8 @@ function clearFilters() {
 </script>
 
 <template>
-  <main class="min-h-screen pb-12">
+  <div class="flex min-h-screen flex-col">
+    <main class="flex-1 pb-12">
     <TabStrip :tabs="[{to: '/', label: t('kiosk.title'), exact: true}]">
       <template #end>
         <NuxtLink
@@ -101,10 +102,14 @@ function clearFilters() {
       </AsyncSection>
     </section>
 
+    </main>
+
+    <AppFooter/>
+
     <DownloadWizard
         v-if="wizardProduct"
         :product="wizardProduct"
         @close="wizardProduct = null"
     />
-  </main>
+  </div>
 </template>

@@ -8,6 +8,7 @@ package de.chojo.lyna.web.api.v1;
 import com.google.inject.Inject;
 import de.chojo.lyna.web.api.v1.demo.DemoApi;
 import de.chojo.lyna.web.api.v1.download.Download;
+import de.chojo.lyna.web.api.v1.instance.InstanceInfo;
 import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.products.Products;
 import de.chojo.lyna.web.api.v1.products.Wizard;
@@ -32,6 +33,7 @@ public class V1 {
     private final Releases releases;
     private final Wizard wizard;
     private final DemoApi demoApi;
+    private final InstanceInfo instanceInfo;
 
     @Inject
     public V1(
@@ -41,7 +43,9 @@ public class V1 {
             Products products,
             Releases releases,
             Wizard wizard,
-            DemoApi demoApi) {
+            DemoApi demoApi,
+            InstanceInfo instanceInfo) {
+        this.instanceInfo = instanceInfo;
         this.download = download;
         this.update = update;
         this.kofi = kofi;
@@ -60,6 +64,7 @@ public class V1 {
             releases.init();
             wizard.init();
             demoApi.init();
+            instanceInfo.init();
         });
     }
 }

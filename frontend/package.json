@@ -32,6 +32,8 @@
     "@nuxtjs/i18n": "^10.4.0",
     "@tailwindcss/vite": "^4.2.4",
     "axios": "^1.16.0",
+    "dompurify": "^3.4.15",
+    "marked": "^18.0.13",
     "nuxt": "^4.4.8",
     "tailwindcss": "^4.2.4",
     "vue": "^3.5.32",

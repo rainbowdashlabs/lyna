@@ -1,65 +1,67 @@
----
+api:
+  allowedOrigins: []
+  host: "0.0.0.0"
+  hostname: "localhost"
+  iconHosts: []
+  port: 8888
+  staticUi: false
+  url: "http://localhost:25292"
+auth:
+  jwtExpirySeconds: 86400
+  jwtSecret: "end-to-end-suite-secret-not-a-real-one"
 baseSettings:
-  token: ""
   botEnabled: false
-  # The Discord id the seeded "entitled" account is linked to, so the stories can walk the
-  # operator path on a stack that runs no bot.
-  botOwner: [4242424242]
   botGuild: 0
+  botOwner:
+  - 4242424242
+  token: ""
 database:
-  host: "postgres_e2e"
-  port: "5432"
   database: "lyna"
-  schema: "public"
-  user: "user"
+  host: "postgres_e2e"
   password: "pw"
   poolSize: 5
-links:
-  tos: ""
-  invite: ""
-  support: ""
-  website: ""
-  faq: ""
-  frontend: "http://localhost:3000"
-license:
-  baseSeed: "W7B6QAAKZEWL7KXAGKJ8WK9WRZXZUEQR92BKVGQUB8J3F5TMAP"
-nexus:
-  host: "nexus-e2e"
-  username: ""
-  password: ""
-api:
-  hostname: "localhost"
-  url: "http://localhost:8888"
-  host: "0.0.0.0"
-  port: 8888
-  allowedOrigins: []
-  iconHosts: []
-  staticUi: false
-mailing:
-  smtp:
-    host: ""
-    port: 665
-    ssl: false
-  imap:
-    host: ""
-    port: 665
-    ssl: false
-  user: ""
-  password: ""
-  originMail: []
-  pollSeconds: 300
+  port: "5432"
+  schema: "public"
+  user: "user"
+demo:
   enabled: false
-  properties: {}
-kofi:
-  verificationToken: "7a777eb6-8f9e-9ddf-acba-2b5efada247a"
-auth:
-  jwtSecret: "end-to-end-suite-secret-not-a-real-one"
-  jwtExpirySeconds: 86400
+  resetIntervalMinutes: 60
 discord:
   oauth:
     clientId: ""
     clientSecret: ""
     redirectUri: "http://localhost:8890/api/auth/discord/callback"
-demo:
+downloads:
+  skipJarSigning: false
+kofi:
+  verificationToken: "7a777eb6-8f9e-9ddf-acba-2b5efada247a"
+license:
+  baseSeed: "W7B6QAAKZEWL7KXAGKJ8WK9WRZXZUEQR92BKVGQUB8J3F5TMAP"
+links:
+  faq: ""
+  frontend: "http://localhost:3000"
+  invite: "https://discord.com/oauth2/authorize?client_id=1&scope=bot"
+  support: "https://discord.gg/e2e-support"
+  tos: ""
+  website: ""
+mailing:
   enabled: false
-  resetIntervalMinutes: 60
+  imap:
+    host: ""
+    port: 665
+    ssl: false
+  originMail: []
+  password: ""
+  pollSeconds: 300
+  properties: {}
+  senderName: "Lyna"
+  skipVerify: false
+  smtp:
+    host: ""
+    port: 665
+    ssl: false
+  user: ""
+nexus:
+  host: "nexus-e2e"
+  password: ""
+  username: ""

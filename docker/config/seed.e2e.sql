@@ -14,6 +14,10 @@ INSERT INTO public.product (guild_id, name, role, free)
 SELECT 4242, 'E2E Premium', 2, FALSE
 WHERE NOT EXISTS (SELECT 1 FROM public.product WHERE name = 'E2E Premium');
 
+UPDATE public.product
+SET description = E'# What it does\n\nA **freebie** for the stories.\n\n- one\n- two\n\n<img src=x onerror="window.__xss=1">'
+WHERE name = 'E2E Freebie';
+
 INSERT INTO public.product (guild_id, name, role, free)
 SELECT 4242, 'E2E Unsellable', 3, FALSE
 WHERE NOT EXISTS (SELECT 1 FROM public.product WHERE name = 'E2E Unsellable');

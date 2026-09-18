@@ -15,6 +15,14 @@ package de.chojo.lyna.feature.kiosk.entity;
  *
  * @param free        whether anyone may download it, which decides the button the tile offers
  * @param purchaseUrl where to buy it, when a Ko-fi code has been mapped to it
+ * @param description what the product says about itself, as markdown, or nothing when unwritten
  */
 public record KioskProduct(
-        int id, long guildId, String name, String url, String iconUrl, boolean free, String purchaseUrl) {}
+        int id,
+        long guildId,
+        String name,
+        String url,
+        String iconUrl,
+        boolean free,
+        String purchaseUrl,
+        String description) {}

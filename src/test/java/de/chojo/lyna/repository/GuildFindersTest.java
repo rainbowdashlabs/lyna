@@ -366,4 +366,41 @@ class GuildFindersTest extends RepositoryTestBase {
                 .map(net.dv8tion.jda.api.interactions.commands.Command.Choice::getName)
                 .toList();
     }
+
+    @Test
+    @DisplayName("A product is read on its own for its page, description and all")
+    void theStorefrontReadsOneProduct() {
+        assertTrue(kioskProducts.byId(product.id()).isPresent());
+        assertTrue(kioskProducts.byId(product.id() + 9999).isEmpty());
+
+        kioskProducts.description(product.id(), "# Widget\n\nWhat it **does**.");
+
+        var read = kioskProducts.byId(product.id()).orElseThrow();
+        assertEquals("Widget", read.name());
+        assertEquals("# Widget\n\nWhat it **does**.", read.description());
+        assertEquals("https://example.invalid/widget", read.url());
+    }
+
+    @Test
+    @DisplayName("A description is kept as markdown, not as whatever it would render to")
+    void theDescriptionIsStoredAsWritten() {
+        kioskProducts.description(product.id(), "<b>bold</b> and [a link](https://example.invalid)");
+
+        assertEquals(
+                "<b>bold</b> and [a link](https://example.invalid)",
+                kioskProducts.byId(product.id()).orElseThrow().description(),
+                "rendering is the reader's business, so nothing is decided here");
+    }
+
+    @Test
+    @DisplayName("The catalogue carries the description too, so one read answers a page")
+    void theCatalogueCarriesIt() {
+        kioskProducts.description(product.id(), "something");
+
+        var listed = kioskProducts.all().stream()
+                .filter(p -> p.id() == product.id())
+                .findFirst()
+                .orElseThrow();
+        assertEquals("something", listed.description());
+    }
 }

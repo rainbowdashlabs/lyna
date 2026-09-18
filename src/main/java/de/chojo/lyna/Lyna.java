@@ -35,7 +35,10 @@ public class Lyna {
      * because everything else answers without it.
      */
     private void init() throws SQLException, IOException, InterruptedException {
-        Injector injector = Guice.createInjector(new LynaModule(new Conf()));
+        Conf conf = new Conf();
+        conf.main();
+        conf.save();
+        Injector injector = Guice.createInjector(new LynaModule(conf));
 
         injector.getInstance(Data.class).start();
         injector.getInstance(MailingService.class).start();

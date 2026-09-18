@@ -1,3 +1,7 @@
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 plugins {
     application
     java
@@ -100,11 +104,25 @@ tasks {
     }
 
     processResources {
+        val projectVersion = project.version.toString()
+        inputs.property("projectVersion", projectVersion)
         from(sourceSets.main.get().resources.srcDirs) {
+            // The commit and the moment it was built, so that somebody looking at a running instance
+            // can say which code it is. A local build says only its version: there is no commit to
+            // name for a working tree, and a time would only say when somebody last ran Gradle.
             filesMatching("version") {
-                expand(
-                        "version" to project.version
-                )
+                var version = projectVersion
+                if ((System.getenv("GITHUB_ACTIONS") ?: "false") == "true") {
+                    val built = ZonedDateTime.now(ZoneOffset.UTC)
+                            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                    val sha = System.getenv("GITHUB_SHA")?.take(7)
+                    version = when (System.getenv("GITHUB_REF_TYPE")) {
+                        "branch" -> "$version ${System.getenv("GITHUB_REF_NAME")}-$sha @ $built UTC"
+                        "tag" -> "$version @ $built UTC"
+                        else -> "$version snapshot"
+                    }
+                }
+                expand("version" to version)
             }
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
         }
