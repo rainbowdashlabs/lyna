@@ -31,9 +31,11 @@ public final class MailCreator {
      * @param name        who bought it, as they gave it
      * @param address     where to send it
      * @param downloadUrl where the product can be downloaded, or null when there is nowhere to point
+     * @param recipient   what the application knows about who is receiving it
      */
     public static Mail createLicenseMessage(MailTemplateRenderer renderer, Mailing mailing, String key,
-                                            String name, String address, String downloadUrl) {
+                                            String name, String address, String downloadUrl,
+                                            PurchaseRecipient recipient) {
         Map<String, Object> values = new LinkedHashMap<>();
         values.put("name", name);
         values.put("key", key);
@@ -42,6 +44,9 @@ public final class MailCreator {
 
         Map<String, Object> context = new HashMap<>(values);
         context.put("body", body(mailing, values));
+        context.put("tellAboutAccount", recipient != PurchaseRecipient.UNSTATED);
+        context.put("hasAccount", recipient == PurchaseRecipient.WITH_ACCOUNT);
+        context.put("buyerAddress", address);
 
         return new Mail(address,
                 renderer.subject("licence-issued", "en", values),

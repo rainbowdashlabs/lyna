@@ -235,7 +235,7 @@ public class Admin {
         var sample = de.chojo.lyna.mail.blocks.MailBlockRenderer.sampleValues(mailing.product().name());
         var mail = de.chojo.lyna.mail.MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
                 sample.get("key").toString(), sample.get("name").toString(), address,
-                mailing.product().url());
+                mailing.product().url(), de.chojo.lyna.mail.PurchaseRecipient.UNSTATED);
         mailingService.sendMail(mail);
         ctx.status(HttpStatus.ACCEPTED);
     }

@@ -16,6 +16,7 @@ import de.chojo.sadu.queries.api.query.Query;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.MailCreator;
+import de.chojo.lyna.mail.PurchaseRecipient;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.util.Urls;
 import de.chojo.lyna.configuration.elements.Kofi;
@@ -77,9 +78,11 @@ public class KoFiApi {
                         Optional<License> license = product.createLicense(post.email(), LicenseSource.KOFI);
                         if (license.isEmpty()) continue;
                         license.get().grantAccess(ReleaseType.STABLE);
-                        handOver(license.get().id(), post.email());
+                        boolean handedOver = handOver(license.get().id(), post.email());
                         var mail = MailCreator.createLicenseMessage(mailing.renderer(), productMail,
-                                license.get().key(), post.from(), post.email(), product.url());
+                                license.get().key(), post.from(), post.email(), product.url(),
+                                handedOver ? PurchaseRecipient.WITH_ACCOUNT
+                                        : PurchaseRecipient.WITHOUT_ACCOUNT);
                         mailing.sendMail(mail);
                     }
                 } else {
@@ -100,17 +103,24 @@ public class KoFiApi {
      * <p>Only a proved address, and only a licence nobody holds. The address arrives from the shop,
      * so the thing standing between a payment and somebody else's licence is that the account
      * followed a link sent to that address.
+     *
+     * <p>An address that has merely been claimed counts as nobody: the mail would otherwise tell
+     * whoever claimed it that a purchase was made against an address they have not proved is theirs.
+     *
+     * @return whether the licence was handed to an account, which is what the mail then says
      */
-    private void handOver(int licenseId, String payingAddress) {
-        accountEmails.byAddress(payingAddress)
+    private boolean handOver(int licenseId, String payingAddress) {
+        return accountEmails.byAddress(payingAddress)
                 .filter(AccountEmail::verified)
-                .ifPresent(held -> Query
+                .map(held -> Query
                         .query("""
                                 INSERT INTO user_license (account_id, license_id)
                                 VALUES (?, ?)
                                 ON CONFLICT (license_id) DO NOTHING
                                 """)
                         .single(Call.call().bind(held.accountId()).bind(licenseId))
-                        .insert());
+                        .insert()
+                        .changed())
+                .orElse(false);
     }
 }

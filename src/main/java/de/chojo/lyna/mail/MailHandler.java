@@ -101,7 +101,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         license.get().grantAccess(ReleaseType.STABLE);
         Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
                 license.get().key(), parsed.name().get(), parsed.mail().get(),
-                mailing.product().url());
+                mailing.product().url(), PurchaseRecipient.UNSTATED);
         mailingService.sendMail(mail);
     }
 }

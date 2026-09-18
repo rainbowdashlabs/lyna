@@ -60,7 +60,8 @@ public class Send implements SlashHandler {
 
         Mailing mailing = optMailing.get();
         Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
-                license.get().key(), name, address, mailing.product().url());
+                license.get().key(), name, address, mailing.product().url(),
+                de.chojo.lyna.mail.PurchaseRecipient.UNSTATED);
 
         mailingService.sendMail(mail);
         event.reply("Email sent").setEphemeral(true).queue();

@@ -1,16 +1,23 @@
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {signup} from '~/api/account'
 import {useSession} from '~/composables/useSession'
 
 const {t} = useI18n()
 
+const route = useRoute()
 const router = useRouter()
 const {setToken, hydrate} = useSession()
 
-const email = ref('')
+/**
+ * The address a licence mail points here with, so somebody who bought with one address does not
+ * sign up with another and leave the purchase behind. It stays editable: it is a suggestion, and
+ * whoever is reading knows better than the link does.
+ */
+const invited = Array.isArray(route.query.email) ? route.query.email[0] : route.query.email
+const email = ref(typeof invited === 'string' ? invited : '')
 const password = ref('')
 const passwordConfirm = ref('')
 const submitting = ref(false)

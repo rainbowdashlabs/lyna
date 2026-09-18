@@ -1,4 +1,29 @@
-{% extends '_layout.html' %}
+{#
+  The per-product mail: the operator's own text, and beneath it what the application knows about the
+  account this licence belongs to.
+
+  The account section is not a block an operator can compose. Only the application knows whether a
+  licence is held, the wording is security-relevant, and it has to stay the same for every product.
+#}{% extends '_layout.html' %}
 {% block body %}
 {{ body | raw }}
+{% if tellAboutAccount %}
+<hr class="divider" style="border:0;border-top:1px solid #eee;margin:24px 0;">
+{% if hasAccount %}
+<h2 style="color:#1a1a1a;margin:0 0 16px;font-size:19px;">This licence is in your account</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;">You bought it with <strong>{{ buyerAddress }}</strong>, an address you have already confirmed, so the licence is waiting for you at {{ senderName }}. You do not need to keep the key to use it.</p>
+<div class="btn-wrap" style="text-align:center;margin:24px 0;">
+  <a class="btn" href="{{ baseUrl }}/account/licenses" style="display:inline-block;background:#E92063;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;">Open your licences</a>
+</div>
+<p class="hint" style="color:#888;font-size:13px;">Your licence key still works wherever you want to paste it.</p>
+{% else %}
+<h2 style="color:#1a1a1a;margin:0 0 16px;font-size:19px;">Keep this licence in an account</h2>
+<p style="color:#555;font-size:15px;line-height:1.6;">An account at {{ senderName }} holds your licences for you, so you can download without pasting a key and share the licence if it allows it.</p>
+<p style="color:#555;font-size:15px;line-height:1.6;">Sign up with <strong>{{ buyerAddress }}</strong> and this purchase is added to your account once you confirm the address.</p>
+<div class="btn-wrap" style="text-align:center;margin:24px 0;">
+  <a class="btn" href="{{ baseUrl }}/signup?email={{ buyerAddress | urlencode }}" style="display:inline-block;background:#E92063;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;">Create an account</a>
+</div>
+<p class="hint" style="color:#888;font-size:13px;">Already have an account under a different address? Add <strong>{{ buyerAddress }}</strong> on your security page and confirm it, and this licence follows.</p>
+{% endif %}
+{% endif %}
 {% endblock %}
