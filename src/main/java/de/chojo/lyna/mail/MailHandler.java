@@ -51,6 +51,13 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
             // We always accept mails from the origin address.
             String[] header = message.getHeader("X-Forwarded-For");
             if (header != null) {
+                if (mailConf.originMails().isEmpty()) {
+                    log.warn(LogNotify.NOTIFY_ADMIN,
+                            "Refused a mail forwarded by {} because mailing.originMail is empty. "
+                                    + "Name the addresses that forward receipts here to accept them.",
+                            header[0]);
+                    return;
+                }
                 boolean valid = false;
                 for (String mail : mailConf.originMails()) {
                     if (header[0].contains(mail)) {

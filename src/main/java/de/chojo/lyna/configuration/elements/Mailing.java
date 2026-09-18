@@ -21,8 +21,15 @@ public class Mailing {
     private String user = "";
     @Overwrite(env = @Env, prop = @Prop)
     private String password = "";
+    /**
+     * The addresses trusted to forward a payment receipt here.
+     *
+     * <p>Empty trusts nobody, which is why a forwarded mail is refused until this is set. It used to
+     * default to a list holding the empty string, and every address contains that - so the check
+     * read as though it were being made and passed whatever it was given.
+     */
     @Overwrite(env = @Env, prop = @Prop)
-    private List<String> originMail = java.util.List.of("");
+    private List<String> originMail = java.util.List.of();
     /**
      * Takes any sender's mail as a payment receipt instead of only the addresses that are trusted.
      *
