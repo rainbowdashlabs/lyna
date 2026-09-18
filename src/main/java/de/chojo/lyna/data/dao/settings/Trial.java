@@ -5,15 +5,15 @@
  */
 package de.chojo.lyna.data.dao.settings;
 
+import de.chojo.lyna.feature.guild.repository.GuildSettingsRepository;
 import de.chojo.sadu.queries.api.call.Call;
 
 import java.time.Duration;
 import java.util.function.Function;
 
-import static de.chojo.sadu.queries.api.call.Call.call;
-import static de.chojo.sadu.queries.api.query.Query.query;
-
 public class Trial {
+    private static final GuildSettingsRepository REPOSITORY = new GuildSettingsRepository();
+
     private final Settings settings;
     private int serverTime = 30;
     private int accountTime = 43200;
@@ -49,16 +49,6 @@ public class Trial {
     }
 
     private boolean set(String column, Function<Call, Call> consumer) {
-        return query("""
-                INSERT
-                INTO
-                	trial_settings(guild_id, %s)
-                VALUES
-                	(?, ?)
-                ON CONFLICT(guild_id) DO UPDATE SET
-                	%s = ?""", column)
-                .single(consumer.apply(call().bind(settings.guildId())))
-                .update()
-                .changed();
+        return REPOSITORY.setTrial(column, c -> consumer.apply(c.bind(settings.guildId())));
     }
 }
