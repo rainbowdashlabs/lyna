@@ -1,5 +1,6 @@
 package de.chojo.lyna.commands.kofi;
 
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
@@ -13,6 +14,7 @@ public class KoFi implements SlashProvider<Slash> {
 
     private final KoFiProducts products;
 
+    @Inject
     public KoFi(Guilds guilds, KoFiProducts products) {
         this.guilds = guilds;
         this.products = products;

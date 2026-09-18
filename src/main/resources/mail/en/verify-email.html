@@ -1,0 +1,8 @@
+{% extends '_layout.html' %}
+{% block body %}
+      <h2>Confirm your email address</h2>
+      <p>Follow the button below to confirm that this address is yours.</p>
+      <div class="btn-wrap" style="text-align:center;margin:24px 0;"><a class="btn" style="display:inline-block;background:#E92063;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;" href="{{ url }}">Confirm this address</a></div>
+      <p class="hint" style="color:#888;font-size:13px;">If the button does not work, open this address: {{ url }}</p>
+      <p class="hint" style="color:#888;font-size:13px;">The link works for the next day. If you did not ask for this, nothing has changed and you can ignore this message.</p>
+{% endblock %}

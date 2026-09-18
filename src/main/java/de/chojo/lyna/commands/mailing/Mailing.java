@@ -1,6 +1,6 @@
 package de.chojo.lyna.commands.mailing;
 
-import de.chojo.jdautil.configuration.Configuration;
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
@@ -8,12 +8,14 @@ import de.chojo.jdautil.interactions.slash.provider.SlashCommand;
 import de.chojo.lyna.commands.mailing.handler.Create;
 import de.chojo.lyna.commands.mailing.handler.Edit;
 import de.chojo.lyna.commands.mailing.handler.Send;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.mail.MailingService;
 
 public class Mailing extends SlashCommand {
-    public Mailing(Guilds guilds, Configuration<ConfigFile> configuration, MailingService mailingService) {
+    @Inject
+    public Mailing(Guilds guilds, Conf configuration, MailingService mailingService, Accounts accounts) {
         super(Slash.of("mailing", "Configure mailing")
                 .unlocalized()
                 .adminCommand()
@@ -24,7 +26,7 @@ public class Mailing extends SlashCommand {
                         .argument(Argument.attachment("mail", "A file containing the mail text"))
                 )
                 .subCommand(SubCommand.of("send", "Send a mail to a person")
-                        .handler(new Send(mailingService, configuration, guilds))
+                        .handler(new Send(mailingService, configuration, guilds, accounts))
                         .argument(Argument.text("product", "product").asRequired().withAutoComplete())
                         .argument(Argument.text("address", "The receiver of the mail").asRequired())
                         .argument(Argument.text("name", "name of the receiver").asRequired())

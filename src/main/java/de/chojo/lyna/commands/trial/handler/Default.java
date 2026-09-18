@@ -5,7 +5,7 @@ import de.chojo.jdautil.menus.MenuAction;
 import de.chojo.jdautil.menus.entries.MenuEntry;
 import de.chojo.jdautil.util.Colors;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.web.api.Api;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
@@ -36,11 +36,11 @@ import static de.chojo.lyna.util.Formatting.humanReadableByteCountSI;
 
 public class Default implements SlashHandler {
     private final Guilds guilds;
-    private final Api api;
+    private final Proxy proxy;
 
-    public Default(Guilds guilds, Api api) {
+    public Default(Guilds guilds, Proxy proxy) {
         this.guilds = guilds;
-        this.api = api;
+        this.proxy = proxy;
     }
 
     @Override
@@ -135,10 +135,18 @@ public class Default implements SlashHandler {
                             .setColor(Colors.Strong.PINK)
                             .setFooter("This is a one time use link. Do not distribute.")
                             .build();
-                    String url = api.v1().download().proxy().registerAsset(new AssetDownload(asset.id(), () -> {
+                    String url = proxy.registerAsset(new AssetDownload(asset.id(), () -> {
                         download.downloaded(asset.maven2().version());
                         product.claimTrial(member);
-                    },"%s(%s)".formatted(member.getUser().getName(), member.getId())));
+                    },
+                            "%s(%s)".formatted(member.getUser().getName(), member.getId()),
+                            product.id(),
+                            download.id(),
+                            asset.maven2().version(),
+                            "trial",
+                            null,
+                            member.getIdLong(),
+                            null));
                     ctx.entry().hidden();
 
                     ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {

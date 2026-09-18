@@ -1,0 +1,192 @@
+# Named so the stack cannot be mistaken for another project's. Compose otherwise derives the name
+# from this directory, which is `docker/` in more than one checkout on a developer's machine, and two
+# of them then share containers.
+name: lyna
+
+services:
+  app:
+    image: ghcr.io/rainbowdashlabs/lyna-backend:latest
+    networks:
+      - lyna
+    depends_on:
+      - postgres
+    volumes:
+      - ../config/:/app/config/
+    profiles:
+      - prod
+  app_dev:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    networks:
+      - lyna
+    depends_on:
+      - postgres
+    volumes:
+      - ../config/:/app/config/
+    profiles:
+      - dev
+    ports:
+      - 8888:8888
+  frontend:
+    image: ghcr.io/rainbowdashlabs/lyna-frontend:latest
+    networks:
+      - lyna
+    depends_on:
+      - app
+    environment:
+      NUXT_BACKEND_URL: http://app:8888
+    profiles:
+      - prod
+  frontend_dev:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    networks:
+      - lyna
+    depends_on:
+      - app_dev
+    environment:
+      NUXT_BACKEND_URL: http://app_dev:8888
+    profiles:
+      - dev
+    ports:
+      - 3000:3000
+  app_e2e:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    networks:
+      - lyna
+    depends_on:
+      postgres_e2e:
+        condition: service_started
+      nexus_e2e:
+        condition: service_started
+      tls_init_e2e:
+        condition: service_completed_successfully
+    volumes:
+      - ./config-e2e/:/app/config/
+      - nexus_tls:/app/nexus-tls/
+    environment:
+      JAVA_OPTS: >-
+        -Dlog4j.configurationFile=config/log4j2.xml
+        -Djavax.net.ssl.trustStore=/app/nexus-tls/truststore.jks
+        -Djavax.net.ssl.trustStorePassword=e2estub
+      # The one-time download links are built from this, so it has to name the port the stack
+      # actually publishes - which toolchain.sh derives per checkout.
+      API_URL: "http://localhost:${LYNA_E2E_API_PORT:-8890}"
+      DEMO_ENABLED: "${LYNA_E2E_DEMO:-false}"
+    profiles:
+      - e2e
+    # Derived per checkout by toolchain.sh, so two checkouts never want the same port. The default
+    # is what a bare `docker compose` gets when nothing exported them.
+    ports:
+      - "${LYNA_E2E_API_PORT:-8890}:8888"
+  # Makes the certificate the stub serves and the truststore the backend is given to trust it with.
+  # A run of its own, finishing before either of them starts, so neither has to wait on the other and
+  # nothing has to be committed: a key that lives as long as the stack is a key nobody has to rotate.
+  tls_init_e2e:
+    image: eclipse-temurin:21-alpine
+    volumes:
+      - nexus_tls:/tls
+    profiles:
+      - e2e
+    restart: "no"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        if [ -f /tls/truststore.jks ]; then
+          echo "TLS fixture already made"
+          exit 0
+        fi
+        apk add --no-cache openssl >/dev/null
+        openssl req -x509 -nodes -newkey rsa:2048 \
+          -keyout /tls/server.key -out /tls/server.crt -days 365 \
+          -subj "/CN=nexus-e2e/O=Lyna/OU=End-to-end suite" \
+          -addext "subjectAltName=DNS:nexus-e2e"
+        chmod 644 /tls/server.key
+        keytool -importcert -noprompt -alias nexus-stub \
+          -file /tls/server.crt -keystore /tls/truststore.jks -storepass e2estub
+        echo "TLS fixture made"
+
+  nexus_e2e:
+    image: python:3.13-alpine
+    networks:
+      lyna:
+        aliases:
+          - nexus-e2e
+    depends_on:
+      tls_init_e2e:
+        condition: service_completed_successfully
+    volumes:
+      - ./nexus-stub/:/stub/
+      - nexus_tls:/tls
+    profiles:
+      - e2e
+    # The client fixes the scheme at https and sends no port, so the stub answers TLS on 443 under a
+    # name the certificate covers. The backend is handed the matching truststore.
+    command: ["python3", "/stub/server.py"]
+  seed_e2e:
+    image: postgres:17
+    networks:
+      - lyna
+    depends_on:
+      - app_e2e
+    volumes:
+      - ./config/:/seed/
+    profiles:
+      - e2e
+    # The backend migrates the schema on startup, so the seed waits for a table it creates rather
+    # than for the container, which is up long before the tables are.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until psql -h postgres_e2e -U user -d lyna -c 'SELECT 1 FROM public.product LIMIT 1' >/dev/null 2>&1; do
+          sleep 2
+        done
+        psql -h postgres_e2e -U user -d lyna -v ON_ERROR_STOP=1 -f /seed/seed.e2e.sql
+    environment:
+      PGPASSWORD: "pw"
+    restart: "no"
+  postgres_e2e:
+    networks:
+      - lyna
+    image: postgres:17
+    profiles:
+      - e2e
+    environment:
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pw"
+      POSTGRES_DB: "lyna"
+  postgres:
+    networks:
+      - lyna
+    image: postgres:latest
+    profiles:
+      - dev
+      - prod
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgres/data
+    environment:
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pw"
+      POSTGRES_DB: "lyna"
+
+networks:
+  lyna:
+    name: lyna
+    external: false
+
+volumes:
+  db_data:
+  # The stub's certificate and the truststore built from it. Made at stack-up and gone with
+  # `down -v`, so the pair never outlives the run that needed it.
+  nexus_tls:

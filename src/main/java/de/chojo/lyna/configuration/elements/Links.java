@@ -1,15 +1,32 @@
 package de.chojo.lyna.configuration.elements;
 
+import dev.chojo.ocular.override.Env;
+import dev.chojo.ocular.override.Overwrite;
+import dev.chojo.ocular.override.Prop;
+import dev.chojo.ocular.override.OverwritePrefix;
+
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal"})
+@OverwritePrefix("LINKS")
 public class Links {
+    @Overwrite(env = @Env, prop = @Prop)
     private String tos = "";
+    @Overwrite(env = @Env, prop = @Prop)
     private String invite = "https://discord.com/oauth2/authorize?client_id=1065674230362017813&scope=bot&permissions=2415921152";
+    @Overwrite(env = @Env, prop = @Prop)
     private String support = "";
+    @Overwrite(env = @Env, prop = @Prop)
     private String website = "https://rainbowdashlabs.github.io/lyna/";
+    @Overwrite(env = @Env, prop = @Prop)
     private String faq = "https://rainbowdashlabs.github.io/lyna/faq";
+    @Overwrite(env = @Env, prop = @Prop)
+    private String frontend = "http://localhost:3000";
 
     public String tos() {
         return tos;
+    }
+
+    public String frontend() {
+        return frontend;
     }
 
     public String invite() {

@@ -1,6 +1,7 @@
 package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Member;
@@ -62,7 +63,13 @@ public class License {
         if (owner != -1) {
             return owner;
         }
-        owner = query("SELECT user_id, license_id FROM user_license WHERE license_id = ?")
+        owner = query("""
+                SELECT i.external_id::BIGINT AS user_id
+                FROM user_license u
+                    JOIN account_identity i
+                        ON i.account_id = u.account_id AND i.provider = 'discord'
+                WHERE u.license_id = ?
+                """)
                 .single(call().bind(id))
                 .map(row -> row.getLong("user_id"))
                 .first().orElse(0L);
@@ -70,10 +77,83 @@ public class License {
     }
 
     public List<Long> subUsers() {
-        return query("SELECT user_id, license_id FROM user_sub_license WHERE license_id = ?")
+        return query("""
+                SELECT i.external_id::BIGINT AS user_id
+                FROM user_sub_license u
+                    JOIN account_identity i
+                        ON i.account_id = u.account_id AND i.provider = 'discord'
+                WHERE u.license_id = ?
+                """)
                 .single(call().bind(id))
                 .map(row -> row.getLong("user_id"))
                 .all();
+    }
+
+    /**
+     * Everybody the licence is shared with, named.
+     *
+     * <p>Unlike {@link #subUsers()}, which answers only for the ones Discord can be told about, this
+     * counts the people who hold the licence through the web and have no Discord id at all. The role
+     * logic wants the former; anything that reports to a person wants this, or it quietly says a
+     * licence is shared with fewer people than it is.
+     *
+     * @return the sharees, those with a Discord id first
+     */
+    public List<Sharee> sharees() {
+        return query("""
+                SELECT i.external_id AS discord_id,
+                       a.username,
+                       a.discriminator,
+                       u.account_id
+                FROM user_sub_license u
+                    JOIN account a ON a.id = u.account_id
+                    LEFT JOIN account_identity i
+                        ON i.account_id = u.account_id AND i.provider = 'discord'
+                WHERE u.license_id = ?
+                ORDER BY (i.external_id IS NULL), u.account_id
+                """)
+                .single(call().bind(id))
+                .map(row -> {
+                    String discordId = row.getString("discord_id");
+                    String username = row.getString("username");
+                    String discriminator = row.getString("discriminator");
+                    String name = username == null || username.isBlank()
+                            ? "account " + row.getInt("account_id")
+                            : discriminator == null ? username : username + "#" + discriminator;
+                    return new Sharee(discordId == null ? null : Long.parseLong(discordId), name);
+                })
+                .all();
+    }
+
+    /**
+     * What the guild's share cap is measured against.
+     *
+     * <p>An invite nobody has answered holds a place: counting only accepted shares would let
+     * somebody invite the world and hand out places as the replies arrived.
+     *
+     * @return sharees plus invites still standing
+     */
+    public int shareCount() {
+        return query("""
+                SELECT (SELECT count(*) FROM user_sub_license WHERE license_id = ?)
+                     + (SELECT count(*) FROM license_invite
+                        WHERE license_id = ? AND expires_at > now()) AS used
+                """)
+                .single(call().bind(id).bind(id))
+                .map(row -> row.getInt("used"))
+                .first()
+                .orElse(0);
+    }
+
+    /**
+     * @param discordId the sharee's Discord id, or null for somebody who holds this through the web
+     *                  alone and can therefore be given no Discord role
+     * @param name      what to call them
+     */
+    public record Sharee(Long discordId, String name) {
+        public String display() {
+            return discordId == null ? name : "<@%d> (%s)".formatted(discordId, name);
+        }
     }
 
     public String userIdentifier() {
@@ -92,12 +172,20 @@ public class License {
         return product;
     }
 
+    /**
+     * Takes the license away, and the product's role with it.
+     *
+     * <p>The owner's role goes unconditionally: the license granting it is about to stop existing,
+     * so there is nothing left to weigh it against.
+     *
+     * <p>Through {@link #owner()} rather than the field behind it, which is {@code -1} on a license
+     * read from the database until something asks - so this used to take the role from member -1.
+     */
     public boolean delete() {
         clearSubUsers();
-        Member complete = product.guild().retrieveMemberById(owner).complete();
-        if (complete != null) {
-            product.revoke(complete);
-        }
+        long owner = owner();
+        long guildId = product.products().licenseGuild().guildId();
+        product.products().licenseGuild().roles().revoke(guildId, owner, product);
         return query("DELETE FROM license WHERE id = ?")
                 .single(call().bind(id))
                 .delete()
@@ -105,8 +193,8 @@ public class License {
     }
 
     public boolean claim(Member member) {
-        if (query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(member.getIdLong()).bind(id))
+        if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id))
                 .insert()
                 .changed()) {
             log.info(LogNotify.STATUS, "{} claimed license {} for {}", member.getEffectiveName(), id, product().name());
@@ -123,8 +211,8 @@ public class License {
 
     public boolean transfer(Member member) {
         clearSubUsers();
-        if (query("INSERT INTO user_license(user_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET user_id = excluded.user_id")
-                .single(call().bind(member.getIdLong()).bind(id))
+        if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET account_id = excluded.account_id")
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id))
                 .insert()
                 .changed()) {
             Member oldOwner = member.getGuild().retrieveMemberById(owner).complete();
@@ -139,22 +227,30 @@ public class License {
         return false;
     }
 
+    /**
+     * Ends every share of this license, and takes the product's role back from anybody it was the
+     * only thing granting.
+     *
+     * <p>The rows go first and the entitlement is weighed afterwards. Asked the other way round -
+     * which is how this used to read - every sharee still held the share being cleared, so every one
+     * of them answered "entitled" and nobody ever lost the role.
+     */
     public void clearSubUsers() {
-        for (Long subUser : subUsers()) {
-            Member complete = product.guild().retrieveMemberById(subUser).complete();
-            if (complete != null && !product.canAccess(complete)) {
-                product.revoke(complete);
-            }
-        }
+        List<Long> sharees = subUsers();
 
         query("DELETE FROM user_sub_license WHERE license_id = ?")
                 .single(call().bind(id()))
                 .delete();
+
+        long guildId = product.products().licenseGuild().guildId();
+        for (Long sharee : sharees) {
+            product.products().licenseGuild().roles().revokeIfUnentitled(guildId, sharee, product);
+        }
     }
 
     public boolean removeSubUser(Member member) {
-        boolean changed = query("DELETE FROM user_sub_license WHERE license_id = ? AND user_id = ?")
-                .single(call().bind(id()).bind(member.getIdLong()))
+        boolean changed = query("DELETE FROM user_sub_license WHERE license_id = ? AND account_id = ?")
+                .single(call().bind(id()).bind(Accounts.accountIdForDiscord(member.getIdLong())))
                 .delete()
                 .changed();
         if (changed) {
@@ -168,8 +264,8 @@ public class License {
     public boolean addSubUser(Member member) {
         product.assign(member);
         log.info(LogNotify.STATUS, "{} shared license for {} with {}", owner, product.name(), member.getEffectiveName());
-        return query("INSERT INTO user_sub_license(user_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(member.getIdLong()).bind(id()))
+        return query("INSERT INTO user_sub_license(account_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
+                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong())).bind(id()))
                 .insert()
                 .changed();
     }

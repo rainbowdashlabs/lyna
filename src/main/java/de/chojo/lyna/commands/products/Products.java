@@ -1,5 +1,6 @@
 package de.chojo.lyna.commands.products;
 
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.SubCommand;
@@ -12,6 +13,7 @@ import de.chojo.lyna.data.access.Guilds;
 public class Products implements SlashProvider<Slash> {
     private final Guilds guilds;
 
+    @Inject
     public Products(Guilds guilds) {
         this.guilds = guilds;
     }

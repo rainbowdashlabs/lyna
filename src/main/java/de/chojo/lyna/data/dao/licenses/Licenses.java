@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
@@ -26,10 +27,20 @@ public class Licenses {
     }
 
     public Optional<License> create(Product product, String identifier) {
-        String key = LicenseCreator.create(licenseGuild.configuration().config().license().baseSeed(), product, identifier);
-        log.info(LogNotify.STATUS, "Creating license key for {} purchased by {}", product.name(), identifier);
-        return query("INSERT INTO license(product_id, user_identifier, key) VALUES(?,?,?) ON CONFLICT DO NOTHING RETURNING id")
-                .single(call().bind(product.id()).bind(identifier).bind(key))
+        return create(product, identifier, LicenseSource.MANUAL);
+    }
+
+    /**
+     * @param identifier who bought it - an address, or whatever an operator typed
+     * @param source     where it came from, which is a fact about the licence rather than part of who
+     *                   holds it
+     */
+    public Optional<License> create(Product product, String identifier, LicenseSource source) {
+        String key = LicenseCreator.create(licenseGuild.configuration().main().license().baseSeed(), product, identifier);
+        log.info(LogNotify.STATUS, "Creating license key for {} purchased by {} via {}",
+                product.name(), identifier, source);
+        return query("INSERT INTO license(product_id, user_identifier, key, source) VALUES(?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
+                .single(call().bind(product.id()).bind(identifier).bind(key).bind(source.name()))
                 .map(row -> new License(product, identifier, row.getInt("id"), key))
                 .first()
                 .or(() -> byKey(key));
@@ -73,6 +84,48 @@ public class Licenses {
                 .single(call().bind(product.id()).bind(identifier).bind(guildId()))
                 .map(this::buildLicense)
                 .first();
+    }
+
+    public List<License> all() {
+        return query("""
+                SELECT product_id, id, user_identifier, key
+                FROM guild_license
+                WHERE guild_id = ?
+                ORDER BY id DESC
+                """)
+                .single(call().bind(guildId()))
+                .map(this::buildLicense)
+                .all();
+    }
+
+    public List<License> byOwner(long discordId) {
+        return query("""
+                SELECT l.product_id, l.id, l.user_identifier, l.key
+                FROM license l
+                JOIN user_license u ON u.license_id = l.id
+                JOIN account_identity i ON i.account_id = u.account_id AND i.provider = 'discord'
+                JOIN product p ON p.id = l.product_id
+                WHERE i.external_id = ?::TEXT AND p.guild_id = ?
+                ORDER BY l.id DESC
+                """)
+                .single(call().bind(discordId).bind(guildId()))
+                .map(this::buildLicense)
+                .all();
+    }
+
+    public List<License> bySharee(long discordId) {
+        return query("""
+                SELECT l.product_id, l.id, l.user_identifier, l.key
+                FROM license l
+                JOIN user_sub_license u ON u.license_id = l.id
+                JOIN account_identity i ON i.account_id = u.account_id AND i.provider = 'discord'
+                JOIN product p ON p.id = l.product_id
+                WHERE i.external_id = ?::TEXT AND p.guild_id = ?
+                ORDER BY l.id DESC
+                """)
+                .single(call().bind(discordId).bind(guildId()))
+                .map(this::buildLicense)
+                .all();
     }
 
     public License buildLicense(Row row) throws SQLException {

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" shutdownHook="disable" packages="de.chojo.logutil.appender">
+    <Appenders>
+        <!-- Console logger for debugging (prints stacktrace) -->
+        <Console name="ConsoleDebug" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%highlight{[%d{HH:mm:ss]}[%p{length=3}][%c] %m%n}{FATAL=black, ERROR=red, WARN=yellow, INFO=green, DEBUG=blue, TRACE=white}"
+                    disableAnsi="false"/>
+        </Console>
+
+        <RollingFile name="RollingFile" fileName="logs/app.log" filePattern="logs/app-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="[%d{HH:mm:ss]}[%p{length=3}][%15.15c{1}] %m%ex%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <DiscordWebhook name="DiscordVerbose"
+                        url="">
+            <filters>
+                <MarkerFilter marker="DISCORD" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <MarkerFilter marker="+" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO"/>
+            </filters>
+        </DiscordWebhook>
+
+        <DiscordWebhook name="DiscordStatus"
+                        url="">
+            <filters>
+                <MarkerFilter marker="STATUS" onMatch="ACCEPT" onMismatch="DENY"/>
+            </filters>
+        </DiscordWebhook>
+
+        <DiscordWebhook name="DiscordError"
+                        url="">
+            <MarkerFilter marker="NOTIFY_ADMIN" onMatch="ACCEPT" onMismatch="DENY"/>
+        </DiscordWebhook>
+
+        <Socket name="socket" host="localhost" port="8888" protocol="udp">
+            <JsonTemplateLayout eventTemplateUri="classpath:EcsLayout.json">
+                <EventTemplateAdditionalField key="index" value="repbot"/>
+            </JsonTemplateLayout>
+        </Socket>
+
+    </Appenders>
+    <Loggers>
+        <!-- remove too verbose library logging -->
+        <Logger name="net.dv8tion.jda" level="INFO"/>
+        <Logger name="org.eclipse.jetty" level="INFO"/>
+        <Logger name="com.zaxxer.hikari" level="INFO"/>
+
+        <Root level="TRACE">
+            <AppenderRef ref="ConsoleDebug"/>
+            <AppenderRef ref="RollingFile"/>
+            <AppenderRef ref="socket"/>
+            <AppenderRef ref="DiscordVerbose"/>
+            <AppenderRef ref="DiscordStatus"/>
+            <AppenderRef ref="DiscordError"/>
+        </Root>
+    </Loggers>
+</Configuration>

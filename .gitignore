@@ -35,3 +35,7 @@ buildNumber.properties
 /logs/
 /out/
 .direnv
+CLAUDE.md
+.concept
+# Stray scratch directories, which have no business in the tree
+/tmp/

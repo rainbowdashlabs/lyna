@@ -1,0 +1,38 @@
+package de.chojo.lyna.configuration.elements.discord;
+
+import dev.chojo.ocular.override.Env;
+import dev.chojo.ocular.override.Overwrite;
+import dev.chojo.ocular.override.OverwritePrefix;
+import dev.chojo.ocular.override.Prop;
+
+/**
+ * What Discord needs to hand an account back after somebody signs in there.
+ *
+ * <p>Its own class rather than one nested in {@code Discord}, because Ocular's annotation processor
+ * assumes an annotated class sits directly in a package and fails to compile one that does not.
+ */
+@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
+@OverwritePrefix("DISCORD_OAUTH")
+public class OAuth {
+    @Overwrite(env = @Env, prop = @Prop)
+    private String clientId = "";
+
+    /** Supplied from outside the file wherever that is possible. */
+    @Overwrite(env = @Env, prop = @Prop)
+    private String clientSecret = "";
+
+    @Overwrite(env = @Env, prop = @Prop)
+    private String redirectUri = "";
+
+    public String clientId() {
+        return clientId;
+    }
+
+    public String clientSecret() {
+        return clientSecret;
+    }
+
+    public String redirectUri() {
+        return redirectUri;
+    }
+}

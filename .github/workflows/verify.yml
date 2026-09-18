@@ -2,6 +2,9 @@ name: Verify
 
 on: [push, pull_request]
 
+env:
+  NODE_VERSION: 24
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,10 +19,127 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: Build with Gradle
-        run: ./gradlew --build-cache build
-      - name: Test with Gradle
-        run: ./gradlew test --info
+        run: ./gradlew --build-cache build -x test
 
+  test:
+    runs-on: ubuntu-latest
+    # Divided by kind, so a red job names where to look. The repository and service jobs each start
+    # a database container per fork; the rest needs none.
+    name: Test (${{ matrix.kind }})
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        kind: [ testRepositories, testServices, testOther ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Run the tests
+        run: ./gradlew --build-cache ${{ matrix.kind }}
+      - name: Upload the report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-report-${{ matrix.kind }}
+          path: build/reports/tests/
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    name: Frontend lint and build
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+      # Every linter has to pass with nothing but frontend/ on disk, because that is all the image
+      # build copies. This is what catches one that reads above it.
+      - name: Check the linters stand alone
+        working-directory: frontend
+        run: npm run lint:standalone
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+      - name: Pack the build
+        working-directory: frontend
+        run: tar czf frontend-build.tar.gz .output
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/frontend-build.tar.gz
+
+  test-frontend-e2e:
+    runs-on: ubuntu-latest
+    name: End-to-end
+    needs: [ build-frontend ]
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Install Playwright browsers
+        working-directory: frontend
+        timeout-minutes: 5
+        run: npx playwright install --with-deps chromium
+      - name: Download the build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend
+      - name: Unpack the build
+        working-directory: frontend
+        run: tar xzf frontend-build.tar.gz
+      # The suite brings up its own stack - a database and a backend of its own, and the built server
+      # in front of them - because that is what it is configured against.
+      - name: Run the stories
+        working-directory: frontend
+        run: npx playwright test --project chromium --project ssr-no-js
+      - name: Upload the report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/e2e/report/
+      # What the stack was doing, kept only when something went wrong. A story that fails because the
+      # backend was unhappy for half a minute looks exactly like a story that is wrong, and the report
+      # alone cannot tell them apart.
+      - name: Capture the stack logs
+        if: failure()
+        run: docker compose -f docker/docker-compose.yml --profile e2e logs --no-color --timestamps > stack-logs.txt
+      - name: Upload the stack logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-stack-logs
+          path: stack-logs.txt
+      - name: Stop the stack
+        if: always()
+        run: docker compose -f docker/docker-compose.yml --profile e2e down -v
 
   build-docker:
     runs-on: ubuntu-latest
@@ -28,4 +148,4 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Build as Docker image
-        run: docker build .
+        run: docker build -f docker/backend.Dockerfile .

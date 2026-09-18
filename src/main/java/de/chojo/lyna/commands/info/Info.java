@@ -1,10 +1,9 @@
 package de.chojo.lyna.commands.info;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.lyna.commands.info.handler.Default;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -15,14 +14,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class Info implements SlashProvider<Slash> {
     private static final Logger log = getLogger(Info.class);
     private final String version;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
 
-    private Info(String version, Configuration<ConfigFile> configuration) {
+    private Info(String version, Conf configuration) {
         this.version = version;
         this.configuration = configuration;
     }
 
-    public static Info create(Configuration<ConfigFile> configuration) {
+    public static Info create(Conf configuration) {
         var version = "undefined";
         try (var input = Info.class.getClassLoader().getResourceAsStream("version")) {
             version = new String(input.readAllBytes(), StandardCharsets.UTF_8).trim();

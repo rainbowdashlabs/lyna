@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@import "./fonts.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /*
+     * Transistor, in light. These are what the page is painted with before any script runs, so they
+     * are the default scheme rather than a neutral stand-in - a first paint in some other palette is
+     * a flash of a different application.
+     */
+    --color-primary: #eb9db2;
+    --color-primary-accent: #d97e96;
+    --color-primary-text: #1a1a1a;
+    --color-primary-accent-text: #1a1a1a;
+
+    --color-secondary: #7cc4e4;
+    --color-secondary-accent: #57a9ce;
+    --color-secondary-text: #1a1a1a;
+    --color-secondary-accent-text: #1a1a1a;
+
+    --color-info: #c9a227;
+    --color-info-accent: #a5811a;
+    --color-info-text: #1a1a1a;
+    --color-info-accent-text: #1a1a1a;
+
+    --color-success: #3f9d6b;
+    --color-success-text: #1a1a1a;
+
+    --color-error: #d95c5c;
+    --color-error-text: #1a1a1a;
+
+    --color-bg-light: #f5f8fa;
+    --color-bg-light-accent: #dde5ec;
+
+    --color-bg-dark: #12171d;
+    --color-bg-dark-accent: #0c1015;
+
+    --color-text-light: #1a1a1a;
+    --color-text-dark: #eceff4;
+    --color-border-light: #c6d2dc;
+    --color-border-dark: #242c35;
+
+    /* Contrast-safe colours for badges and labels on page backgrounds; useTheme recomputes these per theme. */
+    --color-primary-badge: #b4566f;
+    --color-secondary-badge: #2f7fa3;
+    --color-info-badge: #a5811a;
+    --color-success-badge: #2f7d4f;
+    --color-error-badge: #c14444;
+
+    --radius-theme: 0;
+
+    --font-sans: 'Public Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+:root {
+    --bg: var(--color-bg-light);
+    --bg-accent: var(--color-bg-light-accent);
+    --text: var(--color-text-light);
+    --text-muted: #666666;
+    --border: var(--color-border-light);
+    --link: var(--color-primary);
+}
+
+html.dark {
+    --bg: var(--color-bg-dark);
+    --bg-accent: var(--color-bg-dark-accent);
+    --text: var(--color-text-dark);
+    --text-muted: #9ca3af;
+    --border: var(--color-border-dark);
+}
+
+html {
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+body {
+    min-height: 100vh;
+    font-family: var(--font-sans);
+}
+
+/* Anything a person reads as data rather than as prose: keys, versions, timestamps, counts,
+   labels and the chrome. It is what makes a column of figures line up. */
+.font-data {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+}
+
+.rounded-theme {
+    border-radius: var(--radius-theme);
+}

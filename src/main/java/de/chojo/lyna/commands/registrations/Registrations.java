@@ -1,5 +1,6 @@
 package de.chojo.lyna.commands.registrations;
 
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.slash.Argument;
 import de.chojo.jdautil.interactions.slash.Group;
 import de.chojo.jdautil.interactions.slash.Slash;
@@ -14,6 +15,7 @@ import de.chojo.lyna.data.access.Guilds;
 public class Registrations implements SlashProvider<Slash> {
     private final Guilds guilds;
 
+    @Inject
     public Registrations(Guilds guilds) {
         this.guilds = guilds;
     }

@@ -2,15 +2,14 @@ package de.chojo.lyna.mail;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
-import de.chojo.jdautil.util.SysVar;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.configuration.ConfigFile;
-import de.chojo.lyna.core.Data;
+import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import jakarta.mail.Message;
 import jakarta.mail.internet.InternetAddress;
@@ -25,21 +24,23 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final Mailings mailings;
     private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
-    private final Configuration<ConfigFile> configuration;
+    private final Accounts accounts;
+    private final Conf configuration;
 
     private final Cache<String, String> cache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
-    public MailHandler(Data data, MailingService mailingService, Configuration<ConfigFile> configuration) {
-        this.mailings = data.mailings();
+    public MailHandler(Mailings mailings, MailingService mailingService, Accounts accounts, Conf configuration) {
+        this.mailings = mailings;
         this.mailingService = mailingService;
+        this.accounts = accounts;
         this.configuration = configuration;
     }
 
     @Override
     public void accept(Message message) throws Exception {
-        de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.config().mailing();
+        de.chojo.lyna.configuration.elements.Mailing mailConf = configuration.main().mailing();
         InternetAddress address = (InternetAddress) message.getFrom()[0];
-        if ("false".equalsIgnoreCase(SysVar.envOrProp("LYNA_MAILING_SKIPVERIFY","lyna.mailing.skipverify", "false"))) {
+        if (!mailConf.skipVerify()) {
             // Check if address is from PayPal
             if (!"service@paypal.de".equals(address.getAddress())
                     && !mailConf.originMails().contains(address.getAddress())) {
@@ -50,6 +51,13 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
             // We always accept mails from the origin address.
             String[] header = message.getHeader("X-Forwarded-For");
             if (header != null) {
+                if (mailConf.originMails().isEmpty()) {
+                    log.warn(LogNotify.NOTIFY_ADMIN,
+                            "Refused a mail forwarded by {} because mailing.originMail is empty. "
+                                    + "Name the addresses that forward receipts here to accept them.",
+                            header[0]);
+                    return;
+                }
                 boolean valid = false;
                 for (String mail : mailConf.originMails()) {
                     if (header[0].contains(mail)) {
@@ -98,9 +106,13 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         }
 
         Mailing mailing = optMailing.get();
-        Optional<License> license = mailing.product().createLicense(parsed.mail().get());
+        Optional<License> license = mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
         license.get().grantAccess(ReleaseType.STABLE);
-        Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), parsed.name().get(), parsed.mail().get());
+        boolean handedOver = accounts.handOver(license.get().id(), parsed.mail().get());
+        Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
+                license.get().key(), parsed.name().get(), parsed.mail().get(),
+                mailing.product().url(),
+                handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
         mailingService.sendMail(mail);
     }
 }

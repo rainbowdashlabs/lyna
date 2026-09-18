@@ -1,32 +1,58 @@
 package de.chojo.lyna.web.api.v1.download.direct;
 
-import de.chojo.lyna.web.api.v1.download.Download;
+import com.google.inject.Inject;
+import de.chojo.lyna.data.access.AccountLicenses;
+import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.Products;
+import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.nexus.entities.AssetXO;
-import io.javalin.http.BadRequestResponse;
 import io.javalin.http.ContentType;
+import io.javalin.http.Context;
+import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
+import io.javalin.http.UnauthorizedResponse;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Direct {
-    private final Download download;
     private final Products products;
+    private final Auth auth;
+    private final Accounts accounts;
+    private final AccountLicenses licenses;
+    private final KioskProducts kiosk;
 
-    public Direct(Download download, Products products) {
-        this.download = download;
+    @Inject
+    public Direct(Products products, Auth auth, Accounts accounts, AccountLicenses licenses,
+                  KioskProducts kiosk) {
         this.products = products;
+        this.auth = auth;
+        this.accounts = accounts;
+        this.licenses = licenses;
+        this.kiosk = kiosk;
+    }
+
+    /**
+     * Refuses a product this caller may not have, by the same rule the storefront shows.
+     */
+    private void requireAccess(Context ctx, int productId) {
+        if (kiosk.isFree(productId)) return;
+        var session = auth.currentSession(ctx);
+        if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
+        boolean entitled = licenses.entitledProductIds(session.get().accountId()).contains(productId);
+        if (!entitled) throw new ForbiddenResponse("You do not hold a license for this product");
     }
 
     public void init() {
         path("direct", () -> {
             get("{product}/{type}/{version}", ctx -> {
-                Product product = products.byId(Integer.parseInt(ctx.pathParam("product")))
+                int productId = Integer.parseInt(ctx.pathParam("product"));
+                requireAccess(ctx, productId);
+                Product product = products.byId(productId)
                         .orElseThrow(() -> new NotFoundResponse("Invalid product id"));
-                if (!product.free()) throw new BadRequestResponse("This product is not free.");
                 var downloads = product.downloads().byType(Integer.parseInt(ctx.pathParam("type")))
                         .orElseThrow(() -> new NotFoundResponse("Invalid download type"));
                 AssetXO asset = downloads.assetByVersion(ctx.pathParam("version"))

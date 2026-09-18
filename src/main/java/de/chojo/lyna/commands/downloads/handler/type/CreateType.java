@@ -1,7 +1,6 @@
 package de.chojo.lyna.commands.downloads.handler.type;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
-import de.chojo.jdautil.util.Choice;
 import de.chojo.jdautil.util.Completion;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
@@ -11,7 +10,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
-import java.util.Arrays;
 
 public class CreateType implements SlashHandler {
     private final Guilds guilds;

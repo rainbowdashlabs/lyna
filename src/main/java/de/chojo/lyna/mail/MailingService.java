@@ -1,11 +1,12 @@
 package de.chojo.lyna.mail;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
+import com.google.inject.Inject;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
-import de.chojo.lyna.core.Data;
+import de.chojo.lyna.data.access.Accounts;
+import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
@@ -36,34 +37,46 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class MailingService {
     private final Threading threading;
-    private final Data data;
-    private final Configuration<ConfigFile> configuration;
+    private final Mailings mailings;
+    private final Accounts accounts;
+    private final Conf configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
+    private final MailTemplateRenderer renderer;
 
-    public MailingService(Threading threading, Data data, Configuration<ConfigFile> configuration) {
+    @Inject
+    public MailingService(Threading threading, Mailings mailings, Accounts accounts, Conf configuration) {
         this.threading = threading;
-        this.data = data;
+        this.mailings = mailings;
+        this.accounts = accounts;
         this.configuration = configuration;
+        this.renderer = new MailTemplateRenderer(configuration.main().mailing().senderName(),
+                configuration.main().links().frontend());
     }
 
-    public static MailingService create(Threading threading, Data data, Configuration<ConfigFile> configuration) {
-        MailingService mailingService = new MailingService(threading, data, configuration);
-        while (true) {
-            try {
-                mailingService.init();
-            } catch (MessagingException e) {
-                log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to mail", e);
-                continue;
-            }
-            break;
+    /**
+     * Builds the service and, where mail is configured, starts polling for it.
+     *
+     * <p>A failure to start the polling is reported and left at that rather than retried until it
+     * succeeds. Retrying here holds up the rest of the startup, so a mailbox that is briefly away
+     * used to take the bot and the HTTP API down with it; the scheduled poll recovers on its own
+     * once the mailbox answers again.
+     */
+    public void start() {
+        if (!configuration.main().mailing().enabled()) {
+            log.info("Mailing is disabled. No mail is polled or sent.");
+            return;
         }
-        return mailingService;
+        try {
+            init();
+        } catch (MessagingException e) {
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not connect to mail", e);
+        }
     }
 
     private void init() throws MessagingException {
-        threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.config().mailing().pollSeconds(), TimeUnit.SECONDS);
-        registerMessageListener(new MailHandler(data, this, configuration));
+        threading.botWorker().scheduleAtFixedRate(this::loop, 10, configuration.main().mailing().pollSeconds(), TimeUnit.SECONDS);
+        registerMessageListener(new MailHandler(mailings, this, accounts, configuration));
     }
 
     private void loop() {
@@ -109,10 +122,18 @@ public class MailingService {
         return imapStore;
     }
 
+    /**
+     * Builds the mail session from the system properties with the configured mail settings over them.
+     *
+     * <p>The system properties are copied rather than written into. `System.getProperties()` hands
+     * back the live table, so adding the mail settings to it published host, port and protocol
+     * choice to the whole JVM and let anything else holding a session be reconfigured underneath it.
+     */
     private Session createSession() {
         log.debug("Creating new mail session");
-        Properties props = System.getProperties();
-        Mailing mailing = configuration.config().mailing();
+        Properties props = new Properties();
+        props.putAll(System.getProperties());
+        Mailing mailing = configuration.main().mailing();
         props.putAll(mailing.properties());
         return Session.getInstance(props, new Authenticator() {
             @Override
@@ -122,12 +143,28 @@ public class MailingService {
         });
     }
 
+    /**
+     * The renderer every mail goes through, so that a caller building one never has to know where
+     * the templates are.
+     */
+    public MailTemplateRenderer renderer() {
+        return renderer;
+    }
+
     public void registerMessageListener(ThrowingConsumer<Message, Exception> listener) {
         receivedListener.add(listener);
     }
 
 
+    public void send(String to, String subject, String body) {
+        sendMail(new Mail(to, subject, body));
+    }
+
     public void sendMail(Mail mail) {
+        if (!configuration.main().mailing().enabled()) {
+            log.info("Mailing is disabled. Dropping mail to {} with subject {}", mail.address(), mail.subject());
+            return;
+        }
         Session session = createSession();
         MimeMessage mimeMessage;
         try {
@@ -169,7 +206,7 @@ public class MailingService {
 
     private boolean sendMessage(MimeMessage message) throws MessagingException {
         log.info("Sending mail to {}", ((InternetAddress) message.getAllRecipients()[0]).getAddress());
-        Transport.send(message, configuration.config().mailing().user(), configuration.config().mailing().password());
+        Transport.send(message, configuration.main().mailing().user(), configuration.main().mailing().password());
         log.info("Mail sent.");
         return true;
     }
@@ -202,7 +239,7 @@ public class MailingService {
 
     private MimeMessage buildMessage(Session session, Mail mail) throws MessagingException {
         var message = new MimeMessage(session);
-        message.addFrom(new Address[]{new InternetAddress(configuration.config().mailing().user())});
+        message.addFrom(new Address[]{new InternetAddress(configuration.main().mailing().user())});
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(mail.address(), false));
         message.setDataHandler(new DataHandler(mail.text(), "text/html; charset=UTF-8"));
         message.setSubject(mail.subject());

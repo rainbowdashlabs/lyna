@@ -1,9 +1,7 @@
 package de.chojo.lyna.commands.license.handler;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;

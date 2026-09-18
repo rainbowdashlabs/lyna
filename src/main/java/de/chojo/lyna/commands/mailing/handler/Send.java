@@ -1,9 +1,9 @@
 package de.chojo.lyna.commands.mailing.handler;
 
-import de.chojo.jdautil.configuration.Configuration;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
@@ -11,6 +11,7 @@ import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
+import de.chojo.lyna.mail.PurchaseRecipient;
 import de.chojo.lyna.mail.MailingService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -21,13 +22,15 @@ import java.util.Optional;
 
 public class Send implements SlashHandler {
     private final MailingService mailingService;
-    private final Configuration<ConfigFile> configuration;
+    private final Conf configuration;
     private final Guilds guilds;
+    private final Accounts accounts;
 
-    public Send(MailingService mailingService, Configuration<ConfigFile> configuration, Guilds guilds) {
+    public Send(MailingService mailingService, Conf configuration, Guilds guilds, Accounts accounts) {
         this.mailingService = mailingService;
         this.configuration = configuration;
         this.guilds = guilds;
+        this.accounts = accounts;
     }
 
     @Override
@@ -60,7 +63,10 @@ public class Send implements SlashHandler {
         license.get().grantAccess(ReleaseType.STABLE);
 
         Mailing mailing = optMailing.get();
-        Mail mail = MailCreator.createLicenseMessage(mailing, license.get().key(), name, address);
+        boolean handedOver = accounts.handOver(license.get().id(), address);
+        Mail mail = MailCreator.createLicenseMessage(mailingService.renderer(), mailing,
+                license.get().key(), name, address, mailing.product().url(),
+                handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
 
         mailingService.sendMail(mail);
         event.reply("Email sent").setEphemeral(true).queue();

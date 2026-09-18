@@ -11,7 +11,7 @@ import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
-import de.chojo.lyna.web.api.Api;
+import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
 import de.chojo.nexus.entities.AssetXO;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -39,11 +39,11 @@ import static de.chojo.lyna.util.Formatting.humanReadableByteCountSI;
 
 public class Default implements SlashHandler {
     private final Guilds guilds;
-    private final Api api;
+    private final Proxy proxy;
 
-    public Default(Guilds guilds, Api api) {
+    public Default(Guilds guilds, Proxy proxy) {
         this.guilds = guilds;
-        this.api = api;
+        this.proxy = proxy;
     }
 
     @Override
@@ -196,10 +196,16 @@ public class Default implements SlashHandler {
 
     private void registerButton(AssetVersion assetVersion, Member member, EntryContext<StringSelectInteractionEvent, StringSelectMenu> ctx) {
         AssetXO asset = assetVersion.asset();
-        String url = api.v1().download().proxy()
-                        .registerAsset(new AssetDownload(asset.id(),
-                                () -> assetVersion.download().downloaded(asset.maven2().version())
-                                , "%s(%s)".formatted(member.getUser().getName(), member.getId())));
+        String url = proxy.registerAsset(new AssetDownload(asset.id(),
+                                () -> assetVersion.download().downloaded(asset.maven2().version()),
+                                "%s(%s)".formatted(member.getUser().getName(), member.getId()),
+                                assetVersion.download().product().id(),
+                                assetVersion.download().id(),
+                                asset.maven2().version(),
+                                "license",
+                                null,
+                                member.getIdLong(),
+                                null));
         ctx.container().entries().add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {
         }));
         ctx.entry().hidden();

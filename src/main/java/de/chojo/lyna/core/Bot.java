@@ -1,20 +1,10 @@
 package de.chojo.lyna.core;
 
-import de.chojo.jdautil.configuration.Configuration;
+import de.chojo.lyna.data.access.Guilds;
+import com.google.inject.Inject;
 import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.commands.download.Download;
-import de.chojo.lyna.commands.downloads.Downloads;
-import de.chojo.lyna.commands.info.Info;
-import de.chojo.lyna.commands.kofi.KoFi;
-import de.chojo.lyna.commands.license.License;
-import de.chojo.lyna.commands.mailing.Mailing;
-import de.chojo.lyna.commands.products.Products;
-import de.chojo.lyna.commands.register.Register;
-import de.chojo.lyna.commands.registrations.Registrations;
-import de.chojo.lyna.commands.settings.Settings;
-import de.chojo.lyna.commands.trial.Trial;
-import de.chojo.lyna.configuration.ConfigFile;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -22,34 +12,45 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 
+import de.chojo.jdautil.interactions.slash.Slash;
+import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
+
 import java.util.Collections;
+import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Bot {
     private static final Logger log = getLogger(Bot.class);
-    private final Data data;
+    private final Guilds guilds;
     private final Threading threading;
-    private final Configuration<ConfigFile> configuration;
-    private final Web web;
+    private final Conf configuration;
+    private final Set<SlashProvider<Slash>> commands;
     private final MailingService mailingService;
     private ShardManager shardManager;
 
-    private Bot(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web, MailingService mailingService) {
-        this.data = data;
+    @Inject
+    public Bot(Guilds guilds, Threading threading, Conf configuration, Set<SlashProvider<Slash>> commands,
+               MailingService mailingService) {
+        this.guilds = guilds;
         this.threading = threading;
         this.configuration = configuration;
-        this.web = web;
+        this.commands = commands;
         this.mailingService = mailingService;
     }
 
-    public static Bot create(Data data, Threading threading, Configuration<ConfigFile> configuration, Web web, MailingService mailingService) {
-        Bot bot = new Bot(data, threading, configuration, web, mailingService);
-        bot.init();
-        return bot;
-    }
-
-    private void init() {
+    /**
+     * Connects to Discord and registers the commands, unless this deployment has no bot.
+     *
+     * <p>Separate from construction: opening a gateway is not something to do while an injector is
+     * still assembling the object graph, and everything that asks the bot questions goes through
+     * {@link de.chojo.lyna.gateway.Gateway}, which answers empty until this has run.
+     */
+    public void start() {
+        if (!configuration.main().baseSettings().botEnabled()) {
+            log.info("Discord bot is disabled. Only the HTTP API is served.");
+            return;
+        }
         initShardManager();
         initServices();
         initInteractions();
@@ -60,12 +61,12 @@ public class Bot {
 
     private void initShardManager() {
         shardManager = DefaultShardManagerBuilder
-                .createDefault(configuration.config().baseSettings().token())
+                .createDefault(configuration.main().baseSettings().token())
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS)
                 .setEnableShutdownHook(false)
                 .setThreadFactory(Threading.createThreadFactory(threading.jdaGroup()))
                 .setEventPool(threading.jdaWorker())
-                .addEventListeners(new RoleListener(data.guilds()))
+                .addEventListeners(new RoleListener(guilds))
                 .build();
     }
 
@@ -77,24 +78,12 @@ public class Bot {
                     log.error(LogNotify.NOTIFY_ADMIN, "Command execution of {} failed\n{}",
                             context.interaction().meta().name(), context.args(), throwable);
                 })
-                .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.config().baseSettings()
+                .withGuildCommandMapper(cmd -> Collections.singletonList(configuration.main().baseSettings()
                         .botGuild()))
                 .withDefaultMenuService()
                 .withPagination(builder -> builder.previousText("Previous").nextText("Next"))
                 .withDefaultModalService()
-                .withCommands(
-                        new Products(data.guilds()),
-                        new License(data.guilds(), configuration),
-                        new Register(data.guilds()),
-                        new Registrations(data.guilds()),
-                        new Settings(data.guilds()),
-                        Info.create(configuration),
-                        new Downloads(data.guilds(), data.nexus()),
-                        new Download(data.guilds(), web.webService().api()),
-                        new Trial(data.guilds(), web.webService().api()),
-                        new Mailing(data.guilds(), configuration, mailingService),
-                        new KoFi(data.guilds(), data.kofi())
-                )
+                .withCommands(commands.toArray(SlashProvider[]::new))
                 .build();
     }
 

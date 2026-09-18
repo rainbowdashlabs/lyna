@@ -1,7 +1,5 @@
-import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
-
 plugins {
-    alias(libs.plugins.shadow)
+    application
     java
     id("org.openrewrite.rewrite") version "7.39.0"
 }
@@ -21,6 +19,13 @@ dependencies {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
+    // wiring
+    implementation(libs.guice)
+
+    // configuration
+    implementation(libs.bundles.config)
+    annotationProcessor(libs.ocular)
+
     // database
     implementation("org.postgresql", "postgresql", "42.7.13")
     implementation(libs.bundles.sadu)
@@ -34,7 +39,12 @@ dependencies {
     implementation("io.javalin.community.openapi:javalin-openapi-plugin:$openapi") // for /openapi route with JSON scheme
     implementation("io.javalin.community.openapi:javalin-swagger-plugin:$openapi") // for Swagger UI
 
+    // Auth
+    implementation(libs.bcrypt)
+    implementation(libs.java.jwt)
+
     // Mailing
+    implementation(libs.pebble)
     implementation("org.eclipse.angus", "angus-mail", "2.0.5")
     implementation("org.jsoup", "jsoup", "1.23.2")
 
@@ -45,11 +55,12 @@ dependencies {
         exclude("org.apache.logging.log4j")
     }
 
-    // unit testing
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.1.3")
-    testImplementation("org.mockito", "mockito-core", "5.+")
+    // testing
+    testImplementation(libs.bundles.junit)
+    testRuntimeOnly(libs.junit.platform)
+    testImplementation(libs.mockito)
+    testImplementation(libs.bundles.testcontainers)
+    testImplementation(libs.greenmail)
 }
 
 java {
@@ -60,7 +71,30 @@ java {
     withJavadocJar()
 }
 
+application {
+    mainClass.set("de.chojo.lyna.Lyna")
+    applicationName = "lyna"
+}
+
+/**
+ * Number of JVMs a test task may fork.
+ *
+ * Every fork starts its own database container, and rootless Docker allocates the host port in a
+ * check-then-bind that races every outbound socket on the machine. Disabling the Testcontainers
+ * reaper halves the containers a fork starts and removes the one that lost that race by far the most
+ * often, which is what keeps one fork per two cores workable. Override with `-PtestForks=N` when a
+ * machine needs a different balance.
+ */
+fun testForks(): Int {
+    val configured = providers.gradleProperty("testForks").orNull?.toIntOrNull()
+    return configured ?: (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+}
+
 tasks {
+    withType<Test>().configureEach {
+        environment("TESTCONTAINERS_RYUK_DISABLED", "true")
+    }
+
     processResources {
         from(sourceSets.main.get().resources.srcDirs) {
             filesMatching("version") {
@@ -85,18 +119,42 @@ tasks {
         testLogging {
             events("passed", "skipped", "failed")
         }
+        maxParallelForks = testForks()
     }
 
-    shadowJar {
-        transform(Log4j2PluginsCacheFileTransformer::class.java)
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        mergeServiceFiles()
-        manifest {
-            attributes(mapOf("Main-Class" to "de.chojo.lyna.Lyna"))
+    register<Test>("testRepositories") {
+        group = "verification"
+        description = "Runs repository tests"
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        useJUnitPlatform()
+        testLogging { events("passed", "skipped", "failed") }
+        filter { includeTestsMatching("*.repository.*") }
+        maxParallelForks = testForks()
+    }
+
+    register<Test>("testServices") {
+        group = "verification"
+        description = "Runs service tests"
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        useJUnitPlatform()
+        testLogging { events("passed", "skipped", "failed") }
+        filter { includeTestsMatching("*.service.*") }
+        maxParallelForks = testForks()
+    }
+
+    register<Test>("testOther") {
+        group = "verification"
+        description = "Runs non-repository, non-service tests"
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        useJUnitPlatform()
+        testLogging { events("passed", "skipped", "failed") }
+        filter {
+            excludeTestsMatching("*.repository.*")
+            excludeTestsMatching("*.service.*")
         }
-    }
-
-    build {
-        dependsOn(shadowJar)
+        maxParallelForks = testForks()
     }
 }

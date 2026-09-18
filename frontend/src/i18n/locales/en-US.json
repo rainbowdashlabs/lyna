@@ -1,0 +1,410 @@
+{
+  "common": {
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "revoke": "Revoke",
+    "remove": "Remove",
+    "download": "Download",
+    "product": "Product"
+  },
+  "kiosk": {
+    "title": "Lyna Download Center",
+    "yourAccount": "Your account",
+    "signIn": "Sign in"
+  },
+  "auth": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "loginWithDiscord": "Continue with Discord",
+    "signingIn": "Signing in…",
+    "noAccount": "No account?",
+    "forgotPassword": "Forgot password?",
+    "invalidCredentials": "Invalid email or password.",
+    "loginFailed": "Login failed. Please try again.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "passwordsDiffer": "Passwords do not match."
+  },
+  "page": {
+    "forgot-password": {
+      "resetPassword": "Reset password",
+      "enterTheEmailAssociatedWithYour": "Enter the email associated with your account. If we find a match we'll send a reset link valid for one hour.",
+      "ifTheEmailMatchesAnAccount": "If the email matches an account, a reset link is on its way. Check your inbox (and spam) and follow the link within the next hour.",
+      "backToLogin": "Back to login"
+    },
+    "home": {
+      "browseAndDownloadPluginReleases": "Browse and download plugin releases.",
+      "noPluginsMatch": "No plugins match.",
+      "clearFilters": "Clear filters"
+    },
+    "reset-password": {
+      "setANewPassword": "Set a new password",
+      "passwordUpdatedYouCanLogIn": "Password updated. You can log in now.",
+      "goToLogin": "Go to login",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "missingTokenUseTheLinkFrom": "Missing token. Use the link from your email.",
+      "thisResetLinkHasExpiredRequest": "This reset link has expired. Request a new one."
+    },
+    "signup": {
+      "alreadyHaveAnAccount": "Already have an account?",
+      "confirmPassword": "Confirm password",
+      "anAccountWithThisEmailAlready": "An account with this email already exists.",
+      "signupFailedPleaseTryAgain": "Signup failed. Please try again."
+    },
+    "verify-email": {
+      "emailAddress": "Email address",
+      "yourAddressIsConfirmed": "Your address is confirmed.",
+      "backToYourAccount": "Back to your account",
+      "askForANewLink": "Ask for a new link",
+      "thatLinkCarriesNoToken": "That link carries no token."
+    },
+    "account": {
+      "appearance": {
+        "appearance": "Appearance",
+        "yourOperatorHasFixedTheTheme": "Your operator has fixed the theme and the corner style for everyone.",
+        "theme": "Theme",
+        "darkMode": "Dark mode",
+        "followTheSystem": "Follow the system",
+        "alwaysLight": "Always light",
+        "alwaysDark": "Always dark"
+      },
+      "downloads": {
+        "downloads": "Downloads",
+        "showingOneLicenseOnly": "Showing one license only.",
+        "showEverything": "Show everything"
+      },
+      "account": "Account",
+      "licenses": {
+        "id": {
+          "theLicenseOwnerCanSeeWhen": "The license owner can see when you download. Account emails are never shared.",
+          "share": "Share",
+          "usernameOrEmailAddress": "Username or email address",
+          "shareThisLicense": "Share this license"
+        },
+        "licenses": "Licenses",
+        "noLicenseMatchesThatName": "No license matches that name.",
+        "youDonTOwnAnyLicenses": "You don't own any licenses yet. Browse the",
+        "storefront": "storefront",
+        "noOneHasSharedALicense": "No one has shared a license with you.",
+        "searchByProduct": "Search by product…"
+      },
+      "security": {
+        "security": "Security",
+        "sessions": "Sessions",
+        "endAllOtherSessions": "End all other sessions",
+        "thisDevice": "This device",
+        "end": "End",
+        "noActiveSessionsFound": "No active sessions found.",
+        "deleteAccount": "Delete account",
+        "deletingYourAccountRemovesYourEmail": "Deleting your account removes your email and password. Any licenses tied to your linked Discord id stay in place; you can re-link them later.",
+        "deleteMyAccount": "Delete my account",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmNewPassword": "Confirm new password",
+        "typeYourEmailToConfirm": "Type your email to confirm",
+        "passwordUpdated": "Password updated."
+      }
+    },
+    "admin": {
+      "g": {
+        "guildId": {
+          "kofi": {
+            "koFiMappings": "Ko-fi mappings",
+            "mapKoFiDirectLinkCodes": "Map Ko-fi direct-link codes to products. Used when a Ko-fi webhook arrives — the matching product issues a license.",
+            "addOrUpdateMapping": "Add or update mapping",
+            "choose": "Choose…",
+            "noKoFiMappingsYet": "No Ko-fi mappings yet.",
+            "linkCode": "Link code",
+            "mappingSaved": "Mapping saved."
+          },
+          "licenses": {
+            "licenses": "Licenses",
+            "issueLicense": "Issue license",
+            "choose": "Choose…",
+            "licenseIssued": "License issued",
+            "noLicensesYet": "No licenses yet.",
+            "identifierMailOrderId": "Identifier (mail / order id)"
+          },
+          "mailing": {
+            "mailingTemplates": "Mailing templates",
+            "theMailSentWhenSomebodyBuys": "The mail sent when somebody buys a product. Composed in blocks and rendered into the same layout every other mail uses, so it arrives looking like one.",
+            "middotWrittenBeforeTheEditor": "· written before the editor"
+          },
+          "products": {
+            "products": "Products",
+            "createProduct": "Create product",
+            "freeProduct": "Free product",
+            "trialAvailable": "Trial available",
+            "free": "Free",
+            "premium": "Premium",
+            "noProductsYet": "No products yet.",
+            "name": "Name",
+            "roleId": "Role id",
+            "projectUrlOptional": "Project URL (optional)"
+          },
+          "registrations": {
+            "registrations": "Registrations",
+            "lookUpARegistrationByDiscord": "Look up a registration by Discord user id.",
+            "discordId": "Discord id:",
+            "memberName": "Member name:",
+            "none": "None.",
+            "discordUserId": "Discord user id",
+            "noRegistrationFound": "No registration found."
+          },
+          "settings": {
+            "settings": "Settings",
+            "licenseShareeCap": "License sharee cap",
+            "trialServerTimeMinutes": "Trial server time (minutes)",
+            "trialAccountTimeMinutes": "Trial account time (minutes)",
+            "membersOfThisRoleAdministerThis": "Members of this role administer this guild here. Leave empty so only Manage Server does.",
+            "adminRoleIdOptional": "Admin role id (optional)"
+          },
+          "trial": {
+            "trial": "Trial",
+            "activeLimits": "Active limits",
+            "perServerCooldown": "Per server cooldown:",
+            "perAccountCooldown": "Per account cooldown:",
+            "editTheseLimitsUnder": "Edit these limits under",
+            "settings": "Settings",
+            "products": "Products",
+            "noProducts": "No products."
+          }
+        }
+      },
+      "resolvingAdminContext": "Resolving admin context…",
+      "instance": {
+        "appearance": {
+          "appearance": "Appearance"
+        },
+        "operators": {
+          "operators": "Operators",
+          "anOperatorReachesEveryGuildS": "An operator reaches every guild's admin area and this one. Ids named in the configuration file cannot be withdrawn here — they are the way back in if a grant goes wrong.",
+          "grantTheInstance": "Grant the instance",
+          "discordUserId": "Discord user id"
+        },
+        "system": {
+          "system": "System",
+          "version": "Version",
+          "guilds": "Guilds"
+        }
+      },
+      "select": {
+        "selectAGuild": "Select a guild",
+        "youAdministerMoreThanOneGuild": "You administer more than one guild. Pick one to continue.",
+        "noAdminAccess": "No admin access."
+      }
+    }
+  },
+  "layout": {
+    "account": {
+      "overview": "Overview",
+      "licenses": "Licenses",
+      "downloads": "Downloads",
+      "security": "Security",
+      "appearance": "Appearance",
+      "anonymous": "Anonymous",
+      "notLinked": "no Discord",
+      "storefront": "Storefront"
+    },
+    "admin": {
+      "administering": "Administering",
+      "selectAGuild": "Select a guild…",
+      "noAdminGuildsAvailable": "No admin guilds available.",
+      "instanceArea": "Instance area →",
+      "system": "System",
+      "appearance": "Appearance",
+      "operators": "Operators",
+      "products": "Products",
+      "licenses": "Licenses",
+      "registrations": "Registrations",
+      "trial": "Trial",
+      "kofi": "Ko-fi",
+      "mailing": "Mailing",
+      "settings": "Settings",
+      "botConnected": "bot connected",
+      "noBot": "no bot",
+      "guildsCount": "{count} guilds",
+      "guildAdmin": "guild admin"
+    }
+  },
+  "ui": {
+    "discordLinkCard": {
+      "discord": "Discord",
+      "linkedAs": "Linked as:",
+      "whileThisIsLinkedDiscordSupplies": "While this is linked, Discord supplies your username.",
+      "reLink": "Re-link",
+      "unlink": "Unlink",
+      "notLinked": "Not linked.",
+      "linkYourDiscord": "Link your Discord",
+      "toClaimTheLicensesYourDiscord": "to claim the licenses your Discord id already holds, and to be granted the roles they carry."
+    },
+    "downloadFilters": {
+      "any": "Any",
+      "from": "From",
+      "to": "To",
+      "source": "Source"
+    },
+    "downloadTable": {
+      "date": "Date",
+      "version": "Version",
+      "source": "Source",
+      "license": "License"
+    },
+    "linkedAccountsCard": {
+      "discord": "Discord",
+      "linkNow": "link now",
+      "linkedAccounts": "Linked accounts",
+      "notLinked": "Not linked –"
+    },
+    "pager": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "recentDownloadsCard": {
+      "storefront": "storefront",
+      "recentDownloads": "Recent downloads",
+      "noDownloadsYetBrowseThe": "No downloads yet – browse the"
+    },
+    "sessionsCard": {
+      "sessions": "Sessions",
+      "manageSessions": "Manage sessions →"
+    },
+    "usernameCard": {
+      "username": "Username",
+      "fromDiscord": "From Discord",
+      "thisIsHowYouAppearTo": "This is how you appear to somebody who shares a license with you. Your email address is never shown to them.",
+      "discordSuppliesThisNameUnlinkDiscord": "Discord supplies this name. Unlink Discord to choose one yourself.",
+      "threeToThirtyTwoCharactersLetters": "Three to thirty-two characters: letters, digits, dots, dashes or underscores. Four digits are added so two people can share a name."
+    },
+    "instanceAppearanceForm": {
+      "allowUserTheme": "Allow user theme",
+      "defaultTheme": "Default theme",
+      "emptyMeansEveryThemeIsAvailable": "Empty means every theme is available.",
+      "enabledThemesCommaSeparated": "Enabled themes (comma-separated)",
+      "customThemeColorsJson": "Custom theme colors (JSON)"
+    },
+    "operatorList": {
+      "discordId": "Discord id",
+      "grantedBy": "Granted by",
+      "granted": "Granted",
+      "withdraw": "Withdraw",
+      "fromTheConfig": "From the config",
+      "editTheConfig": "Edit the config"
+    },
+    "productIconField": {
+      "httpsIconPng": "https://…/icon.png"
+    },
+    "demoAccountPicker": {
+      "signInAs": "Sign in as",
+      "thisIsADemoInstancePick": "This is a demo instance. Pick somebody to look at it as — no password needed."
+    },
+    "demoBanner": {
+      "thisIsADemoAnyoneCan": "This is a demo. Anyone can sign in, everything here is made up, and it is all thrown away and laid out again on a timer."
+    },
+    "multiSelectDropdown": {
+      "alleAuswHlen": "Alle auswählen",
+      "keine": "Keine",
+      "suche": "Suche…"
+    },
+    "searchSelectInput": {
+      "keineErgebnisse": "Keine Ergebnisse"
+    },
+    "singleSelectDropdown": {
+      "auswahlAufheben": "Auswahl aufheben",
+      "suche": "Suche…"
+    },
+    "downloadWizard": {
+      "nothingIsPublishedForYouTo": "Nothing is published for you to download yet.",
+      "noVersionHasBeenPublishedFor": "No version has been published for this release type.",
+      "file": "File",
+      "thisIsAOneTimeLink": "This is a one-time link. Do not distribute.",
+      "signInToDownloadThisProduct": "Sign in to download this product.",
+      "youDoNotHoldALicense": "You do not hold a license for this product.",
+      "downloadsAreUnavailableTheDiscordBot": "Downloads are unavailable: the Discord bot is not connected."
+    },
+    "kioskFilters": {
+      "searchPlugins": "Search plugins…"
+    },
+    "productTile": {
+      "free": "Free",
+      "owned": "Owned",
+      "premium": "Premium",
+      "buyOnKoFi": "Buy on Ko-fi",
+      "notForSaleHere": "Not for sale here",
+      "alreadyBoughtIt": "Already bought it?",
+      "linkYourDiscord": "Link your Discord"
+    },
+    "licenseDetailHeader": {
+      "copy": "Copy"
+    },
+    "licenseRow": {
+      "sharedWithYou": "Shared with you"
+    },
+    "licenseSharees": {
+      "sharees": "Sharees",
+      "invited": "invited",
+      "youHaveNotSharedThisLicense": "You have not shared this license with anyone.",
+      "addSharee": "Add sharee",
+      "capReachedRevokeAShareeFirst": "Cap reached. Revoke a sharee first, or ask the guild admin to raise the limit.",
+      "shareByUsernameOrByEmail": "Share by username, or by email address. Somebody with no Discord account still gets downloads, but not the server roles the license grants.",
+      "granted": "granted",
+      "withdraw": "Withdraw"
+    },
+    "licenseUpdaterLink": {
+      "directLinkUpdaters": "Direct-link updaters",
+      "aHeadlessUpdaterCanFetchFrom": "A headless updater can fetch from this address without signing in. Treat it as the key it carries."
+    },
+    "licenseUsage": {
+      "usage": "Usage",
+      "nothingHasBeenDownloadedOnThis": "Nothing has been downloaded on this license yet."
+    },
+    "mailBlockEditor": {
+      "nothingInThisMailYetAdd": "Nothing in this mail yet. Add a block to start it."
+    },
+    "mailBlockField": {
+      "aLineAcrossTheMail": "A line across the mail.",
+      "heading": "Heading",
+      "placeholdersWorkHereALinkIs": "Placeholders work here. A link is written [label](https://…).",
+      "text": "Text",
+      "theLicenceKeyItselfIsFilled": "The licence key itself is filled in when the mail is sent.",
+      "labelAboveTheKey": "Label above the key",
+      "buttonText": "Button text",
+      "address": "Address",
+      "oneLinePerItem": "One line per item.",
+      "items": "Items",
+      "sentAsWrittenThisIsWhat": "Sent as written. This is what a mail composed before the editor kept.",
+      "html": "HTML"
+    },
+    "mailingEditorPanel": {
+      "backToTheList": "Back to the list",
+      "preview": "Preview",
+      "sendYourselfOne": "Send yourself one",
+      "withStandInValuesTheOnly": "With stand-in values. The only real check is what a mail client makes of it.",
+      "send": "Send",
+      "whatTheMailLooksLike": "What the mail looks like",
+      "address": "Address"
+    },
+    "emailList": {
+      "title": "Email addresses",
+      "explain": "An account can hold several. A licence bought with any address you have confirmed is handed to you automatically.",
+      "confirmed": "confirmed",
+      "unconfirmed": "not confirmed",
+      "writtenTo": "written to",
+      "makePrimary": "Write to this one",
+      "addAnother": "Add an address",
+      "newAddress": "New address",
+      "sending": "Sending…",
+      "sent": "Confirm it from the mail sent there. Nothing changes until you do.",
+      "couldNotAdd": "Could not add that address.",
+      "cannotRemovePrimary": "This is the address the account is written to. Choose another one first."
+    }
+  }
+}

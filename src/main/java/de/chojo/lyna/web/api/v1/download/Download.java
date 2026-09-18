@@ -1,21 +1,19 @@
 package de.chojo.lyna.web.api.v1.download;
 
-import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.web.api.v1.V1;
+import com.google.inject.Inject;
 import de.chojo.lyna.web.api.v1.download.direct.Direct;
 import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Download {
-    private final V1 v1;
     private final Direct direct;
-    Proxy proxy;
+    private final Proxy proxy;
 
-    public Download(V1 v1, Products products) {
-        this.v1 = v1;
-        this.proxy = new Proxy(this);
-        direct = new Direct(this, products);
+    @Inject
+    public Download(Proxy proxy, Direct direct) {
+        this.proxy = proxy;
+        this.direct = direct;
     }
 
     public void init() {
@@ -29,7 +27,4 @@ public class Download {
         return proxy;
     }
 
-    public V1 v1() {
-        return v1;
-    }
 }

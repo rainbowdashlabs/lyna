@@ -1,11 +1,13 @@
 package de.chojo.lyna;
 
-import de.chojo.jdautil.configuration.Configuration;
-import de.chojo.lyna.configuration.ConfigFile;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
-import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.core.Web;
+import de.chojo.lyna.web.WebService;
+import de.chojo.lyna.demo.DemoSchedule;
+import de.chojo.lyna.inject.LynaModule;
 import de.chojo.lyna.mail.MailingService;
 
 import java.io.IOException;
@@ -19,13 +21,21 @@ public class Lyna {
         instance.init();
     }
 
+    /**
+     * Builds the application and starts the parts that start.
+     *
+     * <p>What used to be a fixed order of {@code create(...)} calls ending in a back-patch is now a
+     * graph the injector assembles. What remains here is the order things have to be <em>started</em>
+     * in, which is a genuine sequence: the database before anything reads it, the gateway last
+     * because everything else answers without it.
+     */
     private void init() throws SQLException, IOException, InterruptedException {
-        Configuration<ConfigFile> configuration = Configuration.create(new ConfigFile());
-        var threading = new Threading();
-        Data data = Data.create(threading, configuration);
-        MailingService mailingService = MailingService.create(threading, data, configuration);
-        Web web = Web.create(configuration, data, mailingService);
-        Bot bot = Bot.create(data, threading, configuration, web, mailingService);
-        data.inject(bot);
+        Injector injector = Guice.createInjector(new LynaModule(new Conf()));
+
+        injector.getInstance(Data.class).start();
+        injector.getInstance(MailingService.class).start();
+        injector.getInstance(WebService.class).init();
+        injector.getInstance(Bot.class).start();
+        injector.getInstance(DemoSchedule.class).start();
     }
 }

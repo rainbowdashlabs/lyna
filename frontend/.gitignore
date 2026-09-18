@@ -1,0 +1,10 @@
+node_modules/
+.nuxt/
+.output/
+.vite/
+dist/
+*.log
+
+# End-to-end run output
+e2e/results/
+e2e/report/

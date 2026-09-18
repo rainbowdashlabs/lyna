@@ -50,6 +50,14 @@ public class Download implements Comparable<Download> {
         );
     }
 
+    public int id() {
+        return id;
+    }
+
+    public Product product() {
+        return product;
+    }
+
     public DownloadType type() {
         return product.products().licenseGuild().downloadTypes().byId(typeId).orElse(null);
     }

@@ -1,7 +1,6 @@
 package de.chojo.lyna.data.dao.settings;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
-import net.dv8tion.jda.api.entities.Guild;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -24,15 +23,12 @@ public class Settings {
         return licenseGuild.guildId();
     }
 
-    public Guild guild() {
-        return licenseGuild.guild();
-    }
-
     public License license() {
         if (license == null) {
             license = query("SELECT * FROM license_settings WHERE guild_id = ?")
                     .single(call().bind(guildId()))
-                    .map(row -> new License(this, row.getInt("shares")))
+                    .map(row -> new License(this, row.getInt("shares"),
+                            row.getObject("admin_role_id") == null ? null : row.getLong("admin_role_id")))
                     .first()
                     .orElseGet(() -> new License(this));
         }

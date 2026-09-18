@@ -2,7 +2,6 @@ package de.chojo.lyna.data.dao.products;
 
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.nexus.NexusRest;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import org.jetbrains.annotations.Nullable;
@@ -83,10 +82,6 @@ public class Products {
 
     public long guildId() {
         return licenseGuild.guildId();
-    }
-
-    public Guild guild() {
-        return licenseGuild.guild();
     }
 
     public LicenseGuild licenseGuild() {
