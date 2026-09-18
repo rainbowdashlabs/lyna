@@ -12,6 +12,7 @@ import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
+import de.chojo.lyna.feature.product.service.ProductRoleService;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
 
@@ -27,13 +28,16 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Singleton
 public class LicenseSharingService {
+    private final ProductRoleService productRoles;
     private static final Logger log = getLogger(LicenseSharingService.class);
 
     private final LicenseRepository licenses;
     private final AccountLinkService accountLinks;
 
     @Inject
-    public LicenseSharingService(LicenseRepository licenses, AccountLinkService accountLinks) {
+    public LicenseSharingService(
+            LicenseRepository licenses, AccountLinkService accountLinks, ProductRoleService productRoles) {
+        this.productRoles = productRoles;
         this.licenses = licenses;
         this.accountLinks = accountLinks;
     }
@@ -60,7 +64,7 @@ public class LicenseSharingService {
     }
 
     public boolean addSharee(License license, Member member) {
-        license.product().assign(member);
+        productRoles.assign(license.product(), member);
         log.info(
                 LogNotify.STATUS,
                 "{} shared license for {} with {}",
@@ -72,8 +76,8 @@ public class LicenseSharingService {
 
     public boolean removeSharee(License license, Member member) {
         boolean changed = licenses.removeSharee(license.id(), accountLinks.accountIdForDiscord(member.getIdLong()));
-        if (changed && !license.product().canAccess(member)) {
-            license.product().revoke(member);
+        if (changed && !productRoles.canAccess(license.product(), member)) {
+            productRoles.revoke(license.product(), member);
         }
         return changed;
     }

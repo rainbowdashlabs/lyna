@@ -18,14 +18,21 @@ import de.chojo.lyna.commands.registrations.handler.share.Remove;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
+import de.chojo.lyna.feature.product.service.ProductRoleService;
 
 public class Registrations implements SlashProvider<Slash> {
+    private final ProductRoleService productRoles;
     private final LicenseSharingService licenseSharing;
     private final LicenseService licenseService;
     private final Guilds guilds;
 
     @Inject
-    public Registrations(Guilds guilds, LicenseService licenseService, LicenseSharingService licenseSharing) {
+    public Registrations(
+            Guilds guilds,
+            LicenseService licenseService,
+            LicenseSharingService licenseSharing,
+            ProductRoleService productRoles) {
+        this.productRoles = productRoles;
         this.licenseSharing = licenseSharing;
         this.licenseService = licenseService;
         this.guilds = guilds;
@@ -38,7 +45,7 @@ public class Registrations implements SlashProvider<Slash> {
                 .guildOnly()
                 .group(Group.of("share", "Share your registrations")
                         .subCommand(SubCommand.of("add", "Add a user to your license")
-                                .handler(new Add(guilds, licenseSharing))
+                                .handler(new Add(guilds, licenseSharing, productRoles))
                                 .argument(Argument.text("product", "The product to share")
                                         .asRequired()
                                         .withAutoComplete())

@@ -16,6 +16,7 @@ import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
+import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
 import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.nexus.entities.AssetXO;
@@ -43,10 +44,12 @@ import java.util.Set;
 import static de.chojo.lyna.util.Formatting.humanReadableByteCountSI;
 
 public class Default implements SlashHandler {
+    private final ProductRoleService productRoles;
     private final Guilds guilds;
     private final Proxy proxy;
 
-    public Default(Guilds guilds, Proxy proxy) {
+    public Default(Guilds guilds, Proxy proxy, ProductRoleService productRoles) {
+        this.productRoles = productRoles;
         this.guilds = guilds;
         this.proxy = proxy;
     }
@@ -70,7 +73,7 @@ public class Default implements SlashHandler {
 
         Product product = optProduct.get();
 
-        if (!optProduct.get().canDownload(event.getMember())) {
+        if (!productRoles.canDownload(optProduct.get(), event.getMember())) {
             event.reply("You do not have access to this product")
                     .setEphemeral(true)
                     .queue();
@@ -98,7 +101,7 @@ public class Default implements SlashHandler {
                 .setMinValues(1)
                 .setPlaceholder("Please choose a build download");
 
-        Set<ReleaseType> access = product.availableReleaseTypes(member);
+        Set<ReleaseType> access = productRoles.availableReleaseTypes(product, member);
         List<Download> downloads = product.downloads().downloads().stream()
                 .filter(d -> access.contains(d.type().releaseType()))
                 .sorted()

@@ -7,6 +7,7 @@ package de.chojo.lyna.data.dao.products.downloads;
 
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.download.repository.DownloadRepository;
 import de.chojo.nexus.entities.AssetXO;
 import de.chojo.nexus.requests.v1.search.Direction;
 import de.chojo.nexus.requests.v1.search.Sort;
@@ -21,10 +22,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static de.chojo.sadu.queries.api.call.Call.call;
-import static de.chojo.sadu.queries.api.query.Query.query;
-
 public class Download implements Comparable<Download> {
+    private static final DownloadRepository REPOSITORY = new DownloadRepository();
+
     private final Product product;
     private final int id;
     private final int typeId;
@@ -116,17 +116,11 @@ public class Download implements Comparable<Download> {
     }
 
     private boolean set(String column, Function<Call, Call> consumer) {
-        return query("UPDATE download SET %s = ? WHERE product_id = ? AND type_id = ?", column)
-                .single(consumer.apply(call()).bind(product.id()).bind(typeId))
-                .update()
-                .changed();
+        return REPOSITORY.set(product.id(), typeId, column, consumer);
     }
 
     public boolean delete() {
-        return query("DELETE FROM download WHERE product_id = ? AND type_id = ?")
-                .single(call().bind(product.id()).bind(typeId))
-                .delete()
-                .changed();
+        return REPOSITORY.delete(product.id(), typeId);
     }
 
     public List<AssetXO> latestAssets() {
@@ -178,14 +172,7 @@ public class Download implements Comparable<Download> {
     }
 
     public void downloaded(String version) {
-        query("""
-                INSERT
-                INTO download_stat AS d
-                	(download_id, version, count)
-                VALUES
-                	(?, ?, 1)
-                ON CONFLICT (download_id, date, version) DO UPDATE SET
-                	count = d.count + 1""").single(call().bind(id).bind(version)).insert();
+        REPOSITORY.recordDownload(id, version);
     }
 
     @Override

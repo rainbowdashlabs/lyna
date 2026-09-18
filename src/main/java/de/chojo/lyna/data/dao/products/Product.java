@@ -11,28 +11,26 @@ import de.chojo.lyna.data.dao.products.downloads.Downloads;
 import de.chojo.lyna.data.dao.products.mailings.Mailings;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
+import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.NexusRest;
 import de.chojo.nexus.entities.PageComponentXO;
 import de.chojo.nexus.requests.v1.search.Direction;
 import de.chojo.nexus.requests.v1.search.Sort;
-import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 import de.chojo.sadu.queries.api.call.Call;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import static de.chojo.sadu.queries.api.call.Call.call;
-import static de.chojo.sadu.queries.api.query.Query.query;
-
 public class Product {
+    private static final ProductRepository REPOSITORY = new ProductRepository();
+
     private final Products products;
     private final NexusRest nexus;
     private final int id;
@@ -74,10 +72,7 @@ public class Product {
     }
 
     public boolean delete() {
-        return query("DELETE FROM product WHERE id = ? AND guild_id = ?")
-                .single(call().bind(id).bind(products.guildId()))
-                .delete()
-                .changed();
+        return REPOSITORY.delete(id, products.guildId());
     }
 
     public long guildId() {
@@ -88,72 +83,12 @@ public class Product {
         return products;
     }
 
-    public boolean canAccess(Member member) {
-        if (free) return true;
-        return products.licenseGuild().user(member).canAccess(this);
-    }
-
-    public boolean hasTrial(Member member) {
-        return query("SELECT NOT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?) as exists")
-                .single(call().bind(id).bind(member.getIdLong()))
-                .map(row -> row.getBoolean("exists"))
-                .first()
-                .orElse(false);
-    }
-
-    public void claimTrial(Member member) {
-        query("INSERT INTO trial(product_id, user_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(id).bind(member.getIdLong()))
-                .insert();
-    }
-
-    public boolean canDownload(Member member) {
-        if (free) return true;
-        return !availableReleaseTypes(member).isEmpty();
-    }
-
-    public Set<ReleaseType> availableReleaseTypes(Member member) {
-        if (free) {
-            return Set.of(ReleaseType.values());
-        }
-        List<ReleaseType> byUser = query(
-                        "SELECT release_type FROM user_product_access WHERE user_id = ? AND product_id = ?")
-                .single(call().bind(member.getIdLong()).bind(id))
-                .map(row -> row.getEnum("release_type", ReleaseType.class))
-                .all();
-
-        List<ReleaseType> byRole = query(
-                        "SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
-                .single(call().bind(id)
-                        .bind(member.getRoles().stream().map(Role::getIdLong).toList(), PostgreSqlTypes.BIGINT))
-                .map(row -> row.getEnum("release_type", ReleaseType.class))
-                .all();
-        var result = EnumSet.noneOf(ReleaseType.class);
-        result.addAll(byUser);
-        result.addAll(byRole);
-        return result;
-    }
-
     public Optional<Role> role(Guild guild) {
         return Optional.ofNullable(guild.getRoleById(role));
     }
 
-    public void assign(Member member) {
-        Role roleById = member.getGuild().getRoleById(role);
-        if (roleById != null && !member.getRoles().contains(roleById)) {
-            member.getGuild().addRoleToMember(member, roleById).queue();
-        }
-    }
-
     public Downloads downloads() {
         return downloads;
-    }
-
-    public void revoke(Member member) {
-        Role roleById = member.getGuild().getRoleById(role);
-        if (roleById != null && member.getRoles().contains(roleById)) {
-            member.getGuild().removeRoleFromMember(member, roleById).queue();
-        }
     }
 
     public NexusRest nexus() {
@@ -161,23 +96,7 @@ public class Product {
     }
 
     public List<License> license(Member member) {
-        return query("""
-                SELECT
-                	guild_id,
-                	user_id,
-                	product_id,
-                	license_id,
-                	user_identifier,
-                	key
-                FROM
-                	user_license_all
-                WHERE guild_id = ?
-                  AND product_id = ?
-                  AND user_id = ?""")
-                .single(call().bind(guildId()).bind(id).bind(member.getIdLong()))
-                .map(row -> row.getInt("license_id"))
-                .all()
-                .stream()
+        return REPOSITORY.licenseIdsFor(guildId(), id, member.getIdLong()).stream()
                 .map(i -> products.licenseGuild().licenses().byId(i))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -250,15 +169,7 @@ public class Product {
     }
 
     private boolean set(String column, Function<Call, Call> consumer) {
-        return query("""
-                UPDATE
-                    product
-                SET %s = ?
-                WHERE
-                    id = ?""", column)
-                .single(consumer.apply(call()).bind(id))
-                .update()
-                .changed();
+        return REPOSITORY.set(id, column, consumer);
     }
 
     public void role(Role role) {

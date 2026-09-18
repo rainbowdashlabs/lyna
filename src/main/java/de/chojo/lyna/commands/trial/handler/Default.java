@@ -16,6 +16,7 @@ import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
 import de.chojo.lyna.data.dao.settings.Trial;
+import de.chojo.lyna.feature.product.service.TrialService;
 import de.chojo.lyna.util.Formatting;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
 import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
@@ -40,10 +41,12 @@ import java.util.Optional;
 import static de.chojo.lyna.util.Formatting.humanReadableByteCountSI;
 
 public class Default implements SlashHandler {
+    private final TrialService trials;
     private final Guilds guilds;
     private final Proxy proxy;
 
-    public Default(Guilds guilds, Proxy proxy) {
+    public Default(Guilds guilds, Proxy proxy, TrialService trials) {
+        this.trials = trials;
         this.guilds = guilds;
         this.proxy = proxy;
     }
@@ -79,7 +82,7 @@ public class Default implements SlashHandler {
 
         Product product = optProduct.get();
 
-        if (!optProduct.get().hasTrial(event.getMember())) {
+        if (!trials.hasTrial(optProduct.get(), event.getMember())) {
             event.reply("You have no trial left for this product")
                     .setEphemeral(true)
                     .queue();
@@ -163,7 +166,7 @@ public class Default implements SlashHandler {
                     asset.id(),
                     () -> {
                         download.downloaded(asset.maven2().version());
-                        product.claimTrial(member);
+                        trials.claimTrial(product, member);
                     },
                     "%s(%s)".formatted(member.getUser().getName(), member.getId()),
                     product.id(),
