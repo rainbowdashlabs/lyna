@@ -50,14 +50,7 @@ public class InstanceSettingsRepository {
 
     private static List<String> readStringArray(Array array) throws SQLException {
         if (array == null) return List.of();
-        Object raw = array.getArray();
-        if (raw instanceof String[] strings) return List.of(strings);
-        if (raw instanceof Object[] objects) {
-            List<String> out = new java.util.ArrayList<>(objects.length);
-            for (Object o : objects) out.add(o == null ? null : o.toString());
-            return out;
-        }
-        return List.of();
+        return array.getArray() instanceof String[] strings ? List.of(strings) : List.of();
     }
 
     private static InstanceSettings defaults() {

@@ -59,6 +59,12 @@ jobs:
         with:
           name: test-report-${{ matrix.kind }}
           path: build/reports/tests/
+      - name: Upload the coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-${{ matrix.kind }}
+          path: build/jacoco/${{ matrix.kind }}.exec
+          retention-days: 1
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -286,3 +292,37 @@ jobs:
           echo "statements into the lowest-numbered patch, delete the rest, and set"
           echo "src/main/resources/database/version to that one number."
           exit 1
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Verify Coverage
+    needs: [ test ]
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Download the coverage data
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jacoco-*
+          path: build/jacoco
+          merge-multiple: true
+      # Before the gate, because the run that fails it is the one whose uncovered lines somebody wants.
+      - name: Build the coverage report
+        run: >-
+          ./gradlew --build-cache jacocoFullReport
+          -x testRepositories -x testServices -x testOther
+      - name: Upload the coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: build/reports/jacoco/jacocoFullReport/
+      - name: Verify the thresholds
+        run: >-
+          ./gradlew --build-cache jacocoCoverageCheck
+          -x testRepositories -x testServices -x testOther

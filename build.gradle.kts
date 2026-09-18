@@ -1,6 +1,7 @@
 plugins {
     application
     java
+    jacoco
     alias(libs.plugins.spotless)
 }
 
@@ -159,6 +160,46 @@ tasks {
             excludeTestsMatching("*.service.*")
         }
         maxParallelForks = testForks()
+    }
+
+    register<JacocoReport>("jacocoFullReport") {
+        group = "verification"
+        description = "One coverage report across every test task"
+        dependsOn("testRepositories", "testServices", "testOther")
+        executionData(fileTree(layout.buildDirectory.dir("jacoco")) { include("*.exec") })
+        sourceSets(sourceSets.main.get())
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+        }
+    }
+
+    register<JacocoCoverageVerification>("jacocoCoverageCheck") {
+        group = "verification"
+        description = "Holds the repositories and services to their line coverage"
+        dependsOn("testRepositories", "testServices", "testOther")
+        executionData(fileTree(layout.buildDirectory.dir("jacoco")) { include("*.exec") })
+        sourceSets(sourceSets.main.get())
+        violationRules {
+            // A repository is statements. One that is hard to cover is doing something else.
+            rule {
+                element = "CLASS"
+                includes = listOf("de.chojo.lyna.feature.*.repository.*")
+                limit {
+                    counter = "LINE"
+                    minimum = "0.95".toBigDecimal()
+                }
+            }
+            // Services hold the decisions, which is what there is to get wrong.
+            rule {
+                element = "CLASS"
+                includes = listOf("de.chojo.lyna.feature.*.service.*")
+                limit {
+                    counter = "LINE"
+                    minimum = "0.90".toBigDecimal()
+                }
+            }
+        }
     }
 }
 
