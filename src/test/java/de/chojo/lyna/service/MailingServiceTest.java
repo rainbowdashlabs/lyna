@@ -10,8 +10,8 @@ import com.icegreen.greenmail.util.ServerSetup;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.MailingService;
 import jakarta.mail.Message;
@@ -52,7 +52,7 @@ class MailingServiceTest {
 
         service = new MailingService(
                 Mockito.mock(Threading.class),
-                Mockito.mock(Mailings.class),
+                Mockito.mock(MailingLookup.class),
                 () -> Mockito.mock(PurchaseService.class),
                 configuration(),
                 Mockito.mock(LicenseService.class));

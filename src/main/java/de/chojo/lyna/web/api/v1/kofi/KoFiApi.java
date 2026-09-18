@@ -11,10 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.elements.Kofi;
-import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.util.Urls;
@@ -35,7 +35,7 @@ public class KoFiApi {
     private final Kofi kofiSettings;
     private static final Logger log = getLogger(KoFiApi.class);
 
-    private final KoFiProducts kofi;
+    private final KoFiProductRepository kofi;
     private final MailingService mailing;
     private final PurchaseService purchases;
     private final ObjectMapper mapper = JsonMapper.builder()
@@ -47,7 +47,7 @@ public class KoFiApi {
     @Inject
     public KoFiApi(
             Kofi kofiSettings,
-            KoFiProducts kofi,
+            KoFiProductRepository kofi,
             MailingService mailing,
             PurchaseService purchases,
             LicenseService licenseService) {

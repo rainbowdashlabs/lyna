@@ -8,10 +8,6 @@ package de.chojo.lyna.demo;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.DemoArtifacts;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
@@ -20,11 +16,15 @@ import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.gateway.Gateway;
@@ -65,11 +65,11 @@ public class DemoService {
     private final AccountService accountService;
     private final AccountEmailService accountEmails;
     private final AccountLicenseRepository accountLicenses;
-    private final LicenseInvites licenseInvites;
+    private final LicenseInviteRepository licenseInvites;
     private final DownloadLogRepository downloadLog;
     private final InstanceOperatorRepository instanceOperators;
     private final Conf configuration;
-    private final DemoArtifacts artifacts;
+    private final DemoArtifactRepository artifacts;
     private final PasswordHasher passwordHasher = new PasswordHasher();
     private final Gateway gateway;
 
@@ -84,9 +84,9 @@ public class DemoService {
             AccountService accountService,
             AccountEmailService accountEmails,
             AccountLicenseRepository accountLicenses,
-            LicenseInvites licenseInvites,
+            LicenseInviteRepository licenseInvites,
             DownloadLogRepository downloadLog,
-            DemoArtifacts artifacts,
+            DemoArtifactRepository artifacts,
             InstanceOperatorRepository instanceOperators,
             LicenseService licenseService) {
         this.licenseService = licenseService;
@@ -126,15 +126,15 @@ public class DemoService {
      * and a link belong to an account, and both cascade. What is left is the record itself.
      */
     public synchronized void reset() {
-        for (String id : artifacts.of(DemoArtifacts.ACCOUNT)) {
+        for (String id : artifacts.of(DemoArtifactRepository.ACCOUNT)) {
             accounts.delete(Integer.parseInt(id));
         }
         Optional<LicenseGuild> guild = licenseGuild();
         if (guild.isPresent()) {
-            for (String id : artifacts.of(DemoArtifacts.PRODUCT)) {
+            for (String id : artifacts.of(DemoArtifactRepository.PRODUCT)) {
                 guild.get().products().byId(Integer.parseInt(id)).ifPresent(Product::delete);
             }
-            for (String id : artifacts.of(DemoArtifacts.DOWNLOAD_TYPE)) {
+            for (String id : artifacts.of(DemoArtifactRepository.DOWNLOAD_TYPE)) {
                 guild.get().downloadTypes().byId(Integer.parseInt(id)).ifPresent(DownloadType::delete);
             }
         }
@@ -147,7 +147,7 @@ public class DemoService {
      */
     public List<DemoAccount> accounts() {
         List<DemoAccount> out = new ArrayList<>();
-        for (String id : artifacts.of(DemoArtifacts.ACCOUNT)) {
+        for (String id : artifacts.of(DemoArtifactRepository.ACCOUNT)) {
             accounts.findById(Integer.parseInt(id))
                     .ifPresent(account ->
                             out.add(new DemoAccount(account.email(), roleOf(out.size()), describe(out.size()))));
@@ -202,7 +202,7 @@ public class DemoService {
                 .downloadTypes()
                 .create(name, description, type)
                 .orElseThrow(() -> new IllegalStateException("Could not create the demo download type " + name));
-        artifacts.record(DemoArtifacts.DOWNLOAD_TYPE, Integer.toString(created.id()));
+        artifacts.record(DemoArtifactRepository.DOWNLOAD_TYPE, Integer.toString(created.id()));
         return created;
     }
 
@@ -224,7 +224,7 @@ public class DemoService {
                 .products()
                 .create(name, guild.getPublicRole(), url, free, trial)
                 .orElseThrow(() -> new IllegalStateException("Could not create the demo product " + name));
-        artifacts.record(DemoArtifacts.PRODUCT, Integer.toString(product.id()));
+        artifacts.record(DemoArtifactRepository.PRODUCT, Integer.toString(product.id()));
         for (DownloadType type : types) {
             product.downloads().create(type, "releases", "de.chojo", "e2e-plugin", null);
         }
@@ -255,7 +255,7 @@ public class DemoService {
                     members.get(i).getIdLong(),
                     AccountIdentity.Verification.OAUTH,
                     members.get(i).getUser().getName());
-            artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
+            artifacts.record(DemoArtifactRepository.ACCOUNT, Integer.toString(account.id()));
             cast.add(account);
         }
         instanceOperators.add(members.getFirst().getIdLong(), null);
@@ -271,7 +271,7 @@ public class DemoService {
         Account account = accountService.register("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
         accountEmails.confirm(account.id(), account.email());
         usernameService.setUsername(account.id(), "webonly");
-        artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
+        artifacts.record(DemoArtifactRepository.ACCOUNT, Integer.toString(account.id()));
         return accounts.findById(account.id()).orElse(account);
     }
 

@@ -5,14 +5,14 @@
  */
 package de.chojo.lyna.feature.product.entity;
 
-import de.chojo.lyna.data.dao.products.Products;
-import de.chojo.lyna.data.dao.products.downloads.Downloads;
-import de.chojo.lyna.data.dao.products.mailings.Mailings;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.repository.Downloads;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
+import de.chojo.lyna.feature.mail.repository.Mailings;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
+import de.chojo.lyna.feature.product.repository.Products;
 import de.chojo.lyna.util.Version;
 import de.chojo.nexus.NexusRest;
 import de.chojo.nexus.entities.PageComponentXO;

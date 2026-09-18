@@ -3,11 +3,11 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.downloadtype;
+package de.chojo.lyna.feature.download.repository;
 
-import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
 import java.util.List;

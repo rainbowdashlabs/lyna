@@ -3,8 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao;
+package de.chojo.lyna.feature.license.repository;
 
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
@@ -63,7 +64,7 @@ public class LicenseUser {
                 FROM user_guild_license
                 WHERE user_id = ? AND guild_id = ?
                 """)
-                .single(call().bind(id()))
+                .single(call().bind(id()).bind(guildId()))
                 .map(licenseGuild.licenses()::buildLicense)
                 .all();
     }
@@ -74,7 +75,7 @@ public class LicenseUser {
                 FROM user_guild_sub_license
                 WHERE user_id = ? AND guild_id = ?
                 """)
-                .single(call().bind(id()))
+                .single(call().bind(id()).bind(guildId()))
                 .map(licenseGuild.licenses()::buildLicense)
                 .all();
     }

@@ -7,10 +7,10 @@ package de.chojo.lyna.commands.registrations.handler.share;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.LicenseUser;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.repository.LicenseUser;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.service.ProductRoleService;

@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.license.repository;
 
 import de.chojo.lyna.feature.license.entity.LicenseInvite;
 import de.chojo.sadu.mapper.wrapper.Row;
@@ -28,7 +28,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * would let anybody take a share by claiming an address they do not own, which is the whole reason
  * this table stores an address rather than an account.
  */
-public class LicenseInvites {
+public class LicenseInviteRepository {
     /** How long an unanswered invite stands before it stops counting against the owner's cap. */
     public static final Duration LIFETIME = Duration.ofDays(30);
 
@@ -75,7 +75,7 @@ public class LicenseInvites {
                 ORDER BY invited_at
                 """)
                 .single(call().bind(licenseId))
-                .map(LicenseInvites::read)
+                .map(LicenseInviteRepository::read)
                 .all();
     }
 

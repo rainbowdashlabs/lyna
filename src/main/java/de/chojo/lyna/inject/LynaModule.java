@@ -40,14 +40,6 @@ import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.data.access.DemoArtifacts;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.KoFiProducts;
-import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.access.Mailings;
-import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.roles.JdaRoleSync;
-import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.demo.DemoService;
 import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
@@ -61,17 +53,25 @@ import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.download.repository.DownloadRepository;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.guild.roles.JdaRoleSync;
+import de.chojo.lyna.feature.guild.roles.RoleSync;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
+import de.chojo.lyna.feature.mail.repository.MailingLookup;
+import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.feature.product.service.TrialService;
+import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
@@ -273,11 +273,11 @@ public class LynaModule extends AbstractModule {
         bind(PurchaseService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);
-        bind(LicenseInvites.class).in(Singleton.class);
+        bind(LicenseInviteRepository.class).in(Singleton.class);
         bind(AccountSessionRepository.class).in(Singleton.class);
         bind(RevokedJtiRepository.class).in(Singleton.class);
         bind(DownloadLogRepository.class).in(Singleton.class);
-        bind(DemoArtifacts.class).in(Singleton.class);
+        bind(DemoArtifactRepository.class).in(Singleton.class);
         bind(InstanceSettingsRepository.class).in(Singleton.class);
         bind(InstanceOperatorRepository.class).in(Singleton.class);
         bind(PasswordResetTokenRepository.class).in(Singleton.class);
@@ -330,20 +330,20 @@ public class LynaModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Products products(Guilds guilds) {
-        return new Products(guilds);
+    ProductLookup products(Guilds guilds) {
+        return new ProductLookup(guilds);
     }
 
     @Provides
     @Singleton
-    Mailings mailings(Guilds guilds) {
-        return new Mailings(guilds);
+    MailingLookup mailings(Guilds guilds) {
+        return new MailingLookup(guilds);
     }
 
     @Provides
     @Singleton
-    KoFiProducts koFiProducts(Products products) {
-        return new KoFiProducts(products);
+    KoFiProductRepository koFiProducts(ProductLookup products) {
+        return new KoFiProductRepository(products);
     }
 
     /**

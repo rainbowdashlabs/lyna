@@ -20,7 +20,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 /**
  * Licenses as the account area reads them: by account, across every guild at once.
  *
- * <p>Separate from {@link de.chojo.lyna.data.dao.licenses.Licenses}, which hangs off a guild and
+ * <p>Separate from {@link de.chojo.lyna.feature.license.repository.Licenses}, which hangs off a guild and
  * speaks in JDA members. The web has neither: a visitor holds licenses in whichever guilds issued
  * them and never picks one, and the API answers the same whether or not the bot is connected.
  *

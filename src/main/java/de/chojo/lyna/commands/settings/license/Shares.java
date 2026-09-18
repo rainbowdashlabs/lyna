@@ -7,8 +7,8 @@ package de.chojo.lyna.commands.settings.license;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.dao.settings.License;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.guild.entity.LicenseSettings;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
@@ -22,7 +22,7 @@ public class Shares implements SlashHandler {
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         OptionMapping shares = event.getOption("shares");
-        License license = guilds.guild(event.getGuild()).settings().license();
+        LicenseSettings license = guilds.guild(event.getGuild()).settings().license();
         if (shares != null) {
             license.shares(shares.getAsInt());
         }

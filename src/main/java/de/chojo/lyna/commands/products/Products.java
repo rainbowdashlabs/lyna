@@ -13,7 +13,7 @@ import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.lyna.commands.products.handler.Create;
 import de.chojo.lyna.commands.products.handler.Delete;
 import de.chojo.lyna.commands.products.handler.Edit;
-import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.guild.Guilds;
 
 public class Products implements SlashProvider<Slash> {
     private final Guilds guilds;

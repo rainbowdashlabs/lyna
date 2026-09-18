@@ -3,12 +3,11 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products.downloads;
+package de.chojo.lyna.feature.download.repository;
 
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
-import de.chojo.lyna.feature.download.repository.DownloadRepository;
 import de.chojo.lyna.feature.product.entity.Product;
 import net.dv8tion.jda.api.entities.Role;
 import org.jetbrains.annotations.Nullable;

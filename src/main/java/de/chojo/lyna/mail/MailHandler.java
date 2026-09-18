@@ -10,10 +10,10 @@ import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.mail.entity.Mailing;
+import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import jakarta.mail.Message;
 import jakarta.mail.internet.InternetAddress;
@@ -26,7 +26,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final LicenseService licenseService;
-    private final Mailings mailings;
+    private final MailingLookup mailings;
     private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
     private final PurchaseService purchases;
@@ -36,7 +36,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
             CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
     public MailHandler(
-            Mailings mailings,
+            MailingLookup mailings,
             MailingService mailingService,
             PurchaseService purchases,
             Conf configuration,

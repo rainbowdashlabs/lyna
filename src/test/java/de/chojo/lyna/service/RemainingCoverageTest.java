@@ -61,7 +61,7 @@ class RemainingCoverageTest extends RepositoryTestBase {
     }
 
     private Product productOf() {
-        var guilds = new de.chojo.lyna.data.access.Guilds(
+        var guilds = new de.chojo.lyna.feature.guild.Guilds(
                 Mockito.mock(de.chojo.nexus.NexusRest.class),
                 de.chojo.lyna.configuration.TestConf.defaults(),
                 accountLinks);

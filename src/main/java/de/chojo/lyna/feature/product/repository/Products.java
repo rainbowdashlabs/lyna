@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.products;
+package de.chojo.lyna.feature.product.repository;
 
-import de.chojo.lyna.data.dao.LicenseGuild;
+import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Role;
@@ -28,12 +28,13 @@ public class Products {
     }
 
     public Optional<Product> create(String name, Role role, @Nullable String url, boolean free, boolean trial) {
-        return query("INSERT INTO product(guild_id, name, url, role, free) VALUES (?,?,?,?,?) RETURNING id")
+        return query("INSERT INTO product(guild_id, name, url, role, free, trial) VALUES (?,?,?,?,?,?) RETURNING id")
                 .single(call().bind(licenseGuild.guildId())
                         .bind(name)
                         .bind(url)
                         .bind(role.getIdLong())
-                        .bind(free))
+                        .bind(free)
+                        .bind(trial))
                 .map(row -> new Product(
                         this, row.getInt("id"), name, url, role.isPublicRole() ? 0 : role.getIdLong(), free, trial))
                 .first();

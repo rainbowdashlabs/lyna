@@ -3,9 +3,10 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.purchase.repository;
 
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
 import de.chojo.lyna.web.api.v1.kofi.payloads.ShopItem;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +19,10 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 import static de.chojo.sadu.queries.converter.StandardValueConverter.OFFSET_DATE_TIME;
 import static de.chojo.sadu.queries.converter.StandardValueConverter.UUID_STRING;
 
-public class KoFiProducts {
-    private final Products products;
+public class KoFiProductRepository {
+    private final ProductLookup products;
 
-    public KoFiProducts(Products products) {
+    public KoFiProductRepository(ProductLookup products) {
         this.products = products;
     }
 

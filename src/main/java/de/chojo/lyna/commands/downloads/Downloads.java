@@ -19,7 +19,7 @@ import de.chojo.lyna.commands.downloads.handler.roles.Revoke;
 import de.chojo.lyna.commands.downloads.handler.type.CreateType;
 import de.chojo.lyna.commands.downloads.handler.type.DeleteType;
 import de.chojo.lyna.commands.downloads.handler.type.EditType;
-import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.nexus.NexusRest;
 
 public class Downloads extends SlashCommand {

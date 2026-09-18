@@ -7,8 +7,8 @@ package de.chojo.lyna.mail;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
@@ -39,9 +39,9 @@ class MailHandlerTest {
     private static final String PAYPAL = "service@paypal.de";
     private static final String FORWARDER = "shop@example.invalid";
 
-    private final Mailings mailings = Mockito.mock(Mailings.class);
+    private final MailingLookup mailings = Mockito.mock(MailingLookup.class);
 
-    private Mailings handle(String from, String forwardedBy, String yaml) throws Exception {
+    private MailingLookup handle(String from, String forwardedBy, String yaml) throws Exception {
         Mockito.when(mailings.byName(anyString())).thenReturn(Optional.empty());
         Conf configuration = TestConf.from(yaml);
         var handler = new MailHandler(

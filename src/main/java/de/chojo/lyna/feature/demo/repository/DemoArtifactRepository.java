@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.demo.repository;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * write a reset that truncates tables. Recording each row as it is created means the reset is a list
  * of things to remove rather than a guess about what was there first.
  */
-public class DemoArtifacts {
+public class DemoArtifactRepository {
     /** The kinds a reset knows how to take back, in the order it has to walk them. */
     public static final String ACCOUNT = "account";
 

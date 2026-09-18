@@ -7,9 +7,9 @@ package de.chojo.lyna.commands.register.handler;
 
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.dao.LicenseUser;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.repository.LicenseUser;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;

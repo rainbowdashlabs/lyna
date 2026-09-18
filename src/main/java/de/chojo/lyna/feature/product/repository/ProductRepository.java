@@ -58,11 +58,10 @@ public class ProductRepository {
     }
 
     /**
-     * @return what the member's Discord roles open, including the rules that apply to every product
+     * @return what the member's Discord roles open for this product
      */
     public List<ReleaseType> accessByRoles(int productId, List<Long> roleIds) {
-        return query(
-                        "SELECT release_type FROM role_access WHERE (product_id = ? OR  product_id = 0) AND ARRAY[role_id] && ?")
+        return query("SELECT release_type FROM role_access WHERE product_id = ? AND ARRAY[role_id] && ?")
                 .single(call().bind(productId).bind(roleIds, PostgreSqlTypes.BIGINT))
                 .map(row -> row.getEnum("release_type", ReleaseType.class))
                 .all();

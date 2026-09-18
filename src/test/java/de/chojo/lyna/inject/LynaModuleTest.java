@@ -23,13 +23,6 @@ import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.data.access.DemoArtifacts;
-import de.chojo.lyna.data.access.Guilds;
-import de.chojo.lyna.data.access.KoFiProducts;
-import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.access.Mailings;
-import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.demo.DemoService;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
@@ -38,10 +31,17 @@ import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.guild.roles.RoleSync;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
+import de.chojo.lyna.feature.mail.repository.MailingLookup;
+import de.chojo.lyna.feature.product.repository.ProductLookup;
+import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
@@ -133,20 +133,20 @@ class LynaModuleTest {
         for (Class<?> dao : List.of(
                 AccountRepository.class,
                 AccountLicenseRepository.class,
-                LicenseInvites.class,
+                LicenseInviteRepository.class,
                 AccountSessionRepository.class,
                 RevokedJtiRepository.class,
                 DownloadLogRepository.class,
-                DemoArtifacts.class,
+                DemoArtifactRepository.class,
                 InstanceSettingsRepository.class,
                 InstanceOperatorRepository.class,
                 PasswordResetTokenRepository.class,
                 EmailVerificationTokenRepository.class,
                 KioskProductRepository.class,
                 Guilds.class,
-                Products.class,
-                Mailings.class,
-                KoFiProducts.class)) {
+                ProductLookup.class,
+                MailingLookup.class,
+                KoFiProductRepository.class)) {
             assertNotNull(injector.getInstance(dao), dao.getSimpleName() + " could not be built");
             assertSame(
                     injector.getInstance(dao), injector.getInstance(dao), dao.getSimpleName() + " should be held once");

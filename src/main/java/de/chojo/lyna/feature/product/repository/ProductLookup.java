@@ -3,8 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.product.repository;
 
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.sadu.mapper.wrapper.Row;
 
@@ -14,10 +15,10 @@ import java.util.Optional;
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
-public class Products {
+public class ProductLookup {
     private final Guilds guilds;
 
-    public Products(Guilds guilds) {
+    public ProductLookup(Guilds guilds) {
         this.guilds = guilds;
     }
 

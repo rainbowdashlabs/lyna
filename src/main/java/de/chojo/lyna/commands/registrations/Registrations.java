@@ -15,7 +15,7 @@ import de.chojo.lyna.commands.registrations.handler.Info;
 import de.chojo.lyna.commands.registrations.handler.Transfer;
 import de.chojo.lyna.commands.registrations.handler.share.Add;
 import de.chojo.lyna.commands.registrations.handler.share.Remove;
-import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.service.ProductRoleService;

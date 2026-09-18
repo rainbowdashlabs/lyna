@@ -7,10 +7,10 @@ package de.chojo.lyna.feature.account.service;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.feature.account.entity.AccountEmail;
 import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +30,11 @@ import java.util.List;
 public class PurchaseCollectionService {
     private final AccountEmailRepository emails;
     private final AccountLicenseRepository licenses;
-    private final LicenseInvites invites;
+    private final LicenseInviteRepository invites;
 
     @Inject
     public PurchaseCollectionService(
-            AccountEmailRepository emails, AccountLicenseRepository licenses, LicenseInvites invites) {
+            AccountEmailRepository emails, AccountLicenseRepository licenses, LicenseInviteRepository invites) {
         this.emails = emails;
         this.licenses = licenses;
         this.invites = invites;
