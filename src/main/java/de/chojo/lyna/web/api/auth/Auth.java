@@ -12,13 +12,13 @@ import de.chojo.lyna.auth.DiscordOAuthClient;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
-import de.chojo.lyna.data.access.PasswordResetTokens;
-import de.chojo.lyna.data.access.RevokedJtis;
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
+import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -40,11 +40,11 @@ public class Auth {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final Conf configuration;
-    private final Accounts accounts;
-    private final AccountSessions accountSessions;
-    private final RevokedJtis revokedJtis;
-    private final PasswordResetTokens passwordResetTokens;
-    private final EmailVerificationTokens emailTokens;
+    private final AccountRepository accounts;
+    private final AccountSessionRepository accountSessions;
+    private final RevokedJtiRepository revokedJtis;
+    private final PasswordResetTokenRepository passwordResetTokens;
+    private final EmailVerificationTokenRepository emailTokens;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final DiscordOAuthClient oauthClient;
@@ -54,11 +54,11 @@ public class Auth {
     @Inject
     public Auth(
             Conf configuration,
-            Accounts accounts,
-            AccountSessions accountSessions,
-            RevokedJtis revokedJtis,
-            PasswordResetTokens passwordResetTokens,
-            EmailVerificationTokens emailTokens,
+            AccountRepository accounts,
+            AccountSessionRepository accountSessions,
+            RevokedJtiRepository revokedJtis,
+            PasswordResetTokenRepository passwordResetTokens,
+            EmailVerificationTokenRepository emailTokens,
             PasswordHasher passwordHasher,
             JwtService jwtService,
             DiscordOAuthClient oauthClient,

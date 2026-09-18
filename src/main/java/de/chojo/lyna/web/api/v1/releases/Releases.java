@@ -6,12 +6,12 @@
 package de.chojo.lyna.web.api.v1.releases;
 
 import com.google.inject.Inject;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.downloads.Download;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.Context;
@@ -28,16 +28,16 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 public class Releases {
     private final de.chojo.lyna.data.access.Products products;
     private final Auth auth;
-    private final Accounts accounts;
-    private final AccountLicenses licenses;
+    private final AccountRepository accounts;
+    private final AccountLicenseRepository licenses;
     private final KioskProducts kiosk;
 
     @Inject
     public Releases(
             de.chojo.lyna.data.access.Products products,
             Auth auth,
-            Accounts accounts,
-            AccountLicenses licenses,
+            AccountRepository accounts,
+            AccountLicenseRepository licenses,
             KioskProducts kiosk) {
         this.products = products;
         this.auth = auth;

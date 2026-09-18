@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
@@ -18,9 +17,10 @@ import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -51,7 +51,7 @@ public class Admin {
 
     private final Auth auth;
     private final Conf configuration;
-    private final Accounts accounts;
+    private final AccountRepository accounts;
     private final Guilds guilds;
     private final InstanceSettingsAccess instanceSettings;
     private final KoFiProducts kofi;
@@ -68,7 +68,7 @@ public class Admin {
     public Admin(
             Auth auth,
             Conf configuration,
-            Accounts accounts,
+            AccountRepository accounts,
             Guilds guilds,
             InstanceSettingsAccess instanceSettings,
             KoFiProducts kofi,

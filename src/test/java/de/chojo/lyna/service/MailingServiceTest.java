@@ -51,7 +51,7 @@ class MailingServiceTest {
         service = new MailingService(
                 Mockito.mock(Threading.class),
                 Mockito.mock(Mailings.class),
-                Mockito.mock(de.chojo.lyna.data.access.Accounts.class),
+                Mockito.mock(de.chojo.lyna.feature.account.repository.AccountRepository.class),
                 configuration());
     }
 

@@ -11,13 +11,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.elements.Kofi;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.mail.PurchaseRecipient;
@@ -40,7 +40,7 @@ public class KoFiApi {
 
     private final KoFiProducts kofi;
     private final MailingService mailing;
-    private final Accounts accounts;
+    private final AccountRepository accounts;
     private final ObjectMapper mapper = JsonMapper.builder()
             .configure(JsonReadFeature.ALLOW_MISSING_VALUES, true)
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
@@ -48,7 +48,7 @@ public class KoFiApi {
             .build();
 
     @Inject
-    public KoFiApi(Kofi kofiSettings, KoFiProducts kofi, MailingService mailing, Accounts accounts) {
+    public KoFiApi(Kofi kofiSettings, KoFiProducts kofi, MailingService mailing, AccountRepository accounts) {
         this.kofiSettings = kofiSettings;
         this.kofi = kofi;
         this.mailing = mailing;

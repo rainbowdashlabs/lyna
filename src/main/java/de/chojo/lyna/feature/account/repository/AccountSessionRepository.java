@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
-import de.chojo.lyna.data.dao.account.AccountSession;
+import de.chojo.lyna.feature.account.entity.AccountSession;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -15,7 +15,7 @@ import java.util.Optional;
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
-public class AccountSessions {
+public class AccountSessionRepository {
 
     public void record(String jti, int accountId, Instant expiresAt, String userAgent) {
         query("""

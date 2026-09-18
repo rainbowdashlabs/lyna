@@ -43,8 +43,8 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
                 "product",
                 "account_identity",
                 "account");
-        buyer = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(BUYER_DISCORD);
-        sharee = de.chojo.lyna.data.access.Accounts.accountIdForDiscord(SHAREE_DISCORD);
+        buyer = de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(BUYER_DISCORD);
+        sharee = de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(SHAREE_DISCORD);
 
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement()) {
@@ -169,7 +169,8 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     @DisplayName("Somebody holding no license is entitled to nothing")
     void strangerIsEntitledToNothing() {
         assertTrue(accountLicenses
-                .entitledProductIds(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(999L))
+                .entitledProductIds(
+                        de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(999L))
                 .isEmpty());
     }
 

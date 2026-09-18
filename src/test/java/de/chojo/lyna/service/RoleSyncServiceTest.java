@@ -7,12 +7,12 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.roles.RoleSync;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import de.chojo.nexus.NexusRest;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +67,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
 
         private boolean stillEntitled(long discordId, int productId) {
             return accountLicenses
-                    .entitledProductIds(Accounts.accountIdForDiscord(discordId))
+                    .entitledProductIds(AccountRepository.accountIdForDiscord(discordId))
                     .contains(productId);
         }
     }
@@ -100,9 +100,9 @@ class RoleSyncServiceTest extends RepositoryTestBase {
                     VALUES (%d, 'owner@example.invalid', 'ROLE-KEY') RETURNING id
                     """.formatted(productId));
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, Accounts.accountIdForDiscord(OWNER), licenseId));
+                    .formatted(schemaName, AccountRepository.accountIdForDiscord(OWNER), licenseId));
             statement.execute("INSERT INTO %s.user_sub_license (account_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, Accounts.accountIdForDiscord(SHAREE), licenseId));
+                    .formatted(schemaName, AccountRepository.accountIdForDiscord(SHAREE), licenseId));
         }
     }
 
@@ -141,7 +141,9 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         license().clearSubUsers();
 
         assertEquals(0, countRows("user_sub_license"));
-        assertTrue(accountLicenses.shared(Accounts.accountIdForDiscord(SHAREE)).isEmpty());
+        assertTrue(accountLicenses
+                .shared(AccountRepository.accountIdForDiscord(SHAREE))
+                .isEmpty());
     }
 
     @Test
@@ -176,10 +178,10 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         license().clearSubUsers();
 
         assertTrue(accountLicenses
-                .entitledProductIds(Accounts.accountIdForDiscord(OWNER))
+                .entitledProductIds(AccountRepository.accountIdForDiscord(OWNER))
                 .contains(license().product().id()));
         assertTrue(accountLicenses
-                .entitledProductIds(Accounts.accountIdForDiscord(SHAREE))
+                .entitledProductIds(AccountRepository.accountIdForDiscord(SHAREE))
                 .isEmpty());
     }
 

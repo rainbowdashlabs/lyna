@@ -7,8 +7,8 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.elements.Auth;
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountSession;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountSession;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

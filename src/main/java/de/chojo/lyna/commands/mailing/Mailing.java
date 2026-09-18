@@ -14,13 +14,13 @@ import de.chojo.lyna.commands.mailing.handler.Create;
 import de.chojo.lyna.commands.mailing.handler.Edit;
 import de.chojo.lyna.commands.mailing.handler.Send;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.mail.MailingService;
 
 public class Mailing extends SlashCommand {
     @Inject
-    public Mailing(Guilds guilds, Conf configuration, MailingService mailingService, Accounts accounts) {
+    public Mailing(Guilds guilds, Conf configuration, MailingService mailingService, AccountRepository accounts) {
         super(Slash.of("mailing", "Configure mailing")
                 .unlocalized()
                 .adminCommand()

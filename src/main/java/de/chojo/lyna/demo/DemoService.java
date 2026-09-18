@@ -8,20 +8,20 @@ package de.chojo.lyna.demo;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -53,8 +53,8 @@ public class DemoService {
     public static final String PASSWORD = "demo";
 
     private final Guilds guilds;
-    private final Accounts accounts;
-    private final AccountLicenses accountLicenses;
+    private final AccountRepository accounts;
+    private final AccountLicenseRepository accountLicenses;
     private final LicenseInvites licenseInvites;
     private final DownloadLog downloadLog;
     private final InstanceOperators instanceOperators;
@@ -68,8 +68,8 @@ public class DemoService {
             Conf configuration,
             Gateway gateway,
             Guilds guilds,
-            Accounts accounts,
-            AccountLicenses accountLicenses,
+            AccountRepository accounts,
+            AccountLicenseRepository accountLicenses,
             LicenseInvites licenseInvites,
             DownloadLog downloadLog,
             DemoArtifacts artifacts,
@@ -270,7 +270,8 @@ public class DemoService {
             if (licence.isEmpty()) continue;
             licence.get().grantAccess(ReleaseType.STABLE);
             accountLicenses.addSharee(
-                    licence.get().id(), de.chojo.lyna.data.access.Accounts.accountIdForDiscord(sharee));
+                    licence.get().id(),
+                    de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(sharee));
             seeded.accounts().stream()
                     .filter(account -> "demo-web-only@example.invalid".equals(account.email()))
                     .findFirst()
@@ -290,7 +291,7 @@ public class DemoService {
         de.chojo.sadu.queries.api.query.Query.query(
                         "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
                 .single(de.chojo.sadu.queries.api.call.Call.call()
-                        .bind(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(discordId))
+                        .bind(de.chojo.lyna.feature.account.repository.AccountRepository.accountIdForDiscord(discordId))
                         .bind(licence.id()))
                 .insert();
     }

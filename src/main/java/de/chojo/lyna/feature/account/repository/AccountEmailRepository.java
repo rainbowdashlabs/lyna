@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
-import de.chojo.lyna.data.dao.account.AccountEmail;
+import de.chojo.lyna.feature.account.entity.AccountEmail;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import java.sql.SQLException;
@@ -28,7 +28,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * <p>Only a verified address counts for anything. Adding one is a claim; following the link sent to
  * it is what makes it true.
  */
-public class AccountEmails {
+public class AccountEmailRepository {
 
     /**
      * @return every address the account holds, the primary first and the rest oldest first
@@ -41,7 +41,7 @@ public class AccountEmails {
                 ORDER BY is_primary DESC, added_at
                 """)
                 .single(call().bind(accountId))
-                .map(AccountEmails::read)
+                .map(AccountEmailRepository::read)
                 .all();
     }
 
@@ -55,7 +55,7 @@ public class AccountEmails {
                 WHERE account_id = ? AND is_primary
                 """)
                 .single(call().bind(accountId))
-                .map(AccountEmails::read)
+                .map(AccountEmailRepository::read)
                 .first();
     }
 
@@ -77,7 +77,7 @@ public class AccountEmails {
                 WHERE LOWER(email) = LOWER(?) AND (verified_at IS NOT NULL OR is_primary)
                 """)
                 .single(call().bind(email.trim()))
-                .map(AccountEmails::read)
+                .map(AccountEmailRepository::read)
                 .first();
     }
 
@@ -92,7 +92,7 @@ public class AccountEmails {
                 WHERE account_id = ? AND LOWER(email) = LOWER(?)
                 """)
                 .single(call().bind(accountId).bind(email.trim()))
-                .map(AccountEmails::read)
+                .map(AccountEmailRepository::read)
                 .first();
     }
 

@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
-import de.chojo.lyna.data.dao.account.AccountLicense;
+import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import java.sql.Array;
@@ -27,7 +27,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * <p>Everything here is keyed by account, which is what a session already carries - so a holder who
  * has never touched Discord is no different from one who has.
  */
-public class AccountLicenses {
+public class AccountLicenseRepository {
     private static final String SELECT = """
             SELECT
                 l.id,

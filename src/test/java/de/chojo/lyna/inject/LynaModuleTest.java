@@ -23,12 +23,8 @@ import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
@@ -36,12 +32,16 @@ import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.Mailings;
-import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.demo.DemoService;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
+import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
@@ -131,17 +131,17 @@ class LynaModuleTest {
         Injector injector = injector();
 
         for (Class<?> dao : List.of(
-                Accounts.class,
-                AccountLicenses.class,
+                AccountRepository.class,
+                AccountLicenseRepository.class,
                 LicenseInvites.class,
-                AccountSessions.class,
-                RevokedJtis.class,
+                AccountSessionRepository.class,
+                RevokedJtiRepository.class,
                 DownloadLog.class,
                 DemoArtifacts.class,
                 InstanceSettingsAccess.class,
                 InstanceOperators.class,
-                PasswordResetTokens.class,
-                EmailVerificationTokens.class,
+                PasswordResetTokenRepository.class,
+                EmailVerificationTokenRepository.class,
                 KioskProducts.class,
                 Guilds.class,
                 Products.class,

@@ -6,8 +6,8 @@
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.PasswordHasher;
-import de.chojo.lyna.data.access.PasswordResetTokens;
-import de.chojo.lyna.data.dao.account.Account;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +42,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
         return accounts.findByEmail(email)
                 .map(found ->
                         passwordResetTokens.issue(found.id(), Instant.now().plus(Duration.ofHours(1))))
-                .map(PasswordResetTokens.Issued::token);
+                .map(PasswordResetTokenRepository.Issued::token);
     }
 
     /**
@@ -97,7 +97,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An expired link is refused and leaves the password alone")
     void expiredLinkIsRefused() {
-        PasswordResetTokens.Issued issued =
+        PasswordResetTokenRepository.Issued issued =
                 passwordResetTokens.issue(account.id(), Instant.now().minus(Duration.ofMinutes(1)));
 
         assertFalse(confirmReset(issued.token(), "too late"));

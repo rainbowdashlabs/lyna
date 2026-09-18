@@ -11,8 +11,8 @@ import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Mailings;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
 import jakarta.mail.Address;
@@ -43,14 +43,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MailingService {
     private final Threading threading;
     private final Mailings mailings;
-    private final Accounts accounts;
+    private final AccountRepository accounts;
     private final Conf configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
     private final MailTemplateRenderer renderer;
 
     @Inject
-    public MailingService(Threading threading, Mailings mailings, Accounts accounts, Conf configuration) {
+    public MailingService(Threading threading, Mailings mailings, AccountRepository accounts, Conf configuration) {
         this.threading = threading;
         this.mailings = mailings;
         this.accounts = accounts;

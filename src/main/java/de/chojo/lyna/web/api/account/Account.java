@@ -11,20 +11,20 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.AccountEmails;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.data.dao.InstanceSettings;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
-import de.chojo.lyna.data.dao.account.AccountLicense;
-import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.entity.AccountLicense;
+import de.chojo.lyna.feature.account.entity.AccountSession;
+import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
+import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -51,16 +51,16 @@ public class Account {
     private static final Logger log = getLogger(Account.class);
 
     private final Auth auth;
-    private final Accounts accounts;
-    private final AccountLicenses licenses;
-    private final AccountEmails accountEmails;
+    private final AccountRepository accounts;
+    private final AccountLicenseRepository licenses;
+    private final AccountEmailRepository accountEmails;
     private final LicenseInvites invites;
     private final InstanceSettingsAccess instanceSettings;
     private final MailingService mailingService;
-    private final EmailVerificationTokens emailTokens;
+    private final EmailVerificationTokenRepository emailTokens;
     private final Conf configuration;
-    private final AccountSessions sessions;
-    private final RevokedJtis revokedJtis;
+    private final AccountSessionRepository sessions;
+    private final RevokedJtiRepository revokedJtis;
     private final DownloadLog downloadLog;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
@@ -69,16 +69,16 @@ public class Account {
     @Inject
     public Account(
             Auth auth,
-            Accounts accounts,
-            AccountLicenses licenses,
-            AccountEmails accountEmails,
+            AccountRepository accounts,
+            AccountLicenseRepository licenses,
+            AccountEmailRepository accountEmails,
             LicenseInvites invites,
             InstanceSettingsAccess instanceSettings,
             MailingService mailingService,
-            EmailVerificationTokens emailTokens,
+            EmailVerificationTokenRepository emailTokens,
             Conf configuration,
-            AccountSessions sessions,
-            RevokedJtis revokedJtis,
+            AccountSessionRepository sessions,
+            RevokedJtiRepository revokedJtis,
             DownloadLog downloadLog,
             PasswordHasher passwordHasher,
             JwtService jwtService) {
@@ -540,7 +540,7 @@ public class Account {
         List<ShareeView> views = new java.util.ArrayList<>();
         for (int shareeId : licenses.sharees(licenseId)) {
             String name = accounts.findById(shareeId)
-                    .map(de.chojo.lyna.data.dao.account.Account::displayName)
+                    .map(de.chojo.lyna.feature.account.entity.Account::displayName)
                     .orElse(null);
             views.add(new ShareeView("a" + shareeId, name == null ? "a" + shareeId : name, false));
         }
@@ -578,7 +578,7 @@ public class Account {
             return;
         }
 
-        Optional<de.chojo.lyna.data.dao.account.Account> target =
+        Optional<de.chojo.lyna.feature.account.entity.Account> target =
                 subject.contains("@") ? accounts.findByEmail(subject) : accounts.findByUsername(subject);
 
         if (target.isEmpty() && !subject.contains("@")) {
@@ -649,11 +649,12 @@ public class Account {
      * <p>Best effort on purpose. The share is a database row and has already been written; a mail
      * server that will not take the message is not a reason to tell the caller their share failed.
      */
-    private void tellSharee(String template, de.chojo.lyna.data.dao.account.Account sharee, AccountLicense license) {
+    private void tellSharee(
+            String template, de.chojo.lyna.feature.account.entity.Account sharee, AccountLicense license) {
         try {
             if (sharee.email() == null) return;
             String owner = accounts.findById(license.ownerAccountId())
-                    .map(de.chojo.lyna.data.dao.account.Account::displayName)
+                    .map(de.chojo.lyna.feature.account.entity.Account::displayName)
                     .orElse("the owner");
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of(

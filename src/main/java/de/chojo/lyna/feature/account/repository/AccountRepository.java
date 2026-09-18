@@ -3,10 +3,11 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.data.access.LicenseInvites;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.sadu.mapper.wrapper.Row;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 
@@ -26,9 +27,9 @@ import java.util.regex.Pattern;
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
-public class Accounts {
+public class AccountRepository {
     private final LicenseInvites invites = new LicenseInvites();
-    private final AccountEmails emails = new AccountEmails();
+    private final AccountEmailRepository emails = new AccountEmailRepository();
 
     /**
      * Creates an account, claiming an address for it if one was given.
@@ -141,7 +142,7 @@ public class Accounts {
                 WHERE i.provider = ? AND i.external_id = ?
                 """)
                 .single(call().bind(provider).bind(externalId))
-                .map(Accounts::readAccount)
+                .map(AccountRepository::readAccount)
                 .first();
     }
 
@@ -158,7 +159,7 @@ public class Accounts {
                 FROM account_identity WHERE account_id = ? AND provider = ?
                 """)
                 .single(call().bind(accountId).bind(provider))
-                .map(Accounts::readIdentity)
+                .map(AccountRepository::readIdentity)
                 .first();
     }
 
@@ -171,7 +172,7 @@ public class Accounts {
                 FROM account_identity WHERE account_id = ? ORDER BY linked_at
                 """)
                 .single(call().bind(accountId))
-                .map(Accounts::readIdentity)
+                .map(AccountRepository::readIdentity)
                 .all();
     }
 
@@ -486,7 +487,7 @@ public class Accounts {
                 WHERE lower(a.username) = lower(?) AND a.discriminator IS NOT DISTINCT FROM ?
                 """)
                 .single(call().bind(username).bind(discriminator))
-                .map(Accounts::readAccount)
+                .map(AccountRepository::readAccount)
                 .first();
     }
 
@@ -604,7 +605,7 @@ public class Accounts {
      */
     public boolean handOver(int licenseId, String address) {
         return emails.byAddress(address)
-                .filter(de.chojo.lyna.data.dao.account.AccountEmail::verified)
+                .filter(de.chojo.lyna.feature.account.entity.AccountEmail::verified)
                 .map(held -> query("""
                         INSERT INTO user_license (account_id, license_id)
                         VALUES (?, ?)

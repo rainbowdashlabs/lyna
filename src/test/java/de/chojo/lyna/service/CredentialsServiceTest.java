@@ -6,7 +6,7 @@
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.PasswordHasher;
-import de.chojo.lyna.data.dao.account.Account;
+import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

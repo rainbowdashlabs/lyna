@@ -8,10 +8,10 @@ package de.chojo.lyna.web.api.v1.demo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.demo.DemoService;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -37,13 +37,14 @@ public class DemoApi {
     private static final Logger log = getLogger(DemoApi.class);
 
     private final DemoService demo;
-    private final Accounts accounts;
-    private final AccountSessions sessions;
+    private final AccountRepository accounts;
+    private final AccountSessionRepository sessions;
     private final JwtService jwtService;
     private final ObjectMapper json = new ObjectMapper();
 
     @Inject
-    public DemoApi(DemoService demo, Accounts accounts, AccountSessions sessions, JwtService jwtService) {
+    public DemoApi(
+            DemoService demo, AccountRepository accounts, AccountSessionRepository sessions, JwtService jwtService) {
         this.demo = demo;
         this.accounts = accounts;
         this.sessions = sessions;

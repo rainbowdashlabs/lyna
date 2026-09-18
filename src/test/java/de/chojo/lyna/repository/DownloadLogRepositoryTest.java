@@ -6,8 +6,8 @@
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.dao.account.Account;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
+import de.chojo.lyna.feature.account.entity.Account;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
