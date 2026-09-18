@@ -1,7 +1,6 @@
 plugins {
     application
     java
-    id("org.openrewrite.rewrite") version "7.39.0"
 }
 
 group = "de.chojo"
@@ -18,6 +17,9 @@ dependencies {
     implementation("de.chojo", "cjda-util", "2.14.5+jda-6.3.0") {
         exclude(group = "club.minnced", module = "opus-java")
     }
+
+    // annotations
+    compileOnly(libs.jetbrains.annotations)
 
     // wiring
     implementation(libs.guice)
