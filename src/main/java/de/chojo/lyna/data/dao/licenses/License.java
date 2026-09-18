@@ -8,18 +8,20 @@ package de.chojo.lyna.data.dao.licenses;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.license.entity.Sharee;
+import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.chojo.sadu.queries.api.call.Call.call;
-import static de.chojo.sadu.queries.api.query.Query.query;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class License {
     private static final Logger log = getLogger(License.class);
+
+    private static final LicenseRepository REPOSITORY = new LicenseRepository();
     /**
      * The product the license is for.
      */
@@ -63,35 +65,20 @@ public class License {
         this.subUsers = subUsers;
     }
 
+    private int accountIdFor(Member member) {
+        return product.products().licenseGuild().guilds().accountLinks().accountIdForDiscord(member.getIdLong());
+    }
+
     public long owner() {
         if (owner != -1) {
             return owner;
         }
-        owner = query("""
-                SELECT i.external_id::BIGINT AS user_id
-                FROM user_license u
-                    JOIN account_identity i
-                        ON i.account_id = u.account_id AND i.provider = 'discord'
-                WHERE u.license_id = ?
-                """)
-                .single(call().bind(id))
-                .map(row -> row.getLong("user_id"))
-                .first()
-                .orElse(0L);
+        owner = REPOSITORY.ownerDiscordId(id).orElse(0L);
         return owner;
     }
 
     public List<Long> subUsers() {
-        return query("""
-                SELECT i.external_id::BIGINT AS user_id
-                FROM user_sub_license u
-                    JOIN account_identity i
-                        ON i.account_id = u.account_id AND i.provider = 'discord'
-                WHERE u.license_id = ?
-                """)
-                .single(call().bind(id))
-                .map(row -> row.getLong("user_id"))
-                .all();
+        return REPOSITORY.shareeDiscordIds(id);
     }
 
     /**
@@ -105,29 +92,7 @@ public class License {
      * @return the sharees, those with a Discord id first
      */
     public List<Sharee> sharees() {
-        return query("""
-                SELECT i.external_id AS discord_id,
-                       a.username,
-                       a.discriminator,
-                       u.account_id
-                FROM user_sub_license u
-                    JOIN account a ON a.id = u.account_id
-                    LEFT JOIN account_identity i
-                        ON i.account_id = u.account_id AND i.provider = 'discord'
-                WHERE u.license_id = ?
-                ORDER BY (i.external_id IS NULL), u.account_id
-                """)
-                .single(call().bind(id))
-                .map(row -> {
-                    String discordId = row.getString("discord_id");
-                    String username = row.getString("username");
-                    String discriminator = row.getString("discriminator");
-                    String name = username == null || username.isBlank()
-                            ? "account " + row.getInt("account_id")
-                            : discriminator == null ? username : username + "#" + discriminator;
-                    return new Sharee(discordId == null ? null : Long.parseLong(discordId), name);
-                })
-                .all();
+        return REPOSITORY.sharees(id);
     }
 
     /**
@@ -139,26 +104,7 @@ public class License {
      * @return sharees plus invites still standing
      */
     public int shareCount() {
-        return query("""
-                SELECT (SELECT count(*) FROM user_sub_license WHERE license_id = ?)
-                     + (SELECT count(*) FROM license_invite
-                        WHERE license_id = ? AND expires_at > now()) AS used
-                """)
-                .single(call().bind(id).bind(id))
-                .map(row -> row.getInt("used"))
-                .first()
-                .orElse(0);
-    }
-
-    /**
-     * @param discordId the sharee's Discord id, or null for somebody who holds this through the web
-     *                  alone and can therefore be given no Discord role
-     * @param name      what to call them
-     */
-    public record Sharee(Long discordId, String name) {
-        public String display() {
-            return discordId == null ? name : "<@%d> (%s)".formatted(discordId, name);
-        }
+        return REPOSITORY.shareCount(id);
     }
 
     public String userIdentifier() {
@@ -191,22 +137,11 @@ public class License {
         long owner = owner();
         long guildId = product.products().licenseGuild().guildId();
         product.products().licenseGuild().roles().revoke(guildId, owner, product);
-        return query("DELETE FROM license WHERE id = ?")
-                .single(call().bind(id))
-                .delete()
-                .changed();
+        return REPOSITORY.delete(id);
     }
 
     public boolean claim(Member member) {
-        if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(product.products()
-                                .licenseGuild()
-                                .guilds()
-                                .accountLinks()
-                                .accountIdForDiscord(member.getIdLong()))
-                        .bind(id))
-                .insert()
-                .changed()) {
+        if (REPOSITORY.claim(accountIdFor(member), id)) {
             log.info(
                     LogNotify.STATUS,
                     "{} claimed license {} for {}",
@@ -226,16 +161,7 @@ public class License {
 
     public boolean transfer(Member member) {
         clearSubUsers();
-        if (query(
-                        "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET account_id = excluded.account_id")
-                .single(call().bind(product.products()
-                                .licenseGuild()
-                                .guilds()
-                                .accountLinks()
-                                .accountIdForDiscord(member.getIdLong()))
-                        .bind(id))
-                .insert()
-                .changed()) {
+        if (REPOSITORY.transfer(accountIdFor(member), id)) {
             Member oldOwner = member.getGuild().retrieveMemberById(owner).complete();
             if (oldOwner != null && !product.canAccess(oldOwner)) {
                 log.info(
@@ -264,9 +190,7 @@ public class License {
     public void clearSubUsers() {
         List<Long> sharees = subUsers();
 
-        query("DELETE FROM user_sub_license WHERE license_id = ?")
-                .single(call().bind(id()))
-                .delete();
+        REPOSITORY.clearSharees(id);
 
         long guildId = product.products().licenseGuild().guildId();
         for (Long sharee : sharees) {
@@ -275,15 +199,7 @@ public class License {
     }
 
     public boolean removeSubUser(Member member) {
-        boolean changed = query("DELETE FROM user_sub_license WHERE license_id = ? AND account_id = ?")
-                .single(call().bind(id())
-                        .bind(product.products()
-                                .licenseGuild()
-                                .guilds()
-                                .accountLinks()
-                                .accountIdForDiscord(member.getIdLong())))
-                .delete()
-                .changed();
+        boolean changed = REPOSITORY.removeSharee(id, accountIdFor(member));
         if (changed) {
             if (!product.canAccess(member)) {
                 product.revoke(member);
@@ -296,29 +212,14 @@ public class License {
         product.assign(member);
         log.info(
                 LogNotify.STATUS, "{} shared license for {} with {}", owner, product.name(), member.getEffectiveName());
-        return query("INSERT INTO user_sub_license(account_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(product.products()
-                                .licenseGuild()
-                                .guilds()
-                                .accountLinks()
-                                .accountIdForDiscord(member.getIdLong()))
-                        .bind(id()))
-                .insert()
-                .changed();
+        return REPOSITORY.addSharee(id, accountIdFor(member));
     }
 
     public boolean grantAccess(ReleaseType type) {
-        return query(
-                        "INSERT INTO license_access(license_id, release_type) VALUES (?,?::RELEASE_TYPE) ON CONFLICT DO NOTHING")
-                .single(call().bind(id).bind(type))
-                .insert()
-                .changed();
+        return REPOSITORY.grantAccess(id, type);
     }
 
     public List<ReleaseType> access() {
-        return query("SELECT release_type FROM license_access WHERE license_id = ?")
-                .single(call().bind(id))
-                .map(row -> row.getEnum("release_type", ReleaseType.class))
-                .all();
+        return REPOSITORY.access(id);
     }
 }

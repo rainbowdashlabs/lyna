@@ -14,6 +14,7 @@ import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.LicenseUser;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.license.entity.Sharee;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -53,9 +54,9 @@ public class Info implements SlashHandler {
                     .setColor(Colors.Pastel.DARK_PINK)
                     .addField("Key", "|| %s ||".formatted(license.key()), true);
 
-            List<License.Sharee> sharees = license.sharees();
+            List<Sharee> sharees = license.sharees();
             if (!sharees.isEmpty()) {
-                var shared = sharees.stream().map(License.Sharee::display).collect(Collectors.joining("\n"));
+                var shared = sharees.stream().map(Sharee::display).collect(Collectors.joining("\n"));
                 builder.addField("Shared with:", shared, true);
             }
             event.replyEmbeds(builder.build()).setEphemeral(true).queue();

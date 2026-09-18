@@ -21,6 +21,7 @@ import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -385,7 +386,7 @@ public class Admin {
                         l.userIdentifier(),
                         l.key(),
                         l.owner(),
-                        l.sharees().stream().map(License.Sharee::name).toList()));
+                        l.sharees().stream().map(Sharee::name).toList()));
     }
 
     private void registrationInfo(Context ctx) {
