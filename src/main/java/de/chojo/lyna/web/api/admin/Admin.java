@@ -17,10 +17,13 @@ import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.InstanceSettings;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.entity.Sharee;
+import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -47,6 +50,8 @@ import static io.javalin.apibuilder.ApiBuilder.put;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class Admin {
+    private final LicenseService licenseService;
+    private final LicenseSharingService licenseSharing;
     private static final Logger log = getLogger(Admin.class);
 
     private final Auth auth;
@@ -75,7 +80,11 @@ public class Admin {
             KioskProducts kioskProducts,
             InstanceOperators operators,
             de.chojo.lyna.mail.MailingService mailingService,
-            Gateway gateway) {
+            Gateway gateway,
+            LicenseService licenseService,
+            LicenseSharingService licenseSharing) {
+        this.licenseService = licenseService;
+        this.licenseSharing = licenseSharing;
         this.gateway = gateway;
         this.auth = auth;
         this.configuration = configuration;
@@ -345,7 +354,12 @@ public class Admin {
         List<LicenseSummary> out = new ArrayList<>();
         for (License l : resolved.guild().licenses().all()) {
             out.add(new LicenseSummary(
-                    l.id(), l.product().id(), l.product().name(), l.userIdentifier(), l.owner(), l.shareCount()));
+                    l.id(),
+                    l.product().id(),
+                    l.product().name(),
+                    l.userIdentifier(),
+                    licenseService.owner(l),
+                    licenseSharing.shareCount(l)));
         }
         ctx.json(out);
     }
@@ -384,8 +398,8 @@ public class Admin {
                         l.product().name(),
                         l.userIdentifier(),
                         l.key(),
-                        l.owner(),
-                        l.sharees().stream().map(License.Sharee::name).toList()));
+                        licenseService.owner(l),
+                        licenseSharing.sharees(l).stream().map(Sharee::name).toList()));
     }
 
     private void registrationInfo(Context ctx) {
@@ -403,11 +417,21 @@ public class Admin {
                 .orElse(null);
         var owned = resolved.guild().licenses().byOwner(discordId).stream()
                 .map(l -> new LicenseSummary(
-                        l.id(), l.product().id(), l.product().name(), l.userIdentifier(), l.owner(), l.shareCount()))
+                        l.id(),
+                        l.product().id(),
+                        l.product().name(),
+                        l.userIdentifier(),
+                        licenseService.owner(l),
+                        licenseSharing.shareCount(l)))
                 .toList();
         var shared = resolved.guild().licenses().bySharee(discordId).stream()
                 .map(l -> new LicenseSummary(
-                        l.id(), l.product().id(), l.product().name(), l.userIdentifier(), l.owner(), l.shareCount()))
+                        l.id(),
+                        l.product().id(),
+                        l.product().name(),
+                        l.userIdentifier(),
+                        licenseService.owner(l),
+                        licenseSharing.shareCount(l)))
                 .toList();
         ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null, owned, shared));
     }

@@ -12,10 +12,11 @@ import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.licenses.License;
-import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.entity.LicenseSource;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import jakarta.mail.Message;
 import jakarta.mail.internet.InternetAddress;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class MailHandler implements ThrowingConsumer<Message, Exception> {
+    private final LicenseService licenseService;
     private final Mailings mailings;
     private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
@@ -36,7 +38,12 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
             CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
     public MailHandler(
-            Mailings mailings, MailingService mailingService, PurchaseCollectionService purchases, Conf configuration) {
+            Mailings mailings,
+            MailingService mailingService,
+            PurchaseCollectionService purchases,
+            Conf configuration,
+            LicenseService licenseService) {
+        this.licenseService = licenseService;
         this.mailings = mailings;
         this.mailingService = mailingService;
         this.purchases = purchases;
@@ -120,7 +127,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         Mailing mailing = optMailing.get();
         Optional<License> license =
                 mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
-        license.get().grantAccess(ReleaseType.STABLE);
+        licenseService.grantAccess(license.get(), ReleaseType.STABLE);
         boolean handedOver =
                 purchases.handOver(license.get().id(), parsed.mail().get());
         Mail mail = MailCreator.createLicenseMessage(

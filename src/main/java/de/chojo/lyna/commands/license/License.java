@@ -18,13 +18,16 @@ import de.chojo.lyna.commands.license.handler.downloads.Grant;
 import de.chojo.lyna.commands.license.handler.downloads.Revoke;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.license.service.LicenseService;
 
 public class License implements SlashProvider<Slash> {
+    private final LicenseService licenseService;
     private final Guilds guilds;
     private final Conf configuration;
 
     @Inject
-    public License(Guilds guilds, Conf configuration) {
+    public License(Guilds guilds, Conf configuration, LicenseService licenseService) {
+        this.licenseService = licenseService;
         this.guilds = guilds;
         this.configuration = configuration;
     }
@@ -36,7 +39,7 @@ public class License implements SlashProvider<Slash> {
                 .adminCommand()
                 .guildOnly()
                 .subCommand(SubCommand.of("create", "Create a new license")
-                        .handler(new Create(guilds))
+                        .handler(new Create(guilds, licenseService))
                         .argument(Argument.text("product", "Product name")
                                 .withAutoComplete()
                                 .asRequired())
@@ -44,10 +47,10 @@ public class License implements SlashProvider<Slash> {
                                 .asRequired()))
                 .group(Group.of("delete", "Delete a license")
                         .subCommand(SubCommand.of("key", "Delete by key")
-                                .handler(new Key(guilds))
+                                .handler(new Key(guilds, licenseService))
                                 .argument(Argument.text("key", "Key to delete").asRequired()))
                         .subCommand(SubCommand.of("identifier", "Delete a license by identifier")
-                                .handler(new Identifier(guilds))
+                                .handler(new Identifier(guilds, licenseService))
                                 .argument(Argument.text("product", "Product name")
                                         .withAutoComplete()
                                         .asRequired())
@@ -56,7 +59,7 @@ public class License implements SlashProvider<Slash> {
                                         .asRequired())))
                 .group(Group.of("downloads", "Manage license download rights")
                         .subCommand(SubCommand.of("grant", "Grant download rights to a license")
-                                .handler(new Grant(guilds))
+                                .handler(new Grant(guilds, licenseService))
                                 .argument(Argument.text("product", "Product name")
                                         .withAutoComplete()
                                         .asRequired())
@@ -67,7 +70,7 @@ public class License implements SlashProvider<Slash> {
                                         .withAutoComplete()
                                         .asRequired()))
                         .subCommand(SubCommand.of("revoke", "Revoke download rights from a license")
-                                .handler(new Revoke(guilds))
+                                .handler(new Revoke(guilds, licenseService))
                                 .argument(Argument.text("product", "Product name")
                                         .withAutoComplete()
                                         .asRequired())

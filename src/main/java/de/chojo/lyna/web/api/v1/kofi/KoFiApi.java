@@ -13,11 +13,12 @@ import com.google.inject.Inject;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.licenses.License;
-import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.Product;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.entity.LicenseSource;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.mail.PurchaseRecipient;
@@ -35,6 +36,7 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class KoFiApi {
+    private final LicenseService licenseService;
     private final Kofi kofiSettings;
     private static final Logger log = getLogger(KoFiApi.class);
 
@@ -48,7 +50,13 @@ public class KoFiApi {
             .build();
 
     @Inject
-    public KoFiApi(Kofi kofiSettings, KoFiProducts kofi, MailingService mailing, PurchaseCollectionService purchases) {
+    public KoFiApi(
+            Kofi kofiSettings,
+            KoFiProducts kofi,
+            MailingService mailing,
+            PurchaseCollectionService purchases,
+            LicenseService licenseService) {
+        this.licenseService = licenseService;
         this.kofiSettings = kofiSettings;
         this.kofi = kofi;
         this.mailing = mailing;
@@ -78,7 +86,7 @@ public class KoFiApi {
                         Mailing productMail = optProductMail.get();
                         Optional<License> license = product.createLicense(post.email(), LicenseSource.KOFI);
                         if (license.isEmpty()) continue;
-                        license.get().grantAccess(ReleaseType.STABLE);
+                        licenseService.grantAccess(license.get(), ReleaseType.STABLE);
                         boolean handedOver = purchases.handOver(license.get().id(), post.email());
                         var mail = MailCreator.createLicenseMessage(
                                 mailing.renderer(),

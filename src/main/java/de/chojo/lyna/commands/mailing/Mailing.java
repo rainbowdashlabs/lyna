@@ -16,12 +16,17 @@ import de.chojo.lyna.commands.mailing.handler.Send;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.mail.MailingService;
 
 public class Mailing extends SlashCommand {
     @Inject
     public Mailing(
-            Guilds guilds, Conf configuration, MailingService mailingService, PurchaseCollectionService purchases) {
+            Guilds guilds,
+            Conf configuration,
+            MailingService mailingService,
+            PurchaseCollectionService purchases,
+            LicenseService licenseService) {
         super(Slash.of("mailing", "Configure mailing")
                 .unlocalized()
                 .adminCommand()
@@ -33,7 +38,7 @@ public class Mailing extends SlashCommand {
                                 .asRequired())
                         .argument(Argument.attachment("mail", "A file containing the mail text")))
                 .subCommand(SubCommand.of("send", "Send a mail to a person")
-                        .handler(new Send(mailingService, configuration, guilds, purchases))
+                        .handler(new Send(mailingService, configuration, guilds, purchases, licenseService))
                         .argument(
                                 Argument.text("product", "product").asRequired().withAutoComplete())
                         .argument(Argument.text("address", "The receiver of the mail")

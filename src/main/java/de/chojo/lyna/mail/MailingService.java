@@ -13,6 +13,7 @@ import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.util.Retry;
 import jakarta.activation.DataHandler;
 import jakarta.mail.Address;
@@ -44,6 +45,7 @@ public class MailingService {
     private final Threading threading;
     private final Mailings mailings;
     private final PurchaseCollectionService purchases;
+    private final LicenseService licenseService;
     private final Conf configuration;
     private static final Logger log = getLogger(MailingService.class);
     private final List<ThrowingConsumer<Message, Exception>> receivedListener = new ArrayList<>();
@@ -51,10 +53,15 @@ public class MailingService {
 
     @Inject
     public MailingService(
-            Threading threading, Mailings mailings, PurchaseCollectionService purchases, Conf configuration) {
+            Threading threading,
+            Mailings mailings,
+            PurchaseCollectionService purchases,
+            Conf configuration,
+            LicenseService licenseService) {
         this.threading = threading;
         this.mailings = mailings;
         this.purchases = purchases;
+        this.licenseService = licenseService;
         this.configuration = configuration;
         this.renderer = new MailTemplateRenderer(
                 configuration.main().mailing().senderName(),
@@ -86,7 +93,7 @@ public class MailingService {
                 .botWorker()
                 .scheduleAtFixedRate(
                         this::loop, 10, configuration.main().mailing().pollSeconds(), TimeUnit.SECONDS);
-        registerMessageListener(new MailHandler(mailings, this, purchases, configuration));
+        registerMessageListener(new MailHandler(mailings, this, purchases, configuration, licenseService));
     }
 
     private void loop() {

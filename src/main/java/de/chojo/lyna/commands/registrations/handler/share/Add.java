@@ -10,8 +10,9 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.LicenseUser;
-import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -22,10 +23,12 @@ import java.util.List;
 import java.util.Optional;
 
 public class Add implements SlashHandler {
+    private final LicenseSharingService licenseSharing;
     private final Guilds guilds;
 
-    public Add(Guilds guilds) {
+    public Add(Guilds guilds, LicenseSharingService licenseSharing) {
         this.guilds = guilds;
+        this.licenseSharing = licenseSharing;
     }
 
     @Override
@@ -55,7 +58,7 @@ public class Add implements SlashHandler {
             return;
         }
 
-        List<Long> subUsers = license.get().subUsers();
+        List<Long> subUsers = licenseSharing.shareeDiscordIds(license.get());
         if (subUsers.contains(target.getIdLong())) {
             event.reply("This user has already access to your license.")
                     .setEphemeral(true)
@@ -64,12 +67,13 @@ public class Add implements SlashHandler {
             return;
         }
 
-        if (license.get().shareCount() >= guild.settings().license().shares()) {
+        if (licenseSharing.shareCount(license.get())
+                >= guild.settings().license().shares()) {
             event.reply("You have reached the share limit.").setEphemeral(true).queue();
             return;
         }
 
-        license.get().addSubUser(target);
+        licenseSharing.addSharee(license.get(), target);
         event.reply("Access granted.").setEphemeral(true).queue();
         target.getUser()
                 .openPrivateChannel()

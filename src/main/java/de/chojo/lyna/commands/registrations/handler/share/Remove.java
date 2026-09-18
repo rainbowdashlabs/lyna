@@ -10,8 +10,9 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.LicenseUser;
-import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -21,10 +22,12 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import java.util.Optional;
 
 public class Remove implements SlashHandler {
+    private final LicenseSharingService licenseSharing;
     private final Guilds guilds;
 
-    public Remove(Guilds guilds) {
+    public Remove(Guilds guilds, LicenseSharingService licenseSharing) {
         this.guilds = guilds;
+        this.licenseSharing = licenseSharing;
     }
 
     @Override
@@ -40,7 +43,7 @@ public class Remove implements SlashHandler {
 
         Optional<License> license = licenseUser.licenseByProduct(product.get());
 
-        if (license.get().removeSubUser(target)) {
+        if (licenseSharing.removeSharee(license.get(), target)) {
             event.reply("Access to your license was revoked.")
                     .setEphemeral(true)
                     .queue();

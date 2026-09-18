@@ -11,12 +11,15 @@ import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.lyna.commands.register.handler.Default;
 import de.chojo.lyna.data.access.Guilds;
+import de.chojo.lyna.feature.license.service.LicenseService;
 
 public class Register implements SlashProvider<Slash> {
+    private final LicenseService licenseService;
     private final Guilds guilds;
 
     @Inject
-    public Register(Guilds guilds) {
+    public Register(Guilds guilds, LicenseService licenseService) {
+        this.licenseService = licenseService;
         this.guilds = guilds;
     }
 
@@ -25,7 +28,7 @@ public class Register implements SlashProvider<Slash> {
         return Slash.of("register", "Register a product key")
                 .unlocalized()
                 .guildOnly()
-                .command(new Default(guilds))
+                .command(new Default(guilds, licenseService))
                 .argument(Argument.text("key", "The product key").asRequired())
                 .build();
     }

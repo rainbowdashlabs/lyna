@@ -25,6 +25,9 @@ import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.license.repository.LicenseRepository;
+import de.chojo.lyna.feature.license.service.LicenseService;
+import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.mapper.RowMapperRegistry;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
@@ -91,6 +94,9 @@ public abstract class RepositoryTestBase {
     protected static PurchaseCollectionService purchaseCollection;
     protected static UsernameService usernameService;
     protected static AccountLinkService accountLinks;
+    protected static LicenseRepository licenseRepository;
+    protected static LicenseSharingService licenseSharing;
+    protected static LicenseService licenseService;
 
     @BeforeAll
     static void setupDatabase() throws Exception {
@@ -139,6 +145,9 @@ public abstract class RepositoryTestBase {
         accountEmailService = new AccountEmailService(accountEmails, purchaseCollection);
         usernameService = new UsernameService(accounts);
         accountLinks = new AccountLinkService(accounts, usernameService);
+        licenseRepository = new LicenseRepository();
+        licenseSharing = new LicenseSharingService(licenseRepository, accountLinks);
+        licenseService = new LicenseService(licenseRepository, accountLinks, licenseSharing);
     }
 
     /**

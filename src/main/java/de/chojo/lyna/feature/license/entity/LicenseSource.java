@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.dao.licenses;
+package de.chojo.lyna.feature.license.entity;
 
 /**
  * Where a licence came from.

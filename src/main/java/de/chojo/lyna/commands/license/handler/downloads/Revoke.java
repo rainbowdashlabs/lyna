@@ -10,7 +10,8 @@ import de.chojo.jdautil.util.Completion;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
-import de.chojo.lyna.data.dao.licenses.License;
+import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.service.LicenseService;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
@@ -19,9 +20,11 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import java.util.Optional;
 
 public class Revoke implements SlashHandler {
+    private final LicenseService licenseService;
     private final Guilds guilds;
 
-    public Revoke(Guilds guilds) {
+    public Revoke(Guilds guilds, LicenseService licenseService) {
+        this.licenseService = licenseService;
         this.guilds = guilds;
     }
 
@@ -43,7 +46,8 @@ public class Revoke implements SlashHandler {
             return;
         }
 
-        license.get().grantAccess(ReleaseType.parse(event.getOption("type", OptionMapping::getAsString)));
+        licenseService.grantAccess(
+                license.get(), ReleaseType.parse(event.getOption("type", OptionMapping::getAsString)));
         event.reply("Revokes download access from license").setEphemeral(true).queue();
     }
 
