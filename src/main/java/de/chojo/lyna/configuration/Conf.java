@@ -62,6 +62,37 @@ public class Conf extends Configurations<ConfigFile> {
     }
 
     /**
+     * Refused, always.
+     *
+     * <p>Ocular applies the overrides into the same object it would serialise, so saving writes
+     * whatever the environment supplied into the file - a database password, a mail password, the
+     * sign-in secret. It has happened: a call added here wrote the secret from the environment onto
+     * disk on a running instance.
+     *
+     * <p>Settings a newer version understands are added by {@link #fillInMissingKeys}, which merges
+     * documents before any override is applied and is the only thing that should ever write this
+     * file after it exists.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public void save() {
+        throw new UnsupportedOperationException(
+                "Saving would write the values the environment supplied into the file. New settings "
+                        + "are added when the configuration is read.");
+    }
+
+    /**
+     * Refused, for the same reason as {@link #save()}.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public void save(Key<?> key) {
+        save();
+    }
+
+    /**
      * Turns a {@code config.json} left by an older version into the {@code config.yaml} that is now
      * read, if that has not happened already.
      *
