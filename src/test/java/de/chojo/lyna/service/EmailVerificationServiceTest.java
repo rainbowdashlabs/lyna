@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.service;
 
-import de.chojo.lyna.data.dao.account.Account;
+import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +38,7 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("email_verification_token", "account_email", "account_identity", "account");
-        account = accounts.create("first@example.invalid", "hash");
+        account = accountService.register("first@example.invalid", "hash");
     }
 
     private Optional<String> issueFor(String email) {
@@ -49,7 +49,7 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
 
     private boolean confirm(String token) {
         var confirmed = emailVerificationTokens.consume(token);
-        confirmed.ifPresent(c -> accounts.confirmEmail(c.accountId(), c.email()));
+        confirmed.ifPresent(c -> accountEmailService.confirm(c.accountId(), c.email()));
         return confirmed.isPresent();
     }
 
@@ -90,9 +90,9 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An account with no address yet is written to the first one it confirms")
     void theFirstConfirmedAddressBecomesThePrimary() {
-        Account bare = accounts.create(null, "hash");
+        Account bare = accountService.register(null, "hash");
 
-        accounts.confirmEmail(bare.id(), "only@example.invalid");
+        accountEmailService.confirm(bare.id(), "only@example.invalid");
 
         assertEquals(
                 "only@example.invalid",
@@ -103,10 +103,11 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An address another account holds cannot be taken by confirming it")
     void anAddressBelongsToOneAccount() {
-        Account other = accounts.create("taken@example.invalid", "hash");
+        Account other = accountService.register("taken@example.invalid", "hash");
         assertTrue(other.id() != account.id());
 
-        assertThrows(IllegalStateException.class, () -> accounts.confirmEmail(account.id(), "taken@example.invalid"));
+        assertThrows(
+                IllegalStateException.class, () -> accountEmailService.confirm(account.id(), "taken@example.invalid"));
     }
 
     @Test
@@ -171,7 +172,7 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Pruning drops the links that can no longer be followed")
     void pruneRemovesExpiredOnly() {
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
         emailVerificationTokens.issue(
                 other.id(), "other@example.invalid", Instant.now().minus(Duration.ofHours(1)));
         String live = issueFor("second@example.invalid").orElseThrow();
@@ -194,7 +195,7 @@ class EmailVerificationServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Confirming one account's address says nothing about another's")
     void confirmationIsPerAccount() {
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
         String token = issueFor("first@example.invalid").orElseThrow();
         confirm(token);
 

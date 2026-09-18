@@ -7,8 +7,8 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.elements.Auth;
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountSession;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountSession;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,7 @@ class SessionServiceTest extends RepositoryTestBase {
         Mockito.when(config.jwtSecret()).thenReturn("service-test-secret");
         Mockito.when(config.jwtExpirySeconds()).thenReturn(3600L);
         jwt = new JwtService(config);
-        account = accounts.create("session@example.invalid", "hash");
+        account = accountService.register("session@example.invalid", "hash");
     }
 
     /**

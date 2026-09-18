@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
 import com.google.common.hash.Hashing;
 
@@ -27,7 +27,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * <p>Only the hash is stored. A token is in a mailbox and in a link, and neither is somewhere it
  * should also be readable from the database.
  */
-public class EmailVerificationTokens {
+public class EmailVerificationTokenRepository {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     /**

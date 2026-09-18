@@ -7,19 +7,24 @@ package de.chojo.lyna.repository;
 
 import com.zaxxer.hikari.HikariDataSource;
 import de.chojo.lyna.TestContainers;
-import de.chojo.lyna.data.access.AccountEmails;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.access.PasswordResetTokens;
-import de.chojo.lyna.data.access.RevokedJtis;
+import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
+import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.mapper.RowMapperRegistry;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
@@ -67,19 +72,25 @@ public abstract class RepositoryTestBase {
     protected static HikariDataSource dataSource;
     protected static String schemaName;
 
-    protected static Accounts accounts;
-    protected static AccountLicenses accountLicenses;
-    protected static AccountEmails accountEmails;
+    protected static AccountRepository accounts;
+    protected static AccountLicenseRepository accountLicenses;
+    protected static AccountEmailRepository accountEmails;
     protected static LicenseInvites licenseInvites;
-    protected static AccountSessions accountSessions;
-    protected static RevokedJtis revokedJtis;
+    protected static AccountSessionRepository accountSessions;
+    protected static RevokedJtiRepository revokedJtis;
     protected static DownloadLog downloadLog;
     protected static DemoArtifacts demoArtifacts;
     protected static InstanceSettingsAccess instanceSettings;
     protected static InstanceOperators instanceOperators;
     protected static KioskProducts kioskProducts;
-    protected static PasswordResetTokens passwordResetTokens;
-    protected static EmailVerificationTokens emailVerificationTokens;
+    protected static PasswordResetTokenRepository passwordResetTokens;
+    protected static EmailVerificationTokenRepository emailVerificationTokens;
+
+    protected static AccountService accountService;
+    protected static AccountEmailService accountEmailService;
+    protected static PurchaseCollectionService purchaseCollection;
+    protected static UsernameService usernameService;
+    protected static AccountLinkService accountLinks;
 
     @BeforeAll
     static void setupDatabase() throws Exception {
@@ -109,19 +120,25 @@ public abstract class RepositoryTestBase {
                 .setRowMapperRegistry(new RowMapperRegistry().register(PostgresqlMapper.getDefaultMapper()))
                 .build());
 
-        accounts = new Accounts();
-        accountLicenses = new AccountLicenses();
-        accountEmails = new AccountEmails();
+        accounts = new AccountRepository();
+        accountLicenses = new AccountLicenseRepository();
+        accountEmails = new AccountEmailRepository();
         licenseInvites = new LicenseInvites();
-        accountSessions = new AccountSessions();
-        revokedJtis = new RevokedJtis();
+        accountSessions = new AccountSessionRepository();
+        revokedJtis = new RevokedJtiRepository();
         downloadLog = new DownloadLog();
         demoArtifacts = new DemoArtifacts();
         instanceSettings = new InstanceSettingsAccess();
         instanceOperators = new InstanceOperators();
         kioskProducts = new KioskProducts();
-        passwordResetTokens = new PasswordResetTokens();
-        emailVerificationTokens = new EmailVerificationTokens();
+        passwordResetTokens = new PasswordResetTokenRepository();
+        emailVerificationTokens = new EmailVerificationTokenRepository();
+
+        accountService = new AccountService(accounts, accountEmails);
+        purchaseCollection = new PurchaseCollectionService(accountEmails, accountLicenses, licenseInvites);
+        accountEmailService = new AccountEmailService(accountEmails, purchaseCollection);
+        usernameService = new UsernameService(accounts);
+        accountLinks = new AccountLinkService(accounts, usernameService);
     }
 
     /**

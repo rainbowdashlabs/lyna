@@ -12,13 +12,15 @@ import de.chojo.lyna.auth.DiscordOAuthClient;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
-import de.chojo.lyna.data.access.PasswordResetTokens;
-import de.chojo.lyna.data.access.RevokedJtis;
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
+import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -40,11 +42,13 @@ public class Auth {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final Conf configuration;
-    private final Accounts accounts;
-    private final AccountSessions accountSessions;
-    private final RevokedJtis revokedJtis;
-    private final PasswordResetTokens passwordResetTokens;
-    private final EmailVerificationTokens emailTokens;
+    private final AccountLinkService accountLinkService;
+    private final AccountService accountService;
+    private final AccountEmailService accountEmails;
+    private final AccountSessionRepository accountSessions;
+    private final RevokedJtiRepository revokedJtis;
+    private final PasswordResetTokenRepository passwordResetTokens;
+    private final EmailVerificationTokenRepository emailTokens;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final DiscordOAuthClient oauthClient;
@@ -54,17 +58,21 @@ public class Auth {
     @Inject
     public Auth(
             Conf configuration,
-            Accounts accounts,
-            AccountSessions accountSessions,
-            RevokedJtis revokedJtis,
-            PasswordResetTokens passwordResetTokens,
-            EmailVerificationTokens emailTokens,
+            AccountLinkService accountLinkService,
+            AccountService accountService,
+            AccountEmailService accountEmails,
+            AccountSessionRepository accountSessions,
+            RevokedJtiRepository revokedJtis,
+            PasswordResetTokenRepository passwordResetTokens,
+            EmailVerificationTokenRepository emailTokens,
             PasswordHasher passwordHasher,
             JwtService jwtService,
             DiscordOAuthClient oauthClient,
             MailingService mailingService) {
         this.configuration = configuration;
-        this.accounts = accounts;
+        this.accountLinkService = accountLinkService;
+        this.accountService = accountService;
+        this.accountEmails = accountEmails;
         this.accountSessions = accountSessions;
         this.revokedJtis = revokedJtis;
         this.passwordResetTokens = passwordResetTokens;
@@ -105,7 +113,7 @@ public class Auth {
         // account presence via the response.
         ctx.status(HttpStatus.NO_CONTENT);
         if (body.email() == null || body.email().isBlank()) return;
-        var account = accounts.findByEmail(body.email());
+        var account = accountService.findByEmail(body.email());
         if (account.isEmpty()) return;
         var issued = passwordResetTokens.issue(
                 account.get().id(), java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
@@ -167,7 +175,7 @@ public class Auth {
             ctx.status(HttpStatus.BAD_REQUEST).result("That link has expired or has already been used");
             return;
         }
-        accounts.confirmEmail(confirmed.get().accountId(), confirmed.get().email());
+        accountEmails.confirm(confirmed.get().accountId(), confirmed.get().email());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -192,7 +200,7 @@ public class Auth {
             ctx.status(HttpStatus.GONE).result("Token is invalid or expired");
             return;
         }
-        accounts.setPasswordHash(accountId.get(), passwordHasher.hash(body.newPassword()));
+        accountService.setPasswordHash(accountId.get(), passwordHasher.hash(body.newPassword()));
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -204,11 +212,11 @@ public class Auth {
         Credentials creds = readCredentials(ctx);
         if (creds == null) return;
 
-        if (accounts.findByEmail(creds.email()).isPresent()) {
+        if (accountService.findByEmail(creds.email()).isPresent()) {
             ctx.status(HttpStatus.CONFLICT).result("Email already registered");
             return;
         }
-        Account account = accounts.create(creds.email(), passwordHasher.hash(creds.password()));
+        Account account = accountService.register(creds.email(), passwordHasher.hash(creds.password()));
         sendVerification(account.id(), creds.email());
         issueAndWrite(ctx, account, null, HttpStatus.CREATED);
     }
@@ -217,7 +225,7 @@ public class Auth {
         Credentials creds = readCredentials(ctx);
         if (creds == null) return;
 
-        Optional<Account> opt = accounts.findByEmail(creds.email());
+        Optional<Account> opt = accountService.findByEmail(creds.email());
         if (opt.isEmpty()
                 || !opt.get().hasPassword()
                 || !passwordHasher.verify(creds.password(), opt.get().passwordHash())) {
@@ -225,8 +233,9 @@ public class Auth {
             return;
         }
         Account account = opt.get();
-        accounts.touchLastLogin(account.id());
-        Long discordId = accounts.findLinkByAccountId(account.id())
+        accountService.touchLastLogin(account.id());
+        Long discordId = accountLinkService
+                .discordIdentity(account.id())
                 .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
         issueAndWrite(ctx, account, discordId, HttpStatus.OK);
@@ -248,13 +257,13 @@ public class Auth {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
         }
-        Optional<Account> account = accounts.findById(verified.get().accountId());
+        Optional<Account> account = accountService.findById(verified.get().accountId());
         if (account.isEmpty()) {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
         }
         Optional<AccountIdentity> link =
-                accounts.findLinkByAccountId(account.get().id());
+                accountLinkService.discordIdentity(account.get().id());
         ctx.json(toMePayload(account.get(), link.orElse(null)));
     }
 
@@ -288,21 +297,23 @@ public class Auth {
         Optional<JwtService.Verified> existing = currentSession(ctx);
         Account account;
         if (existing.isPresent()) {
-            Optional<Account> me = accounts.findById(existing.get().accountId());
+            Optional<Account> me = accountService.findById(existing.get().accountId());
             if (me.isEmpty()) {
                 ctx.status(HttpStatus.UNAUTHORIZED);
                 return;
             }
             account = me.get();
-            accounts.link(account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
+            accountLinkService.link(
+                    account.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
         } else {
-            account = accounts.findByDiscordId(discordUser.id()).orElseGet(() -> {
-                Account created = accounts.create(null, null);
-                accounts.link(created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
+            account = accountService.findByDiscordId(discordUser.id()).orElseGet(() -> {
+                Account created = accountService.register(null, null);
+                accountLinkService.link(
+                        created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
                 return created;
             });
-            accounts.rememberHandle(discordUser.id(), discordUser.handle());
-            accounts.touchLastLogin(account.id());
+            accountLinkService.rememberHandle(discordUser.id(), discordUser.handle());
+            accountService.touchLastLogin(account.id());
         }
         JwtService.Issued issued = jwtService.issue(account.id(), discordUser.id());
         accountSessions.record(issued.jti(), account.id(), issued.expiresAt(), ctx.header("User-Agent"));

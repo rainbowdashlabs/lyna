@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
-import de.chojo.lyna.data.dao.account.AccountLicense;
+import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import java.sql.Array;
@@ -27,7 +27,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * <p>Everything here is keyed by account, which is what a session already carries - so a holder who
  * has never touched Discord is no different from one who has.
  */
-public class AccountLicenses {
+public class AccountLicenseRepository {
     private static final String SELECT = """
             SELECT
                 l.id,
@@ -120,6 +120,39 @@ public class AccountLicenses {
      *
      * @return whether a new sharee was added
      */
+    /**
+     * The licences issued against an address that nobody holds yet.
+     *
+     * <p>Matched on the identifier the licence carries, whatever its source: where it came from does
+     * not change whose it is.
+     */
+    public List<Integer> unheldFor(String address) {
+        return query("""
+                SELECT l.id
+                FROM license l
+                WHERE LOWER(l.user_identifier) = LOWER(?)
+                  AND NOT EXISTS (SELECT 1 FROM user_license u WHERE u.license_id = l.id)
+                """)
+                .single(call().bind(address.trim()))
+                .map(row -> row.getInt("id"))
+                .all();
+    }
+
+    /**
+     * Gives a licence to an account, unless somebody already holds it.
+     *
+     * @return whether this account came to hold it
+     */
+    public boolean claim(int accountId, int licenseId) {
+        return query("""
+                INSERT INTO user_license (account_id, license_id) VALUES (?, ?)
+                ON CONFLICT (license_id) DO NOTHING
+                """)
+                .single(call().bind(accountId).bind(licenseId))
+                .insert()
+                .changed();
+    }
+
     public boolean addSharee(int licenseId, int accountId) {
         return query("""
                 INSERT INTO user_sub_license (account_id, license_id)

@@ -6,7 +6,6 @@
 package de.chojo.lyna.data.dao.licenses;
 
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.products.Product;
 import net.dv8tion.jda.api.entities.Member;
@@ -200,7 +199,11 @@ public class License {
 
     public boolean claim(Member member) {
         if (query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong()))
+                .single(call().bind(product.products()
+                                .licenseGuild()
+                                .guilds()
+                                .accountLinks()
+                                .accountIdForDiscord(member.getIdLong()))
                         .bind(id))
                 .insert()
                 .changed()) {
@@ -225,7 +228,11 @@ public class License {
         clearSubUsers();
         if (query(
                         "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT(license_id) DO UPDATE SET account_id = excluded.account_id")
-                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong()))
+                .single(call().bind(product.products()
+                                .licenseGuild()
+                                .guilds()
+                                .accountLinks()
+                                .accountIdForDiscord(member.getIdLong()))
                         .bind(id))
                 .insert()
                 .changed()) {
@@ -269,7 +276,12 @@ public class License {
 
     public boolean removeSubUser(Member member) {
         boolean changed = query("DELETE FROM user_sub_license WHERE license_id = ? AND account_id = ?")
-                .single(call().bind(id()).bind(Accounts.accountIdForDiscord(member.getIdLong())))
+                .single(call().bind(id())
+                        .bind(product.products()
+                                .licenseGuild()
+                                .guilds()
+                                .accountLinks()
+                                .accountIdForDiscord(member.getIdLong())))
                 .delete()
                 .changed();
         if (changed) {
@@ -285,7 +297,11 @@ public class License {
         log.info(
                 LogNotify.STATUS, "{} shared license for {} with {}", owner, product.name(), member.getEffectiveName());
         return query("INSERT INTO user_sub_license(account_id, license_id) VALUES (?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(Accounts.accountIdForDiscord(member.getIdLong()))
+                .single(call().bind(product.products()
+                                .licenseGuild()
+                                .guilds()
+                                .accountLinks()
+                                .accountIdForDiscord(member.getIdLong()))
                         .bind(id()))
                 .insert()
                 .changed();

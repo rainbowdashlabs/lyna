@@ -7,8 +7,8 @@ package de.chojo.lyna.mail;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Mailings;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
@@ -44,7 +44,10 @@ class MailHandlerTest {
         Mockito.when(mailings.byName(anyString())).thenReturn(Optional.empty());
         Conf configuration = TestConf.from(yaml);
         var handler = new MailHandler(
-                mailings, Mockito.mock(MailingService.class), Mockito.mock(Accounts.class), configuration);
+                mailings,
+                Mockito.mock(MailingService.class),
+                Mockito.mock(PurchaseCollectionService.class),
+                configuration);
         handler.accept(receipt(from, forwardedBy));
         return mailings;
     }

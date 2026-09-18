@@ -10,12 +10,12 @@ import com.google.common.cache.CacheBuilder;
 import de.chojo.jdautil.consumer.ThrowingConsumer;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Mailings;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.licenses.LicenseSource;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import jakarta.mail.Message;
 import jakarta.mail.internet.InternetAddress;
 import org.slf4j.Logger;
@@ -29,16 +29,17 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
     private final Mailings mailings;
     private static final Logger log = getLogger(MailHandler.class);
     private final MailingService mailingService;
-    private final Accounts accounts;
+    private final PurchaseCollectionService purchases;
     private final Conf configuration;
 
     private final Cache<String, String> cache =
             CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
-    public MailHandler(Mailings mailings, MailingService mailingService, Accounts accounts, Conf configuration) {
+    public MailHandler(
+            Mailings mailings, MailingService mailingService, PurchaseCollectionService purchases, Conf configuration) {
         this.mailings = mailings;
         this.mailingService = mailingService;
-        this.accounts = accounts;
+        this.purchases = purchases;
         this.configuration = configuration;
     }
 
@@ -120,7 +121,8 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
         Optional<License> license =
                 mailing.product().createLicense(parsed.mail().get(), LicenseSource.MAIL);
         license.get().grantAccess(ReleaseType.STABLE);
-        boolean handedOver = accounts.handOver(license.get().id(), parsed.mail().get());
+        boolean handedOver =
+                purchases.handOver(license.get().id(), parsed.mail().get());
         Mail mail = MailCreator.createLicenseMessage(
                 mailingService.renderer(),
                 mailing,

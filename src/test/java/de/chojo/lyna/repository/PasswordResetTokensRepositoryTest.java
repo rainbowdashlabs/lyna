@@ -5,8 +5,8 @@
  */
 package de.chojo.lyna.repository;
 
-import de.chojo.lyna.data.access.PasswordResetTokens;
-import de.chojo.lyna.data.dao.account.Account;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,13 +25,13 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("password_reset_token", "account_identity", "account");
-        account = accounts.create("reset@example.invalid", "hash");
+        account = accountService.register("reset@example.invalid", "hash");
     }
 
     @Test
     @DisplayName("An issued token names the account it was issued for")
     void issueAndConsume() {
-        PasswordResetTokens.Issued issued =
+        PasswordResetTokenRepository.Issued issued =
                 passwordResetTokens.issue(account.id(), Instant.now().plus(Duration.ofHours(1)));
 
         assertEquals(64, issued.token().length());
@@ -41,7 +41,7 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A token works once and is spent afterwards")
     void tokenIsSingleUse() {
-        PasswordResetTokens.Issued issued =
+        PasswordResetTokenRepository.Issued issued =
                 passwordResetTokens.issue(account.id(), Instant.now().plus(Duration.ofHours(1)));
 
         assertTrue(passwordResetTokens.consume(issued.token()).isPresent());
@@ -51,7 +51,7 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A token past its expiry is refused and stays unspent")
     void expiredTokenIsRefused() {
-        PasswordResetTokens.Issued issued =
+        PasswordResetTokenRepository.Issued issued =
                 passwordResetTokens.issue(account.id(), Instant.now().minus(Duration.ofSeconds(1)));
 
         assertTrue(passwordResetTokens.consume(issued.token()).isEmpty());
@@ -66,9 +66,9 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Asking for a second token takes the first one away")
     void reissueReplacesTheOutstandingToken() {
-        PasswordResetTokens.Issued first =
+        PasswordResetTokenRepository.Issued first =
                 passwordResetTokens.issue(account.id(), Instant.now().plus(Duration.ofHours(1)));
-        PasswordResetTokens.Issued second =
+        PasswordResetTokenRepository.Issued second =
                 passwordResetTokens.issue(account.id(), Instant.now().plus(Duration.ofHours(1)));
 
         assertNotEquals(first.token(), second.token());
@@ -79,8 +79,8 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Pruning drops the tokens that can no longer be redeemed")
     void pruneRemovesExpiredOnly() {
-        Account other = accounts.create("other-reset@example.invalid", "hash");
-        PasswordResetTokens.Issued live =
+        Account other = accountService.register("other-reset@example.invalid", "hash");
+        PasswordResetTokenRepository.Issued live =
                 passwordResetTokens.issue(account.id(), Instant.now().plus(Duration.ofHours(1)));
         passwordResetTokens.issue(other.id(), Instant.now().minus(Duration.ofHours(1)));
 
@@ -92,7 +92,7 @@ class PasswordResetTokensRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Deleting an account takes its outstanding reset token with it")
     void deletingAccountRemovesToken() {
-        PasswordResetTokens.Issued issued =
+        PasswordResetTokenRepository.Issued issued =
                 passwordResetTokens.issue(account.id(), Instant.now().plus(Duration.ofHours(1)));
 
         accounts.delete(account.id());

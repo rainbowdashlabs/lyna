@@ -7,7 +7,6 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.licenses.License;
@@ -67,7 +66,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
 
         private boolean stillEntitled(long discordId, int productId) {
             return accountLicenses
-                    .entitledProductIds(Accounts.accountIdForDiscord(discordId))
+                    .entitledProductIds(accountLinks.accountIdForDiscord(discordId))
                     .contains(productId);
         }
     }
@@ -86,7 +85,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         roles = new RecordingRoleSync();
 
         Conf configuration = TestConf.defaults();
-        Guilds guilds = new Guilds(Mockito.mock(NexusRest.class), configuration);
+        Guilds guilds = new Guilds(Mockito.mock(NexusRest.class), configuration, accountLinks);
         guilds.roles(roles);
         licenseGuild = guilds.guild(GUILD);
 
@@ -100,9 +99,9 @@ class RoleSyncServiceTest extends RepositoryTestBase {
                     VALUES (%d, 'owner@example.invalid', 'ROLE-KEY') RETURNING id
                     """.formatted(productId));
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, Accounts.accountIdForDiscord(OWNER), licenseId));
+                    .formatted(schemaName, accountLinks.accountIdForDiscord(OWNER), licenseId));
             statement.execute("INSERT INTO %s.user_sub_license (account_id, license_id) VALUES (%d, %d)"
-                    .formatted(schemaName, Accounts.accountIdForDiscord(SHAREE), licenseId));
+                    .formatted(schemaName, accountLinks.accountIdForDiscord(SHAREE), licenseId));
         }
     }
 
@@ -141,7 +140,8 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         license().clearSubUsers();
 
         assertEquals(0, countRows("user_sub_license"));
-        assertTrue(accountLicenses.shared(Accounts.accountIdForDiscord(SHAREE)).isEmpty());
+        assertTrue(
+                accountLicenses.shared(accountLinks.accountIdForDiscord(SHAREE)).isEmpty());
     }
 
     @Test
@@ -176,10 +176,10 @@ class RoleSyncServiceTest extends RepositoryTestBase {
         license().clearSubUsers();
 
         assertTrue(accountLicenses
-                .entitledProductIds(Accounts.accountIdForDiscord(OWNER))
+                .entitledProductIds(accountLinks.accountIdForDiscord(OWNER))
                 .contains(license().product().id()));
         assertTrue(accountLicenses
-                .entitledProductIds(Accounts.accountIdForDiscord(SHAREE))
+                .entitledProductIds(accountLinks.accountIdForDiscord(SHAREE))
                 .isEmpty());
     }
 
@@ -187,7 +187,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @DisplayName("Without a gateway nothing is asked of Discord, and the rows still go")
     void withoutAGatewayTheRowsStillGo() throws SQLException {
         Conf configuration = TestConf.defaults();
-        Guilds botless = new Guilds(Mockito.mock(NexusRest.class), configuration);
+        Guilds botless = new Guilds(Mockito.mock(NexusRest.class), configuration, accountLinks);
         assertFalse(botless.roles() == roles);
 
         botless.guild(GUILD).licenses().byId(licenseId).orElseThrow().delete();
@@ -199,8 +199,8 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A sharee with no Discord is listed too, so nothing under-reports the shares")
     void shareesIncludeWebOnlyHolders() {
-        var webOnly = accounts.create("web-only@example.invalid", "hash");
-        accounts.setUsername(webOnly.id(), "ada");
+        var webOnly = accountService.register("web-only@example.invalid", "hash");
+        usernameService.setUsername(webOnly.id(), "ada");
         accountLicenses.addSharee(licenseId, webOnly.id());
 
         var sharees = license().sharees();
@@ -219,7 +219,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     void shareCountCoversEverybody() {
         assertEquals(1, license().shareCount());
 
-        var webOnly = accounts.create("counted@example.invalid", "hash");
+        var webOnly = accountService.register("counted@example.invalid", "hash");
         accountLicenses.addSharee(licenseId, webOnly.id());
         assertEquals(2, license().shareCount());
 
@@ -233,7 +233,7 @@ class RoleSyncServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A sharee nobody has named is listed by something, rather than by nothing")
     void unnamedShareeStillListed() {
-        var unnamed = accounts.create("unnamed@example.invalid", "hash");
+        var unnamed = accountService.register("unnamed@example.invalid", "hash");
         accountLicenses.addSharee(licenseId, unnamed.id());
 
         var web = license().sharees().stream()

@@ -11,6 +11,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.data.access.Mailings;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.mail.MailingService;
 import jakarta.mail.Message;
 import org.junit.jupiter.api.AfterEach;
@@ -51,7 +52,7 @@ class MailingServiceTest {
         service = new MailingService(
                 Mockito.mock(Threading.class),
                 Mockito.mock(Mailings.class),
-                Mockito.mock(de.chojo.lyna.data.access.Accounts.class),
+                Mockito.mock(PurchaseCollectionService.class),
                 configuration());
     }
 

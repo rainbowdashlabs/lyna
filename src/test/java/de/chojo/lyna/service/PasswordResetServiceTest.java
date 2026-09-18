@@ -6,8 +6,8 @@
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.auth.PasswordHasher;
-import de.chojo.lyna.data.access.PasswordResetTokens;
-import de.chojo.lyna.data.dao.account.Account;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +32,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("password_reset_token", "account_session", "account_identity", "account");
-        account = accounts.create("forgetful@example.invalid", HASHER.hash("forgotten"));
+        account = accountService.register("forgetful@example.invalid", HASHER.hash("forgotten"));
     }
 
     /**
@@ -42,7 +42,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
         return accounts.findByEmail(email)
                 .map(found ->
                         passwordResetTokens.issue(found.id(), Instant.now().plus(Duration.ofHours(1))))
-                .map(PasswordResetTokens.Issued::token);
+                .map(PasswordResetTokenRepository.Issued::token);
     }
 
     /**
@@ -97,7 +97,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An expired link is refused and leaves the password alone")
     void expiredLinkIsRefused() {
-        PasswordResetTokens.Issued issued =
+        PasswordResetTokenRepository.Issued issued =
                 passwordResetTokens.issue(account.id(), Instant.now().minus(Duration.ofMinutes(1)));
 
         assertFalse(confirmReset(issued.token(), "too late"));
@@ -114,7 +114,7 @@ class PasswordResetServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("An account that never had a password can be given one through a reset")
     void resetGivesAPasswordToAnOAuthAccount() throws SQLException {
-        Account oauthOnly = accounts.create("discord-only@example.invalid", null);
+        Account oauthOnly = accountService.register("discord-only@example.invalid", null);
         assertFalse(oauthOnly.hasPassword());
 
         String token = requestReset("discord-only@example.invalid").orElseThrow();

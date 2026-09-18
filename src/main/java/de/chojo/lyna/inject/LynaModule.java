@@ -40,13 +40,8 @@ import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.core.Threading;
-import de.chojo.lyna.data.access.AccountEmails;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
@@ -54,12 +49,22 @@ import de.chojo.lyna.data.access.KioskProducts;
 import de.chojo.lyna.data.access.KoFiProducts;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.access.Mailings;
-import de.chojo.lyna.data.access.PasswordResetTokens;
 import de.chojo.lyna.data.access.Products;
-import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.data.roles.JdaRoleSync;
 import de.chojo.lyna.data.roles.RoleSync;
 import de.chojo.lyna.demo.DemoService;
+import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
+import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
+import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
@@ -244,18 +249,23 @@ public class LynaModule extends AbstractModule {
         bind(Proxy.class).in(Singleton.class);
         bind(Bot.class).in(Singleton.class);
 
-        bind(Accounts.class).in(Singleton.class);
-        bind(AccountEmails.class).in(Singleton.class);
-        bind(AccountLicenses.class).in(Singleton.class);
+        bind(AccountRepository.class).in(Singleton.class);
+        bind(AccountService.class).in(Singleton.class);
+        bind(AccountEmailService.class).in(Singleton.class);
+        bind(AccountLinkService.class).in(Singleton.class);
+        bind(UsernameService.class).in(Singleton.class);
+        bind(PurchaseCollectionService.class).in(Singleton.class);
+        bind(AccountEmailRepository.class).in(Singleton.class);
+        bind(AccountLicenseRepository.class).in(Singleton.class);
         bind(LicenseInvites.class).in(Singleton.class);
-        bind(AccountSessions.class).in(Singleton.class);
-        bind(RevokedJtis.class).in(Singleton.class);
+        bind(AccountSessionRepository.class).in(Singleton.class);
+        bind(RevokedJtiRepository.class).in(Singleton.class);
         bind(DownloadLog.class).in(Singleton.class);
         bind(DemoArtifacts.class).in(Singleton.class);
         bind(InstanceSettingsAccess.class).in(Singleton.class);
         bind(InstanceOperators.class).in(Singleton.class);
-        bind(PasswordResetTokens.class).in(Singleton.class);
-        bind(EmailVerificationTokens.class).in(Singleton.class);
+        bind(PasswordResetTokenRepository.class).in(Singleton.class);
+        bind(EmailVerificationTokenRepository.class).in(Singleton.class);
         bind(KioskProducts.class).in(Singleton.class);
         bind(PasswordHasher.class).in(Singleton.class);
     }
@@ -296,8 +306,8 @@ public class LynaModule extends AbstractModule {
      */
     @Provides
     @Singleton
-    Guilds guilds(NexusRest nexus, Conf conf, RoleSync roleSync) {
-        Guilds guilds = new Guilds(nexus, conf);
+    Guilds guilds(NexusRest nexus, Conf conf, RoleSync roleSync, AccountLinkService accountLinks) {
+        Guilds guilds = new Guilds(nexus, conf, accountLinks);
         guilds.roles(roleSync);
         return guilds;
     }

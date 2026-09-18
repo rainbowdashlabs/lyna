@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
 import com.google.common.hash.Hashing;
 
@@ -16,7 +16,7 @@ import java.util.Optional;
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
-public class PasswordResetTokens {
+public class PasswordResetTokenRepository {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     public Issued issue(int accountId, Instant expiresAt) {

@@ -6,7 +6,7 @@
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.data.dao.InstanceSettings;
-import de.chojo.lyna.data.dao.account.Account;
+import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,7 @@ class AppearanceServiceTest extends RepositoryTestBase {
     void freshAccount() throws SQLException {
         clear("account_identity", "account");
         instanceSettings.update(new InstanceSettings("lyna", true, List.of(), null));
-        account = accounts.create("appearance@example.invalid", "hash");
+        account = accountService.register("appearance@example.invalid", "hash");
     }
 
     /**

@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-package de.chojo.lyna.data.access;
+package de.chojo.lyna.feature.account.repository;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -11,7 +11,7 @@ import java.time.Instant;
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
-public class RevokedJtis {
+public class RevokedJtiRepository {
 
     public void revoke(String jti, Instant expiresAt) {
         query("""

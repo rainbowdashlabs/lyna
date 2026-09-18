@@ -5,8 +5,8 @@
  */
 package de.chojo.lyna.service;
 
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountLicense;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -80,9 +80,9 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     @DisplayName("Proving the address it was paid from hands the licence over")
     void provingThePayingAddressCollectsTheLicence() throws SQLException {
         int licenseId = purchase("paid-with@example.invalid");
-        Account account = accounts.create("signed-up-with@example.invalid", "hash");
+        Account account = accountService.register("signed-up-with@example.invalid", "hash");
 
-        List<Integer> collected = accounts.confirmEmail(account.id(), "paid-with@example.invalid");
+        List<Integer> collected = accountEmailService.confirm(account.id(), "paid-with@example.invalid");
 
         assertEquals(List.of(licenseId), collected);
         assertEquals(1, accountLicenses.owned(account.id()).size());
@@ -92,11 +92,12 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     @DisplayName("The address is matched however the shop capitalised it")
     void matchingIgnoresCase() throws SQLException {
         purchase("Mixed.Case@Example.invalid");
-        Account account = accounts.create("signed-up@example.invalid", "hash");
+        Account account = accountService.register("signed-up@example.invalid", "hash");
 
         assertEquals(
                 1,
-                accounts.confirmEmail(account.id(), "mixed.case@example.invalid")
+                accountEmailService
+                        .confirm(account.id(), "mixed.case@example.invalid")
                         .size());
     }
 
@@ -104,15 +105,15 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     @DisplayName("A licence somebody already holds stays theirs")
     void anAlreadyHeldLicenceIsNotTakenAway() throws SQLException {
         int licenseId = purchase("paid-with@example.invalid");
-        Account holder = accounts.create("holder@example.invalid", "hash");
+        Account holder = accountService.register("holder@example.invalid", "hash");
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
                     .formatted(schemaName, holder.id(), licenseId));
         }
 
-        Account latecomer = accounts.create("latecomer@example.invalid", "hash");
-        List<Integer> collected = accounts.confirmEmail(latecomer.id(), "paid-with@example.invalid");
+        Account latecomer = accountService.register("latecomer@example.invalid", "hash");
+        List<Integer> collected = accountEmailService.confirm(latecomer.id(), "paid-with@example.invalid");
 
         assertEquals(List.of(), collected);
         assertEquals(1, accountLicenses.owned(holder.id()).size());
@@ -125,9 +126,9 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
         int receipt = issued("MAIL", "buyer@example.invalid", "KEY-MAIL");
         int byHand = issued("MANUAL", "buyer@example.invalid", "KEY-MANUAL");
         int shop = purchase("buyer@example.invalid");
-        Account account = accounts.create("signed-up@example.invalid", "hash");
+        Account account = accountService.register("signed-up@example.invalid", "hash");
 
-        List<Integer> collected = accounts.confirmEmail(account.id(), "buyer@example.invalid");
+        List<Integer> collected = accountEmailService.confirm(account.id(), "buyer@example.invalid");
 
         assertTrue(collected.contains(shop), "the shop order");
         assertTrue(collected.contains(receipt), "the receipt parsed out of the mailbox");
@@ -137,11 +138,11 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Issuing a licence hands it to somebody who proved the address earlier")
     void handOverFindsAProvedAddress() throws SQLException {
-        Account account = accounts.create("buyer@example.invalid", "hash");
-        accounts.confirmEmail(account.id(), "buyer@example.invalid");
+        Account account = accountService.register("buyer@example.invalid", "hash");
+        accountEmailService.confirm(account.id(), "buyer@example.invalid");
         int receipt = issued("MAIL", "buyer@example.invalid", "KEY-MAIL");
 
-        assertTrue(accounts.handOver(receipt, "buyer@example.invalid"));
+        assertTrue(purchaseCollection.handOver(receipt, "buyer@example.invalid"));
         assertEquals(
                 List.of(receipt),
                 accountLicenses.owned(account.id()).stream()
@@ -152,12 +153,12 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Issuing against an address somebody only claimed hands over nothing")
     void handOverIgnoresAClaim() throws SQLException {
-        Account account = accounts.create("signed-up@example.invalid", "hash");
+        Account account = accountService.register("signed-up@example.invalid", "hash");
         accountEmails.add(account.id(), "buyer@example.invalid");
         int shop = purchase("buyer@example.invalid");
 
         assertFalse(
-                accounts.handOver(shop, "buyer@example.invalid"),
+                purchaseCollection.handOver(shop, "buyer@example.invalid"),
                 "claiming an address would otherwise be a way to take what was bought with it");
         assertTrue(accountLicenses.owned(account.id()).isEmpty());
     }
@@ -166,16 +167,16 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     @DisplayName("Issuing does not take a licence somebody already holds")
     void handOverDoesNotTake() throws SQLException {
         int shop = purchase("buyer@example.invalid");
-        Account holder = accounts.create("holder@example.invalid", "hash");
+        Account holder = accountService.register("holder@example.invalid", "hash");
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
                     .formatted(schemaName, holder.id(), shop));
         }
-        Account buyer = accounts.create("buyer@example.invalid", "hash");
-        accounts.confirmEmail(buyer.id(), "buyer@example.invalid");
+        Account buyer = accountService.register("buyer@example.invalid", "hash");
+        accountEmailService.confirm(buyer.id(), "buyer@example.invalid");
 
-        assertFalse(accounts.handOver(shop, "buyer@example.invalid"));
+        assertFalse(purchaseCollection.handOver(shop, "buyer@example.invalid"));
         assertEquals(1, accountLicenses.owned(holder.id()).size());
     }
 
@@ -196,7 +197,7 @@ class PurchaseCollectionServiceTest extends RepositoryTestBase {
     @DisplayName("Claiming the address is not enough - it has to be proved")
     void claimingAloneCollectsNothing() throws SQLException {
         purchase("paid-with@example.invalid");
-        Account account = accounts.create("signed-up@example.invalid", "hash");
+        Account account = accountService.register("signed-up@example.invalid", "hash");
 
         accountEmails.add(account.id(), "paid-with@example.invalid");
 

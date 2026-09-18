@@ -8,20 +8,24 @@ package de.chojo.lyna.demo;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DemoArtifacts;
 import de.chojo.lyna.data.access.DownloadLog;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.access.InstanceOperators;
 import de.chojo.lyna.data.access.LicenseInvites;
 import de.chojo.lyna.data.dao.LicenseGuild;
-import de.chojo.lyna.data.dao.account.Account;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
 import de.chojo.lyna.data.dao.downloadtype.DownloadType;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.Product;
+import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.service.AccountEmailService;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -53,8 +57,12 @@ public class DemoService {
     public static final String PASSWORD = "demo";
 
     private final Guilds guilds;
-    private final Accounts accounts;
-    private final AccountLicenses accountLicenses;
+    private final AccountRepository accounts;
+    private final UsernameService usernameService;
+    private final AccountLinkService accountLinkService;
+    private final AccountService accountService;
+    private final AccountEmailService accountEmails;
+    private final AccountLicenseRepository accountLicenses;
     private final LicenseInvites licenseInvites;
     private final DownloadLog downloadLog;
     private final InstanceOperators instanceOperators;
@@ -68,8 +76,12 @@ public class DemoService {
             Conf configuration,
             Gateway gateway,
             Guilds guilds,
-            Accounts accounts,
-            AccountLicenses accountLicenses,
+            AccountRepository accounts,
+            UsernameService usernameService,
+            AccountLinkService accountLinkService,
+            AccountService accountService,
+            AccountEmailService accountEmails,
+            AccountLicenseRepository accountLicenses,
             LicenseInvites licenseInvites,
             DownloadLog downloadLog,
             DemoArtifacts artifacts,
@@ -78,6 +90,10 @@ public class DemoService {
         this.gateway = gateway;
         this.guilds = guilds;
         this.accounts = accounts;
+        this.usernameService = usernameService;
+        this.accountLinkService = accountLinkService;
+        this.accountService = accountService;
+        this.accountEmails = accountEmails;
         this.accountLicenses = accountLicenses;
         this.licenseInvites = licenseInvites;
         this.downloadLog = downloadLog;
@@ -227,10 +243,10 @@ public class DemoService {
     private List<Account> seedAccounts(List<Member> members) {
         List<Account> cast = new ArrayList<>();
         for (int i = 0; i < Math.min(ROLES.length, members.size()); i++) {
-            Account account =
-                    accounts.create("demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
-            accounts.confirmEmail(account.id(), account.email());
-            accounts.link(
+            Account account = accountService.register(
+                    "demo-%s@example.invalid".formatted(ROLES[i]), passwordHasher.hash(PASSWORD));
+            accountEmails.confirm(account.id(), account.email());
+            accountLinkService.link(
                     account.id(),
                     members.get(i).getIdLong(),
                     AccountIdentity.Verification.OAUTH,
@@ -248,9 +264,9 @@ public class DemoService {
      * account gets a name when no provider is supplying one.
      */
     private Account seedWebOnlyAccount() {
-        Account account = accounts.create("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
-        accounts.confirmEmail(account.id(), account.email());
-        accounts.setUsername(account.id(), "webonly");
+        Account account = accountService.register("demo-web-only@example.invalid", passwordHasher.hash(PASSWORD));
+        accountEmails.confirm(account.id(), account.email());
+        usernameService.setUsername(account.id(), "webonly");
         artifacts.record(DemoArtifacts.ACCOUNT, Integer.toString(account.id()));
         return accounts.findById(account.id()).orElse(account);
     }
@@ -269,8 +285,7 @@ public class DemoService {
             Optional<License> licence = product.createLicense("demo-owner@example.invalid");
             if (licence.isEmpty()) continue;
             licence.get().grantAccess(ReleaseType.STABLE);
-            accountLicenses.addSharee(
-                    licence.get().id(), de.chojo.lyna.data.access.Accounts.accountIdForDiscord(sharee));
+            accountLicenses.addSharee(licence.get().id(), accountLinkService.accountIdForDiscord(sharee));
             seeded.accounts().stream()
                     .filter(account -> "demo-web-only@example.invalid".equals(account.email()))
                     .findFirst()
@@ -290,7 +305,7 @@ public class DemoService {
         de.chojo.sadu.queries.api.query.Query.query(
                         "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
                 .single(de.chojo.sadu.queries.api.call.Call.call()
-                        .bind(de.chojo.lyna.data.access.Accounts.accountIdForDiscord(discordId))
+                        .bind(accountLinkService.accountIdForDiscord(discordId))
                         .bind(licence.id()))
                 .insert();
     }

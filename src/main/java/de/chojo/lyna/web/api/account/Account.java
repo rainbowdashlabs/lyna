@@ -11,20 +11,22 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.auth.PasswordHasher;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.AccountEmails;
-import de.chojo.lyna.data.access.AccountLicenses;
-import de.chojo.lyna.data.access.AccountSessions;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.DownloadLog;
-import de.chojo.lyna.data.access.EmailVerificationTokens;
 import de.chojo.lyna.data.access.InstanceSettingsAccess;
 import de.chojo.lyna.data.access.LicenseInvites;
-import de.chojo.lyna.data.access.RevokedJtis;
 import de.chojo.lyna.data.dao.InstanceSettings;
-import de.chojo.lyna.data.dao.account.AccountIdentity;
-import de.chojo.lyna.data.dao.account.AccountLicense;
-import de.chojo.lyna.data.dao.account.AccountSession;
 import de.chojo.lyna.data.dao.account.DownloadLogEntry;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.entity.AccountLicense;
+import de.chojo.lyna.feature.account.entity.AccountSession;
+import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
+import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
+import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -51,16 +53,18 @@ public class Account {
     private static final Logger log = getLogger(Account.class);
 
     private final Auth auth;
-    private final Accounts accounts;
-    private final AccountLicenses licenses;
-    private final AccountEmails accountEmails;
+    private final AccountService accountService;
+    private final UsernameService usernameService;
+    private final AccountLinkService accountLinkService;
+    private final AccountLicenseRepository licenses;
+    private final AccountEmailRepository accountEmails;
     private final LicenseInvites invites;
     private final InstanceSettingsAccess instanceSettings;
     private final MailingService mailingService;
-    private final EmailVerificationTokens emailTokens;
+    private final EmailVerificationTokenRepository emailTokens;
     private final Conf configuration;
-    private final AccountSessions sessions;
-    private final RevokedJtis revokedJtis;
+    private final AccountSessionRepository sessions;
+    private final RevokedJtiRepository revokedJtis;
     private final DownloadLog downloadLog;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
@@ -69,21 +73,25 @@ public class Account {
     @Inject
     public Account(
             Auth auth,
-            Accounts accounts,
-            AccountLicenses licenses,
-            AccountEmails accountEmails,
+            AccountService accountService,
+            UsernameService usernameService,
+            AccountLinkService accountLinkService,
+            AccountLicenseRepository licenses,
+            AccountEmailRepository accountEmails,
             LicenseInvites invites,
             InstanceSettingsAccess instanceSettings,
             MailingService mailingService,
-            EmailVerificationTokens emailTokens,
+            EmailVerificationTokenRepository emailTokens,
             Conf configuration,
-            AccountSessions sessions,
-            RevokedJtis revokedJtis,
+            AccountSessionRepository sessions,
+            RevokedJtiRepository revokedJtis,
             DownloadLog downloadLog,
             PasswordHasher passwordHasher,
             JwtService jwtService) {
         this.auth = auth;
-        this.accounts = accounts;
+        this.accountService = accountService;
+        this.usernameService = usernameService;
+        this.accountLinkService = accountLinkService;
         this.licenses = licenses;
         this.accountEmails = accountEmails;
         this.invites = invites;
@@ -138,12 +146,12 @@ public class Account {
     private void overview(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
-        var acc = accounts.findById(session.get().accountId());
+        var acc = accountService.findById(session.get().accountId());
         if (acc.isEmpty()) {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
         }
-        var link = accounts.findLinkByAccountId(acc.get().id());
+        var link = accountLinkService.discordIdentity(acc.get().id());
         List<AccountSession> active = sessions.activeForAccount(acc.get().id());
         var recent = downloadLog.recentForAccount(acc.get().id(), 5);
         ctx.json(new Overview(
@@ -177,7 +185,7 @@ public class Account {
             ctx.status(HttpStatus.BAD_REQUEST).result("New password must be at least 8 characters");
             return;
         }
-        var acc = accounts.findById(session.get().accountId());
+        var acc = accountService.findById(session.get().accountId());
         if (acc.isEmpty()) {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
@@ -189,7 +197,7 @@ public class Account {
                 return;
             }
         }
-        accounts.setPasswordHash(acc.get().id(), passwordHasher.hash(body.newPassword()));
+        accountService.setPasswordHash(acc.get().id(), passwordHasher.hash(body.newPassword()));
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -237,7 +245,7 @@ public class Account {
     private void unlinkDiscord(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
-        accounts.unlink(session.get().accountId());
+        accountLinkService.unlink(session.get().accountId());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -251,7 +259,7 @@ public class Account {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return;
         }
-        var acc = accounts.findById(session.get().accountId());
+        var acc = accountService.findById(session.get().accountId());
         if (acc.isEmpty()) {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
@@ -261,7 +269,7 @@ public class Account {
             return;
         }
         sessions.deleteAllForAccount(acc.get().id());
-        accounts.delete(acc.get().id());
+        accountService.delete(acc.get().id());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -446,7 +454,7 @@ public class Account {
             ctx.status(HttpStatus.BAD_REQUEST).result("Malformed request");
             return;
         }
-        var acc = accounts.findById(session.get().accountId());
+        var acc = accountService.findById(session.get().accountId());
         if (acc.isEmpty()) {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
@@ -465,7 +473,7 @@ public class Account {
         String darkMode =
                 body.darkMode() == null ? acc.get().darkMode() : body.darkMode().isBlank() ? null : body.darkMode();
 
-        accounts.setAppearance(acc.get().id(), theme, darkMode);
+        accountService.setAppearance(acc.get().id(), theme, darkMode);
         ctx.json(new Appearance(theme, darkMode));
     }
 
@@ -495,7 +503,7 @@ public class Account {
             return;
         }
         try {
-            accounts.setUsername(session.get().accountId(), body == null ? null : body.username());
+            usernameService.setUsername(session.get().accountId(), body == null ? null : body.username());
         } catch (IllegalArgumentException e) {
             ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
             return;
@@ -503,7 +511,8 @@ public class Account {
             ctx.status(HttpStatus.CONFLICT).result(e.getMessage());
             return;
         }
-        accounts.findById(session.get().accountId())
+        accountService
+                .findById(session.get().accountId())
                 .ifPresent(account -> ctx.json(new Username(account.displayName())));
     }
 
@@ -539,8 +548,9 @@ public class Account {
     private List<ShareeView> shareesOf(int licenseId) {
         List<ShareeView> views = new java.util.ArrayList<>();
         for (int shareeId : licenses.sharees(licenseId)) {
-            String name = accounts.findById(shareeId)
-                    .map(de.chojo.lyna.data.dao.account.Account::displayName)
+            String name = accountService
+                    .findById(shareeId)
+                    .map(de.chojo.lyna.feature.account.entity.Account::displayName)
                     .orElse(null);
             views.add(new ShareeView("a" + shareeId, name == null ? "a" + shareeId : name, false));
         }
@@ -578,8 +588,8 @@ public class Account {
             return;
         }
 
-        Optional<de.chojo.lyna.data.dao.account.Account> target =
-                subject.contains("@") ? accounts.findByEmail(subject) : accounts.findByUsername(subject);
+        Optional<de.chojo.lyna.feature.account.entity.Account> target =
+                subject.contains("@") ? accountService.findByEmail(subject) : accountService.findByUsername(subject);
 
         if (target.isEmpty() && !subject.contains("@")) {
             ctx.status(HttpStatus.NOT_FOUND).result("Nobody here goes by that name");
@@ -633,7 +643,7 @@ public class Account {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        var sharee = accounts.findById(shareeId);
+        var sharee = accountService.findById(shareeId);
         licenses.removeSharee(owned.id(), shareeId);
         sharee.ifPresent(account -> tellSharee("licence-revoked", account, owned));
         ctx.status(HttpStatus.NO_CONTENT);
@@ -649,11 +659,13 @@ public class Account {
      * <p>Best effort on purpose. The share is a database row and has already been written; a mail
      * server that will not take the message is not a reason to tell the caller their share failed.
      */
-    private void tellSharee(String template, de.chojo.lyna.data.dao.account.Account sharee, AccountLicense license) {
+    private void tellSharee(
+            String template, de.chojo.lyna.feature.account.entity.Account sharee, AccountLicense license) {
         try {
             if (sharee.email() == null) return;
-            String owner = accounts.findById(license.ownerAccountId())
-                    .map(de.chojo.lyna.data.dao.account.Account::displayName)
+            String owner = accountService
+                    .findById(license.ownerAccountId())
+                    .map(de.chojo.lyna.feature.account.entity.Account::displayName)
                     .orElse("the owner");
             var renderer = mailingService.renderer();
             var values = java.util.Map.<String, Object>of(

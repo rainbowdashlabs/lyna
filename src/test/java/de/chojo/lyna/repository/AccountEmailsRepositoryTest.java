@@ -5,7 +5,7 @@
  */
 package de.chojo.lyna.repository;
 
-import de.chojo.lyna.data.dao.account.Account;
+import de.chojo.lyna.feature.account.entity.Account;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
     @BeforeEach
     void freshAccount() throws SQLException {
         clear("account_email", "account_identity", "account");
-        account = accounts.create("first@example.invalid", "hash");
+        account = accountService.register("first@example.invalid", "hash");
     }
 
     @Test
@@ -66,7 +66,7 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("An address an account is written to belongs to it, whatever case it is typed in")
     void anAddressBelongsToOneAccount() {
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
 
         assertThrows(IllegalStateException.class, () -> accountEmails.add(other.id(), "FIRST@example.invalid"));
         assertEquals(
@@ -82,7 +82,7 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Two accounts may both claim an address nobody has proved")
     void claimsDoNotReserve() {
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
 
         accountEmails.add(account.id(), "contested@example.invalid");
         accountEmails.add(other.id(), "contested@example.invalid");
@@ -93,7 +93,7 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Proving a contested address settles it, and the other claim is refused")
     void provingSettlesAContestedAddress() {
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
         accountEmails.add(account.id(), "contested@example.invalid");
         accountEmails.add(other.id(), "contested@example.invalid");
 
@@ -164,7 +164,7 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("One account cannot give up another's address")
     void cannotRemoveSomebodyElsesAddress() {
-        Account other = accounts.create("other@example.invalid", "hash");
+        Account other = accountService.register("other@example.invalid", "hash");
         accountEmails.add(other.id(), "theirs@example.invalid");
 
         assertFalse(accountEmails.remove(account.id(), "theirs@example.invalid"));

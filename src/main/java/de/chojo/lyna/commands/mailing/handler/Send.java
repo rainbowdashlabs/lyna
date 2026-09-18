@@ -8,12 +8,12 @@ package de.chojo.lyna.commands.mailing.handler;
 import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.configuration.Conf;
-import de.chojo.lyna.data.access.Accounts;
 import de.chojo.lyna.data.access.Guilds;
 import de.chojo.lyna.data.dao.LicenseGuild;
 import de.chojo.lyna.data.dao.downloadtype.ReleaseType;
 import de.chojo.lyna.data.dao.licenses.License;
 import de.chojo.lyna.data.dao.products.mailings.Mailing;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
@@ -29,13 +29,13 @@ public class Send implements SlashHandler {
     private final MailingService mailingService;
     private final Conf configuration;
     private final Guilds guilds;
-    private final Accounts accounts;
+    private final PurchaseCollectionService purchases;
 
-    public Send(MailingService mailingService, Conf configuration, Guilds guilds, Accounts accounts) {
+    public Send(MailingService mailingService, Conf configuration, Guilds guilds, PurchaseCollectionService purchases) {
         this.mailingService = mailingService;
         this.configuration = configuration;
         this.guilds = guilds;
-        this.accounts = accounts;
+        this.purchases = purchases;
     }
 
     @Override
@@ -68,7 +68,7 @@ public class Send implements SlashHandler {
         license.get().grantAccess(ReleaseType.STABLE);
 
         Mailing mailing = optMailing.get();
-        boolean handedOver = accounts.handOver(license.get().id(), address);
+        boolean handedOver = purchases.handOver(license.get().id(), address);
         Mail mail = MailCreator.createLicenseMessage(
                 mailingService.renderer(),
                 mailing,
