@@ -61,6 +61,13 @@ public class AccountLinkService {
     /**
      * Forgets the Discord identity, which is the one the interface offers to unlink.
      */
+    /**
+     * @return what Discord knows about this account, if it is linked there
+     */
+    public Optional<AccountIdentity> discordIdentity(int accountId) {
+        return accounts.findIdentity(accountId, AccountIdentity.DISCORD);
+    }
+
     public void unlink(int accountId) {
         unlink(accountId, AccountIdentity.DISCORD);
     }
