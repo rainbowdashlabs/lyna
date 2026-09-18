@@ -771,8 +771,8 @@ public class Admin {
     }
 
     /**
-     * @param shareeCount everybody holding a place on the licence, including invites nobody has
-     *                    answered and sharees who have no Discord id
+     * @param sharees everybody holding a place on the licence, including invites nobody has answered
+     *                and sharees who have no Discord id
      */
     public record LicenseDetail(int id, int productId, String productName, String identifier, String key,
                                 long owner, List<String> sharees) {

@@ -61,8 +61,6 @@ public class MailingService {
      * succeeds. Retrying here holds up the rest of the startup, so a mailbox that is briefly away
      * used to take the bot and the HTTP API down with it; the scheduled poll recovers on its own
      * once the mailbox answers again.
-     *
-     * @return the service, polling unless mail is switched off
      */
     public void start() {
         if (!configuration.main().mailing().enabled()) {
