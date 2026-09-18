@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 25
       - name: Build with Gradle
         run: ./gradlew --build-cache build -x test
 
@@ -38,7 +38,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 25
       - name: Run the tests
         run: ./gradlew --build-cache ${{ matrix.kind }}
       - name: Upload the report
