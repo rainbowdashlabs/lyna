@@ -1,2 +1,0 @@
-ALTER TABLE lyna.mail_products
-	ADD COLUMN IF NOT EXISTS blocks JSONB NULL;
