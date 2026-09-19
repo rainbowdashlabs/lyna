@@ -426,8 +426,6 @@
     },
     "appFooter": {
       "source": "Source",
-      "discord": "Discord",
-      "addTheBot": "Add the bot",
       "faq": "FAQ",
       "terms": "Terms",
       "license": "AGPL-3.0-only"
@@ -468,6 +466,12 @@
       "noneYet": "Nothing has been released yet.",
       "showMore": "Show more",
       "licenseToDownload": "Downloading these needs a license for this plugin."
+    },
+    "supportDiscordBand": {
+      "support": "Support",
+      "needHelp": "Need help?",
+      "whereToAsk": "Questions, a bug, or a license that will not work: ask on the support Discord.",
+      "join": "Join the support Discord"
     }
   }
 }

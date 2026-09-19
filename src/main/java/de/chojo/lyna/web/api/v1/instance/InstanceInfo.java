@@ -36,7 +36,6 @@ public class InstanceInfo {
                 version(),
                 blankToNull(links.website()),
                 blankToNull(links.support()),
-                blankToNull(links.invite()),
                 blankToNull(links.faq()),
                 blankToNull(links.tos())));
     }
@@ -60,7 +59,6 @@ public class InstanceInfo {
     /**
      * @param version what this instance is running
      * @param discord where to find the people who run it, when they said
-     * @param invite  where to add the bot, when there is a bot to add
      */
-    private record Info(String version, String website, String discord, String invite, String faq, String terms) {}
+    private record Info(String version, String website, String discord, String faq, String terms) {}
 }
