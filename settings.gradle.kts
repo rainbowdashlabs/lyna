@@ -41,7 +41,7 @@ dependencyResolutionManagement {
             library("junit-platform", "org.junit.platform:junit-platform-launcher:6.1.3")
             bundle("junit", listOf("junit-jupiter", "junit-params"))
             library("mockito", "org.mockito:mockito-core:5.+")
-            library("greenmail", "com.icegreen:greenmail:2.1.9")
+            library("greenmail", "com.icegreen:greenmail:2.1.14")
 
             version("testcontainers", "2.0.5")
             library("testcontainers-core", "org.testcontainers", "testcontainers").versionRef("testcontainers")
