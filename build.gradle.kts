@@ -104,6 +104,7 @@ fun testForks(): Int {
 tasks {
     withType<Test>().configureEach {
         environment("TESTCONTAINERS_RYUK_DISABLED", "true")
+        systemProperty("java.awt.headless", "true")
     }
 
     processResources {

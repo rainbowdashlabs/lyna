@@ -22,6 +22,7 @@ public class Lyna {
     private static Lyna instance;
 
     public static void main(String[] args) throws SQLException, IOException, InterruptedException {
+        System.setProperty("java.awt.headless", "true");
         instance = new Lyna();
         instance.init();
     }
