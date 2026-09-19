@@ -6,11 +6,9 @@
 package de.chojo.lyna.feature.download.entity;
 
 import de.chojo.lyna.feature.download.repository.DownloadRepository;
+import de.chojo.lyna.feature.download.service.NexusAssetCache;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.nexus.entities.AssetXO;
-import de.chojo.nexus.requests.v1.search.Direction;
-import de.chojo.nexus.requests.v1.search.Sort;
-import de.chojo.nexus.requests.v1.search.assets.SearchRequest;
 import de.chojo.sadu.mapper.wrapper.Row;
 import de.chojo.sadu.queries.api.call.Call;
 import org.jetbrains.annotations.NotNull;
@@ -123,51 +121,22 @@ public class Download implements Comparable<Download> {
     }
 
     public List<AssetXO> latestAssets() {
-        SearchRequest jar = product.nexus()
-                .v1()
-                .search()
-                .assets()
-                .search()
-                .repository(repository)
-                .mavenGroupId(groupId)
-                .mavenArtifactId(artifactId)
-                .mavenExtension("jar")
-                // We order by version
-                .sort(Sort.VERSION)
-                // Newest first
-                .direction(Direction.DESC);
-        if (classifier != null) {
-            jar.mavenClassifier(classifier);
-        }
-        return jar.complete().items().stream()
-                // We can not filter for null classifiers, so we do it afterward
-                .filter(e -> classifier != null || e.maven2().classifier() == null)
-                .toList();
+        return assets().latest(coordinates());
     }
 
     public Optional<AssetXO> assetByVersion(String version) {
-        if ("latest".equalsIgnoreCase(version)) return latestAssets().stream().findFirst();
-        SearchRequest jar = product.nexus()
-                .v1()
-                .search()
-                .assets()
-                .search()
-                .repository(repository)
-                .mavenGroupId(groupId)
-                .mavenArtifactId(artifactId)
-                .mavenExtension("jar")
-                // We order by version
-                .sort(Sort.VERSION)
-                // Newest first
-                .direction(Direction.DESC)
-                .mavenBaseVersion(version);
-        if (classifier != null) {
-            jar.mavenClassifier(classifier);
-        }
-        return jar.complete().items().stream()
-                // We can not filter for null classifiers, so we do it afterward
-                .filter(e -> classifier != null || e.maven2().classifier() == null)
-                .findFirst();
+        return assets().byVersion(coordinates(), version);
+    }
+
+    /**
+     * Where this download's jars live in Nexus.
+     */
+    public NexusAssetCache.Coordinates coordinates() {
+        return new NexusAssetCache.Coordinates(repository, groupId, artifactId, classifier);
+    }
+
+    private NexusAssetCache assets() {
+        return product.products().licenseGuild().guilds().assets();
     }
 
     public void downloaded(String version) {

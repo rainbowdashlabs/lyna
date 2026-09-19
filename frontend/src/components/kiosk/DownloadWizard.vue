@@ -23,6 +23,8 @@ const {t} = useI18n()
 
 const props = defineProps<{
     product: KioskProduct | null
+    /** A version already chosen elsewhere, such as the product page's version list: the wizard opens past it. */
+    start?: {releaseType: ReleaseTypeEntry, version: VersionEntry} | null
 }>()
 
 const emit = defineEmits<{
@@ -84,9 +86,15 @@ watch(() => props.product, async next => {
     needsLogin.value = false
     loading.value = true
     try {
-        releaseTypes.value = await listReleaseTypes(next.id)
-        // Nothing to choose between is not a question worth asking, which is the shortcut the bot takes.
-        if (releaseTypes.value.length === 1) await pickReleaseType(releaseTypes.value[0]!)
+        releaseTypes.value = (await listReleaseTypes(next.id)).filter(releaseType => releaseType.downloadable)
+        if (props.start) {
+            selectedReleaseType.value = props.start.releaseType
+            versions.value = [props.start.version]
+            await pickVersion(props.start.version)
+        } else if (releaseTypes.value.length === 1) {
+            // Nothing to choose between is not a question worth asking, which is the shortcut the bot takes.
+            await pickReleaseType(releaseTypes.value[0]!)
+        }
     } catch (e) {
         report(e, 'Could not load the release types.')
     } finally {
@@ -152,7 +160,8 @@ async function pickDownloadType(downloadTypeId: number) {
  * the version list is where the wizard opens and where leaving it starts.
  */
 const atStart = computed(() => step.value === 'releaseType'
-    || (step.value === 'version' && releaseTypes.value.length <= 1))
+    || (step.value === 'version' && releaseTypes.value.length <= 1)
+    || (props.start != null && (step.value === 'downloadType' || (step.value === 'confirm' && downloadTypes.value.length <= 1))))
 
 function back() {
     if (atStart.value) emit('close')

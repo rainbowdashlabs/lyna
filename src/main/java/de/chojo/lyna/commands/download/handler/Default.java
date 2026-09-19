@@ -14,6 +14,7 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.service.DownloadFilename;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
@@ -227,6 +228,7 @@ public class Default implements SlashHandler {
             Member member,
             EntryContext<StringSelectInteractionEvent, StringSelectMenu> ctx) {
         AssetXO asset = assetVersion.asset();
+        String filename = DownloadFilename.of(assetVersion.download(), asset);
         String url = proxy.registerAsset(new AssetDownload(
                 asset.id(),
                 () -> assetVersion.download().downloaded(asset.maven2().version()),
@@ -237,16 +239,12 @@ public class Default implements SlashHandler {
                 "license",
                 null,
                 member.getIdLong(),
-                null));
+                null,
+                filename));
         ctx.container()
                 .entries()
                 .add(MenuEntry.of(Button.of(ButtonStyle.LINK, url, "Download", Emoji.fromUnicode("⬇️")), c -> {}));
         ctx.entry().hidden();
-        String filename = "%s-%s.%s"
-                .formatted(
-                        asset.maven2().artifactId(),
-                        asset.maven2().version(),
-                        asset.maven2().extension());
 
         MessageEmbed build = new EmbedBuilder()
                 .setTitle("📦 " + filename)

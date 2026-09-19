@@ -456,6 +456,18 @@
     "productAdminRow": {
       "edit": "Edit",
       "done": "Done"
+    },
+    "productVersions": {
+      "versions": "Versions",
+      "releaseType": {
+        "STABLE": "Stable",
+        "DEV": "Dev",
+        "SNAPSHOT": "Snapshot"
+      },
+      "couldNotLoad": "The versions could not be loaded.",
+      "noneYet": "Nothing has been released yet.",
+      "showMore": "Show more",
+      "licenseToDownload": "Downloading these needs a license for this plugin."
     }
   }
 }

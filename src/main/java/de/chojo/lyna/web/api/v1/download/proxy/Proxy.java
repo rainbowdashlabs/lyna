@@ -100,11 +100,13 @@ public class Proxy {
                 }
 
                 var asset = nexus.v1().assets().get(download.assetId()).complete();
-                String filename = "%s-%s.%s"
-                        .formatted(
-                                asset.maven2().artifactId(),
-                                asset.maven2().version(),
-                                asset.maven2().extension());
+                String filename = download.filename() != null
+                        ? download.filename()
+                        : "%s-%s.%s"
+                                .formatted(
+                                        asset.maven2().artifactId(),
+                                        asset.maven2().version(),
+                                        asset.maven2().extension());
 
                 download.postDownload().run();
 

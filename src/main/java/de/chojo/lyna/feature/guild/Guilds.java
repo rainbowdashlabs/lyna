@@ -9,6 +9,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.download.service.NexusAssetCache;
 import de.chojo.lyna.feature.guild.roles.RoleSync;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
@@ -32,11 +33,21 @@ public class Guilds {
     private volatile RoleSync roles = RoleSync.NOOP;
 
     private final AccountLinkService accountLinks;
+    private final NexusAssetCache assets;
 
     public Guilds(NexusRest nexus, Conf configuration, AccountLinkService accountLinks) {
         this.nexus = nexus;
+        this.assets = new NexusAssetCache(nexus);
         this.configuration = configuration;
         this.accountLinks = accountLinks;
+    }
+
+    /**
+     * The jars Nexus holds, shared by every guild so a lookup made for one product page serves the
+     * next.
+     */
+    public NexusAssetCache assets() {
+        return assets;
     }
 
     /**

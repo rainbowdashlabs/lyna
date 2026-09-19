@@ -7,7 +7,7 @@
 import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
-import {getProduct, type KioskProductDetail} from '~/api/kiosk'
+import {getProduct, type KioskProductDetail, type ReleaseTypeEntry, type VersionEntry} from '~/api/kiosk'
 import {useSession} from '~/composables/useSession'
 
 const {t} = useI18n()
@@ -18,6 +18,12 @@ const product = ref<KioskProductDetail | null>(null)
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 const wizardOpen = ref(false)
+const wizardStart = ref<{releaseType: ReleaseTypeEntry, version: VersionEntry} | null>(null)
+
+function openWizard(start: {releaseType: ReleaseTypeEntry, version: VersionEntry} | null = null) {
+  wizardStart.value = start
+  wizardOpen.value = true
+}
 
 const signedIn = computed(() => account.value !== null)
 
@@ -62,12 +68,19 @@ onMounted(load)
       </template>
     </TabStrip>
 
-    <section class="mx-auto max-w-4xl px-4 py-6">
+    <section class="mx-auto max-w-5xl px-4 py-6">
       <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
-        <div v-if="product" class="space-y-6">
-          <ProductDetailHeader :product="product"/>
-          <ProductDescription :markdown="product.description"/>
-          <ProductDetailActions :product="product" :signed-in="signedIn" @download="wizardOpen = true"/>
+        <div v-if="product" class="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem]">
+          <div class="space-y-6">
+            <ProductDetailHeader :product="product"/>
+            <ProductDescription :markdown="product.description"/>
+            <ProductDetailActions :product="product" :signed-in="signedIn" @download="openWizard()"/>
+          </div>
+          <ProductVersions
+              :product="product"
+              class="md:border-l md:border-border-light md:pl-6 md:dark:border-border-dark"
+              @download="(releaseType, version) => openWizard({releaseType, version})"
+          />
         </div>
       </AsyncSection>
     </section>
@@ -76,6 +89,6 @@ onMounted(load)
 
     <AppFooter/>
 
-    <DownloadWizard v-if="wizardOpen && product" :product="product" @close="wizardOpen = false"/>
+    <DownloadWizard v-if="wizardOpen && product" :product="product" :start="wizardStart" @close="wizardOpen = false"/>
   </div>
 </template>
