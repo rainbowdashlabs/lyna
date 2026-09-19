@@ -29,6 +29,7 @@ dependencies {
 
     // wiring
     implementation(libs.guice)
+    implementation(libs.caffeine)
 
     // configuration
     implementation(libs.bundles.config)
