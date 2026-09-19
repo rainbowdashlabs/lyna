@@ -214,6 +214,11 @@
         "couldNotLoad": "Could not load this product.",
         "notAvailableHere": "This one is not offered here."
       }
+    },
+    "auth-discord": {
+      "signingIn": "Signing in with Discord",
+      "nothingToSignInWith": "Discord sent you back without a session.",
+      "backToSignIn": "Back to sign-in"
     }
   },
   "layout": {

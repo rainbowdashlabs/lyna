@@ -31,6 +31,7 @@ export default defineNuxtConfig({
         '/account/**': {ssr: false},
         '/admin': {ssr: false},
         '/admin/**': {ssr: false},
+        '/auth/**': {ssr: false},
     },
 
     nitro: {
