@@ -75,23 +75,33 @@ test.describe('The HTTP API through the frontend proxy', () => {
 })
 
 /**
- * Discord sign-in on an instance that has no Discord application configured.
+ * Discord sign-in, asked for through the frontend as a browser would.
  *
- * <p>The end-to-end stack configures none, which is the same position a fresh instance is in. The
- * endpoint used to build an authorize URL with an empty client id and redirect to Discord, which
- * refuses it on its own page where nothing here can explain why.
+ * <p>The end-to-end stack names a Discord application that does not exist, which is enough to see
+ * the redirect leave: the frontend must hand it to the browser rather than follow it itself. Following
+ * it served Discord's page under this address, and nobody ever came back from Discord.
  */
-test.describe('Discord sign-in without credentials', () => {
-    test('refuses rather than sending somebody to a Discord error page', async ({request}) => {
+test.describe('Discord sign-in', () => {
+    test('sends the browser to Discord rather than fetching Discord itself', async ({request}) => {
         const response = await request.get('/api/auth/discord/start', {maxRedirects: 0})
 
-        expect(response.status()).toBe(503)
-        expect(await response.text()).toContain('not configured')
+        expect(response.status()).toBe(302)
+        const location = new URL(response.headers()['location'])
+        expect(location.origin).toBe('https://discord.com')
+        expect(location.searchParams.get('client_id')).toBe('4242000000000000001')
+        expect(location.searchParams.get('scope')).toBe('identify email')
     })
 
-    test('the callback refuses the same way', async ({request}) => {
+    test('remembers who it sent, so the way back can be checked', async ({request}) => {
+        const response = await request.get('/api/auth/discord/start', {maxRedirects: 0})
+
+        const state = new URL(response.headers()['location']).searchParams.get('state')
+        expect(response.headers()['set-cookie']).toContain(`lyna_oauth_state=${state}`)
+    })
+
+    test('turns away a return it did not send', async ({request}) => {
         const response = await request.get('/api/auth/discord/callback?code=x&state=y', {maxRedirects: 0})
 
-        expect(response.status()).toBe(503)
+        expect(response.status()).toBe(400)
     })
 })
