@@ -27,8 +27,9 @@ import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Optional;
 
@@ -342,9 +343,7 @@ public class Auth {
             } catch (IllegalStateException e) {
                 // Somebody else holds this Discord account. Refusing is the point - moving it would
                 // carry their licences across - so say so rather than fail with a server error.
-                ctx.status(HttpStatus.CONFLICT)
-                        .contentType("text/html; charset=utf-8")
-                        .result(bounceTo("/account/security?linked=taken"));
+                ctx.redirect("/account/security?linked=taken");
                 return;
             }
             attachDiscordEmail(account.id(), discordUser);
@@ -361,7 +360,7 @@ public class Auth {
         }
         JwtService.Issued issued = jwtService.issue(account.id(), discordUser.id());
         accountSessions.record(issued.jti(), account.id(), issued.expiresAt(), ctx.header("User-Agent"));
-        writeBounceHtml(ctx, issued.token(), existing.isPresent() ? "/account/security?linked=1" : "/account");
+        ctx.redirect(landing(issued.token(), existing.isPresent() ? "/account/security?linked=1" : "/account"));
     }
 
     private Credentials readCredentials(Context ctx) {
@@ -422,34 +421,18 @@ public class Auth {
     /**
      * A page that sends the browser somewhere, for the paths that end without a session to store.
      */
-    private static String bounceTo(String next) {
-        return """
-                <!doctype html>
-                <html><head><meta charset="utf-8"><title>Discord</title></head>
-                <body><script>window.location.replace('%s');</script></body></html>
-                """.formatted(next.replace("'", ""));
-    }
-
-    private void writeBounceHtml(Context ctx, String token, String next) {
-        // Inline HTML: writes the JWT to localStorage, then replaces the URL.
-        // Token is base64 → ASCII-safe; next is a server-controlled string.
-        String safeToken = Base64.getEncoder().encodeToString(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        String html = """
-                <!doctype html>
-                <html><head><meta charset="utf-8"><title>Signing in…</title></head>
-                <body>
-                <script>
-                (function(){
-                    try {
-                        var token = atob('%s');
-                        localStorage.setItem('auth', token);
-                    } catch (e) {}
-                    window.location.replace('%s');
-                })();
-                </script>
-                </body></html>
-                """.formatted(safeToken, next.replace("'", ""));
-        ctx.contentType("text/html; charset=utf-8").result(html);
+    /**
+     * Where the browser goes once Discord has vouched for somebody: the page that keeps the session.
+     *
+     * <p>The token travels in the fragment, which a browser never sends to a server, so it stays out of
+     * every access log between here and there. A page written from here with an inline script would
+     * do the same job, and is refused by the content security policy every response carries.
+     */
+    static String landing(String token, String next) {
+        return "/auth/discord#token=%s&next=%s"
+                .formatted(
+                        URLEncoder.encode(token, StandardCharsets.UTF_8),
+                        URLEncoder.encode(next, StandardCharsets.UTF_8));
     }
 
     private static String randomState() {
