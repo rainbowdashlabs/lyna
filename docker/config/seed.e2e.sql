@@ -77,3 +77,13 @@ FROM public.product p, public.download_type t
 WHERE p.name = 'E2E Freebie'
   AND t.guild_id = 4242 AND t.name = 'Jar'
   AND NOT EXISTS (SELECT 1 FROM public.download d WHERE d.product_id = p.id AND d.type_id = t.id);
+
+-- The premium product carries the same jars, so its versions can be listed to somebody who may not
+-- download them.
+
+INSERT INTO public.download (product_id, type_id, repository, group_id, artifact_id)
+SELECT p.id, t.id, 'releases', 'de.chojo', 'e2e-plugin'
+FROM public.product p, public.download_type t
+WHERE p.name = 'E2E Premium'
+  AND t.guild_id = 4242 AND t.name = 'Jar'
+  AND NOT EXISTS (SELECT 1 FROM public.download d WHERE d.product_id = p.id AND d.type_id = t.id);

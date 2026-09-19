@@ -12,6 +12,8 @@ import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.service.DownloadFilename;
+import de.chojo.lyna.feature.download.service.ProductVersionService;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
@@ -26,14 +28,10 @@ import io.javalin.http.NotFoundResponse;
 import io.javalin.http.UnauthorizedResponse;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -50,10 +48,13 @@ import static io.javalin.apibuilder.ApiBuilder.post;
  * mints the one-time address the browser is sent to, which is the address the bot hands out too.
  */
 public class Wizard {
-    /** What the concept settles on: enough history to find a known-good build, not the whole archive. */
+    /** Enough history to find a known-good build, not the whole archive. */
     private static final int DEFAULT_VERSION_LIMIT = 25;
 
     private static final int MAX_VERSION_LIMIT = 100;
+
+    private static final Set<String> ALL_RELEASE_TYPES =
+            Set.of(ReleaseType.STABLE.name(), ReleaseType.DEV.name(), ReleaseType.SNAPSHOT.name());
 
     private final Proxy proxy;
     private final ProductLookup products;
@@ -61,6 +62,7 @@ public class Wizard {
     private final Auth auth;
     private final AccountRepository accounts;
     private final AccountLicenseRepository licenses;
+    private final ProductVersionService versions;
 
     @Inject
     public Wizard(
@@ -69,7 +71,9 @@ public class Wizard {
             KioskProductRepository kiosk,
             Auth auth,
             AccountRepository accounts,
-            AccountLicenseRepository licenses) {
+            AccountLicenseRepository licenses,
+            ProductVersionService versions) {
+        this.versions = versions;
         this.proxy = proxy;
         this.products = products;
         this.kiosk = kiosk;
@@ -89,51 +93,11 @@ public class Wizard {
 
     private void releaseTypes(Context ctx) {
         int productId = productId(ctx);
-        Set<String> allowed = allowed(ctx, productId);
-        Product product = resolve(productId);
-
-        List<ReleaseTypeView> views = product.downloads().downloads().stream()
-                .map(download -> download.type().releaseType())
-                .distinct()
-                .filter(type -> allowed.contains(type.name()))
-                .sorted(Comparator.comparing(Enum::ordinal))
-                .map(type -> new ReleaseTypeView(type.name(), describe(product, type)))
-                .toList();
-        ctx.json(views);
+        ctx.json(versions.releaseTypes(resolve(productId), downloadable(ctx, productId)));
     }
 
     private void versions(Context ctx) {
-        int productId = productId(ctx);
-        Set<String> allowed = allowed(ctx, productId);
-        ReleaseType releaseType = releaseType(ctx);
-        if (!allowed.contains(releaseType.name())) {
-            throw new ForbiddenResponse("You may not download that release type");
-        }
-        Product product = resolve(productId);
-        int limit = limit(ctx);
-
-        Map<String, VersionView> byVersion = new LinkedHashMap<>();
-        for (Download download : product.downloads().byReleaseType(releaseType)) {
-            for (AssetXO asset : download.latestAssets()) {
-                String version = asset.maven2().version();
-                VersionView existing = byVersion.get(version);
-                if (existing == null) {
-                    byVersion.put(
-                            version,
-                            new VersionView(
-                                    version,
-                                    asset.lastModified().toInstant(),
-                                    new ArrayList<>(List.of(download.type().id()))));
-                } else if (!existing.downloadTypeIds().contains(download.type().id())) {
-                    existing.downloadTypeIds().add(download.type().id());
-                }
-            }
-        }
-        List<VersionView> newestFirst = byVersion.values().stream()
-                .sorted(Comparator.comparing(VersionView::publishedAt).reversed())
-                .limit(limit)
-                .toList();
-        ctx.json(newestFirst);
+        ctx.json(versions.versions(resolve(productId(ctx)), releaseType(ctx), limit(ctx)));
     }
 
     private void downloadTypes(Context ctx) {
@@ -188,16 +152,22 @@ public class Wizard {
                         accountId,
                         discordId,
                         null);
-        String url = proxy.registerAsset(assetDownload);
-
-        String filename = "%s-%s.%s"
-                .formatted(
-                        asset.maven2().artifactId(),
-                        asset.maven2().version(),
-                        asset.maven2().extension());
+        String filename = DownloadFilename.of(download, asset);
+        String url = proxy.registerAsset(assetDownload.withFilename(filename));
         ctx.status(HttpStatus.CREATED)
                 .json(new IssuedDownload(
                         url, filename, (long) asset.fileSize(), Instant.now().plusSeconds(1800)));
+    }
+
+    /**
+     * The release types the caller may download, for saying so next to a list anybody may read. Unlike
+     * {@link #allowed}, having none is an answer rather than a refusal.
+     */
+    private Set<String> downloadable(Context ctx, int productId) {
+        if (kiosk.isFree(productId)) return ALL_RELEASE_TYPES;
+        return auth.currentSession(ctx)
+                .map(session -> licenses.releaseTypes(session.accountId(), productId))
+                .orElse(Set.of());
     }
 
     /**
@@ -208,27 +178,12 @@ public class Wizard {
      * sign-in to one and a purchase to the other.
      */
     private Set<String> allowed(Context ctx, int productId) {
-        if (kiosk.isFree(productId)) {
-            return Set.of(ReleaseType.STABLE.name(), ReleaseType.DEV.name(), ReleaseType.SNAPSHOT.name());
-        }
+        if (kiosk.isFree(productId)) return ALL_RELEASE_TYPES;
         var session = auth.currentSession(ctx);
         if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
         Set<String> types = licenses.releaseTypes(session.get().accountId(), productId);
         if (types.isEmpty()) throw new ForbiddenResponse("You do not hold a license for this product");
         return types;
-    }
-
-    /**
-     * A download type's own words about itself, for the release type being offered. The wizard shows
-     * these under the release type's name, and there is nothing to say when nobody wrote any.
-     */
-    private static String describe(Product product, ReleaseType releaseType) {
-        return product.downloads().byReleaseType(releaseType).stream()
-                .map(download -> download.type().description())
-                .filter(description -> description != null && !description.isBlank())
-                .collect(java.util.stream.Collectors.collectingAndThen(
-                        java.util.stream.Collectors.toCollection(TreeSet::new),
-                        descriptions -> descriptions.isEmpty() ? null : String.join(" · ", descriptions)));
     }
 
     private Product resolve(int productId) {
@@ -268,10 +223,6 @@ public class Wizard {
             return DEFAULT_VERSION_LIMIT;
         }
     }
-
-    public record ReleaseTypeView(String id, String description) {}
-
-    public record VersionView(String version, Instant publishedAt, List<Integer> downloadTypeIds) {}
 
     public record DownloadTypeView(int id, String name, String description) {}
 

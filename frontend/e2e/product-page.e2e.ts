@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {type APIRequestContext, expect, test} from '@playwright/test'
+import {type APIRequestContext, expect, type Page, test} from '@playwright/test'
 import {PASSWORD} from './fixtures/auth'
 
 /**
@@ -241,5 +241,38 @@ test.describe('A product an operator administers', () => {
             multipart: {icon: {name: 'icon.png', mimeType: 'image/png', buffer: PNG}},
         })
         expect([401, 403]).toContain(upload.status())
+    })
+})
+
+/**
+ * The versions beside a product: what has been released, and a way to download any of it.
+ */
+test.describe('The versions a product page lists', () => {
+    async function openProduct(page: Page, request: APIRequestContext, name: string) {
+        const products = await (await request.get('/api/v1/products')).json() as {id: number; name: string}[]
+        await page.goto(`/products/${products.find(product => product.name === name)!.id}`)
+        return page.getByRole('complementary', {name: 'Versions'})
+    }
+
+    test('lists every version, newest first', async ({page, request}) => {
+        const versions = await openProduct(page, request, 'E2E Freebie')
+
+        await expect(versions.getByText(/^1\.\d\.0$/)).toHaveText(['1.1.0', '1.0.0'])
+    })
+
+    test('downloads the version it was asked for, not the newest', async ({page, request}) => {
+        const versions = await openProduct(page, request, 'E2E Freebie')
+
+        await versions.getByRole('button', {name: 'Download'}).nth(1).click()
+
+        await expect(page.getByText('E2EFreebie-1.0.0.jar')).toBeVisible()
+    })
+
+    test('shows a visitor what a premium product has released, without offering it', async ({page, request}) => {
+        const versions = await openProduct(page, request, 'E2E Premium')
+
+        await expect(versions.getByText('1.1.0')).toBeVisible()
+        await expect(versions.getByRole('button', {name: 'Download'})).toHaveCount(0)
+        await expect(versions.getByText('Downloading these needs a license for this plugin.')).toBeVisible()
     })
 })

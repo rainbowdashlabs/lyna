@@ -39,6 +39,8 @@ export function callToAction(product: KioskProduct): 'download' | 'buy' | 'unava
 export interface ReleaseTypeEntry {
     id: string
     description: string | null
+    /** Whether the reader may download builds of it. Anybody may see which exist. */
+    downloadable: boolean
 }
 
 export interface VersionEntry {

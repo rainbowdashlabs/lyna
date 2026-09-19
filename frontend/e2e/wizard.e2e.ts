@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, request as playwrightRequest, test} from '@playwright/test'
+import {type APIRequestContext, expect, request as playwrightRequest, test} from '@playwright/test'
 import {PASSWORD} from './fixtures/auth'
 import {uniqueEmail} from './fixtures/unique'
 
@@ -33,52 +33,47 @@ async function productId(request: {get: (url: string) => Promise<{json: () => Pr
     return found.id
 }
 
+/**
+ * Which release types and versions exist is open to anybody - somebody deciding whether to buy learns
+ * the plugin is maintained. Whether they may download is said alongside; the link itself is guarded.
+ */
 test.describe('Step one, the release types', () => {
-    test('a premium product is refused to a visitor who is not signed in', async ({request}) => {
-        const id = await productId(request, 'E2E Premium')
+    async function releaseTypes(request: APIRequestContext, name: string, token?: string) {
+        const id = await productId(request, name)
+        const response = await request.get(`/api/v1/products/${id}/release-types`, {
+            headers: token ? {Authorization: `Bearer ${token}`} : {},
+        })
+        expect(response.ok()).toBe(true)
+        return await response.json() as {id: string; downloadable: boolean}[]
+    }
 
-        const response = await request.get(`/api/v1/products/${id}/release-types`)
-
-        expect(response.status()).toBe(401)
+    test('a premium product shows a visitor what exists, and that they cannot download it', async ({request}) => {
+        expect(await releaseTypes(request, 'E2E Premium')).toEqual([expect.objectContaining({id: 'STABLE', downloadable: false})])
     })
 
-    test('a premium product is refused to somebody signed in without a license', async ({request, baseURL}) => {
+    test('signing in without a license changes nothing about that', async ({request}) => {
         const signup = await request.post('/api/auth/signup', {
             data: {email: uniqueEmail('wizard-nolicense'), password: PASSWORD},
         })
         const {token} = await signup.json()
-        const id = await productId(request, 'E2E Premium')
 
-        const response = await request.get(`/api/v1/products/${id}/release-types`, {
-            headers: {Authorization: `Bearer ${token}`},
-        })
-
-        expect(response.status()).toBe(403)
+        expect(await releaseTypes(request, 'E2E Premium', token)).toEqual([expect.objectContaining({downloadable: false})])
     })
 
-    test('a license carries its holder past the entitlement check', async ({request, baseURL}) => {
+    test('a license makes the release type it covers downloadable', async ({request, baseURL}) => {
         const token = await tokenFor(baseURL!, ENTITLED)
-        const id = await productId(request, 'E2E Premium')
 
-        const response = await request.get(`/api/v1/products/${id}/release-types`, {
-            headers: {Authorization: `Bearer ${token}`},
-        })
-
-        expect(response.ok()).toBe(true)
+        expect(await releaseTypes(request, 'E2E Premium', token)).toEqual([expect.objectContaining({id: 'STABLE', downloadable: true})])
     })
 
-    test('a free product asks nobody to sign in', async ({request}) => {
-        const id = await productId(request, 'E2E Freebie')
-
-        const response = await request.get(`/api/v1/products/${id}/release-types`)
-
-        expect(response.ok()).toBe(true)
+    test('a free product is downloadable by anybody', async ({request}) => {
+        expect(await releaseTypes(request, 'E2E Freebie')).toEqual([expect.objectContaining({downloadable: true})])
     })
 
     test('a product that does not exist is not found', async ({request}) => {
         const response = await request.get('/api/v1/products/999999/release-types')
 
-        expect(response.status()).toBe(401)
+        expect(response.status()).toBe(404)
     })
 })
 
@@ -91,26 +86,23 @@ test.describe('Step two, the versions', () => {
         expect(response.status()).toBe(404)
     })
 
-    test('a release type the license does not cover is refused', async ({request, baseURL}) => {
-        const token = await tokenFor(baseURL!, ENTITLED)
+    test('a premium product lists its versions to a visitor, newest first', async ({request}) => {
         const id = await productId(request, 'E2E Premium')
 
-        const response = await request.get(`/api/v1/products/${id}/release-types/DEV/versions`, {
-            headers: {Authorization: `Bearer ${token}`},
-        })
-
-        expect(response.status()).toBe(403)
-    })
-
-    test('the release type the license does cover is allowed through', async ({request, baseURL}) => {
-        const token = await tokenFor(baseURL!, ENTITLED)
-        const id = await productId(request, 'E2E Premium')
-
-        const response = await request.get(`/api/v1/products/${id}/release-types/STABLE/versions`, {
-            headers: {Authorization: `Bearer ${token}`},
-        })
+        const response = await request.get(`/api/v1/products/${id}/release-types/STABLE/versions`)
 
         expect(response.ok()).toBe(true)
+        const versions = await response.json() as {version: string}[]
+        expect(versions.map(entry => entry.version)).toEqual(['1.1.0', '1.0.0'])
+    })
+
+    test('a release type without builds lists nothing rather than refusing', async ({request}) => {
+        const id = await productId(request, 'E2E Premium')
+
+        const response = await request.get(`/api/v1/products/${id}/release-types/DEV/versions`)
+
+        expect(response.ok()).toBe(true)
+        expect(await response.json()).toEqual([])
     })
 })
 
@@ -156,7 +148,7 @@ test.describe('The wizard on the page', () => {
 
         await page.getByRole('button', {name: /1\.1\.0/}).click()
 
-        await expect(page.getByText('e2e-plugin-1.1.0.jar')).toBeVisible()
+        await expect(page.getByText('E2EFreebie-1.1.0.jar')).toBeVisible()
         await expect(page.getByText(/one-time link/i)).toBeVisible()
     })
 
@@ -167,7 +159,7 @@ test.describe('The wizard on the page', () => {
 
         await page.getByRole('button', {name: /1\.1\.0/}).click()
 
-        await expect(page.getByText('e2e-plugin-1.1.0.jar')).toBeVisible()
+        await expect(page.getByText('E2EFreebie-1.1.0.jar')).toBeVisible()
         await expect(page.getByRole('button', {name: 'Jar', exact: true})).toHaveCount(0)
     })
 
@@ -176,7 +168,7 @@ test.describe('The wizard on the page', () => {
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('button', {name: 'Download'}).click()
         await page.getByRole('button', {name: /1\.1\.0/}).click()
-        await expect(page.getByText('e2e-plugin-1.1.0.jar')).toBeVisible()
+        await expect(page.getByText('E2EFreebie-1.1.0.jar')).toBeVisible()
 
         await page.getByRole('button', {name: 'Back'}).click()
         await expect(page.getByRole('button', {name: /1\.0\.0/})).toBeVisible()
@@ -207,13 +199,13 @@ test.describe('All four steps, through to the file', () => {
             `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`)
         expect(issued.status()).toBe(201)
         const {url, filename, sizeBytes} = await issued.json()
-        expect(filename).toBe('e2e-plugin-1.1.0.jar')
+        expect(filename).toBe('E2EFreebie-1.1.0.jar')
         expect(sizeBytes).toBeGreaterThan(0)
 
         const file = await request.get(url)
 
         expect(file.ok()).toBe(true)
-        expect(file.headers()['content-disposition']).toContain('e2e-plugin-1.1.0.jar')
+        expect(file.headers()['content-disposition']).toContain('E2EFreebie-1.1.0.jar')
         // A jar is a zip, and a zip says so in its first two bytes.
         expect((await file.body()).subarray(0, 2).toString('latin1')).toBe('PK')
     })
@@ -244,7 +236,7 @@ test.describe('All four steps, through to the file', () => {
             `/api/v1/products/${id}/versions/${oldest.version}/downloads/${oldest.downloadTypeIds[0]}/issue`)
 
         expect(issued.status()).toBe(201)
-        expect((await issued.json()).filename).toBe(`e2e-plugin-${oldest.version}.jar`)
+        expect((await issued.json()).filename).toBe(`E2EFreebie-${oldest.version}.jar`)
     })
 
     test("a signed-in visitor's download shows up in their own history", async ({request}) => {
