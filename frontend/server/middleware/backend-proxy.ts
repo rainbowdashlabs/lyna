@@ -14,6 +14,10 @@ import {useRuntimeConfig} from '#imports'
  * of its life, whatever its runtime environment said. Reading the address per request is what makes
  * one image usable in more than one place.
  *
+ * <p>A redirect from the backend is passed to the browser rather than followed. Following it here
+ * fetched Discord's sign-in page on the server and served it under this address, so the browser never
+ * reached Discord and never came back.
+ *
  * <p>Everything else falls through untouched: returning nothing from a middleware lets the request
  * carry on to the pages.
  */
@@ -21,5 +25,5 @@ export default defineEventHandler(event => {
     if (!event.path.startsWith('/api/')) return
 
     const {backendUrl} = useRuntimeConfig(event)
-    return proxyRequest(event, `${backendUrl}${event.path}`)
+    return proxyRequest(event, `${backendUrl}${event.path}`, {fetchOptions: {redirect: 'manual'}})
 })

@@ -29,8 +29,8 @@ demo:
   resetIntervalMinutes: 60
 discord:
   oauth:
-    clientId: ""
-    clientSecret: ""
+    clientId: "4242000000000000001"
+    clientSecret: "e2e-not-a-real-secret"
     redirectUri: "http://localhost:8890/api/auth/discord/callback"
 downloads:
   skipJarSigning: false
