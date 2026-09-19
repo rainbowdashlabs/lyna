@@ -77,7 +77,6 @@ export interface InstanceInfo {
     version: string
     website: string | null
     discord: string | null
-    invite: string | null
     faq: string | null
     terms: string | null
 }

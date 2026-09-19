@@ -24,10 +24,10 @@ public class Links {
     private String support = "";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private String website = "https://rainbowdashlabs.github.io/lyna/";
+    private String website = "";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private String faq = "https://rainbowdashlabs.github.io/lyna/faq";
+    private String faq = "";
 
     @Overwrite(env = @Env, prop = @Prop)
     private String frontend = "http://localhost:3000";

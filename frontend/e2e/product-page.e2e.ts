@@ -101,10 +101,24 @@ test.describe('The footer', () => {
         await expect(footer.getByText('AGPL-3.0-only')).toBeVisible()
     })
 
-    test('offers the Discord the instance was configured with', async ({page}) => {
+    test('sets the support Discord apart, where nobody has to look for it', async ({page}) => {
         await page.goto('/')
 
-        await expect(page.getByRole('contentinfo').getByRole('link', {name: 'Add the bot'})).toBeVisible()
+        const support = page.getByRole('contentinfo').getByRole('region', {name: 'Support'})
+        await expect(support.getByRole('link', {name: 'Join the support Discord'}))
+            .toHaveAttribute('href', 'https://discord.gg/e2e-support')
+    })
+
+    test('does not offer to add the bot, which is not what a visitor came for', async ({page}) => {
+        await page.goto('/')
+
+        await expect(page.getByRole('contentinfo').getByText('Add the bot')).toHaveCount(0)
+    })
+
+    test('leaves out a link nobody configured', async ({page}) => {
+        await page.goto('/')
+
+        await expect(page.getByRole('contentinfo').getByRole('link', {name: 'FAQ'})).toHaveCount(0)
     })
 
     test('is on the product page too', async ({page}) => {
