@@ -5,11 +5,15 @@
  */
 package de.chojo.lyna.feature.download.service;
 
+import de.chojo.nexus.NexusRest;
 import de.chojo.nexus.entities.AssetXO;
 import de.chojo.nexus.entities.MavenMeta;
+import de.chojo.nexus.entities.PageAssetXO;
+import de.chojo.nexus.requests.v1.search.assets.SearchRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -21,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -143,5 +149,62 @@ class NexusAssetCacheTest {
         assertEquals(
                 "0.9.0", cache.byVersion(PAPER, "0.9.0").orElseThrow().maven2().version());
         assertTrue(searches.contains("plugin-paper@0.9.0"));
+    }
+
+    /** A Nexus that answers every search with the given jars, and remembers what it was asked. */
+    private static SearchRequest nexusSearch(NexusRest nexus, AssetXO... jars) {
+        SearchRequest search = mock(SearchRequest.class, Answers.RETURNS_SELF);
+        PageAssetXO page = mock(PageAssetXO.class);
+        when(page.items()).thenReturn(List.of(jars));
+        when(search.complete()).thenReturn(page);
+        when(nexus.v1().search().assets().search()).thenReturn(search);
+        return search;
+    }
+
+    private static AssetXO jar(String version, String classifier) {
+        AssetXO asset = asset(version);
+        when(asset.maven2().classifier()).thenReturn(classifier);
+        return asset;
+    }
+
+    @Test
+    @DisplayName("Nexus is searched for the jars at exactly those coordinates")
+    void searchesNexusAtTheCoordinates() {
+        NexusRest nexus = mock(NexusRest.class, Answers.RETURNS_DEEP_STUBS);
+        SearchRequest search = nexusSearch(nexus, jar("1.0.0", "all"));
+
+        List<AssetXO> found = new NexusAssetCache(nexus).latest(PAPER);
+
+        assertEquals(List.of("1.0.0"), versions(found));
+        verify(search).repository("releases");
+        verify(search).mavenGroupId("de.eldoria");
+        verify(search).mavenArtifactId("plugin-paper");
+        verify(search).mavenExtension("jar");
+        verify(search).mavenClassifier("all");
+        verify(search, never()).mavenBaseVersion(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    @DisplayName("Without a classifier, only the plain jar counts - Nexus cannot be asked for that itself")
+    void plainJarWhenThereIsNoClassifier() {
+        NexusRest nexus = mock(NexusRest.class, Answers.RETURNS_DEEP_STUBS);
+        SearchRequest search = nexusSearch(nexus, jar("1.0.0", null), jar("1.0.0", "sources"));
+        var plain = new NexusAssetCache.Coordinates("releases", "de.eldoria", "plugin", null);
+
+        List<AssetXO> found = new NexusAssetCache(nexus).latest(plain);
+
+        assertEquals(1, found.size());
+        verify(search, never()).mavenClassifier(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    @DisplayName("A version the list lacks is searched for by that version")
+    void versionSearchNamesTheVersion() {
+        NexusRest nexus = mock(NexusRest.class, Answers.RETURNS_DEEP_STUBS);
+        SearchRequest search = nexusSearch(nexus, jar("1.0.0", "all"));
+
+        new NexusAssetCache(nexus).byVersion(PAPER, "0.9.0");
+
+        verify(search).mavenBaseVersion("0.9.0");
     }
 }

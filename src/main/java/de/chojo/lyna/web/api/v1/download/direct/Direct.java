@@ -8,6 +8,7 @@ package de.chojo.lyna.web.api.v1.download.direct;
 import com.google.inject.Inject;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.download.service.DownloadFilename;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
@@ -69,11 +70,7 @@ public class Direct {
                 AssetXO asset = downloads
                         .assetByVersion(ctx.pathParam("version"))
                         .orElseThrow(() -> new NotFoundResponse("Unknown version"));
-                String filename = "%s-%s.%s"
-                        .formatted(
-                                asset.maven2().artifactId(),
-                                asset.maven2().version(),
-                                asset.maven2().extension());
+                String filename = DownloadFilename.of(downloads, asset);
 
                 ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
                         .header("X-Content-Type-Options", "nosniff")

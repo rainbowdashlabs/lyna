@@ -13,6 +13,7 @@ import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.service.DownloadFilename;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.entity.TrialSettings;
 import de.chojo.lyna.feature.product.entity.Product;
@@ -143,11 +144,7 @@ public class Default implements SlashHandler {
             }
             AssetXO asset = assets.get(0);
 
-            String filename = "%s-%s.%s"
-                    .formatted(
-                            asset.maven2().artifactId(),
-                            asset.maven2().version(),
-                            asset.maven2().extension());
+            String filename = DownloadFilename.of(download, asset);
 
             MessageEmbed build = new EmbedBuilder()
                     .setTitle("📦 " + filename)
@@ -175,7 +172,8 @@ public class Default implements SlashHandler {
                     "trial",
                     null,
                     member.getIdLong(),
-                    null));
+                    null,
+                    filename));
             ctx.entry().hidden();
 
             ctx.container()
