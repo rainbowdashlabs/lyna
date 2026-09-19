@@ -16,9 +16,12 @@ export interface ProductSummary {
     id: number
     name: string
     url: string | null
-    roleId: number
+    /** Text, because a Discord id is larger than a number holds exactly. */
+    roleId: string
     free: boolean
+    trial: boolean
     iconUrl: string | null
+    description: string | null
 }
 
 export interface CreateProductPayload {
@@ -65,8 +68,37 @@ export async function listGuildProducts(guildId: string): Promise<ProductSummary
     return data
 }
 
-export async function setProductIcon(guildId: string, productId: number, iconUrl: string): Promise<void> {
-    await client.put(`/api/admin/g/${guildId}/products/${productId}/icon`, {iconUrl})
+/**
+ * Uploads an image as a product's icon.
+ *
+ * <p>Sent as a file rather than an address: what the instance serves is then its own, at the sizes it
+ * made, rather than whatever a third party decides to answer with tomorrow.
+ */
+export async function uploadProductIcon(guildId: string, productId: number, file: File): Promise<void> {
+    const form = new FormData()
+    form.append('icon', file)
+    await client.post(`/api/admin/g/${guildId}/products/${productId}/icon`, form)
+}
+
+export async function deleteProductIcon(guildId: string, productId: number): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/products/${productId}/icon`)
+}
+
+export interface ProductEditPayload {
+    name: string
+    url: string | null
+    roleId: string
+    free: boolean
+    trial: boolean
+    description: string | null
+    /** An address to fetch the icon from, for an instance that would rather point at its own CDN. */
+    iconUrl: string | null
+}
+
+/** Everything about a product except its icon, saved in one go. */
+export async function updateGuildProduct(
+    guildId: string, productId: number, payload: ProductEditPayload): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}`, payload)
 }
 
 export async function createGuildProduct(guildId: string, payload: CreateProductPayload): Promise<ProductSummary> {

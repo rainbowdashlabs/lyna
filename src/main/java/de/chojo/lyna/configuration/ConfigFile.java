@@ -17,6 +17,7 @@ import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
 import de.chojo.lyna.configuration.elements.Mailing;
 import de.chojo.lyna.configuration.elements.Nexus;
+import de.chojo.lyna.configuration.elements.Storage;
 
 @SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
 public class ConfigFile {
@@ -27,6 +28,7 @@ public class ConfigFile {
     private Nexus nexus = new Nexus();
     private Api api = new Api();
     private Mailing mailing = new Mailing();
+    private Storage storage = new Storage();
     private Kofi kofi = new Kofi();
     private Auth auth = new Auth();
     private Discord discord = new Discord();
@@ -55,6 +57,10 @@ public class ConfigFile {
 
     public Api api() {
         return api;
+    }
+
+    public Storage storage() {
+        return storage;
     }
 
     public Mailing mailing() {

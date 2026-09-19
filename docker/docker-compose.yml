@@ -68,6 +68,8 @@ services:
     volumes:
       - ./config-e2e/:/app/config/
       - nexus_tls:/app/nexus-tls/
+      # Uploaded icons. Thrown away with the stack, which is what the stories want.
+      - lyna_e2e_data:/app/data/
     environment:
       JAVA_OPTS: >-
         -Dlog4j.configurationFile=config/log4j2.xml
@@ -186,6 +188,7 @@ networks:
     external: false
 
 volumes:
+  lyna_e2e_data:
   db_data:
   # The stub's certificate and the truststore built from it. Made at stack-up and gone with
   # `down -v`, so the pair never outlives the run that needed it.

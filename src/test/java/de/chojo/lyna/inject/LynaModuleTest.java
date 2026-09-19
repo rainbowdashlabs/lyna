@@ -19,6 +19,7 @@ import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.Demo;
 import de.chojo.lyna.configuration.elements.Mailing;
+import de.chojo.lyna.configuration.elements.Storage;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
@@ -165,6 +166,7 @@ class LynaModuleTest {
         assertSame(config.mailing(), injector.getInstance(Mailing.class));
         assertSame(config.demo(), injector.getInstance(Demo.class));
         assertSame(config.discord().oauth(), injector.getInstance(OAuth.class));
+        assertSame(config.storage(), injector.getInstance(Storage.class));
     }
 
     /**
