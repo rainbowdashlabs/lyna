@@ -18,7 +18,7 @@ dependencyResolutionManagement {
             library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.2.4")
 
             library("ocular", "dev.chojo:ocular:2.2.1")
-            version("jackson", "3.2.1")
+            version("jackson", "3.2.3")
             library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
             bundle("config", listOf("ocular", "jackson-yaml"))
 
