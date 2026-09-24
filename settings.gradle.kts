@@ -27,7 +27,7 @@ dependencyResolutionManagement {
             library("imageio-webp", "com.twelvemonkeys.imageio:imageio-webp:3.12.0")
             bundle("images", listOf("thumbnailator", "imageio-webp"))
             library("bcrypt", "at.favre.lib:bcrypt:0.10.2")
-            library("java-jwt", "com.auth0:java-jwt:4.5.0")
+            library("java-jwt", "com.auth0:java-jwt:4.6.1")
 
             library("slf4j-api", "org.slf4j:slf4j-api:2.0.20")
             library("log4j-core", "org.apache.logging.log4j", "log4j-core").versionRef("log4j")
