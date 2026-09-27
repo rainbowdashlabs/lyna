@@ -15,7 +15,7 @@ dependencyResolutionManagement {
             version("log4j", "2.26.1")
 
             library("guice", "com.google.inject:guice:7.0.0")
-            library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.2.4")
+            library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.3.0")
 
             library("ocular", "dev.chojo:ocular:2.2.1")
             version("jackson", "3.2.3")
