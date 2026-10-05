@@ -132,7 +132,7 @@ services:
     # name the certificate covers. The backend is handed the matching truststore.
     command: ["python3", "/stub/server.py"]
   seed_e2e:
-    image: postgres:17
+    image: postgres:18
     networks:
       - lyna
     depends_on:
@@ -157,7 +157,7 @@ services:
   postgres_e2e:
     networks:
       - lyna
-    image: postgres:17
+    image: postgres:18
     profiles:
       - e2e
     environment:
