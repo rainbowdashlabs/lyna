@@ -15,6 +15,7 @@ import de.chojo.lyna.web.api.v1.products.Products;
 import de.chojo.lyna.web.api.v1.products.Wizard;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
+import de.chojo.lyna.web.api.v1.webhook.GithubWebhook;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
 
@@ -36,6 +37,7 @@ public class V1 {
     private final DemoApi demoApi;
     private final InstanceInfo instanceInfo;
     private final DebugApi debug;
+    private final GithubWebhook github;
 
     @Inject
     public V1(
@@ -47,8 +49,10 @@ public class V1 {
             Wizard wizard,
             DemoApi demoApi,
             InstanceInfo instanceInfo,
-            DebugApi debug) {
+            DebugApi debug,
+            GithubWebhook github) {
         this.debug = debug;
+        this.github = github;
         this.instanceInfo = instanceInfo;
         this.download = download;
         this.update = update;
@@ -70,6 +74,7 @@ public class V1 {
             demoApi.init();
             instanceInfo.init();
             debug.init();
+            github.init();
         });
     }
 }

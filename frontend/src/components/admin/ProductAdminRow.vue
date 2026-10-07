@@ -41,6 +41,7 @@ const open = ref(false)
           @changed="emit('changed')"
       />
       <ProductEditForm :guild-id="guildId" :product="product" @saved="emit('changed')"/>
+      <ReleaseWebhookPanel :guild-id="guildId" :product-id="product.id"/>
     </div>
   </li>
 </template>

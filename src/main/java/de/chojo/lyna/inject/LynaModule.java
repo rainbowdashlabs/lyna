@@ -68,6 +68,8 @@ import de.chojo.lyna.feature.debug.repository.DebugReportRepository;
 import de.chojo.lyna.feature.debug.service.DebugReportExpiry;
 import de.chojo.lyna.feature.debug.service.DebugReportService;
 import de.chojo.lyna.feature.debug.service.UploadThrottle;
+import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
+import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
 import de.chojo.lyna.feature.timechannel.repository.TimeChannelRepository;
 import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
@@ -104,6 +106,7 @@ import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.products.Wizard;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
+import de.chojo.lyna.web.api.v1.webhook.GithubWebhook;
 import de.chojo.lyna.web.legacy.ButlerApi;
 import de.chojo.nexus.NexusRest;
 
@@ -282,6 +285,7 @@ public class LynaModule extends AbstractModule {
         bind(DemoApi.class).in(Singleton.class);
         bind(ButlerApi.class).in(Singleton.class);
         bind(DebugApi.class).in(Singleton.class);
+        bind(GithubWebhook.class).in(Singleton.class);
 
         // The token cache lives here: a link minted by one instance would not be redeemable by
         // another, and the bot mints links through the same object the API serves them from.
@@ -312,6 +316,8 @@ public class LynaModule extends AbstractModule {
         bind(DebugReportExpiry.class).in(Singleton.class);
         bind(TimeChannelRepository.class).in(Singleton.class);
         bind(TimeChannelSchedule.class).in(Singleton.class);
+        bind(ReleaseWebhookRepository.class).in(Singleton.class);
+        bind(ReleasePostService.class).in(Singleton.class);
         bind(ProductIconService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);

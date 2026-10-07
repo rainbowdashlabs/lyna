@@ -556,6 +556,22 @@
       "warnings": "warnings in the log",
       "exceptions": "exceptions collected",
       "plugins": "plugins installed"
+    },
+    "releaseWebhookPanel": {
+      "title": "Release announcements",
+      "explain": "Announce this product's GitHub releases in a Discord channel. Lyna gives you an address and a secret to enter in the repository's webhook settings.",
+      "create": "Set up webhook",
+      "channelId": "Discord channel id",
+      "saveChannel": "Save channel",
+      "rotate": "New address and secret",
+      "remove": "Remove webhook",
+      "saved": "Saved.",
+      "couldNotSave": "That could not be saved."
+    },
+    "releaseWebhookDetails": {
+      "howTo": "On GitHub: Settings, Webhooks, Add webhook. Content type application/json, and under events choose only Releases.",
+      "payloadUrl": "Payload URL",
+      "secret": "Secret"
     }
   }
 }
