@@ -21,6 +21,7 @@ import de.chojo.lyna.commands.kofi.KoFi;
 import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
+import de.chojo.lyna.commands.timechannel.TimeChannels;
 import de.chojo.lyna.commands.trial.Trial;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.ConfigFile;
@@ -67,6 +68,8 @@ import de.chojo.lyna.feature.debug.repository.DebugReportRepository;
 import de.chojo.lyna.feature.debug.service.DebugReportExpiry;
 import de.chojo.lyna.feature.debug.service.DebugReportService;
 import de.chojo.lyna.feature.debug.service.UploadThrottle;
+import de.chojo.lyna.feature.timechannel.repository.TimeChannelRepository;
+import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.icon.storage.IconStorage;
@@ -257,6 +260,7 @@ public class LynaModule extends AbstractModule {
         commands.addBinding().to(Trial.class);
         commands.addBinding().to(de.chojo.lyna.commands.mailing.Mailing.class);
         commands.addBinding().to(KoFi.class);
+        commands.addBinding().to(TimeChannels.class);
 
         bind(Threading.class).in(Singleton.class);
         bind(Data.class).in(Singleton.class);
@@ -306,6 +310,8 @@ public class LynaModule extends AbstractModule {
         bind(DebugReportService.class).in(Singleton.class);
         bind(UploadThrottle.class).in(Singleton.class);
         bind(DebugReportExpiry.class).in(Singleton.class);
+        bind(TimeChannelRepository.class).in(Singleton.class);
+        bind(TimeChannelSchedule.class).in(Singleton.class);
         bind(ProductIconService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);

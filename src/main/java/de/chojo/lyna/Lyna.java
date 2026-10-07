@@ -12,6 +12,7 @@ import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.feature.debug.service.DebugReportExpiry;
+import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.inject.LynaModule;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
@@ -45,5 +46,6 @@ public class Lyna {
         injector.getInstance(WebService.class).init();
         injector.getInstance(Bot.class).start();
         injector.getInstance(DemoSchedule.class).start();
+        injector.getInstance(TimeChannelSchedule.class).start();
     }
 }
