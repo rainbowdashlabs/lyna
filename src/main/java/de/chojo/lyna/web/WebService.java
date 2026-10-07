@@ -8,6 +8,7 @@ package de.chojo.lyna.web;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.Api;
+import de.chojo.lyna.web.legacy.ButlerApi;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import io.javalin.http.Context;
@@ -26,13 +27,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class WebService {
     private final Conf configuration;
     private final Api api;
+    private final ButlerApi butler;
     private static final Logger log = getLogger(WebService.class);
     private Javalin javalin;
 
     @Inject
-    public WebService(Conf configuration, Api api) {
+    public WebService(Conf configuration, Api api, ButlerApi butler) {
         this.configuration = configuration;
         this.api = api;
+        this.butler = butler;
     }
 
     public void init() {
@@ -138,6 +141,7 @@ public class WebService {
         });
 
         api.init();
+        butler.init();
     }
 
     public Api api() {
