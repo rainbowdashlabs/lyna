@@ -60,6 +60,7 @@ import de.chojo.lyna.feature.download.repository.DownloadRepository;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.roles.JdaRoleSync;
 import de.chojo.lyna.feature.guild.roles.RoleSync;
+import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.icon.storage.IconStorage;
@@ -283,6 +284,7 @@ public class LynaModule extends AbstractModule {
         bind(PurchaseService.class).in(Singleton.class);
         bind(IconStorage.class).in(Singleton.class);
         bind(ProductIconRepository.class).in(Singleton.class);
+        bind(ButlerApplicationRepository.class).in(Singleton.class);
         bind(ProductIconService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);

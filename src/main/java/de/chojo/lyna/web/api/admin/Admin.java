@@ -13,6 +13,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
@@ -40,6 +41,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -69,6 +71,7 @@ public class Admin {
     private final InstanceSettingsRepository instanceSettings;
     private final KoFiProductRepository kofi;
     private final KioskProductRepository kioskProducts;
+    private final ButlerApplicationRepository butlerApplications;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final de.chojo.lyna.mail.blocks.MailBlockRenderer blockRenderer =
@@ -92,8 +95,10 @@ public class Admin {
             LicenseService licenseService,
             LicenseSharingService licenseSharing,
             OAuth oauthConfig,
-            ProductIconService productIcons) {
+            ProductIconService productIcons,
+            ButlerApplicationRepository butlerApplications) {
         this.productIcons = productIcons;
+        this.butlerApplications = butlerApplications;
         this.oauthConfig = oauthConfig;
         this.licenseService = licenseService;
         this.licenseSharing = licenseSharing;
@@ -160,6 +165,7 @@ public class Admin {
         var kioskById = kioskProducts.all().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         de.chojo.lyna.feature.kiosk.entity.KioskProduct::id, product -> product));
+        Map<Integer, Integer> butlerIds = butlerApplications.butlerIdsByProduct();
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream()
                 .map(p -> new ProductSummary(
@@ -170,7 +176,8 @@ public class Admin {
                         p.free(),
                         p.trial(),
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
-                        kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null))
+                        kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null,
+                        butlerIds.get(p.id())))
                 .toList());
     }
 
@@ -369,6 +376,14 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not a role id");
             return;
         }
+        if (body.butlerId() != null && body.butlerId() <= 0) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("An UpdateButler id is a positive number");
+            return;
+        }
+        if (body.butlerId() != null && butlerApplications.takenByAnother(body.butlerId(), product.id())) {
+            ctx.status(HttpStatus.CONFLICT).result("Another product already carries that UpdateButler id");
+            return;
+        }
         product.name(body.name().strip());
         product.url(
                 body.url() == null || body.url().isBlank() ? null : body.url().strip());
@@ -378,6 +393,11 @@ public class Admin {
         String description =
                 body.description() == null ? "" : body.description().strip();
         kioskProducts.description(product.id(), description.isBlank() ? null : description);
+        if (body.butlerId() == null) {
+            butlerApplications.clear(product.id());
+        } else {
+            butlerApplications.assign(product.id(), body.butlerId());
+        }
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -475,7 +495,7 @@ public class Admin {
         var p = product.get();
         ctx.status(HttpStatus.CREATED)
                 .json(new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null));
+                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null));
     }
 
     private void listLicenses(Context ctx) {
@@ -643,7 +663,7 @@ public class Admin {
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
                 .map(p -> new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null))
+                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null))
                 .toList();
         ctx.json(new TrialInfo(
                 (int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
@@ -947,7 +967,8 @@ public class Admin {
             boolean free,
             boolean trial,
             String iconUrl,
-            String description) {}
+            String description,
+            Integer butlerId) {}
 
     public record ProductDescription(String description) {}
 
@@ -955,7 +976,14 @@ public class Admin {
      * @param roleId the Discord role, as text because a role id does not fit a JavaScript number
      */
     public record ProductEdit(
-            String name, String url, String roleId, boolean free, boolean trial, String description, String iconUrl) {}
+            String name,
+            String url,
+            String roleId,
+            boolean free,
+            boolean trial,
+            String description,
+            String iconUrl,
+            Integer butlerId) {}
 
     /**
      * @param configured whether the id holds the instance by configuration, and so cannot be

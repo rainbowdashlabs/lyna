@@ -22,6 +22,8 @@ export interface ProductSummary {
     trial: boolean
     iconUrl: string | null
     description: string | null
+    /** The id deployed plugins ask UpdateButler for this product by. */
+    butlerId?: number | null
 }
 
 export interface CreateProductPayload {
@@ -93,6 +95,7 @@ export interface ProductEditPayload {
     description: string | null
     /** An address to fetch the icon from, for an instance that would rather point at its own CDN. */
     iconUrl: string | null
+    butlerId: number | null
 }
 
 /** Everything about a product except its icon, saved in one go. */

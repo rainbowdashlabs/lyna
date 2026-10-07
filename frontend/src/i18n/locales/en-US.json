@@ -449,7 +449,9 @@
       "saved": "Saved.",
       "couldNotSave": "That could not be saved.",
       "iconAddress": "Icon address",
-      "usedWhenNothingIsUploaded": "Used only when no icon has been uploaded."
+      "usedWhenNothingIsUploaded": "Used only when no icon has been uploaded.",
+      "butlerId": "UpdateButler id",
+      "butlerIdHint": "The id plugins built for UpdateButler ask for updates by. Leave empty if it never had one."
     },
     "productAdminRow": {
       "edit": "Edit",

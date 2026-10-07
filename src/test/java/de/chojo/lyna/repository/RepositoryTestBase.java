@@ -21,6 +21,7 @@ import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
+import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
@@ -91,6 +92,7 @@ public abstract class RepositoryTestBase {
     protected static InstanceOperatorRepository instanceOperators;
     protected static KioskProductRepository kioskProducts;
     protected static ProductIconRepository productIcons;
+    protected static ButlerApplicationRepository butlerApplications;
     protected static PasswordResetTokenRepository passwordResetTokens;
     protected static EmailVerificationTokenRepository emailVerificationTokens;
 
@@ -146,6 +148,7 @@ public abstract class RepositoryTestBase {
         instanceOperators = new InstanceOperatorRepository();
         kioskProducts = new KioskProductRepository();
         productIcons = new ProductIconRepository();
+        butlerApplications = new ButlerApplicationRepository();
         passwordResetTokens = new PasswordResetTokenRepository();
         emailVerificationTokens = new EmailVerificationTokenRepository();
 
