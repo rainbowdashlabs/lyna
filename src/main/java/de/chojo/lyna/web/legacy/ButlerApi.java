@@ -12,6 +12,7 @@ import de.chojo.lyna.feature.butler.service.ButlerUpdateService.CheckAnswer;
 import de.chojo.lyna.feature.download.service.DownloadFilename;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.web.api.v1.debug.DebugApi;
 import io.javalin.http.ContentType;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -19,6 +20,7 @@ import io.javalin.http.HttpStatus;
 import java.util.Optional;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
+import static io.javalin.apibuilder.ApiBuilder.post;
 
 /**
  * The routes UpdateButler served at the root of its host, for plugins that still call them.
@@ -30,16 +32,19 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 public class ButlerApi {
     private final ButlerUpdateService updates;
     private final KioskProductRepository kiosk;
+    private final DebugApi debug;
 
     @Inject
-    public ButlerApi(ButlerUpdateService updates, KioskProductRepository kiosk) {
+    public ButlerApi(ButlerUpdateService updates, KioskProductRepository kiosk, DebugApi debug) {
         this.updates = updates;
         this.kiosk = kiosk;
+        this.debug = debug;
     }
 
     public void init() {
         get("check", this::check);
         get("download", this::download);
+        post("debug/v1/submit", debug::submit);
     }
 
     /**
