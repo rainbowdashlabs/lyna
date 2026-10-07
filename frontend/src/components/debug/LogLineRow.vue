@@ -41,8 +41,6 @@ const LEVEL_CLASS: Record<LogLevel, string> = {
 
 <style scoped>
 .log-row {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 1.25rem;
   scroll-margin-top: 8rem;
 }
 </style>
