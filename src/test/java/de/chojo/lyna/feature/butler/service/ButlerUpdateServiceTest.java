@@ -91,8 +91,7 @@ class ButlerUpdateServiceTest {
         download(ReleaseType.DEV, asset("1.4.0-DEV", 4));
 
         assertEquals(
-                Optional.of(new CheckAnswer(true, "1.3.0", "sha256-1.3.0")),
-                service.check(product, "1.2.0", false));
+                Optional.of(new CheckAnswer(true, "1.3.0", "sha256-1.3.0")), service.check(product, "1.2.0", false));
     }
 
     @Test
@@ -101,8 +100,7 @@ class ButlerUpdateServiceTest {
         download(ReleaseType.STABLE, asset("1.3.0", 3));
 
         assertEquals(
-                Optional.of(new CheckAnswer(false, "1.3.0", "sha256-1.3.0")),
-                service.check(product, "1.3.0", false));
+                Optional.of(new CheckAnswer(false, "1.3.0", "sha256-1.3.0")), service.check(product, "1.3.0", false));
     }
 
     @Test
@@ -111,7 +109,8 @@ class ButlerUpdateServiceTest {
         download(ReleaseType.STABLE, asset("1.3.0", 3));
         download(ReleaseType.DEV, asset("1.4.0-DEV", 4));
 
-        assertEquals("1.4.0-DEV", service.check(product, "1.3.0", true).orElseThrow().latestVersion());
+        assertEquals(
+                "1.4.0-DEV", service.check(product, "1.3.0", true).orElseThrow().latestVersion());
     }
 
     @Test
@@ -132,7 +131,9 @@ class ButlerUpdateServiceTest {
         download(ReleaseType.STABLE, asset("1.4.0", 5));
         download(ReleaseType.DEV, asset("1.4.0-DEV", 4));
 
-        assertEquals("1.4.0", service.check(product, "1.4.0-DEV", false).orElseThrow().latestVersion());
+        assertEquals(
+                "1.4.0",
+                service.check(product, "1.4.0-DEV", false).orElseThrow().latestVersion());
     }
 
     @Test
@@ -141,7 +142,8 @@ class ButlerUpdateServiceTest {
         download(ReleaseType.STABLE, asset("1.2.0", 2));
         download(ReleaseType.STABLE, asset("1.3.0", 3));
 
-        assertEquals("1.3.0", service.check(product, "1.0.0", false).orElseThrow().latestVersion());
+        assertEquals(
+                "1.3.0", service.check(product, "1.0.0", false).orElseThrow().latestVersion());
     }
 
     @Test

@@ -49,7 +49,8 @@ public class SetChannel implements SlashHandler {
         }
         ZoneId zone;
         try {
-            zone = ZoneId.of(Objects.requireNonNull(event.getOption("zone", OptionMapping::getAsString)).strip());
+            zone = ZoneId.of(Objects.requireNonNull(event.getOption("zone", OptionMapping::getAsString))
+                    .strip());
         } catch (DateTimeException e) {
             event.reply("That is not a time zone. Try one the list offers, such as Europe/Berlin.")
                     .setEphemeral(true)
@@ -66,8 +67,11 @@ public class SetChannel implements SlashHandler {
         TimeChannel timeChannel = new TimeChannel(channel.getGuild().getIdLong(), channel.getIdLong(), zone, template);
         channels.set(timeChannel);
         schedule.refresh(timeChannel);
-        event.reply("%s now shows the time in %s: **%s**".formatted(
-                        channel.getAsMention(), zone.getId(), TimeChannelNames.name(template, zone, Instant.now())))
+        event.reply("%s now shows the time in %s: **%s**"
+                        .formatted(
+                                channel.getAsMention(),
+                                zone.getId(),
+                                TimeChannelNames.name(template, zone, Instant.now())))
                 .setEphemeral(true)
                 .queue();
     }
@@ -75,9 +79,10 @@ public class SetChannel implements SlashHandler {
     @Override
     public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         if (!event.getFocusedOption().getName().equals("zone")) return;
-        event.replyChoices(TimeChannelNames.zonesMatching(event.getFocusedOption().getValue(), 25).stream()
-                        .map(zone -> new Command.Choice(zone, zone))
-                        .toList())
+        event.replyChoices(
+                        TimeChannelNames.zonesMatching(event.getFocusedOption().getValue(), 25).stream()
+                                .map(zone -> new Command.Choice(zone, zone))
+                                .toList())
                 .queue();
     }
 }

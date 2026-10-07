@@ -31,8 +31,8 @@ import java.util.stream.Stream;
  */
 @Singleton
 public class ButlerUpdateService {
-    private static final Comparator<AssetXO> NEWEST = Comparator
-            .comparing((AssetXO asset) -> Version.parse(asset.maven2().version()))
+    private static final Comparator<AssetXO> NEWEST = Comparator.comparing(
+                    (AssetXO asset) -> Version.parse(asset.maven2().version()))
             .thenComparing(AssetXO::lastModified);
 
     private final ButlerApplicationRepository applications;
@@ -65,10 +65,11 @@ public class ButlerUpdateService {
      */
     public Optional<CheckAnswer> check(Product product, String runningVersion, boolean devBuild) {
         Version running = Version.parse(runningVersion);
-        return latest(product, track(running, devBuild)).map(asset -> new CheckAnswer(
-                Version.parse(asset.maven2().version()).isNewer(running),
-                asset.maven2().version(),
-                asset.checksum() == null ? null : asset.checksum().sha256()));
+        return latest(product, track(running, devBuild))
+                .map(asset -> new CheckAnswer(
+                        Version.parse(asset.maven2().version()).isNewer(running),
+                        asset.maven2().version(),
+                        asset.checksum() == null ? null : asset.checksum().sha256()));
     }
 
     /**

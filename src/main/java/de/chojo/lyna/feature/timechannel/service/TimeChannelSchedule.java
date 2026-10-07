@@ -41,28 +41,33 @@ public class TimeChannelSchedule {
 
     public void start() {
         if (!gateway.connected()) return;
-        threading.botWorker().scheduleAtFixedRate(
-                this::refreshAll,
-                TimeChannelNames.untilNextRename(Instant.now()).toMillis(),
-                TimeChannelNames.INTERVAL.toMillis(),
-                TimeUnit.MILLISECONDS);
+        threading
+                .botWorker()
+                .scheduleAtFixedRate(
+                        this::refreshAll,
+                        TimeChannelNames.untilNextRename(Instant.now()).toMillis(),
+                        TimeChannelNames.INTERVAL.toMillis(),
+                        TimeUnit.MILLISECONDS);
     }
 
     /**
      * Renames one channel now, as when it was just set up.
      */
     public void refresh(TimeChannel channel) {
-        Optional<GuildChannel> found = gateway.guild(channel.guildId())
-                .map(guild -> guild.getGuildChannelById(channel.channelId()));
+        Optional<GuildChannel> found =
+                gateway.guild(channel.guildId()).map(guild -> guild.getGuildChannelById(channel.channelId()));
         if (found.isEmpty()) {
             log.debug("Time channel {} is not visible to the bot", channel.channelId());
             return;
         }
         String name = TimeChannelNames.name(channel.template(), channel.zone(), Instant.now());
         if (name.equals(found.get().getName())) return;
-        found.get().getManager().setName(name).queue(
-                success -> {},
-                error -> log.warn("Could not rename time channel {}", channel.channelId(), error));
+        found.get()
+                .getManager()
+                .setName(name)
+                .queue(
+                        success -> {},
+                        error -> log.warn("Could not rename time channel {}", channel.channelId(), error));
     }
 
     private void refreshAll() {

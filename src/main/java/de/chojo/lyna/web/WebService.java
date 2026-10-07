@@ -54,7 +54,9 @@ public class WebService {
                 });
             }
             config.useVirtualThreads = true;
-            config.http.maxRequestSize = Math.max(config.http.maxRequestSize, configuration.main().debugReports().maxUploadBytes());
+            config.http.maxRequestSize = Math.max(
+                    config.http.maxRequestSize,
+                    configuration.main().debugReports().maxUploadBytes());
             config.router.apiBuilder(this::routes);
         });
 

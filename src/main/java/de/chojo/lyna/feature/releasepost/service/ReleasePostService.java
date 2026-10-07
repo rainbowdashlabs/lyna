@@ -21,8 +21,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.slf4j.Logger;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -33,6 +31,9 @@ import java.util.HexFormat;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -128,9 +129,11 @@ public class ReleasePostService {
             log.debug("Release of product {} not announced: no channel the bot can post in", webhook.productId());
             return;
         }
-        channel.get().sendMessageEmbeds(embed(product.get(), payload)).queue(
-                success -> {},
-                error -> log.warn("Could not announce a release of product {}", webhook.productId(), error));
+        channel.get()
+                .sendMessageEmbeds(embed(product.get(), payload))
+                .queue(
+                        success -> {},
+                        error -> log.warn("Could not announce a release of product {}", webhook.productId(), error));
     }
 
     MessageEmbed embed(Product product, Payload payload) {
@@ -138,12 +141,19 @@ public class ReleasePostService {
         String title = "%s %s".formatted(product.name(), release.tag());
         String body = Objects.requireNonNullElse(release.body(), "").strip();
         EmbedBuilder embed = new EmbedBuilder()
-                .setTitle(title.length() > MessageEmbed.TITLE_MAX_LENGTH ? title.substring(0, MessageEmbed.TITLE_MAX_LENGTH) : title, release.url())
-                .setDescription(body.length() > DESCRIPTION_LIMIT ? body.substring(0, DESCRIPTION_LIMIT - 1) + "…" : body)
+                .setTitle(
+                        title.length() > MessageEmbed.TITLE_MAX_LENGTH
+                                ? title.substring(0, MessageEmbed.TITLE_MAX_LENGTH)
+                                : title,
+                        release.url())
+                .setDescription(
+                        body.length() > DESCRIPTION_LIMIT ? body.substring(0, DESCRIPTION_LIMIT - 1) + "…" : body)
                 .addField("Release", release.prerelease() ? "Pre-release" : "Stable", true)
                 .addField("Download", "%s/products/%d".formatted(api.url(), product.id()), true)
                 .setTimestamp(Instant.now());
-        if (release.name() != null && !release.name().isBlank() && !release.name().equals(release.tag())) {
+        if (release.name() != null
+                && !release.name().isBlank()
+                && !release.name().equals(release.tag())) {
             embed.setAuthor(release.name());
         }
         if (payload.repository() != null) embed.setFooter(payload.repository().fullName());

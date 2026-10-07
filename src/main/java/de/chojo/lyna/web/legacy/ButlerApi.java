@@ -65,9 +65,8 @@ public class ButlerApi {
 
     private void check(Context ctx) {
         ButlerCheckRequest.wellFormed(ctx.queryParamMap())
-                .ifPresentOrElse(
-                        request -> answer(ctx, request),
-                        () -> ctx.status(HttpStatus.BAD_REQUEST).result("Invalid number"));
+                .ifPresentOrElse(request -> answer(ctx, request), () -> ctx.status(HttpStatus.BAD_REQUEST)
+                        .result("Invalid number"));
     }
 
     private void download(Context ctx) {

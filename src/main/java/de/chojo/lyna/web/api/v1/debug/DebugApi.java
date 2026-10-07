@@ -51,15 +51,17 @@ public class DebugApi {
             ctx.status(HttpStatus.TOO_MANY_REQUESTS).result("You are rate limited. Please wait.");
             return;
         }
-        reports.submit(ctx.body()).ifPresentOrElse(
-                keys -> ctx.status(HttpStatus.OK).json(keys),
-                () -> ctx.status(HttpStatus.UNPROCESSABLE_CONTENT).result("That is not a debug report."));
+        reports.submit(ctx.body())
+                .ifPresentOrElse(
+                        keys -> ctx.status(HttpStatus.OK).json(keys),
+                        () -> ctx.status(HttpStatus.UNPROCESSABLE_CONTENT).result("That is not a debug report."));
     }
 
     private void read(Context ctx) {
-        reports.read(ctx.pathParam("readKey")).ifPresentOrElse(
-                report -> ctx.header("Cache-Control", "no-store").json(report),
-                () -> ctx.status(HttpStatus.NOT_FOUND).result("No such report."));
+        reports.read(ctx.pathParam("readKey"))
+                .ifPresentOrElse(
+                        report -> ctx.header("Cache-Control", "no-store").json(report),
+                        () -> ctx.status(HttpStatus.NOT_FOUND).result("No such report."));
     }
 
     private void section(Context ctx) {
@@ -70,12 +72,13 @@ public class DebugApi {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        reports.section(ctx.pathParam("readKey"), position).ifPresentOrElse(
-                content -> ctx.header("Cache-Control", "no-store")
-                        .header("X-Content-Type-Options", "nosniff")
-                        .contentType(ContentType.TEXT_PLAIN.getMimeType() + "; charset=utf-8")
-                        .result(content),
-                () -> ctx.status(HttpStatus.NOT_FOUND).result("No such section."));
+        reports.section(ctx.pathParam("readKey"), position)
+                .ifPresentOrElse(
+                        content -> ctx.header("Cache-Control", "no-store")
+                                .header("X-Content-Type-Options", "nosniff")
+                                .contentType(ContentType.TEXT_PLAIN.getMimeType() + "; charset=utf-8")
+                                .result(content),
+                        () -> ctx.status(HttpStatus.NOT_FOUND).result("No such section."));
     }
 
     private void remove(Context ctx) {

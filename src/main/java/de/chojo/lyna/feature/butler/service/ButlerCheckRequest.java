@@ -42,7 +42,8 @@ public record ButlerCheckRequest(int butlerId, String version, boolean devBuild)
     private static Optional<ButlerCheckRequest> of(Map<String, List<String>> query, String version) {
         if (version.isBlank()) return Optional.empty();
         boolean devBuild = first(query, "devbuild").map(Boolean::parseBoolean).orElse(false);
-        return first(query, "id").flatMap(ButlerCheckRequest::number)
+        return first(query, "id")
+                .flatMap(ButlerCheckRequest::number)
                 .map(id -> new ButlerCheckRequest(id, version, devBuild));
     }
 

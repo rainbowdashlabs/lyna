@@ -63,8 +63,12 @@ class DebugReportServiceTest extends RepositoryTestBase {
         assertEquals(Duration.ofDays(14), Duration.between(report.created(), report.expires()));
         assertTrue(report.serverMeta().contains("Paper 1.21"));
         assertEquals(
-                List.of(DebugEntryKind.META, DebugEntryKind.LOG, DebugEntryKind.PLUGIN_LOG,
-                        DebugEntryKind.INTERNAL_EXCEPTION, DebugEntryKind.CONFIG),
+                List.of(
+                        DebugEntryKind.META,
+                        DebugEntryKind.LOG,
+                        DebugEntryKind.PLUGIN_LOG,
+                        DebugEntryKind.INTERNAL_EXCEPTION,
+                        DebugEntryKind.CONFIG),
                 report.sections().stream().map(DebugReport.Section::kind).toList());
         assertEquals("plugins/BloodNight/config.yml", report.sections().get(4).name());
         assertEquals(2, report.sections().get(1).lines());
@@ -75,7 +79,9 @@ class DebugReportServiceTest extends RepositoryTestBase {
     void sectionContent() {
         var keys = service.submit(REPORT).orElseThrow();
 
-        assertEquals("[12:00:00 INFO]: Done\n[12:00:01 WARN]: Hm", service.section(keys.hash(), 1).orElseThrow());
+        assertEquals(
+                "[12:00:00 INFO]: Done\n[12:00:01 WARN]: Hm",
+                service.section(keys.hash(), 1).orElseThrow());
         assertTrue(service.section(keys.hash(), 99).isEmpty());
         assertTrue(service.section(keys.deletionHash(), 1).isEmpty());
     }
@@ -121,7 +127,9 @@ class DebugReportServiceTest extends RepositoryTestBase {
 
         var report = service.read(keys.hash()).orElseThrow();
         assertEquals("unknown", report.pluginVersion());
-        assertEquals(List.of(DebugEntryKind.LOG), report.sections().stream().map(DebugReport.Section::kind).toList());
+        assertEquals(
+                List.of(DebugEntryKind.LOG),
+                report.sections().stream().map(DebugReport.Section::kind).toList());
     }
 
     @Test

@@ -29,8 +29,7 @@ public class TimeChannelRepository {
                 INSERT INTO time_channel (channel_id, guild_id, zone, template) VALUES (?, ?, ?, ?)
                 ON CONFLICT (channel_id) DO UPDATE SET zone = excluded.zone, template = excluded.template
                 """)
-                .single(call()
-                        .bind(channel.channelId())
+                .single(call().bind(channel.channelId())
                         .bind(channel.guildId())
                         .bind(channel.zone().getId())
                         .bind(channel.template()))
@@ -48,7 +47,8 @@ public class TimeChannelRepository {
     }
 
     public List<TimeChannel> inGuild(long guildId) {
-        return query("SELECT guild_id, channel_id, zone, template FROM time_channel WHERE guild_id = ? ORDER BY channel_id")
+        return query(
+                        "SELECT guild_id, channel_id, zone, template FROM time_channel WHERE guild_id = ? ORDER BY channel_id")
                 .single(call().bind(guildId))
                 .map(row -> new TimeChannel(
                         row.getLong("guild_id"),

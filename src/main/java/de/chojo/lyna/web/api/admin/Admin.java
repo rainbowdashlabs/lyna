@@ -14,8 +14,6 @@ import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
-import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
-import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
@@ -29,6 +27,8 @@ import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
+import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
+import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -419,9 +419,10 @@ public class Admin {
         if (resolved == null) return;
         var product = productFromPath(ctx, resolved);
         if (product == null) return;
-        releaseWebhooks.ofProduct(product.id()).ifPresentOrElse(
-                webhook -> ctx.json(releaseWebhookView(webhook)),
-                () -> ctx.status(HttpStatus.NOT_FOUND));
+        releaseWebhooks
+                .ofProduct(product.id())
+                .ifPresentOrElse(
+                        webhook -> ctx.json(releaseWebhookView(webhook)), () -> ctx.status(HttpStatus.NOT_FOUND));
     }
 
     /**
@@ -448,14 +449,18 @@ public class Admin {
         long channelId;
         try {
             var body = json.readValue(ctx.body(), ReleaseChannel.class);
-            channelId = body.channelId() == null || body.channelId().isBlank() ? 0 : Long.parseLong(body.channelId().strip());
+            channelId = body.channelId() == null || body.channelId().isBlank()
+                    ? 0
+                    : Long.parseLong(body.channelId().strip());
         } catch (Exception e) {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not a channel id");
             return;
         }
-        if (channelId != 0 && gateway.connected() && discordGuild(resolved.guild().guildId())
-                .map(guild -> guild.getChannelById(GuildMessageChannel.class, channelId))
-                .isEmpty()) {
+        if (channelId != 0
+                && gateway.connected()
+                && discordGuild(resolved.guild().guildId())
+                        .map(guild -> guild.getChannelById(GuildMessageChannel.class, channelId))
+                        .isEmpty()) {
             ctx.status(HttpStatus.BAD_REQUEST).result("This guild has no channel with that id the bot can post in");
             return;
         }
@@ -473,7 +478,8 @@ public class Admin {
 
     private ReleaseWebhookView releaseWebhookView(ReleaseWebhookRepository.ReleaseWebhook webhook) {
         return new ReleaseWebhookView(
-                "%s/api/v1/webhook/github/%s".formatted(configuration.main().api().url(), webhook.token()),
+                "%s/api/v1/webhook/github/%s"
+                        .formatted(configuration.main().api().url(), webhook.token()),
                 webhook.secret(),
                 webhook.channelId() == 0 ? null : Long.toString(webhook.channelId()));
     }

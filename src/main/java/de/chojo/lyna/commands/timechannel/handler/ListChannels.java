@@ -28,7 +28,8 @@ public class ListChannels implements SlashHandler {
         String text = inGuild.isEmpty()
                 ? "No channel shows the time."
                 : inGuild.stream()
-                        .map(channel -> "<#%d> · %s · `%s`".formatted(channel.channelId(), channel.zone().getId(), channel.template()))
+                        .map(channel -> "<#%d> · %s · `%s`"
+                                .formatted(channel.channelId(), channel.zone().getId(), channel.template()))
                         .collect(Collectors.joining("\n"));
         event.reply(text).setEphemeral(true).queue();
     }

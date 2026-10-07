@@ -24,7 +24,8 @@ class TimeChannelNamesTest {
     @Test
     @DisplayName("The time goes where the template says, in the channel's zone")
     void timeInZone() {
-        assertEquals("Developer Time: 14:07",
+        assertEquals(
+                "Developer Time: 14:07",
                 TimeChannelNames.name(TimeChannelNames.DEFAULT_TEMPLATE, ZoneId.of("Europe/Berlin"), NOON_UTC));
         assertEquals("NYC 08:07", TimeChannelNames.name("NYC {time}", ZoneId.of("America/New_York"), NOON_UTC));
     }
@@ -32,7 +33,10 @@ class TimeChannelNamesTest {
     @Test
     @DisplayName("A name longer than Discord allows is cut")
     void longNameIsCut() {
-        assertEquals(100, TimeChannelNames.name("x".repeat(200) + "{time}", ZoneId.of("UTC"), NOON_UTC).length());
+        assertEquals(
+                100,
+                TimeChannelNames.name("x".repeat(200) + "{time}", ZoneId.of("UTC"), NOON_UTC)
+                        .length());
     }
 
     @Test

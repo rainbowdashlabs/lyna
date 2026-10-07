@@ -17,13 +17,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HexFormat;
 import java.util.Optional;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -77,11 +78,11 @@ class ReleasePostServiceTest extends RepositoryTestBase {
     void signedReleaseIsAnnounced() throws Exception {
         var webhook = service.issue(productId);
 
-        for (String action : new String[]{"released", "prereleased"}) {
+        for (String action : new String[] {"released", "prereleased"}) {
             String body = RELEASE.formatted(action);
             assertEquals(Outcome.ANNOUNCED, deliver(webhook.token(), "release", sign(webhook.secret(), body), body));
         }
-        for (String action : new String[]{"edited", "created", "deleted"}) {
+        for (String action : new String[] {"edited", "created", "deleted"}) {
             String body = RELEASE.formatted(action);
             assertEquals(Outcome.IGNORED, deliver(webhook.token(), "release", sign(webhook.secret(), body), body));
         }

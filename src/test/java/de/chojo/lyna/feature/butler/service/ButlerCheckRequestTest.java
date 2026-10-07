@@ -57,16 +57,20 @@ class ButlerCheckRequestTest {
     @Test
     @DisplayName("Lyna's own check is not taken for Butler's")
     void lynaCheckIsNotButler() {
-        assertTrue(ButlerCheckRequest.malformed(query("id", "5", "version", "1.2.3")).isEmpty());
-        assertTrue(ButlerCheckRequest.malformed(query("id", "5", "version", "1.2.3", "versions", "x")).isEmpty());
+        assertTrue(ButlerCheckRequest.malformed(query("id", "5", "version", "1.2.3"))
+                .isEmpty());
+        assertTrue(ButlerCheckRequest.malformed(query("id", "5", "version", "1.2.3", "versions", "x"))
+                .isEmpty());
     }
 
     @Test
     @DisplayName("A check without a usable id or version is nobody's")
     void incompleteIsNothing() {
         assertTrue(ButlerCheckRequest.malformed(query("version1.2.3", "")).isEmpty());
-        assertTrue(ButlerCheckRequest.malformed(query("version1.2.3", "", "id", "five")).isEmpty());
-        assertTrue(ButlerCheckRequest.wellFormed(query("id", "5", "version", " ")).isEmpty());
+        assertTrue(ButlerCheckRequest.malformed(query("version1.2.3", "", "id", "five"))
+                .isEmpty());
+        assertTrue(
+                ButlerCheckRequest.wellFormed(query("id", "5", "version", " ")).isEmpty());
         assertTrue(ButlerCheckRequest.wellFormed(query("id", "5")).isEmpty());
     }
 }

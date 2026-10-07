@@ -27,8 +27,7 @@ public final class TimeChannelNames {
     private static final int MAX_NAME_LENGTH = 100;
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT);
 
-    private TimeChannelNames() {
-    }
+    private TimeChannelNames() {}
 
     public static String name(String template, ZoneId zone, Instant now) {
         String name = template.replace(TIME, CLOCK.format(now.atZone(zone)));

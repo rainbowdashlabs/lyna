@@ -33,12 +33,7 @@ public class DebugReportRepository {
      * @param serverMeta JSON
      */
     public record Head(
-            int id,
-            String pluginName,
-            String pluginVersion,
-            Instant created,
-            String pluginMeta,
-            String serverMeta) {}
+            int id, String pluginName, String pluginVersion, Instant created, String pluginMeta, String serverMeta) {}
 
     /**
      * Stores a report.
@@ -67,8 +62,7 @@ public class DebugReportRepository {
                 )
                 SELECT id FROM report
                 """)
-                .single(call()
-                        .bind(readKey)
+                .single(call().bind(readKey)
                         .bind(deleteKeyHash)
                         .bind(pluginName)
                         .bind(pluginVersion)

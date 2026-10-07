@@ -50,9 +50,7 @@ public class ReleaseWebhookRepository {
         query("""
                 INSERT INTO release_webhook (product_id, token, secret) VALUES (?, ?, ?)
                 ON CONFLICT (product_id) DO UPDATE SET token = excluded.token, secret = excluded.secret
-                """)
-                .single(call().bind(productId).bind(token).bind(secret))
-                .insert();
+                """).single(call().bind(productId).bind(token).bind(secret)).insert();
     }
 
     /**

@@ -26,7 +26,10 @@ public class Remove implements SlashHandler {
     public void onSlashCommand(SlashCommandInteractionEvent event, EventContext ctx) {
         GuildChannel channel = event.getOption("channel", OptionMapping::getAsChannel);
         boolean removed = channel != null && channels.remove(channel.getGuild().getIdLong(), channel.getIdLong());
-        event.reply(removed ? "%s no longer shows the time.".formatted(channel.getAsMention()) : "That channel does not show the time.")
+        event.reply(
+                        removed
+                                ? "%s no longer shows the time.".formatted(channel.getAsMention())
+                                : "That channel does not show the time.")
                 .setEphemeral(true)
                 .queue();
     }

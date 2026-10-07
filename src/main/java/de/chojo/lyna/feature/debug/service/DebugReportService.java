@@ -73,7 +73,9 @@ public class DebugReportService {
         } catch (JsonProcessingException | IllegalArgumentException e) {
             return Optional.empty();
         }
-        if (submission == null || submission.pluginMeta() == null || !submission.pluginMeta().isObject()) {
+        if (submission == null
+                || submission.pluginMeta() == null
+                || !submission.pluginMeta().isObject()) {
             return Optional.empty();
         }
         Keys keys = new Keys(newKey(), newKey());
@@ -84,8 +86,8 @@ public class DebugReportService {
                     text(submission.pluginMeta(), "name", "Unknown plugin"),
                     text(submission.pluginMeta(), "version", "unknown"),
                     json.writeValueAsString(submission.pluginMeta()),
-                    json.writeValueAsString(Objects.requireNonNullElse(
-                            submission.serverMeta(), json.createObjectNode())),
+                    json.writeValueAsString(
+                            Objects.requireNonNullElse(submission.serverMeta(), json.createObjectNode())),
                     json.writeValueAsString(sections(submission).stream()
                             .map(section -> Map.of(
                                     "kind", section.kind().name(),
@@ -99,14 +101,15 @@ public class DebugReportService {
     }
 
     public Optional<DebugReport> read(String readKey) {
-        return reports.byReadKey(readKey).map(head -> new DebugReport(
-                head.pluginName(),
-                head.pluginVersion(),
-                head.created(),
-                head.created().plus(retention()),
-                head.pluginMeta(),
-                head.serverMeta(),
-                reports.sections(head.id())));
+        return reports.byReadKey(readKey)
+                .map(head -> new DebugReport(
+                        head.pluginName(),
+                        head.pluginVersion(),
+                        head.created(),
+                        head.created().plus(retention()),
+                        head.pluginMeta(),
+                        head.serverMeta(),
+                        reports.sections(head.id())));
     }
 
     public Optional<String> section(String readKey, int position) {
@@ -155,7 +158,8 @@ public class DebugReportService {
         return sections;
     }
 
-    private static void addExceptions(List<NewSection> sections, DebugEntryKind kind, String name, List<String> exceptions) {
+    private static void addExceptions(
+            List<NewSection> sections, DebugEntryKind kind, String name, List<String> exceptions) {
         int number = 1;
         for (String exception : nonNull(exceptions)) {
             if (exception == null || exception.isBlank()) continue;
