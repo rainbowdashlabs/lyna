@@ -11,7 +11,9 @@
     "remove": "Remove",
     "download": "Download",
     "product": "Product",
-    "configured": "Configured"
+    "configured": "Configured",
+    "authors": "Authors",
+    "dependsOn": "Depends on"
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -219,6 +221,21 @@
       "signingIn": "Signing in with Discord",
       "nothingToSignInWith": "Discord sent you back without a session.",
       "backToSignIn": "Back to sign-in"
+    },
+    "debug": {
+      "read": {
+        "notFound": "There is no report here. It may have expired or been deleted.",
+        "expires": "Expires {date}",
+        "sections": "{count} sections"
+      },
+      "delete": {
+        "title": "Delete debug report",
+        "explain": "This removes the report and everything in it for good. Anybody holding its link will no longer be able to open it.",
+        "confirm": "Delete report",
+        "deleted": "The report is deleted.",
+        "unknown": "There is no report with this key. It may already be gone.",
+        "failed": "The report could not be deleted. Try again in a moment."
+      }
     }
   },
   "layout": {
@@ -474,6 +491,71 @@
       "needHelp": "Need help?",
       "whereToAsk": "Questions, a bug, or a license that will not work: ask on the support Discord.",
       "join": "Join the support Discord"
+    },
+    "debugLog": {
+      "fold": "Fold",
+      "unfold": "Show {count} more lines",
+      "folded": "{count} lines folded",
+      "lines": "{count} lines",
+      "problemsOnly": "Warnings and errors only",
+      "wrap": "Wrap lines",
+      "previousMatch": "Previous match",
+      "nextMatch": "Next match",
+      "matchPosition": "{current} / {count}"
+    },
+    "debugReportHeader": {
+      "server": "Server",
+      "players": "Players",
+      "worlds": "Worlds",
+      "uploaded": "Uploaded",
+      "expires": "Expires"
+    },
+    "debugSearchBar": {
+      "placeholder": "Search the whole report",
+      "regex": "Regex",
+      "caseSensitive": "Match case",
+      "invalidRegex": "That regex does not compile."
+    },
+    "debugSectionTabs": {
+      "overview": "Overview",
+      "logs": "Logs",
+      "exceptions": "Exceptions",
+      "configs": "Configs",
+      "plugins": "Plugins"
+    },
+    "debugExceptionGroup": {
+      "findInLog": "Find in log",
+      "toggleTrace": "Show the stack trace"
+    },
+    "debugExceptionList": {
+      "plugin": "From the plugin",
+      "other": "From elsewhere on the server",
+      "none": "None."
+    },
+    "debugConfigFile": {
+      "toggle": "Show the file"
+    },
+    "debugConfigList": {
+      "none": "No config files."
+    },
+    "debugPluginTable": {
+      "none": "No plugins.",
+      "name": "Name",
+      "version": "Version",
+      "state": "State",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "debugOverview": {
+      "main": "Main class",
+      "softDependencies": "Soft depends on",
+      "loadBefore": "Loads before"
+    },
+    "debugOverviewCounts": {
+      "errors": "errors in the log",
+      "warnings": "warnings in the log",
+      "exceptions": "exceptions collected",
+      "plugins": "plugins installed"
     }
   }
 }

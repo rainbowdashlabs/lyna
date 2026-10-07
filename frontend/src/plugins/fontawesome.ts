@@ -17,6 +17,7 @@ import {
     faCheck,
     faCircleCheck,
     faChevronDown,
+    faChevronUp,
     faChevronRight,
     faCircleExclamation,
     faCircleHalfStroke,
@@ -51,6 +52,7 @@ library.add(faCartShopping)
 library.add(faCheck)
 library.add(faCircleCheck)
 library.add(faChevronDown)
+library.add(faChevronUp)
 library.add(faChevronRight)
 library.add(faCircleExclamation)
 library.add(faCircleHalfStroke)

@@ -68,3 +68,7 @@ nexus:
   username: ""
 storage:
   directory: "data"
+debugReports:
+  maxUploadBytes: 16777216
+  retentionDays: 14
+  uploadIntervalSeconds: 0

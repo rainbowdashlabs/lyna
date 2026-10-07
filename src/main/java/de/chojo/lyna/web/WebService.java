@@ -38,6 +38,10 @@ public class WebService {
         this.butler = butler;
     }
 
+    /**
+     * Starts the server. The request size limit is the largest debug report accepted, since those are
+     * the largest bodies anything sends and Javalin's limit is server-wide.
+     */
     public void init() {
         var apiConfig = configuration.main().api();
         javalin = Javalin.create(config -> {
@@ -50,6 +54,7 @@ public class WebService {
                 });
             }
             config.useVirtualThreads = true;
+            config.http.maxRequestSize = Math.max(config.http.maxRequestSize, configuration.main().debugReports().maxUploadBytes());
             config.router.apiBuilder(this::routes);
         });
 

@@ -13,10 +13,6 @@ import io.javalin.http.ContentType;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
 import static io.javalin.apibuilder.ApiBuilder.delete;
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -25,19 +21,17 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 /**
  * Debug reports: uploaded by plugins, read and deleted by whoever holds the links.
  *
- * <p>The body is read from the stream up to the configured limit rather than through
- * {@link Context#body()}, whose limit is the server-wide one and far smaller than a server log.
+ * <p>An upload is mostly a server log, far larger than anything else this server takes, so the
+ * server-wide request limit is raised to {@link DebugReports#maxUploadBytes()} for it.
  */
 public class DebugApi {
     private final DebugReportService reports;
     private final UploadThrottle throttle;
-    private final DebugReports settings;
 
     @Inject
-    public DebugApi(DebugReportService reports, UploadThrottle throttle, DebugReports settings) {
+    public DebugApi(DebugReportService reports, UploadThrottle throttle) {
         this.reports = reports;
         this.throttle = throttle;
-        this.settings = settings;
     }
 
     public void init() {
@@ -52,21 +46,12 @@ public class DebugApi {
     /**
      * Takes an upload. Also mounted at UpdateButler's old path, where the deployed clients send it.
      */
-    public void submit(Context ctx) throws IOException {
+    public void submit(Context ctx) {
         if (!throttle.admit(clientAddress(ctx))) {
             ctx.status(HttpStatus.TOO_MANY_REQUESTS).result("You are rate limited. Please wait.");
             return;
         }
-        String body;
-        try (InputStream in = ctx.bodyInputStream()) {
-            byte[] bytes = in.readNBytes(settings.maxUploadBytes() + 1);
-            if (bytes.length > settings.maxUploadBytes()) {
-                ctx.status(HttpStatus.CONTENT_TOO_LARGE).result("The report is too large.");
-                return;
-            }
-            body = new String(bytes, StandardCharsets.UTF_8);
-        }
-        reports.submit(body).ifPresentOrElse(
+        reports.submit(ctx.body()).ifPresentOrElse(
                 keys -> ctx.status(HttpStatus.OK).json(keys),
                 () -> ctx.status(HttpStatus.UNPROCESSABLE_CONTENT).result("That is not a debug report."));
     }
