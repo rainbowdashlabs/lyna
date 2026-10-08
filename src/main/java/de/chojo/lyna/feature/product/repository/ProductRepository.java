@@ -33,6 +33,16 @@ public class ProductRepository {
     /**
      * @return whether this member has a trial of the product still to spend
      */
+    /**
+     * @return every guild that has products, for an operator choosing one with no gateway to ask
+     */
+    public List<Long> guildsWithProducts() {
+        return query("SELECT DISTINCT guild_id FROM product ORDER BY guild_id")
+                .single()
+                .map(row -> row.getLong("guild_id"))
+                .all();
+    }
+
     public boolean trialUnspent(int productId, long discordId) {
         return query("SELECT NOT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?) as exists")
                 .single(call().bind(productId).bind(discordId))

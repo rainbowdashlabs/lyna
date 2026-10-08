@@ -13,7 +13,8 @@
     "product": "Product",
     "configured": "Configured",
     "authors": "Authors",
-    "dependsOn": "Depends on"
+    "dependsOn": "Depends on",
+    "admin": "Admin"
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -205,6 +206,12 @@
         "selectAGuild": "Select a guild",
         "youAdministerMoreThanOneGuild": "You administer more than one guild. Pick one to continue.",
         "noAdminAccess": "No admin access."
+      },
+      "noAccess": {
+        "title": "No admin access",
+        "linkDiscord": "Administering a guild needs your Discord account. Link it under your account, then come back here.",
+        "noGuild": "Your Discord account cannot administer any guild here. That needs Manage Server on the guild, or an operator of this instance adding you.",
+        "toAccount": "Go to your account"
       }
     },
     "products": {

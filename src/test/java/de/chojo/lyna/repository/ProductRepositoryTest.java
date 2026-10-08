@@ -136,4 +136,17 @@ class ProductRepositoryTest extends RepositoryTestBase {
         assertTrue(productRepository.delete(productId, GUILD));
         assertFalse(productRepository.delete(productId, GUILD), "and it is gone");
     }
+
+    @Test
+    @DisplayName("Every guild with a product is named once, which is all an operator has to go on without a bot")
+    void guildsWithProducts() throws SQLException {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "INSERT INTO %s.product (guild_id, name, role) VALUES (%d, 'Second', 7), (%d, 'Elsewhere', 8)"
+                            .formatted(schemaName, GUILD, GUILD + 1));
+        }
+
+        assertEquals(java.util.List.of(GUILD, GUILD + 1), productRepository.guildsWithProducts());
+    }
 }

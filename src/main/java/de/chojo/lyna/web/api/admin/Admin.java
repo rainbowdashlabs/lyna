@@ -26,6 +26,7 @@ import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
@@ -77,6 +78,7 @@ public class Admin {
     private final ButlerApplicationRepository butlerApplications;
     private final ReleaseWebhookRepository releaseWebhooks;
     private final ReleasePostService releasePosts;
+    private final ProductRepository productRepository;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final de.chojo.lyna.mail.blocks.MailBlockRenderer blockRenderer =
@@ -103,7 +105,9 @@ public class Admin {
             ProductIconService productIcons,
             ButlerApplicationRepository butlerApplications,
             ReleaseWebhookRepository releaseWebhooks,
-            ReleasePostService releasePosts) {
+            ReleasePostService releasePosts,
+            ProductRepository productRepository) {
+        this.productRepository = productRepository;
         this.productIcons = productIcons;
         this.butlerApplications = butlerApplications;
         this.releaseWebhooks = releaseWebhooks;
@@ -991,6 +995,15 @@ public class Admin {
      * the root set and cannot be removed through the web, so there is always a way back in; the rest
      * were granted here and can be withdrawn here.
      */
+    private List<AdminGuild> knownGuilds() {
+        Set<Long> ids = new java.util.TreeSet<>(productRepository.guildsWithProducts());
+        long configured = configuration.main().baseSettings().botGuild();
+        if (configured != 0) ids.add(configured);
+        return ids.stream()
+                .map(id -> new AdminGuild(Long.toString(id), "Guild " + id, null, "operator"))
+                .toList();
+    }
+
     private boolean isOperator(Long discordId) {
         if (discordId == null) return false;
         return isRootOperator(discordId) || operators.contains(discordId);
@@ -1021,8 +1034,13 @@ public class Admin {
         return member.getRoles().stream().anyMatch(role -> role.getIdLong() == adminRole);
     }
 
+    /**
+     * The guilds the caller may administer. Without a gateway there are no guild names or memberships
+     * to ask about, so only an operator gets any: the configured guild and every guild that has
+     * products, named by id.
+     */
     private List<AdminGuild> adminGuilds(Long discordId, boolean operator) {
-        if (!gateway.connected()) return List.of();
+        if (!gateway.connected()) return operator ? knownGuilds() : List.of();
         Set<Long> seen = new HashSet<>();
         List<AdminGuild> result = new ArrayList<>();
         for (Guild g : gateway.guilds()) {

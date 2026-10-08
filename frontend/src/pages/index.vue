@@ -63,6 +63,7 @@ function clearFilters() {
     <main class="flex-1 pb-12">
     <TabStrip :tabs="[{to: '/', label: t('kiosk.title'), exact: true}]">
       <template #end>
+        <AdminLink/>
         <NuxtLink
             :to="signedIn ? '/account' : '/login'"
             class="font-data px-4 py-2.5 text-xs whitespace-nowrap text-(--text-muted) hover:text-(--text)"
