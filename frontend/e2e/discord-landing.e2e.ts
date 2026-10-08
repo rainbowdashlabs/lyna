@@ -25,7 +25,7 @@ test.describe('Arriving back from Discord', () => {
 
         await page.goto(`/auth/discord#token=${encodeURIComponent(token)}&next=${encodeURIComponent('/account/security')}`)
 
-        await expect(page).toHaveURL(/\/account\/security$/)
+        await expect(page).toHaveURL(/:\/\/[^/]+\/account\/security$/)
         expect(await page.evaluate(() => localStorage.getItem('auth'))).toBe(token)
     })
 
