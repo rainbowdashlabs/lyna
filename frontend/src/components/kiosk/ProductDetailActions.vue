@@ -35,7 +35,7 @@ defineEmits<{ download: [] }>()
     <EmptyHint v-if="!product.free && !product.entitled && signedIn">
       {{ t('ui.productTile.alreadyBoughtIt') }}
       <NuxtLink class="text-primary hover:underline" to="/account/security">
-        {{ t('ui.productTile.linkYourDiscord') }}
+        {{ t('ui.productTile.linkYourAccount') }}
       </NuxtLink>
     </EmptyHint>
   </div>

@@ -414,7 +414,7 @@
       "buyOnKoFi": "Buy on Ko-fi",
       "notForSaleHere": "Not for sale here",
       "alreadyBoughtIt": "Already bought it?",
-      "linkYourDiscord": "Link your Discord",
+      "linkYourAccount": "Link your account",
       "latest": "{version} · updated {date}"
     },
     "licenseDetailHeader": {
