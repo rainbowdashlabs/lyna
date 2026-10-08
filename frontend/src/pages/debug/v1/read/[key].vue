@@ -78,7 +78,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex flex-1 flex-col">
     <main class="flex-1 pb-12">
       <section class="mx-auto max-w-7xl space-y-6 px-4 py-6">
         <EmptyState v-if="notFound" :message="t('page.debug.read.notFound')"/>

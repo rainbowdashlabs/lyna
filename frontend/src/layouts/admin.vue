@@ -130,6 +130,8 @@ function switchGuild(event: Event) {
       <slot/>
     </main>
 
+    <AppFooter/>
+
     <StatusBar
         :left="status"
         :right="system ? [{label: `lyna ${system.version}`}] : []"

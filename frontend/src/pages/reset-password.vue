@@ -57,7 +57,7 @@ async function goToLogin() {
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
+  <main class="mx-auto flex flex-1 max-w-md flex-col justify-center p-6">
     <PageHeader class="mb-6">
       {{ t('page.reset-password.setANewPassword') }}
     </PageHeader>

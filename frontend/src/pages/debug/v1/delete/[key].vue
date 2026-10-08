@@ -36,7 +36,7 @@ async function remove() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex flex-1 flex-col">
     <main class="mx-auto w-full max-w-xl flex-1 space-y-4 px-4 py-12">
       <Heading :level="1">{{ t('page.debug.delete.title') }}</Heading>
       <template v-if="state === 'ask' || state === 'busy'">
@@ -47,6 +47,5 @@ async function remove() {
       <Alert v-else-if="state === 'unknown'" variant="error">{{ t('page.debug.delete.unknown') }}</Alert>
       <Alert v-else variant="error">{{ t('page.debug.delete.failed') }}</Alert>
     </main>
-    <AppFooter/>
   </div>
 </template>
