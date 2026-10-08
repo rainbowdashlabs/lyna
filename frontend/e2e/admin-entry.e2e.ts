@@ -20,6 +20,9 @@ test.describe('The way into the admin area', () => {
         await page.getByRole('link', {name: 'Admin', exact: true}).click()
 
         await expect(page).toHaveURL(/\/admin\/(g\/\d+\/products|select)$/)
+
+        await page.getByRole('link', {name: 'Your account', exact: true}).click()
+        await expect(page).toHaveURL(/\/account$/)
     })
 
     test('an account that administers nothing is offered no way in, and told why at the door', async ({page}) => {

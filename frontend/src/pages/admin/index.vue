@@ -39,7 +39,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center px-4">
+  <div class="flex flex-1 items-center justify-center px-4">
     <div v-if="refused" class="max-w-md space-y-4">
       <Heading :level="1">{{ t('page.admin.noAccess.title') }}</Heading>
       <p>{{ account?.discordId ? t('page.admin.noAccess.noGuild') : t('page.admin.noAccess.linkDiscord') }}</p>

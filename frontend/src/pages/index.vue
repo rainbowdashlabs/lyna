@@ -73,7 +73,7 @@ function clearFilters() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex flex-1 flex-col">
     <main class="flex-1 pb-12">
     <TabStrip :tabs="[{to: '/', label: t('kiosk.title'), exact: true}]">
       <template #end>
@@ -118,8 +118,6 @@ function clearFilters() {
     </section>
 
     </main>
-
-    <AppFooter/>
 
     <DownloadWizard
         v-if="wizardProduct"

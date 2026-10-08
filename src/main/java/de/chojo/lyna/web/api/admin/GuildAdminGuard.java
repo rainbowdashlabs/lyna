@@ -130,9 +130,16 @@ public class GuildAdminGuard {
         return configuration.main().baseSettings().isOwner(discordId) || operators.contains(discordId);
     }
 
+    /**
+     * Whether the caller has Manage Server, or the guild's admin role, on a guild the gateway knows.
+     *
+     * <p>The member is asked of Discord when the cache does not hold them. The bot does not load a
+     * guild's members up front, so a cache-only lookup missed even the guild's owner, who then could
+     * not reach the admin area at all.
+     */
     public boolean hasGuildAdmin(Long discordId, Guild guild) {
         if (discordId == null) return false;
-        Member member = guild.getMemberById(discordId);
+        Member member = gateway.member(guild.getIdLong(), discordId).orElse(null);
         if (member == null) return false;
         if (member.hasPermission(Permission.MANAGE_SERVER)) return true;
         Long adminRole = guilds.guild(guild).settings().license().adminRoleId();

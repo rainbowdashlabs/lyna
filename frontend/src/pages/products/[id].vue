@@ -58,7 +58,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex flex-1 flex-col">
     <main class="flex-1 pb-12">
     <TabStrip :tabs="[{to: '/', label: t('kiosk.title'), exact: true}]">
       <template #end>
@@ -94,8 +94,6 @@ onMounted(load)
     </section>
 
     </main>
-
-    <AppFooter/>
 
     <DownloadWizard v-if="wizardOpen && product" :product="product" :start="wizardStart" @close="wizardOpen = false"/>
   </div>

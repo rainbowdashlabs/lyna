@@ -94,6 +94,19 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A guild's products are listed by id, whatever their names")
+    void productsAreListedById() {
+        Product zebra =
+                guild.products().create("Zebra", 61L, null, false, false).orElseThrow();
+        Product apple =
+                guild.products().create("Apple", 62L, null, false, false).orElseThrow();
+
+        assertEquals(
+                List.of(product.id(), zebra.id(), apple.id()),
+                guild.products().all().stream().map(Product::id).toList());
+    }
+
+    @Test
     @DisplayName("A product can be made naming its role by id, for an instance with no gateway")
     void productByRoleId() {
         Product made = guild.products().create("Gadget", 60L, null, true, true).orElseThrow();

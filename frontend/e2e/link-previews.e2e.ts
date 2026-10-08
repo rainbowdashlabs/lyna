@@ -40,6 +40,10 @@ test.describe('Link previews', () => {
         const card = embed(html)
         expect(card.component.type).toBe(17)
         expect(JSON.stringify(card)).toContain('"label":"Download"')
+        const text = (card.component.components[0] as unknown as {content: string}).content
+        expect(text).toContain('A **freebie** for the stories.')
+        expect(text).not.toContain('- one')
+        expect(text).not.toContain('<img')
     })
 
     test('the storefront and a debug report have previews of their own', async ({request}) => {

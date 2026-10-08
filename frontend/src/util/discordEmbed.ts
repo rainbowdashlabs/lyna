@@ -91,6 +91,26 @@ export function discordMarkdown(markdown: string | null | undefined, base: strin
         .trim())
 }
 
+/**
+ * The opening of a description as Discord markdown: its first paragraph of prose, cut at a word near
+ * {@code limit}. Headings, lists, code and every image - badges included, linked or not - are left
+ * out, since an embed shows none of them well and a preview only needs to say what the plugin is.
+ */
+export function discordAbstract(markdown: string | null | undefined, base: string, limit = 350): string {
+    const prose = discordMarkdown(markdown
+        ?.replace(/\[!\[[^\]]*]\([^)]*\)]\([^)]*\)/g, '')
+        .replace(/<a\b[^>]*>\s*<img\b[^>]*>\s*<\/a>/gi, ''), base)
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/\[]\([^)]*\)/g, '')
+        .split(/\n\s*\n/)
+        .map(block => block.trim())
+        .find(block => block.length > 0 && !/^(#|[-*+]\s|\d+\.\s|>|\|)/.test(block))
+        ?.replace(/\s*\n\s*/g, ' ') ?? ''
+    if (prose.length <= limit) return prose
+    const cut = prose.slice(0, limit)
+    return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), limit / 2)).trimEnd()}…`
+}
+
 /** Markdown reduced to plain text, for the places that show no formatting, such as OpenGraph. */
 export function plainText(markdown: string | null | undefined, limit = 300): string {
     if (!markdown) return ''

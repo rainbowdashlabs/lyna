@@ -305,7 +305,8 @@
       "guildsCount": "{count} guilds",
       "guildAdmin": "guild admin",
       "downloadTypes": "Download types",
-      "timeChannels": "Time channels"
+      "timeChannels": "Time channels",
+      "yourAccount": "Your account"
     }
   },
   "ui": {
@@ -413,7 +414,8 @@
       "buyOnKoFi": "Buy on Ko-fi",
       "notForSaleHere": "Not for sale here",
       "alreadyBoughtIt": "Already bought it?",
-      "linkYourDiscord": "Link your Discord"
+      "linkYourDiscord": "Link your Discord",
+      "latest": "{version} · updated {date}"
     },
     "licenseDetailHeader": {
       "copy": "Copy"

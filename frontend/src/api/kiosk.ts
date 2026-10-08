@@ -15,6 +15,10 @@ export interface KioskProduct {
     purchaseUrl: string | null
     /** Whether this visitor already holds a license covering the product. */
     entitled: boolean
+    /** The newest stable version, or null when there is none. */
+    latestVersion: string | null
+    /** When the newest stable version was published. */
+    updatedAt: string | null
 }
 
 /**

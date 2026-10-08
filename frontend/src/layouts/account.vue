@@ -71,6 +71,8 @@ const status = computed<StatusItem[]>(() => [
       <slot/>
     </main>
 
+    <AppFooter/>
+
     <StatusBar :left="status"/>
   </div>
 </template>

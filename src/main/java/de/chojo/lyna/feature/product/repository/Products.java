@@ -57,7 +57,7 @@ public class Products {
     }
 
     public List<Product> all() {
-        return query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ?")
+        return query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ? ORDER BY id")
                 .single(call().bind(licenseGuild.guildId()))
                 .map(row -> new Product(
                         this,

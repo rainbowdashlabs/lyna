@@ -93,6 +93,18 @@ function switchGuild(event: Event) {
         >
           {{ t('layout.admin.instanceArea') }}
         </NuxtLink>
+        <NuxtLink
+            class="font-data border-l border-border-light px-4 py-2.5 text-xs whitespace-nowrap text-(--text-muted) hover:text-(--text) dark:border-border-dark"
+            to="/account"
+        >
+          {{ t('layout.admin.yourAccount') }}
+        </NuxtLink>
+        <NuxtLink
+            class="font-data border-l border-border-light px-4 py-2.5 text-xs whitespace-nowrap text-(--text-muted) hover:text-(--text) dark:border-border-dark"
+            to="/"
+        >
+          {{ t('layout.account.storefront') }}
+        </NuxtLink>
       </template>
     </TabStrip>
 
@@ -117,6 +129,8 @@ function switchGuild(event: Event) {
     <main class="mx-auto w-full max-w-6xl flex-1 p-6">
       <slot/>
     </main>
+
+    <AppFooter/>
 
     <StatusBar
         :left="status"

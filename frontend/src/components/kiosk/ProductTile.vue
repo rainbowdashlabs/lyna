@@ -7,6 +7,7 @@
 import {useI18n} from 'vue-i18n'
 import {computed} from 'vue'
 import {callToAction, type KioskProduct} from '~/api/kiosk'
+import {formatDate} from '~/util/format'
 
 const {t} = useI18n()
 
@@ -38,6 +39,10 @@ const action = computed(() => callToAction(props.product))
         <NeutralBadge v-else>{{ t('ui.productTile.premium') }}</NeutralBadge>
       </div>
     </header>
+
+    <MutedText v-if="product.latestVersion" class="font-data mt-3" size="xs" tag="p">
+      {{ t('ui.productTile.latest', {version: product.latestVersion, date: formatDate(product.updatedAt)}) }}
+    </MutedText>
 
     <footer class="mt-4 flex items-center justify-end gap-2">
       <a

@@ -6,7 +6,7 @@
 import {computed} from 'vue'
 import {useI18n} from 'vue-i18n'
 import type {KioskProductDetail, VersionEntry} from '~/api/kiosk'
-import {discordMarkdown, plainText} from '~/util/discordEmbed'
+import {discordAbstract, plainText} from '~/util/discordEmbed'
 import {useLinkPreview} from './useLinkPreview'
 import {useServerFetch} from './useServerFetch'
 
@@ -37,7 +37,7 @@ export function useProductPreview(productId: number) {
             image,
             card: {
                 heading: `## ${value.name}\n${facts}`,
-                body: discordMarkdown(value.description, `${origin}/products/${value.id}`) || description,
+                body: discordAbstract(value.description, `${origin}/products/${value.id}`) || description,
                 thumbnail: image,
                 buttons: [
                     {label: value.free ? t('preview.product.download') : t('preview.product.view'), url: `/products/${value.id}`},
