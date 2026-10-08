@@ -5,6 +5,7 @@
  */
 package de.chojo.lyna.web.api.v1.releases;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.inject.Inject;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
@@ -101,7 +102,14 @@ public class Releases {
         }
     }
 
-    private record SimpleAsset(String version, int type, Instant published) {
+    /**
+     * @param published seconds since the epoch, as this public endpoint has always answered; clients
+     *                  outside this repository read it
+     */
+    private record SimpleAsset(
+            String version,
+            int type,
+            @JsonFormat(shape = JsonFormat.Shape.NUMBER) Instant published) {
         public static SimpleAsset create(int type, AssetXO asset) {
             return new SimpleAsset(
                     asset.maven2().version(), type, asset.lastModified().toInstant());

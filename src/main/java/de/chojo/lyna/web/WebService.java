@@ -5,6 +5,7 @@
  */
 package de.chojo.lyna.web;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.Api;
@@ -13,6 +14,7 @@ import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.json.JavalinJackson;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -41,6 +43,9 @@ public class WebService {
     /**
      * Starts the server. The request size limit is the largest debug report accepted, since those are
      * the largest bodies anything sends and Javalin's limit is server-wide.
+     *
+     * <p>Moments are written as ISO-8601 text. Jackson's default is seconds since the epoch, which the
+     * browser reads as milliseconds: every date the frontend showed was a day in January 1970.
      */
     public void init() {
         var apiConfig = configuration.main().api();
@@ -54,6 +59,8 @@ public class WebService {
                 });
             }
             config.useVirtualThreads = true;
+            config.jsonMapper(new JavalinJackson()
+                    .updateMapper(mapper -> mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)));
             config.http.maxRequestSize = Math.max(
                     config.http.maxRequestSize,
                     configuration.main().debugReports().maxUploadBytes());
