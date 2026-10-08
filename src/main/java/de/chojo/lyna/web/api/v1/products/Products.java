@@ -5,19 +5,25 @@
  */
 package de.chojo.lyna.web.api.v1.products;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.inject.Inject;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.service.ProductVersionService;
 import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.kiosk.service.ProductPageService;
+import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -39,6 +45,8 @@ public class Products {
     private final AccountLicenseRepository licenses;
 
     private final ProductPageService pages;
+    private final ProductLookup productLookup;
+    private final ProductVersionService versions;
 
     @Inject
     public Products(
@@ -48,8 +56,12 @@ public class Products {
             AccountLicenseRepository licenses,
             ProductIconRepository icons,
             ProductIconService productIcons,
-            ProductPageService pages) {
+            ProductPageService pages,
+            ProductLookup productLookup,
+            ProductVersionService versions) {
         this.pages = pages;
+        this.productLookup = productLookup;
+        this.versions = versions;
         this.productIcons = productIcons;
         this.icons = icons;
         this.kiosk = kiosk;
@@ -72,8 +84,11 @@ public class Products {
         Set<Integer> entitled = entitlements(ctx);
         Set<Integer> uploaded = icons.withIcon();
         List<KioskEntry> entries = kiosk.all().stream()
-                .map(product ->
-                        KioskEntry.of(product, entitled.contains(product.id()), uploaded.contains(product.id())))
+                .map(product -> KioskEntry.of(
+                        product,
+                        entitled.contains(product.id()),
+                        uploaded.contains(product.id()),
+                        latestStable(product.id())))
                 .toList();
         ctx.json(entries);
     }
@@ -169,6 +184,25 @@ public class Products {
     /**
      * @param entitled whether this visitor holds a license covering the product
      */
+    /**
+     * The newest stable build of a product, for its tile. Nothing when it has none, or when Nexus
+     * cannot be asked - a tile without a version is better than a storefront that does not load.
+     */
+    private Optional<ProductVersionService.VersionView> latestStable(int productId) {
+        try {
+            return productLookup
+                    .byId(productId)
+                    .flatMap(product -> versions.versions(product, ReleaseType.STABLE, 1).stream()
+                            .findFirst());
+        } catch (RuntimeException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * @param latestVersion the newest stable version, or null when there is none
+     * @param updatedAt     when it was published, or null when there is none
+     */
     private record KioskEntry(
             int id,
             String guildId,
@@ -177,8 +211,14 @@ public class Products {
             String iconUrl,
             boolean free,
             String purchaseUrl,
-            boolean entitled) {
-        static KioskEntry of(KioskProduct product, boolean entitled, boolean uploaded) {
+            boolean entitled,
+            String latestVersion,
+            @JsonFormat(shape = JsonFormat.Shape.STRING) Instant updatedAt) {
+        static KioskEntry of(
+                KioskProduct product,
+                boolean entitled,
+                boolean uploaded,
+                Optional<ProductVersionService.VersionView> latest) {
             return new KioskEntry(
                     product.id(),
                     Long.toString(product.guildId()),
@@ -187,7 +227,9 @@ public class Products {
                     iconAddress(product, uploaded),
                     product.free(),
                     product.purchaseUrl(),
-                    entitled);
+                    entitled,
+                    latest.map(ProductVersionService.VersionView::version).orElse(null),
+                    latest.map(ProductVersionService.VersionView::publishedAt).orElse(null));
         }
     }
 

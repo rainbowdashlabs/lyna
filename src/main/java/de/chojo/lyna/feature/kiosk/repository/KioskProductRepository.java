@@ -36,7 +36,7 @@ public class KioskProductRepository {
                 LEFT JOIN LATERAL (
                     SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
                 ) kp ON TRUE
-                ORDER BY p.name
+                ORDER BY lower(p.name), p.id
                 """)
                 .single()
                 .map(row -> new KioskProduct(

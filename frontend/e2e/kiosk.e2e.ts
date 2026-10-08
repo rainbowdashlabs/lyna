@@ -69,6 +69,15 @@ test.describe('The storefront', () => {
         await expect(page.getByRole('article').filter({hasText: 'E2E Premium'})).toHaveCount(0)
     })
 
+    test('tiles are alphabetical and show the newest stable version and when it came out', async ({page}) => {
+        await page.goto('/')
+
+        await expect(seeded(page)).toHaveCount(3)
+        const names = await seeded(page).getByRole('heading').allTextContents()
+        expect(names.map(name => name.trim())).toEqual(['E2E Freebie', 'E2E Premium', 'E2E Unsellable'])
+        await expect(page.getByRole('article').filter({hasText: 'E2E Freebie'})).toContainText('1.1.0 · updated 01/02/2026')
+    })
+
     test('search narrows to what was typed, and clearing brings the rest back', async ({page}) => {
         await page.goto('/')
 

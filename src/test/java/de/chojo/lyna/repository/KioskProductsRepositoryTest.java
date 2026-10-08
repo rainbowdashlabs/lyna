@@ -88,6 +88,20 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("The catalogue is alphabetical whatever the case of a name")
+    void catalogueIgnoresCase() throws java.sql.SQLException {
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement()) {
+            statement.execute("INSERT INTO %s.product (guild_id, name, role, free) VALUES (%d, 'better tools', 1, TRUE)"
+                    .formatted(schemaName, GUILD_A));
+        }
+
+        assertEquals(
+                List.of("better tools", "Freebie", "Premium"),
+                kioskProducts.all().stream().map(KioskProduct::name).toList());
+    }
+
+    @Test
     @DisplayName("A premium product is listed too, so it can be offered for sale")
     void premiumProductsAreListed() {
         KioskProduct premium = kioskProducts.all().getLast();
