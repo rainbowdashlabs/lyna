@@ -20,6 +20,9 @@ export const PASSWORD = 'end-to-end-password'
 /**
  * Signs a brand new account up through the form, the way a visitor would.
  *
+ * <p>The form is filled only once the page has settled: on a server that has just started, a click
+ * before hydration submits nothing, and the story would wait for an account page that never comes.
+ *
  * <p>Going through the page rather than posting to the endpoint is deliberate: it is the one place
  * the suite has to know that signing up works at all, and every story that needs to *be* someone
  * gets that for free.
@@ -29,7 +32,7 @@ export const PASSWORD = 'end-to-end-password'
 export async function signUp(page: Page, prefix: string): Promise<Account> {
     const account: Account = {email: uniqueEmail(prefix), password: PASSWORD}
 
-    await page.goto('/signup')
+    await page.goto('/signup', {waitUntil: 'networkidle'})
     await fillCredentials(page, account, {confirm: true})
     await page.getByRole('button', {name: 'Sign up'}).click()
 
@@ -42,7 +45,7 @@ export async function signUp(page: Page, prefix: string): Promise<Account> {
  * assert either the account area or the error the form shows.
  */
 export async function logIn(page: Page, account: Account): Promise<void> {
-    await page.goto('/login')
+    await page.goto('/login', {waitUntil: 'networkidle'})
     await fillCredentials(page, account, {confirm: false})
     await page.getByRole('button', {name: 'Log in'}).click()
 }

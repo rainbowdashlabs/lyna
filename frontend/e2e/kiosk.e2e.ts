@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
+import {expect, type Page, test} from '@playwright/test'
 import {signUp} from './fixtures/auth'
 
 /**
@@ -11,6 +11,14 @@ import {signUp} from './fixtures/auth'
  * premium product with somewhere to buy it, and one premium product with nowhere. Those are the
  * three answers a tile can give, which is what the stories here are about.
  */
+/**
+ * The seed's three tiles. Other stories make products of their own while these run, so the storefront
+ * as a whole has no fixed size; the seed's part of it does.
+ */
+function seeded(page: Page) {
+    return page.getByRole('article').filter({hasText: /E2E (Freebie|Premium|Unsellable)/})
+}
+
 test.describe('The storefront', () => {
     test('greets a visitor who is not signed in', async ({page}) => {
         await page.goto('/')
@@ -68,7 +76,7 @@ test.describe('The storefront', () => {
         await expect(page.getByRole('article')).toHaveCount(1)
 
         await page.getByRole('searchbox').fill('')
-        await expect(page.getByRole('article')).toHaveCount(3)
+        await expect(seeded(page)).toHaveCount(3)
     })
 
     test('a search matching nothing explains itself and offers a way back', async ({page}) => {
@@ -78,7 +86,7 @@ test.describe('The storefront', () => {
 
         await expect(page.getByText('No plugins match.')).toBeVisible()
         await page.getByRole('button', {name: 'Clear filters'}).click()
-        await expect(page.getByRole('article')).toHaveCount(3)
+        await expect(seeded(page)).toHaveCount(3)
     })
 
     test('Owned appears only once somebody is signed in', async ({page}) => {
