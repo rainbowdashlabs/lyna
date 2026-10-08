@@ -273,6 +273,8 @@ test.describe('The versions a product page lists', () => {
         const versions = await openProduct(page, request, 'E2E Freebie')
 
         await expect(versions.getByText(/^1\.\d\.0$/)).toHaveText(['1.1.0', '1.0.0'])
+        await expect(versions).toContainText('01/02/2026')
+        await expect(versions).not.toContainText('1970')
     })
 
     test('downloads the version it was asked for, not the newest', async ({page, request}) => {

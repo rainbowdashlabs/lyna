@@ -19,6 +19,17 @@ test.describe('The HTTP API through the frontend proxy', () => {
         expect(Array.isArray(await response.json())).toBe(true)
     })
 
+    test('dates are ISO-8601 text, except on the public releases endpoint, which keeps seconds since the epoch', async ({request}) => {
+        const products = await (await request.get('/api/v1/products')).json() as {id: number, name: string}[]
+        const freebie = products.find(product => product.name === 'E2E Freebie')!
+
+        const versions = await (await request.get(`/api/v1/products/${freebie.id}/release-types/STABLE/versions`)).json()
+        expect(versions[0].publishedAt).toBe('2026-02-01T12:00:00Z')
+
+        const assets = await (await request.get(`/api/v1/releases/${freebie.id}/1`)).json()
+        expect(typeof assets[0].published).toBe('number')
+    })
+
     test('the account endpoints refuse a request carrying no token', async ({request}) => {
         const response = await request.get('/api/account')
 
