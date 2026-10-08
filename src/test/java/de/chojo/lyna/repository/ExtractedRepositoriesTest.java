@@ -183,16 +183,14 @@ class ExtractedRepositoriesTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("Trial settings upsert the same way")
+    @DisplayName("Trial settings upsert the same way, binding the value once as the settings do")
     void trialSettingsUpsert() throws SQLException {
-        assertTrue(guildSettings.setTrial(
-                "server_time", c -> c.bind(GUILD).bind(60).bind(60)));
+        assertTrue(guildSettings.setTrial("server_time", c -> c.bind(GUILD).bind(60)));
         assertEquals(
                 "60",
                 one("SELECT server_time FROM %s.trial_settings WHERE guild_id = %d".formatted(schemaName, GUILD)));
 
-        assertTrue(guildSettings.setTrial(
-                "server_time", c -> c.bind(GUILD).bind(90).bind(90)));
+        assertTrue(guildSettings.setTrial("server_time", c -> c.bind(GUILD).bind(90)));
         assertEquals(
                 "90",
                 one("SELECT server_time FROM %s.trial_settings WHERE guild_id = %d".formatted(schemaName, GUILD)));

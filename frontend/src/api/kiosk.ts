@@ -120,3 +120,26 @@ export async function issueDownload(
         `/api/v1/products/${productId}/versions/${encodeURIComponent(version)}/downloads/${downloadTypeId}/issue`)
     return data
 }
+
+export type TrialReason = 'ELIGIBLE' | 'NOT_OFFERED' | 'SPENT' | 'GUILD_MEMBERSHIP_TOO_NEW' | 'DISCORD_ACCOUNT_TOO_NEW'
+    | 'ACCOUNT_TOO_NEW' | 'NO_VERIFIED_EMAIL' | 'DISPOSABLE_EMAIL'
+
+export interface TrialStatus {
+    reason: TrialReason
+    /** How long until a refusal for age passes. */
+    waitSeconds: number
+    /** The stable builds a trial may take, when it may be taken. */
+    downloads: {typeId: number, name: string, description: string, version: string}[]
+}
+
+/** Whether the signed-in account may take the product's trial, and what it could download. */
+export async function getTrialStatus(productId: number): Promise<TrialStatus> {
+    const {data} = await client.get<TrialStatus>(`/api/v1/products/${productId}/trial`)
+    return data
+}
+
+/** Spends the trial on the newest stable build of a download type and returns its one-time link. */
+export async function issueTrial(productId: number, downloadTypeId: number): Promise<IssuedDownload> {
+    const {data} = await client.post<IssuedDownload>(`/api/v1/products/${productId}/trial/${downloadTypeId}/issue`)
+    return data
+}

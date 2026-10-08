@@ -12,6 +12,7 @@ import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.web.api.v1.instance.InstanceInfo;
 import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.products.Products;
+import de.chojo.lyna.web.api.v1.products.TrialApi;
 import de.chojo.lyna.web.api.v1.products.Wizard;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
@@ -38,6 +39,7 @@ public class V1 {
     private final InstanceInfo instanceInfo;
     private final DebugApi debug;
     private final GithubWebhook github;
+    private final TrialApi trial;
 
     @Inject
     public V1(
@@ -50,7 +52,9 @@ public class V1 {
             DemoApi demoApi,
             InstanceInfo instanceInfo,
             DebugApi debug,
-            GithubWebhook github) {
+            GithubWebhook github,
+            TrialApi trial) {
+        this.trial = trial;
         this.debug = debug;
         this.github = github;
         this.instanceInfo = instanceInfo;
@@ -75,6 +79,7 @@ public class V1 {
             instanceInfo.init();
             debug.init();
             github.init();
+            trial.init();
         });
     }
 }

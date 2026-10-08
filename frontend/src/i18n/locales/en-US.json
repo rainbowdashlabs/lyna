@@ -726,6 +726,24 @@
       "transfer": "Transfer",
       "confirm": "Really give it to {to}",
       "couldNotTransfer": "The license could not be transferred."
+    },
+    "productTrial": {
+      "title": "Try it once",
+      "explain": "Download the newest stable build once, without a license, to see whether it is what you need.",
+      "signIn": "Sign in to try it",
+      "take": "Download once",
+      "issued": "Your trial download. The link works once, for half an hour.",
+      "couldNotIssue": "The trial download could not be issued.",
+      "reason": {
+        "ELIGIBLE": "",
+        "NOT_OFFERED": "This product offers no trial.",
+        "SPENT": "You have taken this product's trial already.",
+        "GUILD_MEMBERSHIP_TOO_NEW": "You have to be on the Discord server a little longer. Try again in {minutes} minutes.",
+        "DISCORD_ACCOUNT_TOO_NEW": "Your Discord account is too new for a trial. Try again in {days} days.",
+        "ACCOUNT_TOO_NEW": "Your account is too new for a trial. Try again in {days} days.",
+        "NO_VERIFIED_EMAIL": "Verify an email address on your account first, or link your Discord account.",
+        "DISPOSABLE_EMAIL": "Throwaway email addresses do not count. Verify another address, or link your Discord account."
+      }
     }
   },
   "preview": {

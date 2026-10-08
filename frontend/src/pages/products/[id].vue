@@ -81,6 +81,7 @@ onMounted(load)
               <a :href="product.readmeUrl" class="hover:text-primary" rel="noopener" target="_blank">{{ t('page.products.id.fromReadme') }}</a>
             </MutedText>
             <ProductDetailActions :product="product" :signed-in="signedIn" @download="openWizard()"/>
+            <ProductTrial v-if="product.trial && !product.free && !product.entitled" :product="product" :signed-in="signedIn"/>
           </div>
           <ProductVersions
               :product="product"
