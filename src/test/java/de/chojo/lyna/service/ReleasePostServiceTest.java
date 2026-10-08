@@ -13,23 +13,36 @@ import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
 import de.chojo.lyna.feature.releasepost.service.ReleasePostService.Outcome;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.repository.RepositoryTestBase;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -42,6 +55,9 @@ class ReleasePostServiceTest extends RepositoryTestBase {
             """;
 
     private final ReleaseWebhookRepository webhooks = new ReleaseWebhookRepository();
+    private final Gateway gateway = mock(Gateway.class);
+    private final GuildMessageChannel channel = mock(GuildMessageChannel.class);
+    private final MessageCreateAction send = mock(MessageCreateAction.class);
     private ReleasePostService service;
     private int productId;
 
@@ -60,7 +76,89 @@ class ReleasePostServiceTest extends RepositoryTestBase {
         when(product.name()).thenReturn("BloodNight");
         ProductLookup products = mock(ProductLookup.class);
         when(products.byId(productId)).thenReturn(Optional.of(product));
-        service = new ReleasePostService(webhooks, products, Gateway.NONE, mock(Api.class));
+        Guild guild = mock(Guild.class);
+        when(gateway.guilds()).thenReturn(List.of(guild));
+        when(guild.getChannelById(GuildMessageChannel.class, 42L)).thenReturn(channel);
+        when(channel.sendMessageEmbeds(any(MessageEmbed.class))).thenReturn(send);
+        Api api = mock(Api.class);
+        when(api.url()).thenReturn("https://lyna.example");
+        service = new ReleasePostService(webhooks, products, gateway, api);
+    }
+
+    private MessageEmbed announce(String body) throws Exception {
+        var webhook = service.issue(productId);
+        webhooks.channel(productId, 42L);
+        assertEquals(Outcome.ANNOUNCED, deliver(webhook.token(), "release", sign(webhook.secret(), body), body));
+        ArgumentCaptor<MessageEmbed> embed = ArgumentCaptor.forClass(MessageEmbed.class);
+        verify(channel).sendMessageEmbeds(embed.capture());
+        return embed.getValue();
+    }
+
+    @Test
+    @DisplayName("The announcement names the product and tag, links the release and the product page")
+    void announcement() throws Exception {
+        MessageEmbed embed = announce(RELEASE.formatted("released"));
+
+        assertEquals("BloodNight v1.2.3", embed.getTitle());
+        assertEquals("https://github.com/x/y/releases/v1.2.3", embed.getUrl());
+        assertEquals("Fixes", embed.getDescription());
+        assertEquals("Spooky", embed.getAuthor().getName());
+        assertEquals("x/y", embed.getFooter().getText());
+        assertEquals("Stable", embed.getFields().get(0).getValue());
+        assertEquals(
+                "https://lyna.example/products/" + productId,
+                embed.getFields().get(1).getValue());
+    }
+
+    @Test
+    @DisplayName("Long patch notes are cut to what Discord takes, and a bare release adds nothing empty")
+    void bareRelease() throws Exception {
+        String body =
+                "{\"action\": \"prereleased\", \"release\": {\"tag_name\": \"v2\", \"name\": \"v2\", \"body\": \"%s\", \"prerelease\": true}}"
+                        .formatted("x".repeat(5000));
+
+        MessageEmbed embed = announce(body);
+
+        assertEquals(MessageEmbed.DESCRIPTION_MAX_LENGTH, embed.getDescription().length());
+        assertNull(embed.getAuthor());
+        assertNull(embed.getFooter());
+        assertEquals("Pre-release", embed.getFields().get(0).getValue());
+    }
+
+    @Test
+    @DisplayName("A post Discord refuses is logged rather than thrown")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void refusedPost() throws Exception {
+        announce(RELEASE.formatted("released"));
+
+        ArgumentCaptor<Consumer> success = ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor<Consumer> failure = ArgumentCaptor.forClass(Consumer.class);
+        verify(send).queue(success.capture(), failure.capture());
+        assertDoesNotThrow(() -> success.getValue().accept(null));
+        assertDoesNotThrow(() -> failure.getValue().accept(new RuntimeException("missing access")));
+    }
+
+    @Test
+    @DisplayName("Without a channel the bot can post in, the release is acknowledged and nothing is sent")
+    void noChannel() throws Exception {
+        var webhook = service.issue(productId);
+        String body = RELEASE.formatted("released");
+
+        assertEquals(Outcome.ANNOUNCED, deliver(webhook.token(), "release", sign(webhook.secret(), body), body));
+        webhooks.channel(productId, 99L);
+        assertEquals(Outcome.ANNOUNCED, deliver(webhook.token(), "release", sign(webhook.secret(), body), body));
+
+        verify(channel, never()).sendMessageEmbeds(any(MessageEmbed.class));
+    }
+
+    @Test
+    @DisplayName("Removing the webhook ends it, once")
+    void removal() {
+        service.issue(productId);
+
+        assertTrue(webhooks.remove(productId));
+        assertFalse(webhooks.remove(productId));
+        assertTrue(webhooks.ofProduct(productId).isEmpty());
     }
 
     private static String sign(String secret, String body) throws Exception {
@@ -128,7 +226,7 @@ class ReleasePostServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A channel can be cleared, and only a product with a webhook has one to set")
     void channel() {
-        assertTrue(!webhooks.channel(productId, 42L));
+        assertFalse(webhooks.channel(productId, 42L));
         service.issue(productId);
         assertTrue(webhooks.channel(productId, 42L));
         assertTrue(webhooks.channel(productId, 0L));
