@@ -19,6 +19,7 @@ const roleId = ref(props.product.roleId)
 const free = ref(props.product.free)
 const trial = ref(props.product.trial)
 const description = ref(props.product.description ?? '')
+const butlerId = ref(props.product.butlerId?.toString() ?? '')
 // An uploaded icon is served from this instance; that path is not an address to type back.
 const iconUrl = ref(props.product.iconUrl?.startsWith('/api/') ? '' : props.product.iconUrl ?? '')
 
@@ -45,6 +46,7 @@ async function save() {
       trial: trial.value,
       description: description.value.trim() ? description.value : null,
       iconUrl: iconUrl.value.trim() ? iconUrl.value.trim() : null,
+      butlerId: butlerId.value.trim() ? Number(butlerId.value.trim()) : null,
     })
     saved.value = true
     emit('saved')
@@ -77,6 +79,10 @@ async function save() {
     <LabelledField :label="t('ui.productEditForm.iconAddress')">
       <TextInput v-model="iconUrl" type="url"/>
       <MutedText size="xs" tag="p">{{ t('ui.productEditForm.usedWhenNothingIsUploaded') }}</MutedText>
+    </LabelledField>
+    <LabelledField :label="t('ui.productEditForm.butlerId')">
+      <TextInput v-model="butlerId" inputmode="numeric" pattern="[0-9]*"/>
+      <MutedText size="xs" tag="p">{{ t('ui.productEditForm.butlerIdHint') }}</MutedText>
     </LabelledField>
     <label class="flex items-center gap-2 text-sm">
       <CheckboxInput v-model="trial"/> {{ t('ui.productEditForm.trialAvailable') }}

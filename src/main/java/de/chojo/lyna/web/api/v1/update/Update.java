@@ -6,11 +6,13 @@
 package de.chojo.lyna.web.api.v1.update;
 
 import com.google.inject.Inject;
+import de.chojo.lyna.feature.butler.service.ButlerCheckRequest;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.util.Version;
+import de.chojo.lyna.web.legacy.ButlerApi;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.HttpStatus;
 import org.jetbrains.annotations.Nullable;
@@ -25,16 +27,23 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Update {
     private final ProductLookup products;
+    private final ButlerApi butler;
 
     @Inject
-    public Update(ProductLookup products) {
+    public Update(ProductLookup products, ButlerApi butler) {
         this.products = products;
+        this.butler = butler;
     }
 
     public void init() {
         path("update", () -> {
             // ?id=<>&version=<>
             get("check", ctx -> {
+                Optional<ButlerCheckRequest> fromButler = ButlerCheckRequest.malformed(ctx.queryParamMap());
+                if (fromButler.isPresent()) {
+                    butler.answer(ctx, fromButler.get());
+                    return;
+                }
                 int id;
                 try {
                     id = Integer.parseInt(ctx.queryParam("id"));

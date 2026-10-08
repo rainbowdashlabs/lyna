@@ -139,15 +139,19 @@ services:
       - app_e2e
     volumes:
       - ./config/:/seed/
+      - ../src/main/resources/database/version:/seed-schema/version:ro
     profiles:
       - e2e
-    # The backend migrates the schema on startup, so the seed waits for a table it creates rather
-    # than for the container, which is up long before the tables are.
+    # The backend migrates the schema on startup, so the seed waits until the schema has reached at
+    # least the version this checkout ships. Waiting for one table was a race: the table exists after the first
+    # patch, and the seed writes columns that later patches add.
     entrypoint:
       - sh
       - -c
       - |
-        until psql -h postgres_e2e -U user -d lyna -c 'SELECT 1 FROM public.product LIMIT 1' >/dev/null 2>&1; do
+        major=$$(cut -d. -f1 /seed-schema/version)
+        patch=$$(cut -d. -f2 /seed-schema/version)
+        until [ "$$(psql -h postgres_e2e -U user -d lyna -tAc "SELECT major > $$major OR (major = $$major AND patch >= $$patch) FROM public.lyna_version" 2>/dev/null)" = "t" ]; do
           sleep 2
         done
         psql -h postgres_e2e -U user -d lyna -v ON_ERROR_STOP=1 -f /seed/seed.e2e.sql

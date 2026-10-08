@@ -299,9 +299,9 @@ class LynaModuleTest {
         Set<SlashProvider<Slash>> commands =
                 injector.getInstance(Key.get(new TypeLiteral<Set<SlashProvider<Slash>>>() {}));
 
-        assertEquals(11, commands.size());
+        assertEquals(12, commands.size());
         assertEquals(
-                11,
+                12,
                 commands.stream().map(c -> c.getClass().getName()).distinct().count());
     }
 }

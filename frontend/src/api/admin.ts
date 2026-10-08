@@ -22,6 +22,8 @@ export interface ProductSummary {
     trial: boolean
     iconUrl: string | null
     description: string | null
+    /** The id deployed plugins ask UpdateButler for this product by. */
+    butlerId?: number | null
 }
 
 export interface CreateProductPayload {
@@ -93,6 +95,7 @@ export interface ProductEditPayload {
     description: string | null
     /** An address to fetch the icon from, for an instance that would rather point at its own CDN. */
     iconUrl: string | null
+    butlerId: number | null
 }
 
 /** Everything about a product except its icon, saved in one go. */
@@ -251,4 +254,38 @@ export async function addOperator(discordId: string): Promise<InstanceOperator> 
 
 export async function removeOperator(discordId: string): Promise<void> {
     await client.delete(`/api/admin/instance/operators/${encodeURIComponent(discordId)}`)
+}
+
+export interface ReleaseWebhook {
+    /** What to paste into GitHub as the payload URL. */
+    url: string
+    /** What to paste into GitHub as the secret. */
+    secret: string
+    /** Text, because a Discord id is larger than a number holds exactly. */
+    channelId: string | null
+}
+
+/** The product's release webhook, or null when it has none. */
+export async function getReleaseWebhook(guildId: string, productId: number): Promise<ReleaseWebhook | null> {
+    try {
+        const {data} = await client.get<ReleaseWebhook>(`/api/admin/g/${guildId}/products/${productId}/release-webhook`)
+        return data
+    } catch (e) {
+        if ((e as { response?: { status?: number } }).response?.status === 404) return null
+        throw e
+    }
+}
+
+/** Creates the webhook, or replaces its address and secret. */
+export async function issueReleaseWebhook(guildId: string, productId: number): Promise<ReleaseWebhook> {
+    const {data} = await client.post<ReleaseWebhook>(`/api/admin/g/${guildId}/products/${productId}/release-webhook`)
+    return data
+}
+
+export async function setReleaseChannel(guildId: string, productId: number, channelId: string | null): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}/release-webhook/channel`, {channelId})
+}
+
+export async function removeReleaseWebhook(guildId: string, productId: number): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/products/${productId}/release-webhook`)
 }

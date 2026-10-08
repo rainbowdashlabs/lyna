@@ -21,6 +21,7 @@ import de.chojo.lyna.commands.kofi.KoFi;
 import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
+import de.chojo.lyna.commands.timechannel.TimeChannels;
 import de.chojo.lyna.commands.trial.Trial;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.ConfigFile;
@@ -28,6 +29,7 @@ import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
 import de.chojo.lyna.configuration.elements.Database;
+import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.configuration.elements.Demo;
 import de.chojo.lyna.configuration.elements.Discord;
 import de.chojo.lyna.configuration.elements.Downloads;
@@ -54,6 +56,12 @@ import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
+import de.chojo.lyna.feature.butler.service.ButlerUpdateService;
+import de.chojo.lyna.feature.debug.repository.DebugReportRepository;
+import de.chojo.lyna.feature.debug.service.DebugReportExpiry;
+import de.chojo.lyna.feature.debug.service.DebugReportService;
+import de.chojo.lyna.feature.debug.service.UploadThrottle;
 import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.download.repository.DownloadRepository;
@@ -77,6 +85,10 @@ import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.feature.product.service.TrialService;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
+import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
+import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
+import de.chojo.lyna.feature.timechannel.repository.TimeChannelRepository;
+import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
@@ -85,6 +97,7 @@ import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.debug.DebugApi;
 import de.chojo.lyna.web.api.v1.demo.DemoApi;
 import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.web.api.v1.download.direct.Direct;
@@ -93,6 +106,8 @@ import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.products.Wizard;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
+import de.chojo.lyna.web.api.v1.webhook.GithubWebhook;
+import de.chojo.lyna.web.legacy.ButlerApi;
 import de.chojo.nexus.NexusRest;
 
 /**
@@ -213,6 +228,12 @@ public class LynaModule extends AbstractModule {
         return config.downloads();
     }
 
+    @Provides
+    @Singleton
+    DebugReports debugReports(ConfigFile config) {
+        return config.debugReports();
+    }
+
     /**
      * The data-access objects.
      *
@@ -242,6 +263,7 @@ public class LynaModule extends AbstractModule {
         commands.addBinding().to(Trial.class);
         commands.addBinding().to(de.chojo.lyna.commands.mailing.Mailing.class);
         commands.addBinding().to(KoFi.class);
+        commands.addBinding().to(TimeChannels.class);
 
         bind(Threading.class).in(Singleton.class);
         bind(Data.class).in(Singleton.class);
@@ -261,6 +283,9 @@ public class LynaModule extends AbstractModule {
         bind(Releases.class).in(Singleton.class);
         bind(Wizard.class).in(Singleton.class);
         bind(DemoApi.class).in(Singleton.class);
+        bind(ButlerApi.class).in(Singleton.class);
+        bind(DebugApi.class).in(Singleton.class);
+        bind(GithubWebhook.class).in(Singleton.class);
 
         // The token cache lives here: a link minted by one instance would not be redeemable by
         // another, and the bot mints links through the same object the API serves them from.
@@ -283,6 +308,16 @@ public class LynaModule extends AbstractModule {
         bind(PurchaseService.class).in(Singleton.class);
         bind(IconStorage.class).in(Singleton.class);
         bind(ProductIconRepository.class).in(Singleton.class);
+        bind(ButlerApplicationRepository.class).in(Singleton.class);
+        bind(ButlerUpdateService.class).in(Singleton.class);
+        bind(DebugReportRepository.class).in(Singleton.class);
+        bind(DebugReportService.class).in(Singleton.class);
+        bind(UploadThrottle.class).in(Singleton.class);
+        bind(DebugReportExpiry.class).in(Singleton.class);
+        bind(TimeChannelRepository.class).in(Singleton.class);
+        bind(TimeChannelSchedule.class).in(Singleton.class);
+        bind(ReleaseWebhookRepository.class).in(Singleton.class);
+        bind(ReleasePostService.class).in(Singleton.class);
         bind(ProductIconService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);

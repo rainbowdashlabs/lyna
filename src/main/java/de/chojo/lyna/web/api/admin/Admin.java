@@ -13,6 +13,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
@@ -26,6 +27,8 @@ import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
+import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
+import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -33,6 +36,7 @@ import io.javalin.http.HttpStatus;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -40,6 +44,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -69,6 +74,9 @@ public class Admin {
     private final InstanceSettingsRepository instanceSettings;
     private final KoFiProductRepository kofi;
     private final KioskProductRepository kioskProducts;
+    private final ButlerApplicationRepository butlerApplications;
+    private final ReleaseWebhookRepository releaseWebhooks;
+    private final ReleasePostService releasePosts;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final de.chojo.lyna.mail.blocks.MailBlockRenderer blockRenderer =
@@ -92,8 +100,14 @@ public class Admin {
             LicenseService licenseService,
             LicenseSharingService licenseSharing,
             OAuth oauthConfig,
-            ProductIconService productIcons) {
+            ProductIconService productIcons,
+            ButlerApplicationRepository butlerApplications,
+            ReleaseWebhookRepository releaseWebhooks,
+            ReleasePostService releasePosts) {
         this.productIcons = productIcons;
+        this.butlerApplications = butlerApplications;
+        this.releaseWebhooks = releaseWebhooks;
+        this.releasePosts = releasePosts;
         this.oauthConfig = oauthConfig;
         this.licenseService = licenseService;
         this.licenseSharing = licenseSharing;
@@ -119,6 +133,10 @@ public class Admin {
                 put("products/{productId}/description", this::setProductDescription);
                 post("products/{productId}/icon", this::uploadProductIcon);
                 delete("products/{productId}/icon", this::deleteProductIcon);
+                get("products/{productId}/release-webhook", this::releaseWebhook);
+                post("products/{productId}/release-webhook", this::issueReleaseWebhook);
+                put("products/{productId}/release-webhook/channel", this::releaseWebhookChannel);
+                delete("products/{productId}/release-webhook", this::removeReleaseWebhook);
                 get("licenses", this::listLicenses);
                 post("licenses", this::createLicense);
                 get("registrations/{discordId}", this::registrationInfo);
@@ -160,6 +178,7 @@ public class Admin {
         var kioskById = kioskProducts.all().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         de.chojo.lyna.feature.kiosk.entity.KioskProduct::id, product -> product));
+        Map<Integer, Integer> butlerIds = butlerApplications.butlerIdsByProduct();
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream()
                 .map(p -> new ProductSummary(
@@ -170,7 +189,8 @@ public class Admin {
                         p.free(),
                         p.trial(),
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
-                        kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null))
+                        kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null,
+                        butlerIds.get(p.id())))
                 .toList());
     }
 
@@ -369,6 +389,14 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not a role id");
             return;
         }
+        if (body.butlerId() != null && body.butlerId() <= 0) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("An UpdateButler id is a positive number");
+            return;
+        }
+        if (body.butlerId() != null && butlerApplications.takenByAnother(body.butlerId(), product.id())) {
+            ctx.status(HttpStatus.CONFLICT).result("Another product already carries that UpdateButler id");
+            return;
+        }
         product.name(body.name().strip());
         product.url(
                 body.url() == null || body.url().isBlank() ? null : body.url().strip());
@@ -378,7 +406,82 @@ public class Admin {
         String description =
                 body.description() == null ? "" : body.description().strip();
         kioskProducts.description(product.id(), description.isBlank() ? null : description);
+        if (body.butlerId() == null) {
+            butlerApplications.clear(product.id());
+        } else {
+            butlerApplications.assign(product.id(), body.butlerId());
+        }
         ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    private void releaseWebhook(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        releaseWebhooks
+                .ofProduct(product.id())
+                .ifPresentOrElse(
+                        webhook -> ctx.json(releaseWebhookView(webhook)), () -> ctx.status(HttpStatus.NOT_FOUND));
+    }
+
+    /**
+     * Gives a product a webhook address and secret, or new ones. The old address stops working, which
+     * is what rotating is for.
+     */
+    private void issueReleaseWebhook(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        ctx.json(releaseWebhookView(releasePosts.issue(product.id())));
+    }
+
+    /**
+     * Sets where releases are announced. With a bot connected the channel must be one of this guild's
+     * that messages can be sent to; without one there is nothing to ask.
+     */
+    private void releaseWebhookChannel(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        long channelId;
+        try {
+            var body = json.readValue(ctx.body(), ReleaseChannel.class);
+            channelId = body.channelId() == null || body.channelId().isBlank()
+                    ? 0
+                    : Long.parseLong(body.channelId().strip());
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("That is not a channel id");
+            return;
+        }
+        if (channelId != 0
+                && gateway.connected()
+                && discordGuild(resolved.guild().guildId())
+                        .map(guild -> guild.getChannelById(GuildMessageChannel.class, channelId))
+                        .isEmpty()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("This guild has no channel with that id the bot can post in");
+            return;
+        }
+        ctx.status(releaseWebhooks.channel(product.id(), channelId) ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
+    }
+
+    private void removeReleaseWebhook(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        releaseWebhooks.remove(product.id());
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    private ReleaseWebhookView releaseWebhookView(ReleaseWebhookRepository.ReleaseWebhook webhook) {
+        return new ReleaseWebhookView(
+                "%s/api/v1/webhook/github/%s"
+                        .formatted(configuration.main().api().url(), webhook.token()),
+                webhook.secret(),
+                webhook.channelId() == 0 ? null : Long.toString(webhook.channelId()));
     }
 
     /**
@@ -475,7 +578,7 @@ public class Admin {
         var p = product.get();
         ctx.status(HttpStatus.CREATED)
                 .json(new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null));
+                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null));
     }
 
     private void listLicenses(Context ctx) {
@@ -643,7 +746,7 @@ public class Admin {
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
                 .map(p -> new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null))
+                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null))
                 .toList();
         ctx.json(new TrialInfo(
                 (int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
@@ -947,15 +1050,32 @@ public class Admin {
             boolean free,
             boolean trial,
             String iconUrl,
-            String description) {}
+            String description,
+            Integer butlerId) {}
 
     public record ProductDescription(String description) {}
+
+    /**
+     * @param url       what to paste into GitHub as the payload URL
+     * @param secret    what to paste into GitHub as the secret
+     * @param channelId as text, since a Discord id is larger than a JavaScript number holds exactly
+     */
+    public record ReleaseWebhookView(String url, String secret, String channelId) {}
+
+    public record ReleaseChannel(String channelId) {}
 
     /**
      * @param roleId the Discord role, as text because a role id does not fit a JavaScript number
      */
     public record ProductEdit(
-            String name, String url, String roleId, boolean free, boolean trial, String description, String iconUrl) {}
+            String name,
+            String url,
+            String roleId,
+            boolean free,
+            boolean trial,
+            String description,
+            String iconUrl,
+            Integer butlerId) {}
 
     /**
      * @param configured whether the id holds the instance by configuration, and so cannot be

@@ -8,6 +8,7 @@ package de.chojo.lyna.web;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.Api;
+import de.chojo.lyna.web.legacy.ButlerApi;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import io.javalin.http.Context;
@@ -26,15 +27,21 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class WebService {
     private final Conf configuration;
     private final Api api;
+    private final ButlerApi butler;
     private static final Logger log = getLogger(WebService.class);
     private Javalin javalin;
 
     @Inject
-    public WebService(Conf configuration, Api api) {
+    public WebService(Conf configuration, Api api, ButlerApi butler) {
         this.configuration = configuration;
         this.api = api;
+        this.butler = butler;
     }
 
+    /**
+     * Starts the server. The request size limit is the largest debug report accepted, since those are
+     * the largest bodies anything sends and Javalin's limit is server-wide.
+     */
     public void init() {
         var apiConfig = configuration.main().api();
         javalin = Javalin.create(config -> {
@@ -47,6 +54,9 @@ public class WebService {
                 });
             }
             config.useVirtualThreads = true;
+            config.http.maxRequestSize = Math.max(
+                    config.http.maxRequestSize,
+                    configuration.main().debugReports().maxUploadBytes());
             config.router.apiBuilder(this::routes);
         });
 
@@ -138,6 +148,7 @@ public class WebService {
         });
 
         api.init();
+        butler.init();
     }
 
     public Api api() {
