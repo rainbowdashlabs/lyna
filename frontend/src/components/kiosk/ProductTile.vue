@@ -73,7 +73,7 @@ const action = computed(() => callToAction(props.product))
     </footer>
     <MutedText v-if="action === 'buy' && signedIn" class="mt-2 block text-right" size="xs">
       {{ t('ui.productTile.alreadyBoughtIt') }}
-      <NuxtLink class="text-primary hover:underline" to="/account/security">{{ t('ui.productTile.linkYourDiscord') }}</NuxtLink>
+      <NuxtLink class="text-primary hover:underline" to="/account/security">{{ t('ui.productTile.linkYourAccount') }}</NuxtLink>
     </MutedText>
   </article>
 </template>

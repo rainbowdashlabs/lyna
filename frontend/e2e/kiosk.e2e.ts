@@ -51,13 +51,13 @@ test.describe('The storefront', () => {
         await expect(tile.getByRole('link', {name: /Buy on Ko-fi/})).toHaveCount(0)
     })
 
-    test('a signed-in visitor holding no license is pointed at linking their Discord', async ({page}) => {
+    test('a signed-in visitor holding no license is pointed at linking their account, Discord or Ko-fi', async ({page}) => {
         await signUp(page, 'kiosk-hint')
 
         await page.goto('/')
 
         const tile = page.getByRole('article').filter({hasText: 'E2E Premium'})
-        await expect(tile.getByRole('link', {name: 'Link your Discord'})).toBeVisible()
+        await expect(tile.getByRole('link', {name: 'Link your account'})).toHaveAttribute('href', '/account/security')
     })
 
     test('the Free filter leaves the premium products out', async ({page}) => {
