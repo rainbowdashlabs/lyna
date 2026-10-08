@@ -5,7 +5,7 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {onMounted, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {createGuildLicense, listGuildLicenses, listGuildProducts, type LicenseSummary, type ProductSummary} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
@@ -29,6 +29,14 @@ const createIdentifier = ref('')
 const createBusy = ref(false)
 const createError = ref<string | null>(null)
 const issuedKey = ref<string | null>(null)
+const search = ref('')
+
+const shown = computed(() => {
+  const needle = search.value.trim().toLowerCase()
+  if (!needle) return licenses.value
+  return licenses.value.filter(license => `${license.id} ${license.productName} ${license.identifier} ${license.owner}`
+      .toLowerCase().includes(needle))
+})
 
 async function load() {
   loading.value = true
@@ -128,18 +136,12 @@ async function submitCreate() {
     <div v-else-if="errorMessage" class="rounded-theme border border-error/40 bg-error/10 p-4 text-error">
       {{ errorMessage }}
     </div>
-    <ul v-else-if="licenses.length" class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark">
-      <li v-for="l in licenses" :key="l.id" class="flex items-center justify-between p-3 text-sm">
-        <div>
-          <div class="font-medium">
-            {{ l.productName }}
-          </div>
-          <div class="text-xs opacity-60">
-            id {{ l.id }} · {{ l.identifier }} · owner {{ l.owner || 'unclaimed' }} · {{ l.shareeCount }} sharees
-          </div>
-        </div>
-      </li>
-    </ul>
+    <template v-else-if="licenses.length">
+      <div class="mb-3"><SearchInput v-model="search" :placeholder="t('page.admin.g.guildId.licenses.search')"/></div>
+      <ul class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark">
+        <AdminLicenseRow v-for="l in shown" :key="l.id" :guild-id="guildId" :license="l" @deleted="load"/>
+      </ul>
+    </template>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
       {{ t('page.admin.g.guildId.licenses.noLicensesYet') }}
     </div>

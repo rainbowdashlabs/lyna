@@ -10,6 +10,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
+import de.chojo.lyna.web.api.admin.AdminLicenses;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
@@ -28,6 +29,7 @@ public class Api {
     private final Theme theme;
     private final Admin admin;
     private final AdminDownloads adminDownloads;
+    private final AdminLicenses adminLicenses;
 
     private static final Logger log = getLogger(Api.class);
 
@@ -40,8 +42,10 @@ public class Api {
             Account account,
             Theme theme,
             Admin admin,
-            AdminDownloads adminDownloads) {
+            AdminDownloads adminDownloads,
+            AdminLicenses adminLicenses) {
         this.adminDownloads = adminDownloads;
+        this.adminLicenses = adminLicenses;
         this.configuration = configuration;
         this.nexus = nexus;
         this.v1 = v1;
@@ -58,7 +62,10 @@ public class Api {
             account.init();
             theme.init();
             admin.init();
-            path("admin/g/{guildId}", adminDownloads::init);
+            path("admin/g/{guildId}", () -> {
+                adminDownloads.init();
+                adminLicenses.init();
+            });
         });
     }
 

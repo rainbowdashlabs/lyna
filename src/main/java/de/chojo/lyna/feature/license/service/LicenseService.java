@@ -119,6 +119,10 @@ public class LicenseService {
         return licenses.grantAccess(license.id(), type);
     }
 
+    public boolean revokeAccess(License license, ReleaseType type) {
+        return licenses.revokeAccess(license.id(), type);
+    }
+
     public List<ReleaseType> access(License license) {
         return licenses.access(license.id());
     }

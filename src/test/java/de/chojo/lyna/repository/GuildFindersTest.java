@@ -297,6 +297,11 @@ class GuildFindersTest extends RepositoryTestBase {
         assertEquals(
                 List.of(product.id()),
                 kofi.listForGuild(GUILD).stream().map(m -> m.productId()).toList());
+
+        assertFalse(kofi.remove(OTHER_GUILD, "abc123"), "another guild cannot unlink it");
+        assertTrue(kofi.remove(GUILD, "abc123"));
+        assertTrue(kofi.byCode("abc123").isEmpty());
+        assertFalse(kofi.remove(GUILD, "abc123"));
     }
 
     @Test

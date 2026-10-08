@@ -167,6 +167,13 @@ public class LicenseRepository {
                 .changed();
     }
 
+    public boolean revokeAccess(int licenseId, ReleaseType type) {
+        return query("DELETE FROM license_access WHERE license_id = ? AND release_type = ?::RELEASE_TYPE")
+                .single(call().bind(licenseId).bind(type))
+                .delete()
+                .changed();
+    }
+
     public List<ReleaseType> access(int licenseId) {
         return query("SELECT release_type FROM license_access WHERE license_id = ?")
                 .single(call().bind(licenseId))

@@ -173,6 +173,8 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
         License license = license();
         assertTrue(licenseService.grantAccess(license, ReleaseType.STABLE));
         assertEquals(List.of(ReleaseType.STABLE), licenseService.access(license));
+        assertTrue(licenseService.revokeAccess(license, ReleaseType.STABLE));
+        assertEquals(List.of(), licenseService.access(license));
     }
 
     @Test

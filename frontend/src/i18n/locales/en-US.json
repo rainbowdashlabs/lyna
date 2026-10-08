@@ -127,7 +127,8 @@
             "choose": "Choose…",
             "noKoFiMappingsYet": "No Ko-fi mappings yet.",
             "linkCode": "Link code",
-            "mappingSaved": "Mapping saved."
+            "mappingSaved": "Mapping saved.",
+            "remove": "Remove"
           },
           "licenses": {
             "licenses": "Licenses",
@@ -135,7 +136,8 @@
             "choose": "Choose…",
             "licenseIssued": "License issued",
             "noLicensesYet": "No licenses yet.",
-            "identifierMailOrderId": "Identifier (mail / order id)"
+            "identifierMailOrderId": "Identifier (mail / order id)",
+            "search": "Search by product, identifier, id or owner"
           },
           "mailing": {
             "mailingTemplates": "Mailing templates",
@@ -652,6 +654,17 @@
       "releaseType": "Release type",
       "grant": "Grant",
       "revoke": "Revoke",
+      "couldNotSave": "That could not be saved."
+    },
+    "adminLicenseRow": {
+      "owner": "owner {owner}",
+      "unclaimed": "unclaimed",
+      "sharees": "{count} sharees",
+      "manage": "Manage",
+      "close": "Close",
+      "reaches": "Reaches",
+      "delete": "Delete license",
+      "confirmDelete": "Really delete",
       "couldNotSave": "That could not be saved."
     }
   }

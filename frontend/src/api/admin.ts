@@ -4,6 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import client from './client'
+import type {ReleaseType} from './adminDownloads'
 
 export interface AdminGuild {
     id: string
@@ -299,4 +300,25 @@ export async function deleteGuildProduct(guildId: string, productId: number, con
 /** What the product's own page says, as markdown. Blank clears it. */
 export async function setProductDescription(guildId: string, productId: number, description: string): Promise<void> {
     await client.put(`/api/admin/g/${guildId}/products/${productId}/description`, {description})
+}
+
+/** The release types a license reaches. */
+export async function getLicenseAccess(guildId: string, licenseId: number): Promise<ReleaseType[]> {
+    const {data} = await client.get<{releaseTypes: ReleaseType[]}>(`/api/admin/g/${guildId}/licenses/${licenseId}/access`)
+    return data.releaseTypes
+}
+
+/** Makes a license reach exactly these release types. */
+export async function setLicenseAccess(guildId: string, licenseId: number, releaseTypes: ReleaseType[]): Promise<ReleaseType[]> {
+    const {data} = await client.put<{releaseTypes: ReleaseType[]}>(`/api/admin/g/${guildId}/licenses/${licenseId}/access`, {releaseTypes})
+    return data.releaseTypes
+}
+
+/** Ends a license; whoever held it loses the product's role unless something else grants it. */
+export async function deleteGuildLicense(guildId: string, licenseId: number): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/licenses/${licenseId}`)
+}
+
+export async function removeKofiMapping(guildId: string, linkCode: string): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/kofi/${encodeURIComponent(linkCode)}`)
 }
