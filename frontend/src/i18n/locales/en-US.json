@@ -619,6 +619,40 @@
       "saved": "Saved.",
       "usedBy": "Offered by {products}",
       "couldNotSave": "That could not be saved."
+    },
+    "downloadCoordinates": {
+      "repository": "Repository",
+      "groupId": "Group id",
+      "artifactId": "Artifact id",
+      "classifier": "Classifier"
+    },
+    "productDownloadRow": {
+      "latest": "Nexus: {version}",
+      "nothingInNexus": "Nexus holds nothing for these coordinates yet",
+      "save": "Save",
+      "remove": "Remove",
+      "couldNotSave": "That could not be saved."
+    },
+    "productDownloadCreate": {
+      "title": "Add a download",
+      "type": "Download type",
+      "choose": "Choose…",
+      "add": "Add download",
+      "noTypes": "Every download type of this guild is offered already. Make another under Download types.",
+      "couldNotCreate": "The download could not be added."
+    },
+    "productDownloadsTab": {
+      "none": "This product offers nothing to download yet."
+    },
+    "productAccessTab": {
+      "none": "No role grants access to this product's downloads.",
+      "role": "Role",
+      "choose": "Choose…",
+      "roleId": "Discord role id",
+      "releaseType": "Release type",
+      "grant": "Grant",
+      "revoke": "Revoke",
+      "couldNotSave": "That could not be saved."
     }
   }
 }

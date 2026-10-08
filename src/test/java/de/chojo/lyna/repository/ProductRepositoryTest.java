@@ -149,4 +149,22 @@ class ProductRepositoryTest extends RepositoryTestBase {
 
         assertEquals(java.util.List.of(GUILD, GUILD + 1), productRepository.guildsWithProducts());
     }
+
+    @Test
+    @DisplayName("The roles granted a product are listed with their release type, and revoking takes one away")
+    void roleAccessIsListed() {
+        var downloads = new de.chojo.lyna.feature.download.repository.DownloadRepository();
+        downloads.grantRole(20L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.STABLE);
+        downloads.grantRole(10L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.DEV);
+
+        assertEquals(
+                java.util.List.of(
+                        new de.chojo.lyna.feature.download.repository.DownloadRepository.RoleAccess(
+                                10L, de.chojo.lyna.feature.download.entity.ReleaseType.DEV),
+                        new de.chojo.lyna.feature.download.repository.DownloadRepository.RoleAccess(
+                                20L, de.chojo.lyna.feature.download.entity.ReleaseType.STABLE)),
+                downloads.roleAccess(productId));
+        assertTrue(downloads.revokeRole(10L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.DEV));
+        assertEquals(1, downloads.roleAccess(productId).size());
+    }
 }

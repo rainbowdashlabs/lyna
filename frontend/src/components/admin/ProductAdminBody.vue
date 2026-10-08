@@ -27,5 +27,7 @@ defineEmits<{ changed: [], deleted: [] }>()
     <ProductDeleteZone :guild-id="guildId" :product="product" @deleted="$emit('deleted')"/>
   </div>
   <ProductPageEditor v-else-if="tab === 'page'" :guild-id="guildId" :product="product" @saved="$emit('changed')"/>
+  <ProductDownloadsTab v-else-if="tab === 'downloads'" :guild-id="guildId" :product-id="product.id"/>
+  <ProductAccessTab v-else-if="tab === 'access'" :guild-id="guildId" :product-id="product.id"/>
   <ReleaseWebhookPanel v-else :guild-id="guildId" :product-id="product.id"/>
 </template>
