@@ -10,8 +10,10 @@ import {useRoute} from 'vue-router'
 import {getGuildSettings, updateGuildSettings, type GuildSettings} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.settings'))
 
 definePageMeta({layout: 'admin'})
 

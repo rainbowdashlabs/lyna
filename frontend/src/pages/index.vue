@@ -8,10 +8,24 @@ import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {type KioskProduct, listProducts} from '~/api/kiosk'
 import {useSession} from '~/composables/useSession'
+import {useLinkPreview} from '~/composables/useLinkPreview'
+import {useServerFetch} from '~/composables/useServerFetch'
 
 const {t} = useI18n()
 
 const {account, hydrate} = useSession()
+
+const {data: catalogue} = useServerFetch<KioskProduct[]>('preview-catalogue', '/api/v1/products')
+useLinkPreview(computed(() => {
+  const count = catalogue.value?.length ?? 0
+  const description = t('preview.storefront.description', {count})
+  return {
+    title: t('kiosk.title'),
+    description,
+    image: null,
+    card: {heading: `## ${t('kiosk.title')}`, body: description, thumbnail: null, buttons: [{label: t('preview.storefront.browse'), url: '/'}]},
+  }
+}))
 
 const products = ref<KioskProduct[]>([])
 const loading = ref(true)

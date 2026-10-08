@@ -8,8 +8,10 @@ import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {getInstanceSystem, type SystemInfo} from '~/api/admin'
 import Spinner from '~/components/feedback/Spinner.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.system'))
 
 definePageMeta({layout: 'admin'})
 

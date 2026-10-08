@@ -9,8 +9,10 @@ import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {type DownloadPage, listDownloads} from '~/api/account'
 import {todayIsoDate, toIsoDate} from '~/util/format'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.account.downloads'))
 
 definePageMeta({layout: 'account'})
 

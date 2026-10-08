@@ -10,8 +10,10 @@ import {useRoute} from 'vue-router'
 import {createKofi, listGuildProducts, listKofi, type KofiMapping, type ProductSummary, removeKofiMapping} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.kofi'))
 
 definePageMeta({layout: 'admin'})
 

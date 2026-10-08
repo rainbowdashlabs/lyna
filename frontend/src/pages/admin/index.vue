@@ -9,6 +9,7 @@ import {onMounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAdminGuilds} from '~/composables/useAdminGuilds'
 import {useSession} from '~/composables/useSession'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 /**
  * Where the admin area starts: straight on to the one guild somebody administers, a choice among
@@ -16,6 +17,7 @@ import {useSession} from '~/composables/useSession'
  * silent return to the account area.
  */
 const {t} = useI18n()
+usePageTitle(t('common.admin'))
 
 const router = useRouter()
 const {guilds, load} = useAdminGuilds()

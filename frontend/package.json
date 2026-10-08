@@ -18,11 +18,12 @@
     "lint:i18n-keys": "node scripts/lint-i18n-keys.mjs",
     "lint:duplication": "node scripts/lint-duplication.mjs",
     "lint:standalone": "node scripts/lint-standalone.mjs",
-    "lint": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent",
-    "lint:audit": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent && npm run lint:i18n-keys --silent && npm run lint:duplication --silent || true",
+    "lint": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent && npm run lint:page-titles --silent",
+    "lint:audit": "npm run lint:icons --silent && npm run lint:conventions --silent && npm run lint:locales --silent && npm run lint:imports --silent && npm run lint:style --silent && npm run lint:stacked-text --silent && npm run lint:component-size --silent && npm run lint:page-titles --silent && npm run lint:i18n-keys --silent && npm run lint:duplication --silent || true",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "e2e:dev": "E2E_DEV_SERVER=1 playwright test"
+    "e2e:dev": "E2E_DEV_SERVER=1 playwright test",
+    "lint:page-titles": "node scripts/lint-page-titles.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.2.0",

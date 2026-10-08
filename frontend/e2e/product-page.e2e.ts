@@ -53,7 +53,7 @@ test.describe('A product page', () => {
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('link', {name: 'E2E Freebie', exact: true}).click()
 
-        await expect(page.getByRole('button', {name: 'Download'})).toBeVisible()
+        await expect(page.getByRole('button', {name: 'Download'}).first()).toBeVisible()
     })
 
     test('a premium product offers the purchase instead', async ({page}) => {

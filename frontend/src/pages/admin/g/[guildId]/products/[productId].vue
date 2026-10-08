@@ -9,6 +9,7 @@ import {computed, onMounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {listGuildProducts, type ProductSummary} from '~/api/admin'
 import {PRODUCT_ADMIN_TABS, type ProductAdminTab} from '~/components/admin/productAdminTabs'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 /**
  * Everything about one product, a tab per concern. The tab is kept in the address, so a link can
@@ -23,6 +24,8 @@ const guildId = String(route.params.guildId)
 const productId = Number(route.params.productId)
 
 const product = ref<ProductSummary | null>(null)
+
+usePageTitle(() => product.value?.name)
 const loading = ref(true)
 const errorMessage = ref('')
 

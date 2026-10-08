@@ -21,8 +21,10 @@ import {
 import {useSession} from '~/composables/useSession'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.account.security'))
 
 definePageMeta({layout: 'account'})
 

@@ -8,8 +8,10 @@ import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {listMailings, type MailBlock, type MailingTemplate} from '~/api/admin'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.mailing'))
 
 definePageMeta({layout: 'admin'})
 

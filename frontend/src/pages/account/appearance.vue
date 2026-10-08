@@ -10,8 +10,10 @@ import {overview} from '~/api/account'
 import {publicTheme, type PublicTheme, saveAppearance} from '~/api/theme'
 import {useTheme} from '~/composables/useTheme'
 import {DarkMode, type DarkModeValue} from '~/theme/themes'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.account.appearance'))
 
 definePageMeta({layout: 'account'})
 

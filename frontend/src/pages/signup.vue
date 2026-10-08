@@ -9,8 +9,10 @@ import {ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {signup} from '~/api/account'
 import {useSession} from '~/composables/useSession'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('auth.signup'))
 
 const route = useRoute()
 const router = useRouter()

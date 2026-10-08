@@ -10,6 +10,7 @@ import {useRoute} from 'vue-router'
 import type {DebugTab} from '~/api/debug'
 import {useDebugReport} from '~/composables/useDebugReport'
 import {useDebugSearch} from '~/composables/useDebugSearch'
+import {useDebugPreview} from '~/composables/useDebugPreview'
 import type {LineTarget} from '~/util/debugLog'
 import {formatDate} from '~/util/format'
 
@@ -22,6 +23,7 @@ import {formatDate} from '~/util/format'
 const {t} = useI18n()
 const route = useRoute()
 const readKey = String(route.params.key)
+useDebugPreview(readKey)
 
 const {report, contents, loading, notFound, error, load, content, loadAll, logs, exceptions, configs, metas} = useDebugReport(readKey)
 const {query, pattern, invalid, counts} = useDebugSearch(report, contents)

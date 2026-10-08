@@ -14,7 +14,8 @@
     "configured": "Configured",
     "authors": "Authors",
     "dependsOn": "Depends on",
-    "admin": "Admin"
+    "admin": "Admin",
+    "siteName": "Lyna"
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -41,7 +42,8 @@
       "resetPassword": "Reset password",
       "enterTheEmailAssociatedWithYour": "Enter the email associated with your account. If we find a match we'll send a reset link valid for one hour.",
       "ifTheEmailMatchesAnAccount": "If the email matches an account, a reset link is on its way. Check your inbox (and spam) and follow the link within the next hour.",
-      "backToLogin": "Back to login"
+      "backToLogin": "Back to login",
+      "title": "Forgot password"
     },
     "home": {
       "browseAndDownloadPluginReleases": "Browse and download plugin releases.",
@@ -55,7 +57,8 @@
       "newPassword": "New password",
       "confirmNewPassword": "Confirm new password",
       "missingTokenUseTheLinkFrom": "Missing token. Use the link from your email.",
-      "thisResetLinkHasExpiredRequest": "This reset link has expired. Request a new one."
+      "thisResetLinkHasExpiredRequest": "This reset link has expired. Request a new one.",
+      "title": "Choose a new password"
     },
     "signup": {
       "alreadyHaveAnAccount": "Already have an account?",
@@ -68,7 +71,8 @@
       "yourAddressIsConfirmed": "Your address is confirmed.",
       "backToYourAccount": "Back to your account",
       "askForANewLink": "Ask for a new link",
-      "thatLinkCarriesNoToken": "That link carries no token."
+      "thatLinkCarriesNoToken": "That link carries no token.",
+      "title": "Verify your email"
     },
     "account": {
       "appearance": {
@@ -666,6 +670,26 @@
       "delete": "Delete license",
       "confirmDelete": "Really delete",
       "couldNotSave": "That could not be saved."
+    }
+  },
+  "preview": {
+    "product": {
+      "free": "Free",
+      "premium": "Premium",
+      "download": "Download",
+      "view": "View",
+      "source": "Source",
+      "noDescription": "{name} on Lyna."
+    },
+    "storefront": {
+      "description": "Browse and download {count} plugins.",
+      "browse": "Browse plugins"
+    },
+    "debug": {
+      "title": "Debug report: {plugin} {version}",
+      "description": "Server {server} · exceptions: {exceptions} · config files: {configs} · expires {expires}",
+      "open": "Open report",
+      "missing": "Debug report not found"
     }
   }
 }

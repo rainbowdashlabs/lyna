@@ -8,8 +8,10 @@ import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {verifyEmail} from '~/api/account'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('page.verify-email.title'))
 
 const route = useRoute()
 

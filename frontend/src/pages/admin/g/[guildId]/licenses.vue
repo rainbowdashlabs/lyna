@@ -10,8 +10,10 @@ import {useRoute} from 'vue-router'
 import {createGuildLicense, listGuildLicenses, listGuildProducts, type LicenseSummary, type ProductSummary} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.licenses'))
 
 definePageMeta({layout: 'admin'})
 

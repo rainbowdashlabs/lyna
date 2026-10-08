@@ -7,8 +7,10 @@
 import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {overview, type Overview} from '~/api/account'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.account.overview'))
 
 definePageMeta({layout: 'account'})
 

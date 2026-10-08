@@ -8,8 +8,10 @@ import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {addSharee, licenseDetail, type LicenseDetail, removeSharee, type ShareeView} from '~/api/account'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.account.licenses'))
 
 definePageMeta({layout: 'account'})
 

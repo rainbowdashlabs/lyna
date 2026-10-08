@@ -8,8 +8,10 @@ import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
 import {requestPasswordReset} from '~/api/account'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('page.forgot-password.title'))
 
 const email = ref('')
 const submitting = ref(false)

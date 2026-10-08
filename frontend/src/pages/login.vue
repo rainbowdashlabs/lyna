@@ -10,8 +10,10 @@ import {useRoute, useRouter} from 'vue-router'
 import {login} from '~/api/account'
 import {useSession} from '~/composables/useSession'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('auth.login'))
 const route = useRoute()
 const router = useRouter()
 const {setToken, hydrate} = useSession()

@@ -9,10 +9,12 @@ import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {getProduct, type KioskProductDetail, type ReleaseTypeEntry, type VersionEntry} from '~/api/kiosk'
 import {useSession} from '~/composables/useSession'
+import {useProductPreview} from '~/composables/useProductPreview'
 
 const {t} = useI18n()
 const route = useRoute()
 const {account, hydrate} = useSession()
+useProductPreview(Number(route.params.id))
 
 const product = ref<KioskProductDetail | null>(null)
 const loading = ref(true)

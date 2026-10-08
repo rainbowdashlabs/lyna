@@ -9,8 +9,10 @@ import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {getTrialInfo, type TrialInfo} from '~/api/admin'
 import Spinner from '~/components/feedback/Spinner.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.trial'))
 
 definePageMeta({layout: 'admin'})
 

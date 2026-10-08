@@ -8,6 +8,7 @@ import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {type DownloadType, listDownloadTypes} from '~/api/adminDownloads'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 /**
  * The kinds of build this guild offers - what {@code /downloads type} manages. A product's downloads
@@ -16,6 +17,7 @@ import {type DownloadType, listDownloadTypes} from '~/api/adminDownloads'
 definePageMeta({layout: 'admin'})
 
 const {t} = useI18n()
+usePageTitle(t('page.admin.g.guildId.downloadTypes.title'))
 const guildId = String(useRoute().params.guildId)
 
 const types = ref<DownloadType[]>([])
