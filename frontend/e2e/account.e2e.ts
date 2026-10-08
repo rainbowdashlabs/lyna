@@ -73,11 +73,13 @@ test.describe('The security page', () => {
 })
 
 test.describe('The admin area', () => {
-    test('an account that administers no guild is sent back to its own area', async ({page}) => {
+    test('an account that administers no guild is told why, with the way back to its own area', async ({page}) => {
         await signUp(page, 'not-an-admin')
 
         await page.goto('/admin')
 
+        await expect(page.getByRole('heading', {name: 'No admin access'})).toBeVisible()
+        await page.getByRole('link', {name: 'Go to your account'}).click()
         await expect(page).toHaveURL(/\/account$/)
     })
 })
