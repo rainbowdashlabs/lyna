@@ -40,6 +40,8 @@ Fetched from the **repository**, not written in Lyna.
 ![logo](assets/logo.png)
 
 See [the setup guide](docs/setup.md).
+
+[Download the latest release](https://github.com/e2e-owner/e2e-plugin/releases/latest)
 """
 
 with open("/stub/UserData.class", "rb") as fixture:

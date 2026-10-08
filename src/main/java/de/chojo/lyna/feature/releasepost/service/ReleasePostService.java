@@ -17,6 +17,8 @@ import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository.ReleaseWebhook;
 import de.chojo.lyna.gateway.Gateway;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.slf4j.Logger;
@@ -39,6 +41,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Announces a product's GitHub releases in its Discord channel.
+ *
+ * <p>The announcement carries a button to the product's page on Lyna, where it is downloaded.
  *
  * <p>GitHub signs every delivery with the webhook's secret, and nothing unsigned is acted on: the
  * address alone is not enough to make the bot post in somebody's channel. Only published releases and
@@ -131,6 +135,8 @@ public class ReleasePostService {
         }
         channel.get()
                 .sendMessageEmbeds(embed(product.get(), payload))
+                .addComponents(ActionRow.of(Button.link(
+                        "%s/products/%d".formatted(api.url(), product.get().id()), "Download on Lyna")))
                 .queue(
                         success -> {},
                         error -> log.warn("Could not announce a release of product {}", webhook.productId(), error));
@@ -149,7 +155,6 @@ public class ReleasePostService {
                 .setDescription(
                         body.length() > DESCRIPTION_LIMIT ? body.substring(0, DESCRIPTION_LIMIT - 1) + "…" : body)
                 .addField("Release", release.prerelease() ? "Pre-release" : "Stable", true)
-                .addField("Download", "%s/products/%d".formatted(api.url(), product.id()), true)
                 .setTimestamp(Instant.now());
         if (release.name() != null
                 && !release.name().isBlank()

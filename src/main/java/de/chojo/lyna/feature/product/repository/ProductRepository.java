@@ -43,20 +43,6 @@ public class ProductRepository {
                 .all();
     }
 
-    public boolean trialUnspent(int productId, long discordId) {
-        return query("SELECT NOT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?) as exists")
-                .single(call().bind(productId).bind(discordId))
-                .map(row -> row.getBoolean("exists"))
-                .first()
-                .orElse(false);
-    }
-
-    public void spendTrial(int productId, long discordId) {
-        query("INSERT INTO trial(product_id, user_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(productId).bind(discordId))
-                .insert();
-    }
-
     /**
      * Whether a trial of the product is still to be taken by this account, counting one its linked
      * Discord account took on Discord.

@@ -5,6 +5,7 @@
  */
 package de.chojo.lyna.feature.readme.service;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +27,11 @@ public final class ReadmeLinks {
             Pattern.compile("(<img\\b[^>]*?\\bsrc=[\"'])([^\"']+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern HTML_HREF =
             Pattern.compile("(<a\\b[^>]*?\\bhref=[\"'])([^\"']+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern LINK_TARGET =
+            Pattern.compile("(\\]\\(|href=[\"'])(https?://[^)\"'\\s]+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PLUGIN_HOST = Pattern.compile(
+            "^https?://(?:www\\.)?(?:spigotmc\\.org/resources|modrinth\\.com/(?:plugin|mod)|hangar\\.papermc\\.io|curseforge\\.com)/.*",
+            Pattern.CASE_INSENSITIVE);
 
     /**
      * @param owner the account the repository belongs to
@@ -55,6 +61,27 @@ public final class ReadmeLinks {
         result = rewrite(result, HTML_SRC, raw, folder);
         result = rewrite(result, MARKDOWN_LINK, blob, folder);
         return rewrite(result, HTML_HREF, blob, folder);
+    }
+
+    /**
+     * Sends a README's download links to Lyna: links to the repository's releases and to the usual
+     * plugin hosts lead to {@code target} instead. Badge images stay what they are; only where they
+     * lead changes.
+     */
+    public static String downloadsTo(String markdown, Repository repository, String target) {
+        String releases = "https://github.com/%s/%s/releases"
+                .formatted(repository.owner(), repository.name())
+                .toLowerCase(Locale.ROOT);
+        Matcher matcher = LINK_TARGET.matcher(markdown);
+        StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            String url = matcher.group(2);
+            boolean download = url.toLowerCase(Locale.ROOT).startsWith(releases)
+                    || PLUGIN_HOST.matcher(url).matches();
+            matcher.appendReplacement(out, Matcher.quoteReplacement(matcher.group(1) + (download ? target : url)));
+        }
+        matcher.appendTail(out);
+        return out.toString();
     }
 
     /**

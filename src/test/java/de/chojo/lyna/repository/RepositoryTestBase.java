@@ -32,7 +32,6 @@ import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
-import de.chojo.lyna.feature.product.service.TrialService;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.mapper.RowMapperRegistry;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
@@ -106,7 +105,6 @@ public abstract class RepositoryTestBase {
     protected static LicenseService licenseService;
     protected static ProductRepository productRepository;
     protected static ProductRoleService productRoles;
-    protected static TrialService trials;
 
     @BeforeAll
     static void setupDatabase() throws Exception {
@@ -160,7 +158,6 @@ public abstract class RepositoryTestBase {
         licenseRepository = new LicenseRepository();
         productRepository = new ProductRepository();
         productRoles = new ProductRoleService(productRepository);
-        trials = new TrialService(productRepository);
         licenseSharing = new LicenseSharingService(licenseRepository, accountLinks, productRoles);
         licenseService = new LicenseService(licenseRepository, accountLinks, licenseSharing, productRoles);
     }

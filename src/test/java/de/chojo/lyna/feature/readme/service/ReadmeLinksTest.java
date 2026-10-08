@@ -62,4 +62,21 @@ class ReadmeLinksTest {
                         + "[mail](mailto:a@b.c) [top](#usage) ![b](//cdn/x.png)",
                 rewritten);
     }
+
+    @Test
+    @DisplayName("Download links to the releases and the plugin hosts lead to Lyna; badges and other links stay")
+    void downloadsToLyna() {
+        String readme =
+                "[![spigot](https://img.shields.io/x.svg)](https://www.spigotmc.org/resources/blood-night.85095/) "
+                        + "[Releases](https://github.com/eldoriarpg/BloodNight/releases/latest) "
+                        + "<a href=\"https://modrinth.com/plugin/bloodnight\">Modrinth</a> "
+                        + "[Wiki](https://github.com/eldoriarpg/BloodNight/wiki) [Other](https://github.com/someone/else/releases)";
+
+        assertEquals(
+                "[![spigot](https://img.shields.io/x.svg)](/products/4?download=1) "
+                        + "[Releases](/products/4?download=1) "
+                        + "<a href=\"/products/4?download=1\">Modrinth</a> "
+                        + "[Wiki](https://github.com/eldoriarpg/BloodNight/wiki) [Other](https://github.com/someone/else/releases)",
+                ReadmeLinks.downloadsTo(readme, REPO, "/products/4?download=1"));
+    }
 }

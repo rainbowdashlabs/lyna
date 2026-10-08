@@ -84,7 +84,6 @@ import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
-import de.chojo.lyna.feature.product.service.TrialService;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
@@ -321,7 +320,6 @@ public class LynaModule extends AbstractModule {
         bind(LicenseService.class).in(Singleton.class);
         bind(ProductRepository.class).in(Singleton.class);
         bind(ProductRoleService.class).in(Singleton.class);
-        bind(TrialService.class).in(Singleton.class);
         bind(DownloadRepository.class).in(Singleton.class);
         bind(PurchaseService.class).in(Singleton.class);
         bind(IconStorage.class).in(Singleton.class);

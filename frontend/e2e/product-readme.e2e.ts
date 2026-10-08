@@ -25,6 +25,11 @@ test.describe('A product page from the README', () => {
         await expect(page.getByRole('link', {name: 'the setup guide'})).toHaveAttribute(
             'href', 'https://github.com/e2e-owner/e2e-plugin/blob/HEAD/docs/setup.md')
         await expect(page.getByRole('link', {name: 'From the project\'s README on GitHub'})).toBeVisible()
+
+        const download = page.getByRole('link', {name: 'Download the latest release'})
+        await expect(download).toHaveAttribute('href', `/products/${id}?download=1`)
+        await download.click()
+        await expect(page.getByRole('heading', {name, level: 3})).toBeVisible()
         await deleteProduct(request, id, name)
     })
 

@@ -159,10 +159,14 @@ class WebTrialServiceTest extends RepositoryTestBase {
 
     @Test
     @DisplayName("A trial taken on Discord counts for the web, so linking afterwards gives no second one")
-    void discordTrialCounts() {
+    void discordTrialCounts() throws SQLException {
         int account = accountWithEmail("b@example.org");
         accountLinks.link(account, DISCORD, AccountIdentity.Verification.OAUTH);
-        productRepository.spendTrial(trialProduct.id(), DISCORD);
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement()) {
+            statement.execute("INSERT INTO %s.trial (product_id, user_id) VALUES (%d, %d)"
+                    .formatted(schemaName, trialProduct.id(), DISCORD));
+        }
 
         assertEquals(
                 Reason.SPENT, at(monthsLater()).decide(trialProduct, account).reason());

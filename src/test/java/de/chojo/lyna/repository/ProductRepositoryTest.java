@@ -61,20 +61,27 @@ class ProductRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A trial is unspent until it is spent, and then it stays spent")
     void trialsAreSpentOnce() {
-        assertTrue(productRepository.trialUnspent(productId, MEMBER));
+        int account = accounts.insert(null).id();
+        assertTrue(productRepository.trialUnspent(productId, account, MEMBER));
 
-        productRepository.spendTrial(productId, MEMBER);
-        assertFalse(productRepository.trialUnspent(productId, MEMBER));
+        productRepository.spendTrial(productId, account, MEMBER);
+        assertFalse(productRepository.trialUnspent(productId, account, MEMBER));
 
-        productRepository.spendTrial(productId, MEMBER);
-        assertFalse(productRepository.trialUnspent(productId, MEMBER), "asking twice changes nothing");
+        productRepository.spendTrial(productId, account, MEMBER);
+        assertFalse(productRepository.trialUnspent(productId, account, MEMBER), "asking twice changes nothing");
     }
 
     @Test
-    @DisplayName("Somebody else's spent trial is not yours")
-    void trialsArePerMember() {
-        productRepository.spendTrial(productId, MEMBER);
-        assertTrue(productRepository.trialUnspent(productId, 888L));
+    @DisplayName("A trial is spent for the account and for its Discord id, so either one finds it spent")
+    void trialsCountBothWays() {
+        int taker = accounts.insert(null).id();
+        int other = accounts.insert(null).id();
+        productRepository.spendTrial(productId, taker, MEMBER);
+
+        assertFalse(productRepository.trialUnspent(productId, other, MEMBER), "the Discord id took it");
+        assertFalse(productRepository.trialUnspent(productId, taker, null), "the account took it");
+        assertTrue(productRepository.trialUnspent(productId, other, 888L), "somebody else's spent trial is not yours");
+        assertTrue(productRepository.trialUnspent(productId, other, null));
     }
 
     @Test

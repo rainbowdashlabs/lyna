@@ -18,7 +18,8 @@ import java.util.Optional;
  *
  * <p>The README is shown when the product asks for it, and also when the product says nothing about
  * itself and names a GitHub repository - an empty page helps nobody when the README is right there.
- * When GitHub has never answered for the repository, the description stands in.
+ * When GitHub has never answered for the repository, the description stands in. A README's download
+ * links - its releases page, the plugin hosts - lead to this product's download on Lyna.
  */
 @Singleton
 public class ProductPageService {
@@ -46,7 +47,13 @@ public class ProductPageService {
         boolean wantsReadme = product.pageReadme()
                 || (blank && ReadmeLinks.repository(product.url()).isPresent());
         Optional<ReadmeService.Readme> readme = wantsReadme ? readmes.readme(product.url()) : Optional.empty();
-        return readme.map(found -> new Page(found.markdown(), Source.README, found.url()))
+        return readme.map(found -> new Page(
+                        ReadmeLinks.downloadsTo(
+                                found.markdown(),
+                                ReadmeLinks.repository(product.url()).orElseThrow(),
+                                "/products/%d?download=1".formatted(product.id())),
+                        Source.README,
+                        found.url()))
                 .orElseGet(() -> new Page(product.description(), Source.CUSTOM, null));
     }
 }

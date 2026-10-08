@@ -43,6 +43,7 @@ async function load() {
   try {
     await hydrate()
     product.value = await getProduct(id)
+    if (route.query.download === '1') openWizard()
   } catch (e) {
     const status = (e as { response?: { status?: number } }).response?.status
     errorMessage.value = status === 404
