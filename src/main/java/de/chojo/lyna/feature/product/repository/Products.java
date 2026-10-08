@@ -40,6 +40,22 @@ public class Products {
                 .first();
     }
 
+    /**
+     * Creates a product naming its role by id alone, for an instance with no gateway to look the role
+     * up through.
+     */
+    public Optional<Product> create(String name, long roleId, @Nullable String url, boolean free, boolean trial) {
+        return query("INSERT INTO product(guild_id, name, url, role, free, trial) VALUES (?,?,?,?,?,?) RETURNING id")
+                .single(call().bind(licenseGuild.guildId())
+                        .bind(name)
+                        .bind(url)
+                        .bind(roleId)
+                        .bind(free)
+                        .bind(trial))
+                .map(row -> new Product(this, row.getInt("id"), name, url, roleId, free, trial))
+                .first();
+    }
+
     public List<Product> all() {
         return query("SELECT id, name, url, role, free, trial FROM product WHERE guild_id = ?")
                 .single(call().bind(licenseGuild.guildId()))

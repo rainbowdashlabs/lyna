@@ -152,7 +152,18 @@
             "noProductsYet": "No products yet.",
             "name": "Name",
             "roleId": "Role id",
-            "projectUrlOptional": "Project URL (optional)"
+            "projectUrlOptional": "Project URL (optional)",
+            "productId": {
+              "notFound": "This guild has no such product.",
+              "tabs": {
+                "general": "General",
+                "page": "Page",
+                "downloads": "Downloads",
+                "access": "Access",
+                "mailing": "Mailing",
+                "announcements": "Announcements"
+              }
+            }
           },
           "registrations": {
             "registrations": "Registrations",
@@ -464,8 +475,6 @@
       "name": "Name",
       "roleId": "Discord role id",
       "projectUrl": "Project URL",
-      "description": "Description",
-      "markdownShownOnThePage": "Markdown. Shown on the product's own page.",
       "trialAvailable": "Trial available",
       "freeToEveryone": "Free to everyone",
       "thisChangesWhoMayDownloadIt": "This changes who may download it.",
@@ -476,10 +485,6 @@
       "usedWhenNothingIsUploaded": "Used only when no icon has been uploaded.",
       "butlerId": "UpdateButler id",
       "butlerIdHint": "The id plugins built for UpdateButler ask for updates by. Leave empty if it never had one."
-    },
-    "productAdminRow": {
-      "edit": "Edit",
-      "done": "Done"
     },
     "productVersions": {
       "versions": "Versions",
@@ -579,6 +584,20 @@
       "howTo": "On GitHub: Settings, Webhooks, Add webhook. Content type application/json, and under events choose only Releases.",
       "payloadUrl": "Payload URL",
       "secret": "Secret"
+    },
+    "productPageEditor": {
+      "markdown": "Markdown",
+      "preview": "Preview",
+      "save": "Save page",
+      "saved": "Saved.",
+      "couldNotSave": "That could not be saved."
+    },
+    "productDeleteZone": {
+      "title": "Delete product",
+      "explain": "Deleting {name} removes its licenses, downloads, mailing and everything else attached to it. This cannot be undone.",
+      "typeName": "Type the product's name to confirm",
+      "delete": "Delete product",
+      "couldNotDelete": "The product could not be deleted."
     }
   }
 }

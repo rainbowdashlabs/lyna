@@ -92,7 +92,8 @@ export interface ProductEditPayload {
     roleId: string
     free: boolean
     trial: boolean
-    description: string | null
+    /** Left out to keep the description as it is; it is edited on its own tab. */
+    description?: string | null
     /** An address to fetch the icon from, for an instance that would rather point at its own CDN. */
     iconUrl: string | null
     butlerId: number | null
@@ -288,4 +289,14 @@ export async function setReleaseChannel(guildId: string, productId: number, chan
 
 export async function removeReleaseWebhook(guildId: string, productId: number): Promise<void> {
     await client.delete(`/api/admin/g/${guildId}/products/${productId}/release-webhook`)
+}
+
+/** Deletes a product and everything attached to it. The name must be typed out to confirm. */
+export async function deleteGuildProduct(guildId: string, productId: number, confirmName: string): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/products/${productId}`, {data: {confirmName}})
+}
+
+/** What the product's own page says, as markdown. Blank clears it. */
+export async function setProductDescription(guildId: string, productId: number, description: string): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}/description`, {description})
 }

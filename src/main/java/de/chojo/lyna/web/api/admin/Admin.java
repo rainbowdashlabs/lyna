@@ -134,6 +134,7 @@ public class Admin {
                 get("products", this::listProducts);
                 post("products", this::createProduct);
                 put("products/{productId}", this::updateProduct);
+                delete("products/{productId}", this::deleteProduct);
                 put("products/{productId}/description", this::setProductDescription);
                 post("products/{productId}/icon", this::uploadProductIcon);
                 delete("products/{productId}/icon", this::deleteProductIcon);
@@ -407,14 +408,40 @@ public class Admin {
         product.role(roleId);
         product.free(body.free());
         product.trial(body.trial());
-        String description =
-                body.description() == null ? "" : body.description().strip();
-        kioskProducts.description(product.id(), description.isBlank() ? null : description);
+        if (body.description() != null) {
+            String description = body.description().strip();
+            kioskProducts.description(product.id(), description.isBlank() ? null : description);
+        }
         if (body.butlerId() == null) {
             butlerApplications.clear(product.id());
         } else {
             butlerApplications.assign(product.id(), body.butlerId());
         }
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Deletes a product and everything attached to it, as {@code /products delete} does. The body must
+     * name the product, so a stray request cannot delete one by its id alone.
+     */
+    private void deleteProduct(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        ProductDeletion body;
+        try {
+            body = json.readValue(ctx.body(), ProductDeletion.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        if (body == null || !product.name().equals(body.confirmName())) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Type the product's name to delete it");
+            return;
+        }
+        productIcons.remove(product.id());
+        product.delete();
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -567,14 +594,21 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("roleId required");
             return;
         }
-        var role = discordGuild(resolved.guild().guildId())
-                .map(g -> g.getRoleById(body.roleId()))
-                .orElse(null);
-        if (role == null) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
-            return;
+        Optional<de.chojo.lyna.feature.product.entity.Product> product;
+        if (gateway.connected()) {
+            var role = discordGuild(resolved.guild().guildId())
+                    .map(g -> g.getRoleById(body.roleId()))
+                    .orElse(null);
+            if (role == null) {
+                ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
+                return;
+            }
+            product = resolved.guild().products().create(body.name(), role, body.url(), body.free(), body.trial());
+        } else {
+            product = resolved.guild()
+                    .products()
+                    .create(body.name(), body.roleId(), body.url(), body.free(), body.trial());
         }
-        var product = resolved.guild().products().create(body.name(), role, body.url(), body.free(), body.trial());
         if (product.isEmpty()) {
             ctx.status(HttpStatus.CONFLICT).result("Product already exists");
             return;
@@ -1072,6 +1106,11 @@ public class Admin {
             Integer butlerId) {}
 
     public record ProductDescription(String description) {}
+
+    /**
+     * @param confirmName the product's name, typed out by whoever is deleting it
+     */
+    public record ProductDeletion(String confirmName) {}
 
     /**
      * @param url       what to paste into GitHub as the payload URL

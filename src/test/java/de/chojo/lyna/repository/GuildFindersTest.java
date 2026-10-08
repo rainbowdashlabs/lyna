@@ -94,6 +94,38 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A product can be made naming its role by id, for an instance with no gateway")
+    void productByRoleId() {
+        Product made = guild.products().create("Gadget", 60L, null, true, true).orElseThrow();
+
+        assertEquals(60L, made.role());
+        assertEquals(60L, guild.products().byId(made.id()).orElseThrow().role());
+    }
+
+    @Test
+    @DisplayName("Autocompletion offers the products by what was typed, free apart from paid, trials apart")
+    void completion() {
+        guild.products().create("Gadget", 60L, null, true, false).orElseThrow();
+        guild.products().create("Gizmo", 61L, null, false, true).orElseThrow();
+
+        assertEquals(
+                List.of("Gadget"),
+                guild.products().complete("ga", true).stream()
+                        .map(c -> c.getName())
+                        .toList());
+        assertEquals(
+                List.of("Widget", "Gizmo"),
+                guild.products().complete("", false).stream()
+                        .map(c -> c.getName())
+                        .toList());
+        assertEquals(
+                List.of("Gizmo"),
+                guild.products().completeTrials("").stream()
+                        .map(c -> c.getName())
+                        .toList());
+    }
+
+    @Test
     @DisplayName("The cross-guild lookup finds a product without being told its guild")
     void theLookupCrossesGuilds() {
         ProductLookup lookup = new ProductLookup(guilds);
