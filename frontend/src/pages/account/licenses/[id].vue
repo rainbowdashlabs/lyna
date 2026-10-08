@@ -97,6 +97,7 @@ async function copyKey() {
           @revoke="revoking = $event"
       />
       <LicenseUpdaterLink v-if="data.key" :license-key="data.key"/>
+      <LicenseTransfer v-if="isOwner" :license-id="data.license.id" :product-name="data.license.productName" @transferred="navigateTo('/account/licenses')"/>
       <EmptyHint v-if="!isOwner">
         {{ t('page.account.licenses.id.theLicenseOwnerCanSeeWhen') }}
       </EmptyHint>

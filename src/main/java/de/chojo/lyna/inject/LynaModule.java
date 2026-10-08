@@ -76,6 +76,7 @@ import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
+import de.chojo.lyna.feature.license.repository.LicenseLookup;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
@@ -288,6 +289,7 @@ public class LynaModule extends AbstractModule {
         bind(de.chojo.lyna.web.api.admin.AdminLicenses.class).in(Singleton.class);
         bind(de.chojo.lyna.web.api.admin.AdminMailing.class).in(Singleton.class);
         bind(de.chojo.lyna.web.api.admin.AdminTimeChannels.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.account.AccountLicenseActions.class).in(Singleton.class);
         bind(Download.class).in(Singleton.class);
         bind(Direct.class).in(Singleton.class);
         bind(Update.class).in(Singleton.class);
@@ -392,6 +394,12 @@ public class LynaModule extends AbstractModule {
     @Singleton
     ProductLookup products(Guilds guilds) {
         return new ProductLookup(guilds);
+    }
+
+    @Provides
+    @Singleton
+    LicenseLookup licenseLookup(Guilds guilds) {
+        return new LicenseLookup(guilds);
     }
 
     @Provides

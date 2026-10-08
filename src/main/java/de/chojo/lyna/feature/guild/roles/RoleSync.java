@@ -28,6 +28,9 @@ public interface RoleSync {
 
         @Override
         public void revokeIfUnentitled(long guildId, long discordId, Product product) {}
+
+        @Override
+        public void assign(long guildId, long discordId, Product product) {}
     };
 
     /**
@@ -46,4 +49,9 @@ public interface RoleSync {
      * there, the entitlement check answers yes and nothing is ever taken back.
      */
     void revokeIfUnentitled(long guildId, long discordId, Product product);
+
+    /**
+     * Gives the member the product's role, as claiming a license on Discord does.
+     */
+    void assign(long guildId, long discordId, Product product);
 }

@@ -20,7 +20,7 @@ const errorMessage = ref<string | null>(null)
 const tab = ref('owned')
 const search = ref('')
 
-onMounted(async () => {
+async function load() {
   try {
     data.value = await listLicenses()
   } catch (e) {
@@ -28,7 +28,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(load)
 
 const tabs = computed(() => [
   {key: 'owned', label: `Owned (${data.value?.owned.length ?? 0})`},
@@ -50,6 +52,7 @@ const anyLicenses = computed(() => (data.value?.owned.length ?? 0) + (data.value
     <PageHeader class="mb-6">
       {{ t('page.account.licenses.licenses') }}
     </PageHeader>
+    <RedeemKey class="mb-6" @redeemed="load"/>
     <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
       <div v-if="data">
         <TabBar v-model="tab" :tabs="tabs" class="mb-4"/>

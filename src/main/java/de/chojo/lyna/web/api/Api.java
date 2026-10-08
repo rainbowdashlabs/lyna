@@ -8,6 +8,7 @@ package de.chojo.lyna.web.api;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.account.AccountLicenseActions;
 import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
 import de.chojo.lyna.web.api.admin.AdminLicenses;
@@ -34,6 +35,7 @@ public class Api {
     private final AdminLicenses adminLicenses;
     private final AdminMailing adminMailing;
     private final AdminTimeChannels adminTimeChannels;
+    private final AccountLicenseActions accountLicenseActions;
 
     private static final Logger log = getLogger(Api.class);
 
@@ -49,7 +51,9 @@ public class Api {
             AdminDownloads adminDownloads,
             AdminLicenses adminLicenses,
             AdminMailing adminMailing,
-            AdminTimeChannels adminTimeChannels) {
+            AdminTimeChannels adminTimeChannels,
+            AccountLicenseActions accountLicenseActions) {
+        this.accountLicenseActions = accountLicenseActions;
         this.adminTimeChannels = adminTimeChannels;
         this.adminMailing = adminMailing;
         this.adminDownloads = adminDownloads;
@@ -68,6 +72,7 @@ public class Api {
             v1.init();
             auth.init();
             account.init();
+            path("account/licenses", accountLicenseActions::init);
             theme.init();
             admin.init();
             path("admin/g/{guildId}", () -> {

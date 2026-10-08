@@ -711,6 +711,21 @@
       "showing": "The page shows the README.",
       "onGithub": "Open it on GitHub",
       "couldNotSave": "That could not be saved."
+    },
+    "redeemKey": {
+      "title": "Redeem a license key",
+      "key": "License key",
+      "redeem": "Redeem",
+      "redeemed": "The license for {product} is yours now.",
+      "couldNotRedeem": "That key could not be redeemed."
+    },
+    "licenseTransfer": {
+      "title": "Transfer this license",
+      "explain": "Gives your license for {product} to another account. Everybody you shared it with loses access, and it is no longer yours.",
+      "to": "Username or email address of the receiving account",
+      "transfer": "Transfer",
+      "confirm": "Really give it to {to}",
+      "couldNotTransfer": "The license could not be transferred."
     }
   },
   "preview": {
