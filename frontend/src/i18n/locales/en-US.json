@@ -191,6 +191,11 @@
             "settings": "Settings",
             "products": "Products",
             "noProducts": "No products."
+          },
+          "downloadTypes": {
+            "title": "Download types",
+            "explain": "The kinds of build this guild offers. Each download of a product names one, and its release type decides who may download it.",
+            "none": "No download types yet."
           }
         }
       },
@@ -285,7 +290,8 @@
       "botConnected": "bot connected",
       "noBot": "no bot",
       "guildsCount": "{count} guilds",
-      "guildAdmin": "guild admin"
+      "guildAdmin": "guild admin",
+      "downloadTypes": "Download types"
     }
   },
   "ui": {
@@ -598,6 +604,21 @@
       "typeName": "Type the product's name to confirm",
       "delete": "Delete product",
       "couldNotDelete": "The product could not be deleted."
+    },
+    "downloadTypeCreate": {
+      "title": "New download type",
+      "name": "Name",
+      "description": "Description",
+      "releaseType": "Release type",
+      "create": "Create",
+      "couldNotCreate": "The download type could not be created."
+    },
+    "downloadTypeRow": {
+      "save": "Save",
+      "delete": "Delete",
+      "saved": "Saved.",
+      "usedBy": "Offered by {products}",
+      "couldNotSave": "That could not be saved."
     }
   }
 }

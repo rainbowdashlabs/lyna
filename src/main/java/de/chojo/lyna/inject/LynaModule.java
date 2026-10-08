@@ -276,6 +276,8 @@ public class LynaModule extends AbstractModule {
         bind(Account.class).in(Singleton.class);
         bind(Theme.class).in(Singleton.class);
         bind(Admin.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.admin.GuildAdminGuard.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.admin.AdminDownloads.class).in(Singleton.class);
         bind(Download.class).in(Singleton.class);
         bind(Direct.class).in(Singleton.class);
         bind(Update.class).in(Singleton.class);

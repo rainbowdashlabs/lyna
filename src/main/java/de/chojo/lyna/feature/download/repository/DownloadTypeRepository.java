@@ -8,6 +8,7 @@ package de.chojo.lyna.feature.download.repository;
 import com.google.inject.Singleton;
 import de.chojo.sadu.queries.api.call.Call;
 
+import java.util.List;
 import java.util.function.Function;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
@@ -37,5 +38,18 @@ public class DownloadTypeRepository {
                 .single(call().bind(guildId).bind(typeId))
                 .delete()
                 .changed();
+    }
+
+    /**
+     * @return the names of the products with a download of this type, which keep it from being deleted
+     */
+    public List<String> productsUsing(int typeId) {
+        return query("""
+                SELECT DISTINCT p.name FROM download d JOIN product p ON p.id = d.product_id
+                WHERE d.type_id = ? ORDER BY p.name
+                """)
+                .single(call().bind(typeId))
+                .map(row -> row.getString("name"))
+                .all();
     }
 }

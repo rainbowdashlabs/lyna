@@ -11,7 +11,6 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
-import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.guild.Guilds;
@@ -34,7 +33,6 @@ import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
@@ -79,6 +77,7 @@ public class Admin {
     private final ReleaseWebhookRepository releaseWebhooks;
     private final ReleasePostService releasePosts;
     private final ProductRepository productRepository;
+    private final GuildAdminGuard guard;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final de.chojo.lyna.mail.blocks.MailBlockRenderer blockRenderer =
@@ -106,8 +105,10 @@ public class Admin {
             ButlerApplicationRepository butlerApplications,
             ReleaseWebhookRepository releaseWebhooks,
             ReleasePostService releasePosts,
-            ProductRepository productRepository) {
+            ProductRepository productRepository,
+            GuildAdminGuard guard) {
         this.productRepository = productRepository;
+        this.guard = guard;
         this.productIcons = productIcons;
         this.butlerApplications = butlerApplications;
         this.releaseWebhooks = releaseWebhooks;
@@ -886,37 +887,8 @@ public class Admin {
      * this check.
      */
     private Resolved requireGuildAdmin(Context ctx) {
-        Optional<JwtService.Verified> session = auth.currentSession(ctx);
-        if (session.isEmpty()) {
-            ctx.status(HttpStatus.UNAUTHORIZED);
-            return null;
-        }
-        long guildId;
-        try {
-            guildId = Long.parseLong(ctx.pathParam("guildId"));
-        } catch (NumberFormatException e) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid guild id");
-            return null;
-        }
-        Long discordId = resolveDiscordId(session.get());
-        boolean operator = isOperator(discordId);
-        Guild guild = gateway.guild(guildId).orElse(null);
-        if (guild == null) {
-            // With no gateway there is no MANAGE_SERVER to check, so only somebody who holds the
-            // whole instance may administer. Everything below reads the database, which answers
-            // whether or not a bot is connected; the handful of operations that act on Discord
-            // itself find no guild and say so.
-            if (!operator) {
-                ctx.status(HttpStatus.NOT_FOUND);
-                return null;
-            }
-            return new Resolved(guilds.guild(guildId), discordId, true);
-        }
-        if (!operator && !hasGuildAdmin(discordId, guild)) {
-            ctx.status(HttpStatus.NOT_FOUND);
-            return null;
-        }
-        return new Resolved(guilds.guild(guild), discordId, operator);
+        var admin = guard.require(ctx);
+        return admin == null ? null : new Resolved(admin.guild(), admin.callerDiscordId(), admin.operator());
     }
 
     /**
@@ -930,10 +902,7 @@ public class Admin {
     }
 
     private Long resolveDiscordId(JwtService.Verified verified) {
-        if (verified.discordId() != null) return verified.discordId();
-        return accounts.findLinkByAccountId(verified.accountId())
-                .map(AccountIdentity::externalIdAsLong)
-                .orElse(null);
+        return guard.discordId(verified);
     }
 
     private void listOperators(Context ctx) {
@@ -1039,8 +1008,7 @@ public class Admin {
     }
 
     private boolean isOperator(Long discordId) {
-        if (discordId == null) return false;
-        return isRootOperator(discordId) || operators.contains(discordId);
+        return guard.isOperator(discordId);
     }
 
     /**
@@ -1059,13 +1027,7 @@ public class Admin {
      * nothing else.
      */
     private boolean hasGuildAdmin(Long discordId, Guild guild) {
-        if (discordId == null) return false;
-        Member member = guild.getMemberById(discordId);
-        if (member == null) return false;
-        if (member.hasPermission(Permission.MANAGE_SERVER)) return true;
-        Long adminRole = guilds.guild(guild).settings().license().adminRoleId();
-        if (adminRole == null) return false;
-        return member.getRoles().stream().anyMatch(role -> role.getIdLong() == adminRole);
+        return guard.hasGuildAdmin(discordId, guild);
     }
 
     /**

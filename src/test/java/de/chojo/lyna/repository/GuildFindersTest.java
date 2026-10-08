@@ -251,6 +251,20 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A download type names the products offering it, and an unused one names none")
+    void downloadTypeUsage() {
+        DownloadType used =
+                guild.downloadTypes().create("stable", "", ReleaseType.STABLE).orElseThrow();
+        DownloadType unused =
+                guild.downloadTypes().create("dev", "", ReleaseType.DEV).orElseThrow();
+        product.downloads().create(used, "releases", "de.chojo", "widget", null).orElseThrow();
+
+        var types = new de.chojo.lyna.feature.download.repository.DownloadTypeRepository();
+        assertEquals(List.of("Widget"), types.productsUsing(used.id()));
+        assertEquals(List.of(), types.productsUsing(unused.id()));
+    }
+
+    @Test
     @DisplayName("A role is granted a release type of a product and taken off again")
     void downloadRoleAccess() {
         assertTrue(product.downloads().grant(role(60L), ReleaseType.DEV));
