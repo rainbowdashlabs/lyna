@@ -202,6 +202,12 @@
             "title": "Download types",
             "explain": "The kinds of build this guild offers. Each download of a product names one, and its release type decides who may download it.",
             "none": "No download types yet."
+          },
+          "timeChannels": {
+            "explain": "Channels whose name shows the time in a zone, such as a developer's local time. Renamed every quarter of an hour, which is as often as Discord allows.",
+            "none": "No channel shows the time.",
+            "remove": "Stop",
+            "needsBot": "The bot renames these channels, and none is connected, so no new one can be set up."
           }
         }
       },
@@ -297,7 +303,8 @@
       "noBot": "no bot",
       "guildsCount": "{count} guilds",
       "guildAdmin": "guild admin",
-      "downloadTypes": "Download types"
+      "downloadTypes": "Download types",
+      "timeChannels": "Time channels"
     }
   },
   "ui": {
@@ -683,6 +690,18 @@
       "send": "Issue license and send",
       "sent": "Sent.",
       "couldNotSend": "That could not be done."
+    },
+    "timeChannelForm": {
+      "title": "Show the time on a channel",
+      "channel": "Voice channel or category",
+      "choose": "Choose…",
+      "zone": "Time zone",
+      "template": "Name",
+      "templateHint": "Where {'{'}time{'}'} goes, the time is shown. Empty: Developer Time: {'{'}time{'}'}",
+      "save": "Set up",
+      "couldNotSave": "That could not be set up.",
+      "zonePlaceholder": "Europe/Berlin",
+      "templatePlaceholder": "Developer Time: {'{'}time{'}'}"
     }
   },
   "preview": {

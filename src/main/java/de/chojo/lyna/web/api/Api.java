@@ -12,6 +12,7 @@ import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
 import de.chojo.lyna.web.api.admin.AdminLicenses;
 import de.chojo.lyna.web.api.admin.AdminMailing;
+import de.chojo.lyna.web.api.admin.AdminTimeChannels;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
@@ -32,6 +33,7 @@ public class Api {
     private final AdminDownloads adminDownloads;
     private final AdminLicenses adminLicenses;
     private final AdminMailing adminMailing;
+    private final AdminTimeChannels adminTimeChannels;
 
     private static final Logger log = getLogger(Api.class);
 
@@ -46,7 +48,9 @@ public class Api {
             Admin admin,
             AdminDownloads adminDownloads,
             AdminLicenses adminLicenses,
-            AdminMailing adminMailing) {
+            AdminMailing adminMailing,
+            AdminTimeChannels adminTimeChannels) {
+        this.adminTimeChannels = adminTimeChannels;
         this.adminMailing = adminMailing;
         this.adminDownloads = adminDownloads;
         this.adminLicenses = adminLicenses;
@@ -70,6 +74,7 @@ public class Api {
                 adminDownloads.init();
                 adminLicenses.init();
                 adminMailing.init();
+                adminTimeChannels.init();
             });
         });
     }
