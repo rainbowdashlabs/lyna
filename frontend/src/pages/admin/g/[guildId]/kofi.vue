@@ -7,11 +7,13 @@
 import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
-import {createKofi, listGuildProducts, listKofi, type KofiMapping, type ProductSummary} from '~/api/admin'
+import {createKofi, listGuildProducts, listKofi, type KofiMapping, type ProductSummary, removeKofiMapping} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.kofi'))
 
 definePageMeta({layout: 'admin'})
 
@@ -46,6 +48,11 @@ watch(() => route.params.guildId, (next) => {
 })
 
 onMounted(load)
+
+async function remove(code: string) {
+  await removeKofiMapping(guildId.value, code)
+  await load()
+}
 
 async function submit() {
   if (!linkCode.value || productId.value == null) return
@@ -110,6 +117,7 @@ async function submit() {
           <code class="font-mono">{{ m.linkCode }}</code>
           <span class="ml-2 opacity-60">→ {{ m.productName }} (id {{ m.productId }})</span>
         </div>
+        <ErrorButton compact @click="remove(m.linkCode)">{{ t('page.admin.g.guildId.kofi.remove') }}</ErrorButton>
       </li>
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">

@@ -16,6 +16,8 @@ package de.chojo.lyna.feature.kiosk.entity;
  * @param free        whether anyone may download it, which decides the button the tile offers
  * @param purchaseUrl where to buy it, when a Ko-fi code has been mapped to it
  * @param description what the product says about itself, as markdown, or nothing when unwritten
+ * @param trial       whether somebody without a license may download it once to try it
+ * @param pageReadme  whether its page shows the project's GitHub README instead of the description
  */
 public record KioskProduct(
         int id,
@@ -25,4 +27,6 @@ public record KioskProduct(
         String iconUrl,
         boolean free,
         String purchaseUrl,
-        String description) {}
+        String description,
+        boolean trial,
+        boolean pageReadme) {}

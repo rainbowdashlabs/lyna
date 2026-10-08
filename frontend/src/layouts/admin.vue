@@ -48,11 +48,13 @@ const sections = computed<Tab[]>(() => {
   const base = `/admin/g/${currentGuildId.value}`
   return [
     {to: `${base}/products`, label: t('layout.admin.products')},
+    {to: `${base}/download-types`, label: t('layout.admin.downloadTypes')},
     {to: `${base}/licenses`, label: t('layout.admin.licenses')},
     {to: `${base}/registrations`, label: t('layout.admin.registrations')},
     {to: `${base}/trial`, label: t('layout.admin.trial')},
     {to: `${base}/kofi`, label: t('layout.admin.kofi')},
     {to: `${base}/mailing`, label: t('layout.admin.mailing')},
+    {to: `${base}/time-channels`, label: t('layout.admin.timeChannels')},
     {to: `${base}/settings`, label: t('layout.admin.settings')},
   ]
 })

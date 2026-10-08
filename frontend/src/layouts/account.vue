@@ -4,11 +4,12 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
-import {computed} from 'vue'
+import {computed, onMounted} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {useRouter} from 'vue-router'
 import {logout} from '~/api/account'
 import {useSession} from '~/composables/useSession'
+import {useAdminGuilds} from '~/composables/useAdminGuilds'
 import type {Tab} from '~/components/chrome/TabStrip.vue'
 import type {StatusItem} from '~/components/chrome/StatusBar.vue'
 
@@ -16,6 +17,9 @@ const {t} = useI18n()
 
 const router = useRouter()
 const {clear, account} = useSession()
+const {guilds, load} = useAdminGuilds()
+
+onMounted(() => load().catch(() => undefined))
 
 /**
  * Ends the session here whatever the backend answers: the token is gone from this browser either
@@ -33,6 +37,7 @@ const tabs = computed<Tab[]>(() => [
   {to: '/account/downloads', label: t('layout.account.downloads')},
   {to: '/account/security', label: t('layout.account.security')},
   {to: '/account/appearance', label: t('layout.account.appearance')},
+  ...(guilds.value.length > 0 ? [{to: '/admin', label: t('common.admin')}] : []),
 ])
 
 const who = computed(() => account.value?.username

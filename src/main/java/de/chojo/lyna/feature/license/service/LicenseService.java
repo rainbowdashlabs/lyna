@@ -81,6 +81,60 @@ public class LicenseService {
     }
 
     /**
+     * Gives an unheld licence to an account, as redeeming its key in the account area does. When the
+     * account has a Discord account linked, the product's role follows.
+     *
+     * @return whether the account now holds it; false when somebody already did
+     */
+    public boolean claim(License license, int accountId) {
+        if (!licenses.claim(accountId, license.id())) return false;
+        log.info(
+                LogNotify.STATUS,
+                "Account {} claimed license {} for {}",
+                accountId,
+                license.id(),
+                license.product().name());
+        license.cachedOwner(-1);
+        discordId(accountId)
+                .ifPresent(discordId -> roles(license).assign(guildId(license), discordId, license.product()));
+        return true;
+    }
+
+    /**
+     * Moves a licence to another account, ending every share of it first. The previous holder keeps
+     * the product's role only if something else still grants it; the new one gets it when they have
+     * Discord linked.
+     */
+    public boolean transfer(License license, int accountId) {
+        long previous = owner(license);
+        sharing.clearSharees(license);
+        if (!licenses.transfer(accountId, license.id())) return false;
+        log.info(
+                LogNotify.STATUS,
+                "License {} for {} transferred to account {}",
+                license.id(),
+                license.product().name(),
+                accountId);
+        license.cachedOwner(-1);
+        if (previous != 0) roles(license).revokeIfUnentitled(guildId(license), previous, license.product());
+        discordId(accountId)
+                .ifPresent(discordId -> roles(license).assign(guildId(license), discordId, license.product()));
+        return true;
+    }
+
+    private java.util.Optional<Long> discordId(int accountId) {
+        return accountLinks.discordIdentity(accountId).map(identity -> identity.externalIdAsLong());
+    }
+
+    private static long guildId(License license) {
+        return license.product().products().licenseGuild().guildId();
+    }
+
+    private static de.chojo.lyna.feature.guild.roles.RoleSync roles(License license) {
+        return license.product().products().licenseGuild().roles();
+    }
+
+    /**
      * Moves a licence to somebody else, ending every share of it first.
      *
      * <p>The previous holder keeps the product's role only if something else still grants it.
@@ -117,6 +171,10 @@ public class LicenseService {
 
     public boolean grantAccess(License license, ReleaseType type) {
         return licenses.grantAccess(license.id(), type);
+    }
+
+    public boolean revokeAccess(License license, ReleaseType type) {
+        return licenses.revokeAccess(license.id(), type);
     }
 
     public List<ReleaseType> access(License license) {

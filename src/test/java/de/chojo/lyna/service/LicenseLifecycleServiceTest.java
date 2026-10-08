@@ -173,6 +173,8 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
         License license = license();
         assertTrue(licenseService.grantAccess(license, ReleaseType.STABLE));
         assertEquals(List.of(ReleaseType.STABLE), licenseService.access(license));
+        assertTrue(licenseService.revokeAccess(license, ReleaseType.STABLE));
+        assertEquals(List.of(), licenseService.access(license));
     }
 
     @Test
@@ -185,5 +187,41 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
 
         assertTrue(licenseSharing.removeSharee(license, member(OTHER)));
         assertTrue(licenseSharing.shareeDiscordIds(license).isEmpty());
+    }
+
+    @Test
+    @DisplayName("An account without Discord claims a licence by key; a second claim of it fails")
+    void accountClaims() {
+        int account = accounts.insert(null).id();
+        License license = new de.chojo.lyna.feature.license.repository.LicenseLookup(
+                        new Guilds(Mockito.mock(NexusRest.class), TestConf.defaults(), accountLinks))
+                .byKey("LIFE-KEY")
+                .orElseThrow();
+
+        assertTrue(licenseService.claim(license, account));
+        assertFalse(licenseService.claim(license, accounts.insert(null).id()), "somebody holds it already");
+        assertTrue(accountLicenses.owned(account).stream().anyMatch(owned -> owned.id() == licenseId));
+    }
+
+    @Test
+    @DisplayName("A key nobody issued finds nothing")
+    void unknownKey() {
+        var lookup = new de.chojo.lyna.feature.license.repository.LicenseLookup(
+                new Guilds(Mockito.mock(NexusRest.class), TestConf.defaults(), accountLinks));
+
+        assertTrue(lookup.byKey("NOPE").isEmpty());
+    }
+
+    @Test
+    @DisplayName("A licence held through Discord is transferred to another account, which then holds it")
+    void accountTransfer() {
+        int owner = accountLinks.accountIdForDiscord(OWNER);
+        int receiver = accountLinks.accountIdForDiscord(OTHER);
+        assertTrue(licenseService.claim(license(), owner));
+        assertEquals(java.util.Optional.of(OWNER), licenseRepository.ownerDiscordId(licenseId));
+
+        assertTrue(licenseService.transfer(license(), receiver));
+
+        assertEquals(java.util.Optional.of(OTHER), licenseRepository.ownerDiscordId(licenseId));
     }
 }

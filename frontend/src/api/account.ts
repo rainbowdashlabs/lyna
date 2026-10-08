@@ -227,3 +227,20 @@ export async function removeEmail(address: string): Promise<void> {
 export async function verifyEmail(token: string): Promise<void> {
     await client.post('/api/auth/email/verify', {token})
 }
+
+export interface Redeemed {
+    licenseId: number
+    productId: number
+    productName: string
+}
+
+/** Gives this account the license a key names. */
+export async function redeemKey(key: string): Promise<Redeemed> {
+    const {data} = await client.post<Redeemed>('/api/account/licenses/redeem', {key})
+    return data
+}
+
+/** Hands a license this account owns to another account, named by username or proved address. */
+export async function transferLicense(licenseId: number, subject: string): Promise<void> {
+    await client.post(`/api/account/licenses/${licenseId}/transfer`, {subject})
+}

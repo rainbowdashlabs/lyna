@@ -18,7 +18,6 @@ const url = ref(props.product.url ?? '')
 const roleId = ref(props.product.roleId)
 const free = ref(props.product.free)
 const trial = ref(props.product.trial)
-const description = ref(props.product.description ?? '')
 const butlerId = ref(props.product.butlerId?.toString() ?? '')
 // An uploaded icon is served from this instance; that path is not an address to type back.
 const iconUrl = ref(props.product.iconUrl?.startsWith('/api/') ? '' : props.product.iconUrl ?? '')
@@ -44,7 +43,6 @@ async function save() {
       roleId: roleId.value,
       free: free.value,
       trial: trial.value,
-      description: description.value.trim() ? description.value : null,
       iconUrl: iconUrl.value.trim() ? iconUrl.value.trim() : null,
       butlerId: butlerId.value.trim() ? Number(butlerId.value.trim()) : null,
     })
@@ -71,10 +69,6 @@ async function save() {
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.projectUrl')">
       <TextInput v-model="url" type="url"/>
-    </LabelledField>
-    <LabelledField :label="t('ui.productEditForm.description')">
-      <TextAreaInput v-model="description" :rows="6"/>
-      <MutedText size="xs" tag="p">{{ t('ui.productEditForm.markdownShownOnThePage') }}</MutedText>
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.iconAddress')">
       <TextInput v-model="iconUrl" type="url"/>

@@ -8,7 +8,12 @@ package de.chojo.lyna.web.api;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.account.AccountLicenseActions;
 import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.admin.AdminDownloads;
+import de.chojo.lyna.web.api.admin.AdminLicenses;
+import de.chojo.lyna.web.api.admin.AdminMailing;
+import de.chojo.lyna.web.api.admin.AdminTimeChannels;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
@@ -26,11 +31,33 @@ public class Api {
     private final Account account;
     private final Theme theme;
     private final Admin admin;
+    private final AdminDownloads adminDownloads;
+    private final AdminLicenses adminLicenses;
+    private final AdminMailing adminMailing;
+    private final AdminTimeChannels adminTimeChannels;
+    private final AccountLicenseActions accountLicenseActions;
 
     private static final Logger log = getLogger(Api.class);
 
     @Inject
-    public Api(Conf configuration, NexusRest nexus, V1 v1, Auth auth, Account account, Theme theme, Admin admin) {
+    public Api(
+            Conf configuration,
+            NexusRest nexus,
+            V1 v1,
+            Auth auth,
+            Account account,
+            Theme theme,
+            Admin admin,
+            AdminDownloads adminDownloads,
+            AdminLicenses adminLicenses,
+            AdminMailing adminMailing,
+            AdminTimeChannels adminTimeChannels,
+            AccountLicenseActions accountLicenseActions) {
+        this.accountLicenseActions = accountLicenseActions;
+        this.adminTimeChannels = adminTimeChannels;
+        this.adminMailing = adminMailing;
+        this.adminDownloads = adminDownloads;
+        this.adminLicenses = adminLicenses;
         this.configuration = configuration;
         this.nexus = nexus;
         this.v1 = v1;
@@ -45,8 +72,15 @@ public class Api {
             v1.init();
             auth.init();
             account.init();
+            path("account/licenses", accountLicenseActions::init);
             theme.init();
             admin.init();
+            path("admin/g/{guildId}", () -> {
+                adminDownloads.init();
+                adminLicenses.init();
+                adminMailing.init();
+                adminTimeChannels.init();
+            });
         });
     }
 

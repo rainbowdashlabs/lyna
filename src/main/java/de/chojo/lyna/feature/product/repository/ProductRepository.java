@@ -33,17 +33,40 @@ public class ProductRepository {
     /**
      * @return whether this member has a trial of the product still to spend
      */
-    public boolean trialUnspent(int productId, long discordId) {
-        return query("SELECT NOT exists(SELECT 1 FROM trial WHERE product_id = ? AND user_id = ?) as exists")
-                .single(call().bind(productId).bind(discordId))
-                .map(row -> row.getBoolean("exists"))
+    /**
+     * @return every guild that has products, for an operator choosing one with no gateway to ask
+     */
+    public List<Long> guildsWithProducts() {
+        return query("SELECT DISTINCT guild_id FROM product ORDER BY guild_id")
+                .single()
+                .map(row -> row.getLong("guild_id"))
+                .all();
+    }
+
+    /**
+     * Whether a trial of the product is still to be taken by this account, counting one its linked
+     * Discord account took on Discord.
+     *
+     * @param discordId the account's Discord id, or null when it has none linked
+     */
+    public boolean trialUnspent(int productId, int accountId, Long discordId) {
+        return query("""
+                SELECT NOT exists(
+                    SELECT 1 FROM trial WHERE product_id = ? AND (account_id = ? OR (user_id IS NOT NULL AND user_id = ?))
+                ) AS unspent
+                """)
+                .single(call().bind(productId).bind(accountId).bind(discordId))
+                .map(row -> row.getBoolean("unspent"))
                 .first()
                 .orElse(false);
     }
 
-    public void spendTrial(int productId, long discordId) {
-        query("INSERT INTO trial(product_id, user_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(call().bind(productId).bind(discordId))
+    /**
+     * Spends the account's trial of the product, recording its Discord id too when it has one.
+     */
+    public void spendTrial(int productId, int accountId, Long discordId) {
+        query("INSERT INTO trial(product_id, account_id, user_id) VALUES(?,?,?) ON CONFLICT DO NOTHING")
+                .single(call().bind(productId).bind(accountId).bind(discordId))
                 .insert();
     }
 

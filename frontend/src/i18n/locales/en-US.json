@@ -13,7 +13,9 @@
     "product": "Product",
     "configured": "Configured",
     "authors": "Authors",
-    "dependsOn": "Depends on"
+    "dependsOn": "Depends on",
+    "admin": "Admin",
+    "siteName": "Lyna"
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -40,7 +42,8 @@
       "resetPassword": "Reset password",
       "enterTheEmailAssociatedWithYour": "Enter the email associated with your account. If we find a match we'll send a reset link valid for one hour.",
       "ifTheEmailMatchesAnAccount": "If the email matches an account, a reset link is on its way. Check your inbox (and spam) and follow the link within the next hour.",
-      "backToLogin": "Back to login"
+      "backToLogin": "Back to login",
+      "title": "Forgot password"
     },
     "home": {
       "browseAndDownloadPluginReleases": "Browse and download plugin releases.",
@@ -54,7 +57,8 @@
       "newPassword": "New password",
       "confirmNewPassword": "Confirm new password",
       "missingTokenUseTheLinkFrom": "Missing token. Use the link from your email.",
-      "thisResetLinkHasExpiredRequest": "This reset link has expired. Request a new one."
+      "thisResetLinkHasExpiredRequest": "This reset link has expired. Request a new one.",
+      "title": "Choose a new password"
     },
     "signup": {
       "alreadyHaveAnAccount": "Already have an account?",
@@ -67,7 +71,8 @@
       "yourAddressIsConfirmed": "Your address is confirmed.",
       "backToYourAccount": "Back to your account",
       "askForANewLink": "Ask for a new link",
-      "thatLinkCarriesNoToken": "That link carries no token."
+      "thatLinkCarriesNoToken": "That link carries no token.",
+      "title": "Verify your email"
     },
     "account": {
       "appearance": {
@@ -126,7 +131,8 @@
             "choose": "Choose…",
             "noKoFiMappingsYet": "No Ko-fi mappings yet.",
             "linkCode": "Link code",
-            "mappingSaved": "Mapping saved."
+            "mappingSaved": "Mapping saved.",
+            "remove": "Remove"
           },
           "licenses": {
             "licenses": "Licenses",
@@ -134,7 +140,8 @@
             "choose": "Choose…",
             "licenseIssued": "License issued",
             "noLicensesYet": "No licenses yet.",
-            "identifierMailOrderId": "Identifier (mail / order id)"
+            "identifierMailOrderId": "Identifier (mail / order id)",
+            "search": "Search by product, identifier, id or owner"
           },
           "mailing": {
             "mailingTemplates": "Mailing templates",
@@ -151,7 +158,18 @@
             "noProductsYet": "No products yet.",
             "name": "Name",
             "roleId": "Role id",
-            "projectUrlOptional": "Project URL (optional)"
+            "projectUrlOptional": "Project URL (optional)",
+            "productId": {
+              "notFound": "This guild has no such product.",
+              "tabs": {
+                "general": "General",
+                "page": "Page",
+                "downloads": "Downloads",
+                "access": "Access",
+                "mailing": "Mailing",
+                "announcements": "Announcements"
+              }
+            }
           },
           "registrations": {
             "registrations": "Registrations",
@@ -179,6 +197,17 @@
             "settings": "Settings",
             "products": "Products",
             "noProducts": "No products."
+          },
+          "downloadTypes": {
+            "title": "Download types",
+            "explain": "The kinds of build this guild offers. Each download of a product names one, and its release type decides who may download it.",
+            "none": "No download types yet."
+          },
+          "timeChannels": {
+            "explain": "Channels whose name shows the time in a zone, such as a developer's local time. Renamed every quarter of an hour, which is as often as Discord allows.",
+            "none": "No channel shows the time.",
+            "remove": "Stop",
+            "needsBot": "The bot renames these channels, and none is connected, so no new one can be set up."
           }
         }
       },
@@ -205,6 +234,12 @@
         "selectAGuild": "Select a guild",
         "youAdministerMoreThanOneGuild": "You administer more than one guild. Pick one to continue.",
         "noAdminAccess": "No admin access."
+      },
+      "noAccess": {
+        "title": "No admin access",
+        "linkDiscord": "Administering a guild needs your Discord account. Link it under your account, then come back here.",
+        "noGuild": "Your Discord account cannot administer any guild here. That needs Manage Server on the guild, or an operator of this instance adding you.",
+        "toAccount": "Go to your account"
       }
     },
     "products": {
@@ -214,7 +249,8 @@
         "noDescriptionYet": "Nothing has been written about this one yet.",
         "noSuchProduct": "There is no such product.",
         "couldNotLoad": "Could not load this product.",
-        "notAvailableHere": "This one is not offered here."
+        "notAvailableHere": "This one is not offered here.",
+        "fromReadme": "From the project's README on GitHub"
       }
     },
     "auth-discord": {
@@ -267,7 +303,9 @@
       "botConnected": "bot connected",
       "noBot": "no bot",
       "guildsCount": "{count} guilds",
-      "guildAdmin": "guild admin"
+      "guildAdmin": "guild admin",
+      "downloadTypes": "Download types",
+      "timeChannels": "Time channels"
     }
   },
   "ui": {
@@ -457,8 +495,6 @@
       "name": "Name",
       "roleId": "Discord role id",
       "projectUrl": "Project URL",
-      "description": "Description",
-      "markdownShownOnThePage": "Markdown. Shown on the product's own page.",
       "trialAvailable": "Trial available",
       "freeToEveryone": "Free to everyone",
       "thisChangesWhoMayDownloadIt": "This changes who may download it.",
@@ -469,10 +505,6 @@
       "usedWhenNothingIsUploaded": "Used only when no icon has been uploaded.",
       "butlerId": "UpdateButler id",
       "butlerIdHint": "The id plugins built for UpdateButler ask for updates by. Leave empty if it never had one."
-    },
-    "productAdminRow": {
-      "edit": "Edit",
-      "done": "Done"
     },
     "productVersions": {
       "versions": "Versions",
@@ -572,6 +604,166 @@
       "howTo": "On GitHub: Settings, Webhooks, Add webhook. Content type application/json, and under events choose only Releases.",
       "payloadUrl": "Payload URL",
       "secret": "Secret"
+    },
+    "productPageEditor": {
+      "markdown": "Markdown",
+      "preview": "Preview",
+      "save": "Save page",
+      "saved": "Saved.",
+      "couldNotSave": "That could not be saved."
+    },
+    "productDeleteZone": {
+      "title": "Delete product",
+      "explain": "Deleting {name} removes its licenses, downloads, mailing and everything else attached to it. This cannot be undone.",
+      "typeName": "Type the product's name to confirm",
+      "delete": "Delete product",
+      "couldNotDelete": "The product could not be deleted."
+    },
+    "downloadTypeCreate": {
+      "title": "New download type",
+      "name": "Name",
+      "description": "Description",
+      "releaseType": "Release type",
+      "create": "Create",
+      "couldNotCreate": "The download type could not be created."
+    },
+    "downloadTypeRow": {
+      "save": "Save",
+      "delete": "Delete",
+      "saved": "Saved.",
+      "usedBy": "Offered by {products}",
+      "couldNotSave": "That could not be saved."
+    },
+    "downloadCoordinates": {
+      "repository": "Repository",
+      "groupId": "Group id",
+      "artifactId": "Artifact id",
+      "classifier": "Classifier"
+    },
+    "productDownloadRow": {
+      "latest": "Nexus: {version}",
+      "nothingInNexus": "Nexus holds nothing for these coordinates yet",
+      "save": "Save",
+      "remove": "Remove",
+      "couldNotSave": "That could not be saved."
+    },
+    "productDownloadCreate": {
+      "title": "Add a download",
+      "type": "Download type",
+      "choose": "Choose…",
+      "add": "Add download",
+      "noTypes": "Every download type of this guild is offered already. Make another under Download types.",
+      "couldNotCreate": "The download could not be added."
+    },
+    "productDownloadsTab": {
+      "none": "This product offers nothing to download yet."
+    },
+    "productAccessTab": {
+      "none": "No role grants access to this product's downloads.",
+      "role": "Role",
+      "choose": "Choose…",
+      "roleId": "Discord role id",
+      "releaseType": "Release type",
+      "grant": "Grant",
+      "revoke": "Revoke",
+      "couldNotSave": "That could not be saved."
+    },
+    "adminLicenseRow": {
+      "owner": "owner {owner}",
+      "unclaimed": "unclaimed",
+      "sharees": "{count} sharees",
+      "manage": "Manage",
+      "close": "Close",
+      "reaches": "Reaches",
+      "delete": "Delete license",
+      "confirmDelete": "Really delete",
+      "couldNotSave": "That could not be saved."
+    },
+    "productMailingTab": {
+      "none": "This product has no mailing yet. A mailing is the mail a buyer gets with their license key.",
+      "mailName": "Product name as the mail says it",
+      "create": "Create mailing",
+      "exists": "Mail for {name}.",
+      "edit": "Write it on the mailing page",
+      "sendTitle": "Send a license by mail",
+      "address": "Email address",
+      "recipient": "Name of the recipient",
+      "send": "Issue license and send",
+      "sent": "Sent.",
+      "couldNotSend": "That could not be done."
+    },
+    "timeChannelForm": {
+      "title": "Show the time on a channel",
+      "channel": "Voice channel or category",
+      "choose": "Choose…",
+      "zone": "Time zone",
+      "template": "Name",
+      "templateHint": "Where {'{'}time{'}'} goes, the time is shown. Empty: Developer Time: {'{'}time{'}'}",
+      "save": "Set up",
+      "couldNotSave": "That could not be set up.",
+      "zonePlaceholder": "Europe/Berlin",
+      "templatePlaceholder": "Developer Time: {'{'}time{'}'}"
+    },
+    "productReadmeSource": {
+      "useReadme": "Show the GitHub README as the page",
+      "explain": "The README is fetched from GitHub and kept for an hour. With no description written, the page shows it anyway.",
+      "needsRepository": "Set the project URL to a GitHub repository to show its README.",
+      "showing": "The page shows the README.",
+      "onGithub": "Open it on GitHub",
+      "couldNotSave": "That could not be saved."
+    },
+    "redeemKey": {
+      "title": "Redeem a license key",
+      "key": "License key",
+      "redeem": "Redeem",
+      "redeemed": "The license for {product} is yours now.",
+      "couldNotRedeem": "That key could not be redeemed."
+    },
+    "licenseTransfer": {
+      "title": "Transfer this license",
+      "explain": "Gives your license for {product} to another account. Everybody you shared it with loses access, and it is no longer yours.",
+      "to": "Username or email address of the receiving account",
+      "transfer": "Transfer",
+      "confirm": "Really give it to {to}",
+      "couldNotTransfer": "The license could not be transferred."
+    },
+    "productTrial": {
+      "title": "Try it once",
+      "explain": "Download the newest stable build once, without a license, to see whether it is what you need.",
+      "signIn": "Sign in to try it",
+      "take": "Download once",
+      "issued": "Your trial download. The link works once, for half an hour.",
+      "couldNotIssue": "The trial download could not be issued.",
+      "reason": {
+        "ELIGIBLE": "",
+        "NOT_OFFERED": "This product offers no trial.",
+        "SPENT": "You have taken this product's trial already.",
+        "GUILD_MEMBERSHIP_TOO_NEW": "You have to be on the Discord server a little longer. Try again in {minutes} minutes.",
+        "DISCORD_ACCOUNT_TOO_NEW": "Your Discord account is too new for a trial. Try again in {days} days.",
+        "ACCOUNT_TOO_NEW": "Your account is too new for a trial. Try again in {days} days.",
+        "NO_VERIFIED_EMAIL": "Verify an email address on your account first, or link your Discord account.",
+        "DISPOSABLE_EMAIL": "Throwaway email addresses do not count. Verify another address, or link your Discord account."
+      }
+    }
+  },
+  "preview": {
+    "product": {
+      "free": "Free",
+      "premium": "Premium",
+      "download": "Download",
+      "view": "View",
+      "source": "Source",
+      "noDescription": "{name} on Lyna."
+    },
+    "storefront": {
+      "description": "Browse and download {count} plugins.",
+      "browse": "Browse plugins"
+    },
+    "debug": {
+      "title": "Debug report: {plugin} {version}",
+      "description": "Server {server} · exceptions: {exceptions} · config files: {configs} · expires {expires}",
+      "open": "Open report",
+      "missing": "Debug report not found"
     }
   }
 }

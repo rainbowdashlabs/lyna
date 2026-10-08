@@ -53,13 +53,14 @@ test.describe('A product page', () => {
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('link', {name: 'E2E Freebie', exact: true}).click()
 
-        await expect(page.getByRole('button', {name: 'Download'})).toBeVisible()
+        await expect(page.getByRole('button', {name: 'Download'}).first()).toBeVisible()
     })
 
     test('a premium product offers the purchase instead', async ({page}) => {
         await page.goto('/')
         await page.getByRole('article').filter({hasText: 'E2E Premium'})
             .getByRole('link', {name: 'E2E Premium', exact: true}).click()
+        await expect(page).toHaveURL(/\/products\/\d+$/)
 
         await expect(page.getByRole('link', {name: /Buy on Ko-fi/})).toBeVisible()
         await expect(page.getByRole('button', {name: 'Download'})).toHaveCount(0)

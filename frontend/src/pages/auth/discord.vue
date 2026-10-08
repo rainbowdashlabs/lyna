@@ -7,8 +7,10 @@
 import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('auth.loginWithDiscord'))
 const router = useRouter()
 const {setToken, hydrate} = useSession()
 

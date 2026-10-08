@@ -33,6 +33,7 @@ import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.configuration.elements.Demo;
 import de.chojo.lyna.configuration.elements.Discord;
 import de.chojo.lyna.configuration.elements.Downloads;
+import de.chojo.lyna.configuration.elements.Github;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
@@ -75,6 +76,7 @@ import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
+import de.chojo.lyna.feature.license.repository.LicenseLookup;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
@@ -82,7 +84,6 @@ import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
-import de.chojo.lyna.feature.product.service.TrialService;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
@@ -234,6 +235,12 @@ public class LynaModule extends AbstractModule {
         return config.debugReports();
     }
 
+    @Provides
+    @Singleton
+    Github github(ConfigFile config) {
+        return config.github();
+    }
+
     /**
      * The data-access objects.
      *
@@ -276,6 +283,16 @@ public class LynaModule extends AbstractModule {
         bind(Account.class).in(Singleton.class);
         bind(Theme.class).in(Singleton.class);
         bind(Admin.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.admin.GuildAdminGuard.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.admin.AdminDownloads.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.admin.AdminLicenses.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.admin.AdminMailing.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.admin.AdminTimeChannels.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.account.AccountLicenseActions.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.v1.products.TrialApi.class).in(Singleton.class);
+        bind(de.chojo.lyna.feature.trial.service.DisposableEmailDomains.class).in(Singleton.class);
+        bind(de.chojo.lyna.feature.trial.service.WebTrialService.class).in(Singleton.class);
+        bind(de.chojo.lyna.feature.trial.service.DisposableEmailRefresh.class).in(Singleton.class);
         bind(Download.class).in(Singleton.class);
         bind(Direct.class).in(Singleton.class);
         bind(Update.class).in(Singleton.class);
@@ -303,7 +320,6 @@ public class LynaModule extends AbstractModule {
         bind(LicenseService.class).in(Singleton.class);
         bind(ProductRepository.class).in(Singleton.class);
         bind(ProductRoleService.class).in(Singleton.class);
-        bind(TrialService.class).in(Singleton.class);
         bind(DownloadRepository.class).in(Singleton.class);
         bind(PurchaseService.class).in(Singleton.class);
         bind(IconStorage.class).in(Singleton.class);
@@ -380,6 +396,12 @@ public class LynaModule extends AbstractModule {
     @Singleton
     ProductLookup products(Guilds guilds) {
         return new ProductLookup(guilds);
+    }
+
+    @Provides
+    @Singleton
+    LicenseLookup licenseLookup(Guilds guilds) {
+        return new LicenseLookup(guilds);
     }
 
     @Provides

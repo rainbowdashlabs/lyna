@@ -9,10 +9,12 @@ import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {getProduct, type KioskProductDetail, type ReleaseTypeEntry, type VersionEntry} from '~/api/kiosk'
 import {useSession} from '~/composables/useSession'
+import {useProductPreview} from '~/composables/useProductPreview'
 
 const {t} = useI18n()
 const route = useRoute()
 const {account, hydrate} = useSession()
+useProductPreview(Number(route.params.id))
 
 const product = ref<KioskProductDetail | null>(null)
 const loading = ref(true)
@@ -41,6 +43,7 @@ async function load() {
   try {
     await hydrate()
     product.value = await getProduct(id)
+    if (route.query.download === '1') openWizard()
   } catch (e) {
     const status = (e as { response?: { status?: number } }).response?.status
     errorMessage.value = status === 404
@@ -59,6 +62,7 @@ onMounted(load)
     <main class="flex-1 pb-12">
     <TabStrip :tabs="[{to: '/', label: t('kiosk.title'), exact: true}]">
       <template #end>
+        <AdminLink/>
         <NuxtLink
             :to="signedIn ? '/account' : '/login'"
             class="font-data px-4 py-2.5 text-xs whitespace-nowrap text-(--text-muted) hover:text-(--text)"
@@ -74,7 +78,11 @@ onMounted(load)
           <div class="space-y-6">
             <ProductDetailHeader :product="product"/>
             <ProductDescription :markdown="product.description"/>
+            <MutedText v-if="product.pageSource === 'README' && product.readmeUrl" size="xs" tag="p">
+              <a :href="product.readmeUrl" class="hover:text-primary" rel="noopener" target="_blank">{{ t('page.products.id.fromReadme') }}</a>
+            </MutedText>
             <ProductDetailActions :product="product" :signed-in="signedIn" @download="openWizard()"/>
+            <ProductTrial v-if="product.trial && !product.free && !product.entitled" :product="product" :signed-in="signedIn"/>
           </div>
           <ProductVersions
               :product="product"

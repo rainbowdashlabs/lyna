@@ -164,6 +164,10 @@ class LicenseRepositoryTest extends RepositoryTestBase {
 
         assertEquals(2, licenseRepository.access(licenseId).size());
         assertTrue(licenseRepository.access(licenseId).contains(ReleaseType.STABLE));
+
+        assertTrue(licenseRepository.revokeAccess(licenseId, ReleaseType.STABLE));
+        assertFalse(licenseRepository.revokeAccess(licenseId, ReleaseType.STABLE), "twice revokes nothing");
+        assertEquals(List.of(ReleaseType.DEV), licenseRepository.access(licenseId));
     }
 
     @Test

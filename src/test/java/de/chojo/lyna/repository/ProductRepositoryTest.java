@@ -61,20 +61,27 @@ class ProductRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A trial is unspent until it is spent, and then it stays spent")
     void trialsAreSpentOnce() {
-        assertTrue(productRepository.trialUnspent(productId, MEMBER));
+        int account = accounts.insert(null).id();
+        assertTrue(productRepository.trialUnspent(productId, account, MEMBER));
 
-        productRepository.spendTrial(productId, MEMBER);
-        assertFalse(productRepository.trialUnspent(productId, MEMBER));
+        productRepository.spendTrial(productId, account, MEMBER);
+        assertFalse(productRepository.trialUnspent(productId, account, MEMBER));
 
-        productRepository.spendTrial(productId, MEMBER);
-        assertFalse(productRepository.trialUnspent(productId, MEMBER), "asking twice changes nothing");
+        productRepository.spendTrial(productId, account, MEMBER);
+        assertFalse(productRepository.trialUnspent(productId, account, MEMBER), "asking twice changes nothing");
     }
 
     @Test
-    @DisplayName("Somebody else's spent trial is not yours")
-    void trialsArePerMember() {
-        productRepository.spendTrial(productId, MEMBER);
-        assertTrue(productRepository.trialUnspent(productId, 888L));
+    @DisplayName("A trial is spent for the account and for its Discord id, so either one finds it spent")
+    void trialsCountBothWays() {
+        int taker = accounts.insert(null).id();
+        int other = accounts.insert(null).id();
+        productRepository.spendTrial(productId, taker, MEMBER);
+
+        assertFalse(productRepository.trialUnspent(productId, other, MEMBER), "the Discord id took it");
+        assertFalse(productRepository.trialUnspent(productId, taker, null), "the account took it");
+        assertTrue(productRepository.trialUnspent(productId, other, 888L), "somebody else's spent trial is not yours");
+        assertTrue(productRepository.trialUnspent(productId, other, null));
     }
 
     @Test
@@ -135,5 +142,36 @@ class ProductRepositoryTest extends RepositoryTestBase {
         assertFalse(productRepository.delete(productId, GUILD + 1), "another guild deletes nothing");
         assertTrue(productRepository.delete(productId, GUILD));
         assertFalse(productRepository.delete(productId, GUILD), "and it is gone");
+    }
+
+    @Test
+    @DisplayName("Every guild with a product is named once, which is all an operator has to go on without a bot")
+    void guildsWithProducts() throws SQLException {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "INSERT INTO %s.product (guild_id, name, role) VALUES (%d, 'Second', 7), (%d, 'Elsewhere', 8)"
+                            .formatted(schemaName, GUILD, GUILD + 1));
+        }
+
+        assertEquals(java.util.List.of(GUILD, GUILD + 1), productRepository.guildsWithProducts());
+    }
+
+    @Test
+    @DisplayName("The roles granted a product are listed with their release type, and revoking takes one away")
+    void roleAccessIsListed() {
+        var downloads = new de.chojo.lyna.feature.download.repository.DownloadRepository();
+        downloads.grantRole(20L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.STABLE);
+        downloads.grantRole(10L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.DEV);
+
+        assertEquals(
+                java.util.List.of(
+                        new de.chojo.lyna.feature.download.repository.DownloadRepository.RoleAccess(
+                                10L, de.chojo.lyna.feature.download.entity.ReleaseType.DEV),
+                        new de.chojo.lyna.feature.download.repository.DownloadRepository.RoleAccess(
+                                20L, de.chojo.lyna.feature.download.entity.ReleaseType.STABLE)),
+                downloads.roleAccess(productId));
+        assertTrue(downloads.revokeRole(10L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.DEV));
+        assertEquals(1, downloads.roleAccess(productId).size());
     }
 }

@@ -9,8 +9,10 @@ import {ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {lookupRegistration, type RegistrationInfo} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.registrations'))
 
 definePageMeta({layout: 'admin'})
 

@@ -48,6 +48,18 @@ public class KoFiProductRepository {
 
     public record Mapping(String linkCode, int productId, String productName) {}
 
+    /**
+     * Unlinks a Ko-fi code, but only one pointing at a product of this guild.
+     *
+     * @return whether there was such a mapping
+     */
+    public boolean remove(long guildId, String linkCode) {
+        return query("""
+                DELETE FROM kofi_products kp USING product p
+                WHERE kp.product_id = p.id AND p.guild_id = ? AND kp.link_code = ?
+                """).single(call().bind(guildId).bind(linkCode)).delete().changed();
+    }
+
     public Optional<Product> byCode(String name) {
         var id = query("""
                 SELECT p.id

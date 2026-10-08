@@ -27,6 +27,11 @@ public class JdaRoleSync implements RoleSync {
     }
 
     @Override
+    public void assign(long guildId, long discordId, Product product) {
+        gateway.member(guildId, discordId).ifPresent(member -> productRoles.assign(product, member));
+    }
+
+    @Override
     public void revokeIfUnentitled(long guildId, long discordId, Product product) {
         gateway.member(guildId, discordId)
                 .filter(member -> !productRoles.canAccess(product, member))

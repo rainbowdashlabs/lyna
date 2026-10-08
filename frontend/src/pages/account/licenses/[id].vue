@@ -8,8 +8,10 @@ import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {addSharee, licenseDetail, type LicenseDetail, removeSharee, type ShareeView} from '~/api/account'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.account.licenses'))
 
 definePageMeta({layout: 'account'})
 
@@ -95,6 +97,7 @@ async function copyKey() {
           @revoke="revoking = $event"
       />
       <LicenseUpdaterLink v-if="data.key" :license-key="data.key"/>
+      <LicenseTransfer v-if="isOwner" :license-id="data.license.id" :product-name="data.license.productName" @transferred="navigateTo('/account/licenses')"/>
       <EmptyHint v-if="!isOwner">
         {{ t('page.account.licenses.id.theLicenseOwnerCanSeeWhen') }}
       </EmptyHint>

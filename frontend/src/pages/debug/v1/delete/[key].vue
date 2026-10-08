@@ -8,6 +8,7 @@ import {useI18n} from 'vue-i18n'
 import {ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {deleteDebugReport} from '~/api/debug'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 /**
  * Deletes a debug report, at the address UpdateButler printed for it.
@@ -17,6 +18,7 @@ import {deleteDebugReport} from '~/api/debug'
  * shared it.
  */
 const {t} = useI18n()
+usePageTitle(t('page.debug.delete.title'))
 const route = useRoute()
 
 const state = ref<'ask' | 'busy' | 'deleted' | 'unknown' | 'failed'>('ask')

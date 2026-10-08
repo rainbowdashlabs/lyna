@@ -7,8 +7,10 @@
 import {useI18n} from 'vue-i18n'
 import {onMounted} from 'vue'
 import {useAdminGuilds} from '~/composables/useAdminGuilds'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('layout.admin.selectAGuild'))
 
 const {guilds, load} = useAdminGuilds()
 onMounted(load)

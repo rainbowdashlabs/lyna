@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The corners the other suites do not reach: trials, the storefront's own reads, the instance
+ * The corners the other suites do not reach: the storefront's own reads, the instance
  * settings row, and an address confirmed on an account that already has one.
  */
 class RemainingCoverageTest extends RepositoryTestBase {
@@ -105,17 +105,6 @@ class RemainingCoverageTest extends RepositoryTestBase {
 
         assertTrue(productRoles.availableReleaseTypes(product, member).isEmpty());
         assertFalse(productRoles.canDownload(product, member));
-    }
-
-    @Test
-    @DisplayName("A trial is there until it is spent, and then it is not")
-    void trialsAreSpent() {
-        Product product = productOf();
-        Member member = member();
-
-        assertTrue(trials.hasTrial(product, member));
-        trials.claimTrial(product, member);
-        assertFalse(trials.hasTrial(product, member));
     }
 
     @Test

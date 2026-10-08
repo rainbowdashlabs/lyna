@@ -94,6 +94,38 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A product can be made naming its role by id, for an instance with no gateway")
+    void productByRoleId() {
+        Product made = guild.products().create("Gadget", 60L, null, true, true).orElseThrow();
+
+        assertEquals(60L, made.role());
+        assertEquals(60L, guild.products().byId(made.id()).orElseThrow().role());
+    }
+
+    @Test
+    @DisplayName("Autocompletion offers the products by what was typed, free apart from paid, trials apart")
+    void completion() {
+        guild.products().create("Gadget", 60L, null, true, false).orElseThrow();
+        guild.products().create("Gizmo", 61L, null, false, true).orElseThrow();
+
+        assertEquals(
+                List.of("Gadget"),
+                guild.products().complete("ga", true).stream()
+                        .map(c -> c.getName())
+                        .toList());
+        assertEquals(
+                List.of("Widget", "Gizmo"),
+                guild.products().complete("", false).stream()
+                        .map(c -> c.getName())
+                        .toList());
+        assertEquals(
+                List.of("Gizmo"),
+                guild.products().completeTrials("").stream()
+                        .map(c -> c.getName())
+                        .toList());
+    }
+
+    @Test
     @DisplayName("The cross-guild lookup finds a product without being told its guild")
     void theLookupCrossesGuilds() {
         ProductLookup lookup = new ProductLookup(guilds);
@@ -219,6 +251,20 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A download type names the products offering it, and an unused one names none")
+    void downloadTypeUsage() {
+        DownloadType used =
+                guild.downloadTypes().create("stable", "", ReleaseType.STABLE).orElseThrow();
+        DownloadType unused =
+                guild.downloadTypes().create("dev", "", ReleaseType.DEV).orElseThrow();
+        product.downloads().create(used, "releases", "de.chojo", "widget", null).orElseThrow();
+
+        var types = new de.chojo.lyna.feature.download.repository.DownloadTypeRepository();
+        assertEquals(List.of("Widget"), types.productsUsing(used.id()));
+        assertEquals(List.of(), types.productsUsing(unused.id()));
+    }
+
+    @Test
     @DisplayName("A role is granted a release type of a product and taken off again")
     void downloadRoleAccess() {
         assertTrue(product.downloads().grant(role(60L), ReleaseType.DEV));
@@ -251,6 +297,11 @@ class GuildFindersTest extends RepositoryTestBase {
         assertEquals(
                 List.of(product.id()),
                 kofi.listForGuild(GUILD).stream().map(m -> m.productId()).toList());
+
+        assertFalse(kofi.remove(OTHER_GUILD, "abc123"), "another guild cannot unlink it");
+        assertTrue(kofi.remove(GUILD, "abc123"));
+        assertTrue(kofi.byCode("abc123").isEmpty());
+        assertFalse(kofi.remove(GUILD, "abc123"));
     }
 
     @Test

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A Nexus, as much of one as the end-to-end suite needs.
+"""A Nexus, as much of one as the end-to-end suite needs, and GitHub's README endpoint.
 
 The client the backend uses talks to ``https://<host>/service/rest/v1/...`` with the scheme fixed,
 so this serves TLS on 443 under a name and certificate the backend is given to trust. Three
@@ -9,6 +9,7 @@ bytes.
 The artifact itself is a real jar, because the proxy rewrites strings inside the archive on the way
 out and anything that is not a zip would take a different path through it.
 """
+import base64
 import io
 import json
 import re
@@ -29,6 +30,19 @@ VERSIONS = [
     ("1.0.0", "2026-01-01T12:00:00Z"),
 ]
 
+
+# What GitHub would answer as the README of the stories' repository, with a relative image and link
+# for the backend to make absolute.
+README = """# E2E Plugin from GitHub
+
+Fetched from the **repository**, not written in Lyna.
+
+![logo](assets/logo.png)
+
+See [the setup guide](docs/setup.md).
+
+[Download the latest release](https://github.com/e2e-owner/e2e-plugin/releases/latest)
+"""
 
 with open("/stub/UserData.class", "rb") as fixture:
     USER_DATA_CLASS = fixture.read()
@@ -95,6 +109,19 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _readme(self, owner, repository):
+        """GitHub's README endpoint, for the one repository the stories name. Anything else is
+        unknown, the way GitHub answers for a repository without a README."""
+        if (owner, repository) != ("e2e-owner", "e2e-plugin"):
+            self._json({"message": "Not Found"}, status=404)
+            return
+        self._json({
+            "path": "README.md",
+            "encoding": "base64",
+            "content": base64.b64encode(README.encode()).decode(),
+            "html_url": f"https://github.com/{owner}/{repository}/blob/main/README.md",
+        })
+
     def do_GET(self):
         url = urlparse(self.path)
         query = parse_qs(url.query)
@@ -106,6 +133,11 @@ class Handler(BaseHTTPRequestHandler):
             # The client sorts by version descending; answering in that order keeps it honest.
             items.sort(key=lambda item: item["maven2"]["version"], reverse=True)
             self._json({"items": items, "continuationToken": None})
+            return
+
+        readme_match = re.fullmatch(r"/repos/([^/]+)/([^/]+)/readme", url.path)
+        if readme_match:
+            self._readme(readme_match.group(1), readme_match.group(2))
             return
 
         asset_match = re.fullmatch(r"/service/rest/v1/assets/([^/]+)", url.path)

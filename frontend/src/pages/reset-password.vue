@@ -9,8 +9,10 @@ import {computed, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {confirmPasswordReset} from '~/api/account'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
+import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
+usePageTitle(t('page.reset-password.title'))
 
 const route = useRoute()
 const router = useRouter()

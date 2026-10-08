@@ -11,7 +11,6 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
-import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.guild.Guilds;
@@ -26,6 +25,7 @@ import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
@@ -33,7 +33,6 @@ import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
@@ -77,6 +76,8 @@ public class Admin {
     private final ButlerApplicationRepository butlerApplications;
     private final ReleaseWebhookRepository releaseWebhooks;
     private final ReleasePostService releasePosts;
+    private final ProductRepository productRepository;
+    private final GuildAdminGuard guard;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final de.chojo.lyna.mail.blocks.MailBlockRenderer blockRenderer =
@@ -103,7 +104,11 @@ public class Admin {
             ProductIconService productIcons,
             ButlerApplicationRepository butlerApplications,
             ReleaseWebhookRepository releaseWebhooks,
-            ReleasePostService releasePosts) {
+            ReleasePostService releasePosts,
+            ProductRepository productRepository,
+            GuildAdminGuard guard) {
+        this.productRepository = productRepository;
+        this.guard = guard;
         this.productIcons = productIcons;
         this.butlerApplications = butlerApplications;
         this.releaseWebhooks = releaseWebhooks;
@@ -130,7 +135,9 @@ public class Admin {
                 get("products", this::listProducts);
                 post("products", this::createProduct);
                 put("products/{productId}", this::updateProduct);
+                delete("products/{productId}", this::deleteProduct);
                 put("products/{productId}/description", this::setProductDescription);
+                put("products/{productId}/page-source", this::setPageSource);
                 post("products/{productId}/icon", this::uploadProductIcon);
                 delete("products/{productId}/icon", this::deleteProductIcon);
                 get("products/{productId}/release-webhook", this::releaseWebhook);
@@ -190,7 +197,8 @@ public class Admin {
                         p.trial(),
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null,
-                        butlerIds.get(p.id())))
+                        butlerIds.get(p.id()),
+                        kioskById.containsKey(p.id()) && kioskById.get(p.id()).pageReadme()))
                 .toList());
     }
 
@@ -403,14 +411,59 @@ public class Admin {
         product.role(roleId);
         product.free(body.free());
         product.trial(body.trial());
-        String description =
-                body.description() == null ? "" : body.description().strip();
-        kioskProducts.description(product.id(), description.isBlank() ? null : description);
+        if (body.description() != null) {
+            String description = body.description().strip();
+            kioskProducts.description(product.id(), description.isBlank() ? null : description);
+        }
         if (body.butlerId() == null) {
             butlerApplications.clear(product.id());
         } else {
             butlerApplications.assign(product.id(), body.butlerId());
         }
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Sets whether the product's page shows its GitHub README instead of its description.
+     */
+    private void setPageSource(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        PageSource body;
+        try {
+            body = json.readValue(ctx.body(), PageSource.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        kioskProducts.pageReadme(product.id(), body != null && body.readme());
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Deletes a product and everything attached to it, as {@code /products delete} does. The body must
+     * name the product, so a stray request cannot delete one by its id alone.
+     */
+    private void deleteProduct(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        ProductDeletion body;
+        try {
+            body = json.readValue(ctx.body(), ProductDeletion.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        if (body == null || !product.name().equals(body.confirmName())) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Type the product's name to delete it");
+            return;
+        }
+        productIcons.remove(product.id());
+        product.delete();
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -563,14 +616,21 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("roleId required");
             return;
         }
-        var role = discordGuild(resolved.guild().guildId())
-                .map(g -> g.getRoleById(body.roleId()))
-                .orElse(null);
-        if (role == null) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
-            return;
+        Optional<de.chojo.lyna.feature.product.entity.Product> product;
+        if (gateway.connected()) {
+            var role = discordGuild(resolved.guild().guildId())
+                    .map(g -> g.getRoleById(body.roleId()))
+                    .orElse(null);
+            if (role == null) {
+                ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
+                return;
+            }
+            product = resolved.guild().products().create(body.name(), role, body.url(), body.free(), body.trial());
+        } else {
+            product = resolved.guild()
+                    .products()
+                    .create(body.name(), body.roleId(), body.url(), body.free(), body.trial());
         }
-        var product = resolved.guild().products().create(body.name(), role, body.url(), body.free(), body.trial());
         if (product.isEmpty()) {
             ctx.status(HttpStatus.CONFLICT).result("Product already exists");
             return;
@@ -578,7 +638,16 @@ public class Admin {
         var p = product.get();
         ctx.status(HttpStatus.CREATED)
                 .json(new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null));
+                        p.id(),
+                        p.name(),
+                        p.url(),
+                        Long.toString(p.role()),
+                        p.free(),
+                        p.trial(),
+                        null,
+                        null,
+                        null,
+                        false));
     }
 
     private void listLicenses(Context ctx) {
@@ -746,7 +815,16 @@ public class Admin {
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
                 .map(p -> new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null))
+                        p.id(),
+                        p.name(),
+                        p.url(),
+                        Long.toString(p.role()),
+                        p.free(),
+                        p.trial(),
+                        null,
+                        null,
+                        null,
+                        false))
                 .toList();
         ctx.json(new TrialInfo(
                 (int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
@@ -848,37 +926,8 @@ public class Admin {
      * this check.
      */
     private Resolved requireGuildAdmin(Context ctx) {
-        Optional<JwtService.Verified> session = auth.currentSession(ctx);
-        if (session.isEmpty()) {
-            ctx.status(HttpStatus.UNAUTHORIZED);
-            return null;
-        }
-        long guildId;
-        try {
-            guildId = Long.parseLong(ctx.pathParam("guildId"));
-        } catch (NumberFormatException e) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid guild id");
-            return null;
-        }
-        Long discordId = resolveDiscordId(session.get());
-        boolean operator = isOperator(discordId);
-        Guild guild = gateway.guild(guildId).orElse(null);
-        if (guild == null) {
-            // With no gateway there is no MANAGE_SERVER to check, so only somebody who holds the
-            // whole instance may administer. Everything below reads the database, which answers
-            // whether or not a bot is connected; the handful of operations that act on Discord
-            // itself find no guild and say so.
-            if (!operator) {
-                ctx.status(HttpStatus.NOT_FOUND);
-                return null;
-            }
-            return new Resolved(guilds.guild(guildId), discordId, true);
-        }
-        if (!operator && !hasGuildAdmin(discordId, guild)) {
-            ctx.status(HttpStatus.NOT_FOUND);
-            return null;
-        }
-        return new Resolved(guilds.guild(guild), discordId, operator);
+        var admin = guard.require(ctx);
+        return admin == null ? null : new Resolved(admin.guild(), admin.callerDiscordId(), admin.operator());
     }
 
     /**
@@ -892,10 +941,7 @@ public class Admin {
     }
 
     private Long resolveDiscordId(JwtService.Verified verified) {
-        if (verified.discordId() != null) return verified.discordId();
-        return accounts.findLinkByAccountId(verified.accountId())
-                .map(AccountIdentity::externalIdAsLong)
-                .orElse(null);
+        return guard.discordId(verified);
     }
 
     private void listOperators(Context ctx) {
@@ -991,9 +1037,17 @@ public class Admin {
      * the root set and cannot be removed through the web, so there is always a way back in; the rest
      * were granted here and can be withdrawn here.
      */
+    private List<AdminGuild> knownGuilds() {
+        Set<Long> ids = new java.util.TreeSet<>(productRepository.guildsWithProducts());
+        long configured = configuration.main().baseSettings().botGuild();
+        if (configured != 0) ids.add(configured);
+        return ids.stream()
+                .map(id -> new AdminGuild(Long.toString(id), "Guild " + id, null, "operator"))
+                .toList();
+    }
+
     private boolean isOperator(Long discordId) {
-        if (discordId == null) return false;
-        return isRootOperator(discordId) || operators.contains(discordId);
+        return guard.isOperator(discordId);
     }
 
     /**
@@ -1012,17 +1066,16 @@ public class Admin {
      * nothing else.
      */
     private boolean hasGuildAdmin(Long discordId, Guild guild) {
-        if (discordId == null) return false;
-        Member member = guild.getMemberById(discordId);
-        if (member == null) return false;
-        if (member.hasPermission(Permission.MANAGE_SERVER)) return true;
-        Long adminRole = guilds.guild(guild).settings().license().adminRoleId();
-        if (adminRole == null) return false;
-        return member.getRoles().stream().anyMatch(role -> role.getIdLong() == adminRole);
+        return guard.hasGuildAdmin(discordId, guild);
     }
 
+    /**
+     * The guilds the caller may administer. Without a gateway there are no guild names or memberships
+     * to ask about, so only an operator gets any: the configured guild and every guild that has
+     * products, named by id.
+     */
     private List<AdminGuild> adminGuilds(Long discordId, boolean operator) {
-        if (!gateway.connected()) return List.of();
+        if (!gateway.connected()) return operator ? knownGuilds() : List.of();
         Set<Long> seen = new HashSet<>();
         List<AdminGuild> result = new ArrayList<>();
         for (Guild g : gateway.guilds()) {
@@ -1051,9 +1104,20 @@ public class Admin {
             boolean trial,
             String iconUrl,
             String description,
-            Integer butlerId) {}
+            Integer butlerId,
+            boolean pageReadme) {}
 
     public record ProductDescription(String description) {}
+
+    /**
+     * @param confirmName the product's name, typed out by whoever is deleting it
+     */
+    public record ProductDeletion(String confirmName) {}
+
+    /**
+     * @param readme whether the product page shows the GitHub README instead of the description
+     */
+    public record PageSource(boolean readme) {}
 
     /**
      * @param url       what to paste into GitHub as the payload URL

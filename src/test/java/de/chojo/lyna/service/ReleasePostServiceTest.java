@@ -80,6 +80,8 @@ class ReleasePostServiceTest extends RepositoryTestBase {
         when(gateway.guilds()).thenReturn(List.of(guild));
         when(guild.getChannelById(GuildMessageChannel.class, 42L)).thenReturn(channel);
         when(channel.sendMessageEmbeds(any(MessageEmbed.class))).thenReturn(send);
+        when(send.addComponents(any(net.dv8tion.jda.api.components.MessageTopLevelComponent[].class)))
+                .thenReturn(send);
         Api api = mock(Api.class);
         when(api.url()).thenReturn("https://lyna.example");
         service = new ReleasePostService(webhooks, products, gateway, api);
@@ -105,9 +107,14 @@ class ReleasePostServiceTest extends RepositoryTestBase {
         assertEquals("Spooky", embed.getAuthor().getName());
         assertEquals("x/y", embed.getFooter().getText());
         assertEquals("Stable", embed.getFields().get(0).getValue());
+        ArgumentCaptor<net.dv8tion.jda.api.components.actionrow.ActionRow> row =
+                ArgumentCaptor.forClass(net.dv8tion.jda.api.components.actionrow.ActionRow.class);
+        verify(send).addComponents(row.capture());
         assertEquals(
                 "https://lyna.example/products/" + productId,
-                embed.getFields().get(1).getValue());
+                ((net.dv8tion.jda.api.components.buttons.Button)
+                                row.getValue().getComponents().getFirst())
+                        .getUrl());
     }
 
     @Test

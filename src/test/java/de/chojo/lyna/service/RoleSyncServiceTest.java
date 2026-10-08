@@ -64,6 +64,12 @@ class RoleSyncServiceTest extends RepositoryTestBase {
             entitledWhenAsked.add(stillEntitled(discordId, product.id()));
         }
 
+        @Override
+        public void assign(long guildId, long discordId, Product product) {
+            calls.add("assign:" + discordId);
+            entitledWhenAsked.add(stillEntitled(discordId, product.id()));
+        }
+
         private boolean stillEntitled(long discordId, int productId) {
             return accountLicenses
                     .entitledProductIds(accountLinks.accountIdForDiscord(discordId))

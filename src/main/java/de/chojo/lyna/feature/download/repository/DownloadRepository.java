@@ -9,6 +9,7 @@ import com.google.inject.Singleton;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.sadu.queries.api.call.Call;
 
+import java.util.List;
 import java.util.function.Function;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
@@ -70,5 +71,18 @@ public class DownloadRepository {
                 .single(call().bind(roleId).bind(productId).bind(type))
                 .insert()
                 .changed();
+    }
+
+    /**
+     * A Discord role reaching a release type of a product.
+     */
+    public record RoleAccess(long roleId, ReleaseType releaseType) {}
+
+    public List<RoleAccess> roleAccess(int productId) {
+        return query(
+                        "SELECT role_id, release_type FROM role_access WHERE product_id = ? ORDER BY role_id, release_type")
+                .single(call().bind(productId))
+                .map(row -> new RoleAccess(row.getLong("role_id"), ReleaseType.valueOf(row.getString("release_type"))))
+                .all();
     }
 }

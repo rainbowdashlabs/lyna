@@ -4,6 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import client from './client'
+import type {ReleaseType} from './adminDownloads'
 
 export interface AdminGuild {
     id: string
@@ -24,6 +25,8 @@ export interface ProductSummary {
     description: string | null
     /** The id deployed plugins ask UpdateButler for this product by. */
     butlerId?: number | null
+    /** Whether the product page shows the GitHub README instead of the description. */
+    pageReadme?: boolean
 }
 
 export interface CreateProductPayload {
@@ -92,7 +95,8 @@ export interface ProductEditPayload {
     roleId: string
     free: boolean
     trial: boolean
-    description: string | null
+    /** Left out to keep the description as it is; it is edited on its own tab. */
+    description?: string | null
     /** An address to fetch the icon from, for an instance that would rather point at its own CDN. */
     iconUrl: string | null
     butlerId: number | null
@@ -288,4 +292,50 @@ export async function setReleaseChannel(guildId: string, productId: number, chan
 
 export async function removeReleaseWebhook(guildId: string, productId: number): Promise<void> {
     await client.delete(`/api/admin/g/${guildId}/products/${productId}/release-webhook`)
+}
+
+/** Deletes a product and everything attached to it. The name must be typed out to confirm. */
+export async function deleteGuildProduct(guildId: string, productId: number, confirmName: string): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/products/${productId}`, {data: {confirmName}})
+}
+
+/** What the product's own page says, as markdown. Blank clears it. */
+export async function setProductDescription(guildId: string, productId: number, description: string): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}/description`, {description})
+}
+
+/** The release types a license reaches. */
+export async function getLicenseAccess(guildId: string, licenseId: number): Promise<ReleaseType[]> {
+    const {data} = await client.get<{releaseTypes: ReleaseType[]}>(`/api/admin/g/${guildId}/licenses/${licenseId}/access`)
+    return data.releaseTypes
+}
+
+/** Makes a license reach exactly these release types. */
+export async function setLicenseAccess(guildId: string, licenseId: number, releaseTypes: ReleaseType[]): Promise<ReleaseType[]> {
+    const {data} = await client.put<{releaseTypes: ReleaseType[]}>(`/api/admin/g/${guildId}/licenses/${licenseId}/access`, {releaseTypes})
+    return data.releaseTypes
+}
+
+/** Ends a license; whoever held it loses the product's role unless something else grants it. */
+export async function deleteGuildLicense(guildId: string, licenseId: number): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/licenses/${licenseId}`)
+}
+
+export async function removeKofiMapping(guildId: string, linkCode: string): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/kofi/${encodeURIComponent(linkCode)}`)
+}
+
+/** Gives a product a mailing, named as the mail names the product. Its text is written on the mailing page. */
+export async function createMailing(guildId: string, productId: number, name: string): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing`, {name})
+}
+
+/** Issues a license for the address and mails it there. */
+export async function sendMailing(guildId: string, productId: number, address: string, name: string): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing/send`, {address, name})
+}
+
+/** Sets whether the product page shows the project's GitHub README instead of its description. */
+export async function setPageSource(guildId: string, productId: number, readme: boolean): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}/page-source`, {readme})
 }

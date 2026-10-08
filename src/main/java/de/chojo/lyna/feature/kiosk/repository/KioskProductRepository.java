@@ -31,7 +31,7 @@ public class KioskProductRepository {
      */
     public List<KioskProduct> all() {
         return query("""
-                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.description, kp.link_code
+                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, kp.link_code
                 FROM product p
                 LEFT JOIN LATERAL (
                     SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
@@ -47,7 +47,9 @@ public class KioskProductRepository {
                         row.getString("icon_url"),
                         row.getBoolean("free"),
                         row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
-                        row.getString("description")))
+                        row.getString("description"),
+                        row.getBoolean("trial"),
+                        row.getBoolean("page_readme")))
                 .all();
     }
 
@@ -62,7 +64,7 @@ public class KioskProductRepository {
      */
     public java.util.Optional<KioskProduct> byId(int productId) {
         return query("""
-                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.description, kp.link_code
+                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, kp.link_code
                 FROM product p
                 LEFT JOIN LATERAL (
                     SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
@@ -78,7 +80,9 @@ public class KioskProductRepository {
                         row.getString("icon_url"),
                         row.getBoolean("free"),
                         row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
-                        row.getString("description")))
+                        row.getString("description"),
+                        row.getBoolean("trial"),
+                        row.getBoolean("page_readme")))
                 .first();
     }
 
@@ -88,6 +92,15 @@ public class KioskProductRepository {
     public void description(int productId, String description) {
         query("UPDATE product SET description = ? WHERE id = ?")
                 .single(call().bind(description).bind(productId))
+                .update();
+    }
+
+    /**
+     * Sets whether the product page shows the project's GitHub README instead of the description.
+     */
+    public void pageReadme(int productId, boolean readme) {
+        query("UPDATE product SET page_readme = ? WHERE id = ?")
+                .single(call().bind(readme).bind(productId))
                 .update();
     }
 

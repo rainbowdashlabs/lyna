@@ -13,6 +13,7 @@ import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.configuration.elements.Demo;
 import de.chojo.lyna.configuration.elements.Discord;
 import de.chojo.lyna.configuration.elements.Downloads;
+import de.chojo.lyna.configuration.elements.Github;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
@@ -36,6 +37,7 @@ public class ConfigFile {
     private Demo demo = new Demo();
     private Downloads downloads = new Downloads();
     private DebugReports debugReports = new DebugReports();
+    private Github github = new Github();
 
     public BaseSettings baseSettings() {
         return baseSettings;
@@ -91,5 +93,9 @@ public class ConfigFile {
 
     public DebugReports debugReports() {
         return debugReports;
+    }
+
+    public Github github() {
+        return github;
     }
 }
