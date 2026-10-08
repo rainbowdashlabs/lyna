@@ -322,3 +322,13 @@ export async function deleteGuildLicense(guildId: string, licenseId: number): Pr
 export async function removeKofiMapping(guildId: string, linkCode: string): Promise<void> {
     await client.delete(`/api/admin/g/${guildId}/kofi/${encodeURIComponent(linkCode)}`)
 }
+
+/** Gives a product a mailing, named as the mail names the product. Its text is written on the mailing page. */
+export async function createMailing(guildId: string, productId: number, name: string): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing`, {name})
+}
+
+/** Issues a license for the address and mails it there. */
+export async function sendMailing(guildId: string, productId: number, address: string, name: string): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing/send`, {address, name})
+}

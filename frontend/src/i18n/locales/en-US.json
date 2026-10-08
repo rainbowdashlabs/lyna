@@ -670,6 +670,19 @@
       "delete": "Delete license",
       "confirmDelete": "Really delete",
       "couldNotSave": "That could not be saved."
+    },
+    "productMailingTab": {
+      "none": "This product has no mailing yet. A mailing is the mail a buyer gets with their license key.",
+      "mailName": "Product name as the mail says it",
+      "create": "Create mailing",
+      "exists": "Mail for {name}.",
+      "edit": "Write it on the mailing page",
+      "sendTitle": "Send a license by mail",
+      "address": "Email address",
+      "recipient": "Name of the recipient",
+      "send": "Issue license and send",
+      "sent": "Sent.",
+      "couldNotSend": "That could not be done."
     }
   },
   "preview": {
