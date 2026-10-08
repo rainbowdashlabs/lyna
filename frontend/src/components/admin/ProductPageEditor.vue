@@ -42,6 +42,7 @@ async function save() {
 
 <template>
   <div class="space-y-3">
+    <ProductReadmeSource :guild-id="guildId" :product="product"/>
     <div class="grid gap-4 lg:grid-cols-2">
       <LabelledField :label="t('ui.productPageEditor.markdown')">
         <TextAreaInput v-model="markdown" :rows="20" class="font-data"/>

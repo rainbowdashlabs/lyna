@@ -137,6 +137,7 @@ public class Admin {
                 put("products/{productId}", this::updateProduct);
                 delete("products/{productId}", this::deleteProduct);
                 put("products/{productId}/description", this::setProductDescription);
+                put("products/{productId}/page-source", this::setPageSource);
                 post("products/{productId}/icon", this::uploadProductIcon);
                 delete("products/{productId}/icon", this::deleteProductIcon);
                 get("products/{productId}/release-webhook", this::releaseWebhook);
@@ -196,7 +197,8 @@ public class Admin {
                         p.trial(),
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
                         kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null,
-                        butlerIds.get(p.id())))
+                        butlerIds.get(p.id()),
+                        kioskById.containsKey(p.id()) && kioskById.get(p.id()).pageReadme()))
                 .toList());
     }
 
@@ -422,6 +424,25 @@ public class Admin {
     }
 
     /**
+     * Sets whether the product's page shows its GitHub README instead of its description.
+     */
+    private void setPageSource(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        PageSource body;
+        try {
+            body = json.readValue(ctx.body(), PageSource.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        kioskProducts.pageReadme(product.id(), body != null && body.readme());
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
      * Deletes a product and everything attached to it, as {@code /products delete} does. The body must
      * name the product, so a stray request cannot delete one by its id alone.
      */
@@ -617,7 +638,16 @@ public class Admin {
         var p = product.get();
         ctx.status(HttpStatus.CREATED)
                 .json(new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null));
+                        p.id(),
+                        p.name(),
+                        p.url(),
+                        Long.toString(p.role()),
+                        p.free(),
+                        p.trial(),
+                        null,
+                        null,
+                        null,
+                        false));
     }
 
     private void listLicenses(Context ctx) {
@@ -785,7 +815,16 @@ public class Admin {
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
                 .map(p -> new ProductSummary(
-                        p.id(), p.name(), p.url(), Long.toString(p.role()), p.free(), p.trial(), null, null, null))
+                        p.id(),
+                        p.name(),
+                        p.url(),
+                        Long.toString(p.role()),
+                        p.free(),
+                        p.trial(),
+                        null,
+                        null,
+                        null,
+                        false))
                 .toList();
         ctx.json(new TrialInfo(
                 (int) s.serverTime().toMinutes(), (int) s.accountTime().toMinutes(), products));
@@ -1065,7 +1104,8 @@ public class Admin {
             boolean trial,
             String iconUrl,
             String description,
-            Integer butlerId) {}
+            Integer butlerId,
+            boolean pageReadme) {}
 
     public record ProductDescription(String description) {}
 
@@ -1073,6 +1113,11 @@ public class Admin {
      * @param confirmName the product's name, typed out by whoever is deleting it
      */
     public record ProductDeletion(String confirmName) {}
+
+    /**
+     * @param readme whether the product page shows the GitHub README instead of the description
+     */
+    public record PageSource(boolean readme) {}
 
     /**
      * @param url       what to paste into GitHub as the payload URL

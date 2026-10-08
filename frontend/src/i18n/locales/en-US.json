@@ -249,7 +249,8 @@
         "noDescriptionYet": "Nothing has been written about this one yet.",
         "noSuchProduct": "There is no such product.",
         "couldNotLoad": "Could not load this product.",
-        "notAvailableHere": "This one is not offered here."
+        "notAvailableHere": "This one is not offered here.",
+        "fromReadme": "From the project's README on GitHub"
       }
     },
     "auth-discord": {
@@ -702,6 +703,14 @@
       "couldNotSave": "That could not be set up.",
       "zonePlaceholder": "Europe/Berlin",
       "templatePlaceholder": "Developer Time: {'{'}time{'}'}"
+    },
+    "productReadmeSource": {
+      "useReadme": "Show the GitHub README as the page",
+      "explain": "The README is fetched from GitHub and kept for an hour. With no description written, the page shows it anyway.",
+      "needsRepository": "Set the project URL to a GitHub repository to show its README.",
+      "showing": "The page shows the README.",
+      "onGithub": "Open it on GitHub",
+      "couldNotSave": "That could not be saved."
     }
   },
   "preview": {

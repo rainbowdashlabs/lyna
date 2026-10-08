@@ -25,6 +25,8 @@ export interface ProductSummary {
     description: string | null
     /** The id deployed plugins ask UpdateButler for this product by. */
     butlerId?: number | null
+    /** Whether the product page shows the GitHub README instead of the description. */
+    pageReadme?: boolean
 }
 
 export interface CreateProductPayload {
@@ -331,4 +333,9 @@ export async function createMailing(guildId: string, productId: number, name: st
 /** Issues a license for the address and mails it there. */
 export async function sendMailing(guildId: string, productId: number, address: string, name: string): Promise<void> {
     await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing/send`, {address, name})
+}
+
+/** Sets whether the product page shows the project's GitHub README instead of its description. */
+export async function setPageSource(guildId: string, productId: number, readme: boolean): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}/page-source`, {readme})
 }

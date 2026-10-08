@@ -181,4 +181,19 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
 
         assertTrue(accountLicenses.entitledProductIds(sharee).isEmpty());
     }
+
+    @Test
+    @DisplayName("A product asks for its README as its page once set, and stops when unset; trials are carried")
+    void pageReadmeIsStored() {
+        assertFalse(kioskProducts.byId(freeProduct).orElseThrow().pageReadme());
+
+        kioskProducts.pageReadme(freeProduct, true);
+        assertTrue(kioskProducts.byId(freeProduct).orElseThrow().pageReadme());
+        assertTrue(
+                kioskProducts.all().stream().anyMatch(product -> product.id() == freeProduct && product.pageReadme()));
+
+        kioskProducts.pageReadme(freeProduct, false);
+        assertFalse(kioskProducts.byId(freeProduct).orElseThrow().pageReadme());
+        assertFalse(kioskProducts.byId(freeProduct).orElseThrow().trial());
+    }
 }

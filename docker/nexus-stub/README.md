@@ -17,3 +17,7 @@ from racing each other for a file neither has made yet.
 `UserData.class` is the same fixture `JarUtilTest` uses. The proxy rewrites string constants in the
 constant pool of `.class` entries and nothing else, so a jar of plain text would take the fallback
 path and prove nothing about the rewrite.
+
+It also answers GitHub's `GET /repos/{owner}/{repo}/readme` for the one repository the stories name
+(`e2e-owner/e2e-plugin`), so a product page showing its README is tested without reaching GitHub. The
+e2e configuration points `github.apiUrl` here.

@@ -24,8 +24,14 @@ export interface KioskProduct {
  * every tile would pay for prose nobody reads.
  */
 export interface KioskProductDetail extends KioskProduct {
-    /** Markdown, as the operator wrote it. Rendered where it is shown. */
+    /** Markdown: what the operator wrote, or the project's GitHub README. Rendered where it is shown. */
     description: string | null
+    /** Which of the two the description is. */
+    pageSource: 'CUSTOM' | 'README'
+    /** The README's page on GitHub, when the description is the README. */
+    readmeUrl: string | null
+    /** Whether somebody without a license may download it once to try it. */
+    trial: boolean
 }
 
 /**

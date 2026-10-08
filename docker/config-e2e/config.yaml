@@ -72,3 +72,6 @@ debugReports:
   maxUploadBytes: 16777216
   retentionDays: 14
   uploadIntervalSeconds: 0
+github:
+  apiUrl: "https://nexus-e2e"
+  token: ""

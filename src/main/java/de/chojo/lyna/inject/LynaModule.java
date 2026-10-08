@@ -33,6 +33,7 @@ import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.configuration.elements.Demo;
 import de.chojo.lyna.configuration.elements.Discord;
 import de.chojo.lyna.configuration.elements.Downloads;
+import de.chojo.lyna.configuration.elements.Github;
 import de.chojo.lyna.configuration.elements.Kofi;
 import de.chojo.lyna.configuration.elements.License;
 import de.chojo.lyna.configuration.elements.Links;
@@ -232,6 +233,12 @@ public class LynaModule extends AbstractModule {
     @Singleton
     DebugReports debugReports(ConfigFile config) {
         return config.debugReports();
+    }
+
+    @Provides
+    @Singleton
+    Github github(ConfigFile config) {
+        return config.github();
     }
 
     /**

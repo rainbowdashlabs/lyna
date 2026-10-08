@@ -77,6 +77,9 @@ onMounted(load)
           <div class="space-y-6">
             <ProductDetailHeader :product="product"/>
             <ProductDescription :markdown="product.description"/>
+            <MutedText v-if="product.pageSource === 'README' && product.readmeUrl" size="xs" tag="p">
+              <a :href="product.readmeUrl" class="hover:text-primary" rel="noopener" target="_blank">{{ t('page.products.id.fromReadme') }}</a>
+            </MutedText>
             <ProductDetailActions :product="product" :signed-in="signedIn" @download="openWizard()"/>
           </div>
           <ProductVersions

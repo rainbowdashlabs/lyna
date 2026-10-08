@@ -31,10 +31,11 @@ export async function operatorPage(page: Page): Promise<void> {
  *
  * @return its id
  */
-export async function createProduct(request: APIRequestContext, name: string, free = false): Promise<number> {
+export async function createProduct(
+    request: APIRequestContext, name: string, free = false, options: {url?: string, trial?: boolean} = {}): Promise<number> {
     const created = await request.post(`/api/admin/g/${GUILD}/products`, {
         headers: await operatorHeaders(request),
-        data: {name, url: null, roleId: '99', free, trial: false},
+        data: {name, url: options.url ?? null, roleId: '99', free, trial: options.trial ?? false},
     })
     expect(created.status()).toBe(201)
     return (await created.json()).id

@@ -12,6 +12,7 @@ import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.kiosk.service.ProductPageService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -37,6 +38,8 @@ public class Products {
     private final AccountRepository accounts;
     private final AccountLicenseRepository licenses;
 
+    private final ProductPageService pages;
+
     @Inject
     public Products(
             KioskProductRepository kiosk,
@@ -44,7 +47,9 @@ public class Products {
             AccountRepository accounts,
             AccountLicenseRepository licenses,
             ProductIconRepository icons,
-            ProductIconService productIcons) {
+            ProductIconService productIcons,
+            ProductPageService pages) {
+        this.pages = pages;
         this.productIcons = productIcons;
         this.icons = icons;
         this.kiosk = kiosk;
@@ -102,7 +107,8 @@ public class Products {
                         product -> ctx.json(KioskDetail.of(
                                 product,
                                 entitlements(ctx).contains(product.id()),
-                                icons.of(product.id()).isPresent())),
+                                icons.of(product.id()).isPresent(),
+                                pages.page(product))),
                         () -> ctx.status(HttpStatus.NOT_FOUND));
     }
 
@@ -190,6 +196,12 @@ public class Products {
      *
      * @param description markdown, rendered where it is shown; null when nobody has written any
      */
+    /**
+     * @param description what the page shows: the product's own description or its README
+     * @param pageSource  which of the two it is
+     * @param readmeUrl   the README's page on GitHub, when the page shows it
+     * @param trial       whether somebody without a license may download it once to try it
+     */
     private record KioskDetail(
             int id,
             String guildId,
@@ -199,8 +211,11 @@ public class Products {
             boolean free,
             String purchaseUrl,
             boolean entitled,
-            String description) {
-        static KioskDetail of(KioskProduct product, boolean entitled, boolean uploaded) {
+            String description,
+            ProductPageService.Source pageSource,
+            String readmeUrl,
+            boolean trial) {
+        static KioskDetail of(KioskProduct product, boolean entitled, boolean uploaded, ProductPageService.Page page) {
             return new KioskDetail(
                     product.id(),
                     Long.toString(product.guildId()),
@@ -210,7 +225,10 @@ public class Products {
                     product.free(),
                     product.purchaseUrl(),
                     entitled,
-                    product.description());
+                    page.markdown(),
+                    page.source(),
+                    page.readmeUrl(),
+                    product.trial());
         }
     }
 }
