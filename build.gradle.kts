@@ -36,7 +36,7 @@ dependencies {
     annotationProcessor(libs.ocular)
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.13")
+    implementation("org.postgresql", "postgresql", "42.7.14")
     implementation(libs.bundles.sadu)
 
     // Download api
