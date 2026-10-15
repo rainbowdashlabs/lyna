@@ -19,11 +19,13 @@ import de.chojo.lyna.feature.debug.entity.DebugEntryKind;
 import de.chojo.lyna.feature.debug.entity.DebugReport;
 import de.chojo.lyna.feature.debug.entity.DebugReport.NewSection;
 import de.chojo.lyna.feature.debug.entity.DebugSubmission;
+import de.chojo.lyna.feature.debug.entity.DebugSubmissionV2;
 import de.chojo.lyna.feature.debug.repository.DebugReportRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -38,12 +40,18 @@ import java.util.Optional;
  * guessable; UpdateButler derived its keys from the clock. The delete key is kept only as a hash,
  * which is enough to recognise it and useless to anyone reading the database.
  *
+ * <p>Two formats are taken. The first is UpdateButler's, still sent by deployed plugins; the second hands over the
+ * sections themselves, so the client decides what a report holds. Redacting is the client's job: what arrives is
+ * stored as it is.
+ *
  * <p>PostgreSQL text cannot hold a NUL character, and logs sometimes do, so those are dropped.
  */
 @Singleton
 public class DebugReportService {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final HexFormat HEX = HexFormat.of();
+    public static final int MAX_SECTIONS = 200;
+    public static final int MAX_NAME = 200;
 
     private final DebugReportRepository reports;
     private final DebugReports settings;
@@ -64,31 +72,95 @@ public class DebugReportService {
     }
 
     /**
-     * @return the keys of the stored report, or nothing when the body is not a report
+     * What became of an upload.
      */
-    public Optional<Keys> submit(String body) {
+    public sealed interface Submitted {
+        /**
+         * @param format the format the report came in, which decides the shape of the answer
+         */
+        record Stored(Keys keys, Instant expires, int format) implements Submitted {}
+
+        /**
+         * @param reason what is wrong with it, for whoever sent it
+         */
+        record Refused(String reason) implements Submitted {}
+    }
+
+    /**
+     * Stores a report in either format: the second when the body says {@code "v": 2}, the first otherwise.
+     */
+    public Submitted submit(String body) {
+        JsonNode tree;
+        try {
+            tree = withoutNul(json.readTree(body));
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            return new Submitted.Refused("The body is not JSON.");
+        }
+        if (tree == null || !tree.isObject()) return new Submitted.Refused("The body is not a JSON object.");
+        return tree.path("v").asInt(1) == 2 ? submitV2(tree) : submitV1(tree);
+    }
+
+    private Submitted submitV1(JsonNode tree) {
         DebugSubmission submission;
         try {
-            submission = json.treeToValue(withoutNul(json.readTree(body)), DebugSubmission.class);
+            submission = json.treeToValue(tree, DebugSubmission.class);
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            return Optional.empty();
+            return new Submitted.Refused("That is not a debug report.");
         }
-        if (submission == null
-                || submission.pluginMeta() == null
-                || !submission.pluginMeta().isObject()) {
-            return Optional.empty();
+        if (submission.pluginMeta() == null || !submission.pluginMeta().isObject()) {
+            return new Submitted.Refused("That is not a debug report.");
         }
+        return store(submission.pluginMeta(), submission.serverMeta(), sections(submission), 1);
+    }
+
+    private Submitted submitV2(JsonNode tree) {
+        DebugSubmissionV2 submission;
+        try {
+            submission = json.treeToValue(tree, DebugSubmissionV2.class);
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            return new Submitted.Refused("The report does not have the shape of format 2.");
+        }
+        if (submission.plugin() == null || !submission.plugin().isObject()) {
+            return new Submitted.Refused("The report names no plugin.");
+        }
+        if (text(submission.plugin(), "name", null) == null) {
+            return new Submitted.Refused("The plugin has no name.");
+        }
+        List<DebugSubmissionV2.Section> uploaded = nonNull(submission.sections());
+        if (uploaded.size() > MAX_SECTIONS) {
+            return new Submitted.Refused(
+                    "A report holds at most %d sections, this one has %d.".formatted(MAX_SECTIONS, uploaded.size()));
+        }
+        List<NewSection> sections = new ArrayList<>();
+        for (int position = 0; position < uploaded.size(); position++) {
+            var section = uploaded.get(position);
+            if (section == null) return new Submitted.Refused("Section %d is empty.".formatted(position));
+            Optional<DebugEntryKind> kind = kind(section.kind());
+            if (kind.isEmpty()) {
+                return new Submitted.Refused("Section %d has the unknown kind %s; known are %s."
+                        .formatted(position, section.kind(), List.of(DebugEntryKind.values())));
+            }
+            String name = name(section.name(), kind.get().name());
+            if (name.length() > MAX_NAME) {
+                return new Submitted.Refused(
+                        "The name of section %d is longer than %d characters.".formatted(position, MAX_NAME));
+            }
+            sections.add(new NewSection(kind.get(), name, content(section.content())));
+        }
+        return store(submission.plugin(), submission.server(), sections, 2);
+    }
+
+    private Submitted store(JsonNode pluginMeta, JsonNode serverMeta, List<NewSection> sections, int format) {
         Keys keys = new Keys(newKey(), newKey());
         try {
             reports.create(
                     keys.hash(),
                     hash(keys.deletionHash()),
-                    text(submission.pluginMeta(), "name", "Unknown plugin"),
-                    text(submission.pluginMeta(), "version", "unknown"),
-                    json.writeValueAsString(submission.pluginMeta()),
-                    json.writeValueAsString(
-                            Objects.requireNonNullElse(submission.serverMeta(), json.createObjectNode())),
-                    json.writeValueAsString(sections(submission).stream()
+                    text(pluginMeta, "name", "Unknown plugin"),
+                    text(pluginMeta, "version", "unknown"),
+                    json.writeValueAsString(pluginMeta),
+                    json.writeValueAsString(Objects.requireNonNullElse(serverMeta, json.createObjectNode())),
+                    json.writeValueAsString(sections.stream()
                             .map(section -> Map.of(
                                     "kind", section.kind().name(),
                                     "name", section.name(),
@@ -97,7 +169,7 @@ public class DebugReportService {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("A parsed report could not be written back as JSON", e);
         }
-        return Optional.of(keys);
+        return new Submitted.Stored(keys, Instant.now().plus(retention()), format);
     }
 
     public Optional<DebugReport> read(String readKey) {
@@ -177,6 +249,14 @@ public class DebugReportService {
 
     private static String content(String content) {
         return content == null ? "" : content;
+    }
+
+    private static Optional<DebugEntryKind> kind(String kind) {
+        if (kind == null) return Optional.empty();
+        for (DebugEntryKind known : DebugEntryKind.values()) {
+            if (known.name().equals(kind)) return Optional.of(known);
+        }
+        return Optional.empty();
     }
 
     private static String text(JsonNode node, String field, String fallback) {
