@@ -54,6 +54,17 @@ export async function getDebugReport(readKey: string): Promise<DebugReport> {
     return data
 }
 
+/** The latest version on the reported version's track, when the plugin is a product here. */
+export interface LatestVersion {
+    version: string
+    outdated: boolean
+}
+
+export async function getLatestVersion(readKey: string): Promise<LatestVersion | null> {
+    const response = await client.get<LatestVersion | ''>(`/api/v1/debug/${encodeURIComponent(readKey)}/latest`)
+    return response.status === 200 && response.data ? response.data : null
+}
+
 export async function getDebugSection(readKey: string, position: number): Promise<string> {
     const {data} = await client.get<string>(
         `/api/v1/debug/${encodeURIComponent(readKey)}/sections/${position}`,

@@ -542,7 +542,8 @@
       "players": "Players",
       "worlds": "Worlds",
       "uploaded": "Uploaded",
-      "expires": "Expires"
+      "expires": "Expires",
+      "outdated": "Version {latest} is out; this report comes from {reported}. The problem may already be fixed there."
     },
     "debugSearchBar": {
       "placeholder": "Search the whole report",

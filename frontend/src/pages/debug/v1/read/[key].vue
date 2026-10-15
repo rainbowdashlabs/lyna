@@ -15,11 +15,12 @@ import type {LineTarget} from '~/util/debugLog'
 import {formatDate} from '~/util/format'
 
 /**
- * A debug report, at the address UpdateButler printed into the server console, so every link a
- * plugin ever handed out opens here.
+ * A debug report, at {@code /debug/<key>} and at the address UpdateButler printed into the server
+ * console, so every link a plugin ever handed out opens here.
  *
  * <p>A line is linked as {@code #s<section>-L<line>}; opening such a link goes straight to it.
  */
+definePageMeta({alias: ['/debug/:key']})
 const {t} = useI18n()
 const route = useRoute()
 const readKey = String(route.params.key)
@@ -84,7 +85,7 @@ onMounted(async () => {
         <EmptyState v-if="notFound" :message="t('page.debug.read.notFound')"/>
         <AsyncSection v-else :error="error" :loading="loading">
           <template v-if="report">
-            <DebugReportHeader :report="report"/>
+            <DebugReportHeader :read-key="readKey" :report="report"/>
             <DebugSearchBar v-model="query" :invalid="invalid" :searching="searching" class="sticky top-0 z-10 bg-(--bg) py-2"/>
             <DebugSectionTabs v-model="tab" :counts="counts"/>
             <DebugReportBody
