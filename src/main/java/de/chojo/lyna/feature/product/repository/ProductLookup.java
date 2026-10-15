@@ -10,6 +10,7 @@ import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.sadu.mapper.wrapper.Row;
 
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Optional;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
@@ -26,6 +27,21 @@ public class ProductLookup {
         return query("""
                 SELECT id, guild_id, name, url, role, free FROM product WHERE id = ?
                 """).single(call().bind(id)).map(this::map).first();
+    }
+
+    /**
+     * Finds a product by the name a plugin gives itself. Case, spaces and punctuation are ignored, so
+     * {@code BloodNight} finds "Blood Night"; the oldest product wins when names collide.
+     */
+    public Optional<Product> byPluginName(String name) {
+        return query("""
+                SELECT id, guild_id, name, url, role, free FROM product
+                WHERE lower(regexp_replace(name, '[^a-zA-Z0-9]', '', 'g')) = ?
+                ORDER BY id LIMIT 1
+                """)
+                .single(call().bind(name.replaceAll("[^a-zA-Z0-9]", "").toLowerCase(Locale.ROOT)))
+                .map(this::map)
+                .first();
     }
 
     private Product map(Row row) throws SQLException {

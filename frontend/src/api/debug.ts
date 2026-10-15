@@ -4,11 +4,20 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import client from './client'
+import type {SectionFormat} from '~/util/debugLog'
 
 /** The parts of a report the viewer shows, each behind a tab. */
 export type DebugTab = 'overview' | 'logs' | 'exceptions' | 'configs' | 'plugins'
 
-export type SectionKind = 'META' | 'LOG' | 'PLUGIN_LOG' | 'INTERNAL_EXCEPTION' | 'EXTERNAL_EXCEPTION' | 'CONFIG'
+export type SectionKind = 'META' | 'LOG' | 'PLUGIN_LOG' | 'INTERNAL_EXCEPTION' | 'EXTERNAL_EXCEPTION' | 'CONFIG' | 'CHECK'
+
+/** The outcome of a health check the plugin ran. */
+export type CheckLevel = 'OK' | 'WARN' | 'ERROR'
+
+export interface MetaEntry {
+    key: string
+    value: string
+}
 
 export interface DebugSection {
     position: number
@@ -17,6 +26,16 @@ export interface DebugSection {
     /** Characters, so the size can be shown before the content is fetched. */
     length: number
     lines: number
+    /** How the content is highlighted; guessed from the name when missing. */
+    format?: SectionFormat | null
+    /** Set on a check. */
+    level?: CheckLevel | null
+    /** Set on metadata the plugin sent as pairs, shown as a table. */
+    entries?: MetaEntry[] | null
+    /** How often an exception occurred, with the log times of the first and the last. */
+    occurrences?: number | null
+    firstSeen?: string | null
+    lastSeen?: string | null
 }
 
 export interface PluginMeta {
@@ -52,6 +71,17 @@ export interface DebugReport {
 export async function getDebugReport(readKey: string): Promise<DebugReport> {
     const {data} = await client.get<DebugReport>(`/api/v1/debug/${encodeURIComponent(readKey)}`)
     return data
+}
+
+/** The latest version on the reported version's track, when the plugin is a product here. */
+export interface LatestVersion {
+    version: string
+    outdated: boolean
+}
+
+export async function getLatestVersion(readKey: string): Promise<LatestVersion | null> {
+    const response = await client.get<LatestVersion | ''>(`/api/v1/debug/${encodeURIComponent(readKey)}/latest`)
+    return response.status === 200 && response.data ? response.data : null
 }
 
 export async function getDebugSection(readKey: string, position: number): Promise<string> {

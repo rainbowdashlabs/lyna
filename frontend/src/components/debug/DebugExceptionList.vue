@@ -28,7 +28,7 @@ const {t} = useI18n()
 function groupsOf(kind: DebugSection['kind']) {
     const groups = groupExceptions(props.exceptions
         .filter(section => section.kind === kind && props.contents.has(section.position))
-        .map(section => ({position: section.position, content: props.contents.get(section.position)!})))
+        .map(section => ({...section, content: props.contents.get(section.position)!})))
     const pattern = props.pattern
     if (!pattern) return groups
     return groups.filter(group => {

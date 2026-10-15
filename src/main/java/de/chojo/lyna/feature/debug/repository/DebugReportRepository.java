@@ -5,8 +5,12 @@
  */
 package de.chojo.lyna.feature.debug.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Singleton;
 import de.chojo.lyna.feature.debug.entity.DebugEntryKind;
+import de.chojo.lyna.feature.debug.entity.DebugReport.Display;
+import de.chojo.lyna.feature.debug.entity.DebugReport.Entry;
 import de.chojo.lyna.feature.debug.entity.DebugReport.Section;
 
 import java.time.Instant;
@@ -25,6 +29,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  */
 @Singleton
 public class DebugReportRepository {
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     /**
      * A report as stored, without its sections.
@@ -38,8 +43,8 @@ public class DebugReportRepository {
     /**
      * Stores a report.
      *
-     * @param sections the sections as a JSON array of {@code {kind, name, content}}, in the order they
-     *                 are shown
+     * @param sections the sections as a JSON array of {@code {kind, name, content}} and the optional
+     *                 {@code format, level, entries, occurrences, firstSeen, lastSeen}, in the order they are shown
      */
     public void create(
             String readKey,
@@ -55,8 +60,10 @@ public class DebugReportRepository {
                     VALUES (?, ?, ?, ?, ?::JSONB, ?::JSONB)
                     RETURNING id
                 ), sections AS (
-                    INSERT INTO debug_report_entry (report_id, position, kind, name, content)
-                    SELECT report.id, section.position - 1, section.value ->> 'kind', section.value ->> 'name', section.value ->> 'content'
+                    INSERT INTO debug_report_entry (report_id, position, kind, name, content, format, level, occurrences, first_seen, last_seen, entries)
+                    SELECT report.id, section.position - 1, section.value ->> 'kind', section.value ->> 'name', section.value ->> 'content',
+                           section.value ->> 'format', section.value ->> 'level', (section.value ->> 'occurrences')::INTEGER,
+                           section.value ->> 'firstSeen', section.value ->> 'lastSeen', section.value -> 'entries'
                     FROM report, jsonb_array_elements(?::JSONB) WITH ORDINALITY AS section(value, position)
                     RETURNING report_id
                 )
@@ -93,7 +100,8 @@ public class DebugReportRepository {
     public List<Section> sections(int reportId) {
         return query("""
                 SELECT position, kind, name, char_length(content) AS length,
-                       cardinality(string_to_array(content, E'\\n')) AS lines
+                       cardinality(string_to_array(content, E'\\n')) AS lines,
+                       format, level, occurrences, first_seen, last_seen, entries::TEXT AS entries
                 FROM debug_report_entry WHERE report_id = ? ORDER BY position
                 """)
                 .single(call().bind(reportId))
@@ -102,8 +110,24 @@ public class DebugReportRepository {
                         DebugEntryKind.valueOf(row.getString("kind")),
                         row.getString("name"),
                         row.getInt("length"),
-                        row.getInt("lines")))
+                        row.getInt("lines"),
+                        new Display(
+                                row.getString("format"),
+                                row.getString("level"),
+                                entries(row.getString("entries")),
+                                (Integer) row.getObject("occurrences"),
+                                row.getString("first_seen"),
+                                row.getString("last_seen"))))
                 .all();
+    }
+
+    private static List<Entry> entries(String json) {
+        if (json == null) return null;
+        try {
+            return List.of(JSON.readValue(json, Entry[].class));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Stored entries are not a JSON array of entries", e);
+        }
     }
 
     public Optional<String> content(String readKey, int position) {

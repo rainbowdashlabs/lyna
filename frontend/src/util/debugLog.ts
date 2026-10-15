@@ -141,30 +141,59 @@ export interface ExceptionGroup {
     title: string
     /** The first frame, which is where it was thrown. */
     origin: string | null
+    /** How often they occurred, as the plugin counted them, or one per section when it did not. */
     count: number
+    /** The log time of the first of them, when the plugin sent one. */
+    firstSeen: string | null
+    /** The log time of the last of them, when the plugin sent one. */
+    lastSeen: string | null
     /** The first of them in full. */
     sample: string
     /** The positions of the sections they came from. */
     positions: number[]
 }
 
+/** An exception section with the counts the plugin sent for it. */
+export interface GroupedException {
+    position: number
+    content: string
+    occurrences?: number | null
+    firstSeen?: string | null
+    lastSeen?: string | null
+}
+
+function earlier(a: string | null, b: string | null): string | null {
+    if (a === null) return b
+    if (b === null) return a
+    return a <= b ? a : b
+}
+
+function later(a: string | null, b: string | null): string | null {
+    if (a === null) return b
+    if (b === null) return a
+    return a >= b ? a : b
+}
+
 /**
  * Groups exceptions by what they say and where they were thrown, ignoring numbers in the message -
  * an entity id or a coordinate would otherwise make every occurrence of one bug its own group.
  */
-export function groupExceptions(exceptions: {position: number, content: string}[]): ExceptionGroup[] {
+export function groupExceptions(exceptions: GroupedException[]): ExceptionGroup[] {
     const groups = new Map<string, ExceptionGroup>()
-    for (const {position, content} of exceptions) {
+    for (const {position, content, occurrences, firstSeen, lastSeen} of exceptions) {
         const lines = content.split(/\r?\n/)
         const title = lines.find(line => line.trim().length > 0)?.trim() ?? ''
         const origin = lines.find(line => /^\s+at\s/.test(line))?.trim() ?? null
         const key = `${title.replace(/\d+/g, '#')}\n${origin ?? ''}`
         const group = groups.get(key)
+        const count = occurrences ?? 1
         if (group) {
-            group.count++
+            group.count += count
+            group.firstSeen = earlier(group.firstSeen, firstSeen ?? null)
+            group.lastSeen = later(group.lastSeen, lastSeen ?? null)
             group.positions.push(position)
         } else {
-            groups.set(key, {title, origin, count: 1, sample: content, positions: [position]})
+            groups.set(key, {title, origin, count, firstSeen: firstSeen ?? null, lastSeen: lastSeen ?? null, sample: content, positions: [position]})
         }
     }
     return [...groups.values()].sort((a, b) => b.count - a.count)
@@ -212,6 +241,91 @@ export function yamlTokens(line: string): Token[] {
         {text: key[3]!, kind: 'plain' as TokenKind},
         ...valueTokens(line.slice(key[0].length)),
     ].filter(token => token.text.length > 0)
+}
+
+/** How a section's content is highlighted. */
+export type SectionFormat = 'yaml' | 'json' | 'properties' | 'toml' | 'log' | 'text'
+
+const FORMAT_BY_EXTENSION: Record<string, SectionFormat> = {
+    yml: 'yaml', yaml: 'yaml', json: 'json', properties: 'properties', toml: 'toml', log: 'log',
+}
+
+/** The format a section asked for, or the one its file name suggests, or plain text. */
+export function formatOf(section: {name: string, format?: SectionFormat | null}): SectionFormat {
+    if (section.format) return section.format
+    const extension = /\.([a-z]+)$/i.exec(section.name)?.[1]?.toLowerCase()
+    return (extension && FORMAT_BY_EXTENSION[extension]) || 'text'
+}
+
+const PROPERTIES_PAIR = /^(\s*)([^=:#!\s][^=:]*?)(\s*[=:]\s*)(.*)$/
+const TOML_PAIR = /^(\s*)([^=#\s][^=]*?)(\s*=\s*)(.*)$/
+const JSON_TOKEN = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b/g
+
+/**
+ * Colours a line of a properties file: comments, keys, and values that are numbers or booleans.
+ */
+export function propertiesTokens(line: string): Token[] {
+    if (/^\s*[#!]/.test(line)) return [{text: line, kind: 'comment'}]
+    const pair = PROPERTIES_PAIR.exec(line)
+    if (!pair) return [{text: line, kind: 'plain'}]
+    const scalar = YAML_SCALAR.exec(pair[4]!)
+    return [
+        {text: pair[1]!, kind: 'plain' as TokenKind},
+        {text: pair[2]!, kind: 'key' as TokenKind},
+        {text: pair[3]!, kind: 'plain' as TokenKind},
+        {text: pair[4]!, kind: scalar ? scalarKind(scalar[2]!) : 'plain' as TokenKind},
+    ].filter(token => token.text.length > 0)
+}
+
+/**
+ * Colours a line of a TOML file: comments, table headers as keys, keys, and their values as YAML's are.
+ */
+export function tomlTokens(line: string): Token[] {
+    if (/^\s*#/.test(line)) return [{text: line, kind: 'comment'}]
+    if (/^\s*\[.*\]\s*$/.test(line)) return [{text: line, kind: 'key'}]
+    const pair = TOML_PAIR.exec(line)
+    if (!pair) return valueTokens(line)
+    return [
+        {text: pair[1]!, kind: 'plain' as TokenKind},
+        {text: pair[2]!, kind: 'key' as TokenKind},
+        {text: pair[3]!, kind: 'plain' as TokenKind},
+        ...valueTokens(pair[4]!),
+    ].filter(token => token.text.length > 0)
+}
+
+/**
+ * Colours a line of JSON: a string followed by a colon is a key, other strings, numbers and literals
+ * are values, and the punctuation stays plain.
+ */
+export function jsonTokens(line: string): Token[] {
+    const tokens: Token[] = []
+    let last = 0
+    for (const match of line.matchAll(JSON_TOKEN)) {
+        const index = match.index ?? 0
+        if (index > last) tokens.push({text: line.slice(last, index), kind: 'plain'})
+        if (match[1] !== undefined) {
+            tokens.push({text: match[1], kind: match[2] !== undefined ? 'key' : 'string'})
+            if (match[2] !== undefined) tokens.push({text: match[2], kind: 'plain'})
+        } else if (match[3] !== undefined) {
+            tokens.push({text: match[3], kind: 'number'})
+        } else {
+            tokens.push({text: match[0], kind: 'literal'})
+        }
+        last = index + match[0].length
+    }
+    if (last < line.length) tokens.push({text: line.slice(last), kind: 'plain'})
+    return tokens
+}
+
+/** Colours a line in the section's format; a format without colours stays plain. */
+export function tokensOf(format: SectionFormat, line: string): Token[] {
+    switch (format) {
+        case 'yaml': return yamlTokens(line)
+        case 'json': return jsonTokens(line)
+        case 'properties': return propertiesTokens(line)
+        case 'toml': return tomlTokens(line)
+        default: return [{text: line, kind: 'plain'}]
+    }
 }
 
 /** A line of one of a report's sections, as a link names it. */

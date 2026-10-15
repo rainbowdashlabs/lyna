@@ -10,13 +10,14 @@ import type {DebugReport, DebugSection} from '~/api/debug'
 import {atLeast, blocksOf, splitLines} from '~/util/debugLog'
 
 /**
- * What to look at first: how many problems the log holds, what the plugin says about itself, and
- * whatever extra blocks it added. A count opens the part of the report it counts.
+ * What to look at first: the health checks the plugin ran, how many problems the log holds, what
+ * the plugin says about itself, and whatever extra blocks it added. A count opens the part of the report it counts.
  */
 const props = defineProps<{
     report: DebugReport
     logs: DebugSection[]
     metas: DebugSection[]
+    checks: DebugSection[]
     exceptions: number
     contents: Map<number, string>
 }>()
@@ -52,6 +53,7 @@ const meta = computed(() => {
 
 <template>
   <div class="space-y-8">
+    <DebugCheckList v-if="checks.length" :checks="checks" :contents="contents"/>
     <DebugOverviewCounts
         :errors="problems?.errors ?? null"
         :exceptions="exceptions"
@@ -65,9 +67,6 @@ const meta = computed(() => {
         <dd class="font-data text-sm break-all">{{ entry.value }}</dd>
       </div>
     </dl>
-    <section v-for="section in metas" :key="section.position" class="space-y-2">
-      <SectionLabel>{{ section.name }}</SectionLabel>
-      <pre class="font-data overflow-x-auto border border-border-light p-3 text-xs dark:border-border-dark">{{ contents.get(section.position) }}</pre>
-    </section>
+    <DebugMetaSection v-for="section in metas" :key="section.position" :content="contents.get(section.position)" :section="section"/>
   </div>
 </template>

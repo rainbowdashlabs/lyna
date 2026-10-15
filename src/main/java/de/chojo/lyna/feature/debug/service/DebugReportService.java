@@ -17,17 +17,19 @@ import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.feature.debug.entity.DebugEntryKind;
 import de.chojo.lyna.feature.debug.entity.DebugReport;
+import de.chojo.lyna.feature.debug.entity.DebugReport.Display;
 import de.chojo.lyna.feature.debug.entity.DebugReport.NewSection;
 import de.chojo.lyna.feature.debug.entity.DebugSubmission;
+import de.chojo.lyna.feature.debug.entity.DebugSubmissionV2;
 import de.chojo.lyna.feature.debug.repository.DebugReportRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -38,12 +40,20 @@ import java.util.Optional;
  * guessable; UpdateButler derived its keys from the clock. The delete key is kept only as a hash,
  * which is enough to recognise it and useless to anyone reading the database.
  *
+ * <p>Two formats are taken. The first is UpdateButler's, still sent by deployed plugins; the second hands over the
+ * sections themselves, so the client decides what a report holds. Redacting is the client's job: what arrives is
+ * stored as it is.
+ *
  * <p>PostgreSQL text cannot hold a NUL character, and logs sometimes do, so those are dropped.
  */
 @Singleton
 public class DebugReportService {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final HexFormat HEX = HexFormat.of();
+    public static final int MAX_SECTIONS = 200;
+    public static final int MAX_NAME = 200;
+    public static final int MAX_ENTRIES = 200;
+    public static final int MAX_TIME = 32;
 
     private final DebugReportRepository reports;
     private final DebugReports settings;
@@ -64,40 +74,174 @@ public class DebugReportService {
     }
 
     /**
-     * @return the keys of the stored report, or nothing when the body is not a report
+     * What became of an upload.
      */
-    public Optional<Keys> submit(String body) {
+    public sealed interface Submitted {
+        /**
+         * @param format the format the report came in, which decides the shape of the answer
+         */
+        record Stored(Keys keys, Instant expires, int format) implements Submitted {}
+
+        /**
+         * @param reason what is wrong with it, for whoever sent it
+         */
+        record Refused(String reason) implements Submitted {}
+    }
+
+    /**
+     * Stores a report in either format: the second when the body says {@code "v": 2}, the first otherwise.
+     */
+    public Submitted submit(String body) {
+        JsonNode tree;
+        try {
+            tree = withoutNul(json.readTree(body));
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            return new Submitted.Refused("The body is not JSON.");
+        }
+        if (tree == null || !tree.isObject()) return new Submitted.Refused("The body is not a JSON object.");
+        return tree.path("v").asInt(1) == 2 ? submitV2(tree) : submitV1(tree);
+    }
+
+    private Submitted submitV1(JsonNode tree) {
         DebugSubmission submission;
         try {
-            submission = json.treeToValue(withoutNul(json.readTree(body)), DebugSubmission.class);
+            submission = json.treeToValue(tree, DebugSubmission.class);
         } catch (JsonProcessingException | IllegalArgumentException e) {
-            return Optional.empty();
+            return new Submitted.Refused("That is not a debug report.");
         }
-        if (submission == null
-                || submission.pluginMeta() == null
-                || !submission.pluginMeta().isObject()) {
-            return Optional.empty();
+        if (submission.pluginMeta() == null || !submission.pluginMeta().isObject()) {
+            return new Submitted.Refused("That is not a debug report.");
         }
+        return store(submission.pluginMeta(), submission.serverMeta(), sections(submission), 1);
+    }
+
+    private Submitted submitV2(JsonNode tree) {
+        DebugSubmissionV2 submission;
+        try {
+            submission = json.treeToValue(tree, DebugSubmissionV2.class);
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            return new Submitted.Refused("The report does not have the shape of format 2.");
+        }
+        if (submission.plugin() == null || !submission.plugin().isObject()) {
+            return new Submitted.Refused("The report names no plugin.");
+        }
+        if (text(submission.plugin(), "name", null) == null) {
+            return new Submitted.Refused("The plugin has no name.");
+        }
+        List<DebugSubmissionV2.Section> uploaded = nonNull(submission.sections());
+        if (uploaded.size() > MAX_SECTIONS) {
+            return new Submitted.Refused(
+                    "A report holds at most %d sections, this one has %d.".formatted(MAX_SECTIONS, uploaded.size()));
+        }
+        List<NewSection> sections = new ArrayList<>();
+        for (int position = 0; position < uploaded.size(); position++) {
+            var section = uploaded.get(position);
+            if (section == null) return new Submitted.Refused("Section %d is empty.".formatted(position));
+            Optional<DebugEntryKind> kind = kind(section.kind());
+            if (kind.isEmpty()) {
+                return new Submitted.Refused("Section %d has the unknown kind %s; known are %s."
+                        .formatted(position, section.kind(), List.of(DebugEntryKind.values())));
+            }
+            String name = name(section.name(), kind.get().name());
+            if (name.length() > MAX_NAME) {
+                return new Submitted.Refused(
+                        "The name of section %d is longer than %d characters.".formatted(position, MAX_NAME));
+            }
+            Optional<String> problem = displayProblem(kind.get(), section);
+            if (problem.isPresent()) {
+                return new Submitted.Refused("Section %d %s".formatted(position, problem.get()));
+            }
+            sections.add(new NewSection(kind.get(), name, content(section.content()), display(kind.get(), section)));
+        }
+        return store(submission.plugin(), submission.server(), sections, 2);
+    }
+
+    /**
+     * @return what is wrong with how the section asks to be shown, as the end of a sentence naming it
+     */
+    private static Optional<String> displayProblem(DebugEntryKind kind, DebugSubmissionV2.Section section) {
+        if (section.format() != null && !Display.FORMATS.contains(section.format())) {
+            return Optional.of("has the unknown format %s; known are %s.".formatted(section.format(), Display.FORMATS));
+        }
+        if (kind == DebugEntryKind.CHECK && !Display.LEVELS.contains(String.valueOf(section.level()))) {
+            return Optional.of("is a check and needs a level, one of %s.".formatted(Display.LEVELS));
+        }
+        List<DebugReport.Entry> entries = nonNull(section.entries());
+        if (entries.size() > MAX_ENTRIES) {
+            return Optional.of("has more than %d entries.".formatted(MAX_ENTRIES));
+        }
+        for (var entry : entries) {
+            if (entry == null
+                    || entry.key() == null
+                    || entry.key().isBlank()
+                    || entry.key().length() > MAX_NAME) {
+                return Optional.of(
+                        "has an entry without a key, or with one longer than %d characters.".formatted(MAX_NAME));
+            }
+        }
+        if (section.count() != null && section.count() < 1) {
+            return Optional.of("occurred %d times; a count is at least 1.".formatted(section.count()));
+        }
+        if (tooLong(section.firstSeen()) || tooLong(section.lastSeen())) {
+            return Optional.of("has a time longer than %d characters.".formatted(MAX_TIME));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Keeps of the display hints what fits the kind: a level on a check, entries on metadata, counts and times on
+     * exceptions.
+     */
+    private static Display display(DebugEntryKind kind, DebugSubmissionV2.Section section) {
+        boolean exception = kind == DebugEntryKind.INTERNAL_EXCEPTION || kind == DebugEntryKind.EXTERNAL_EXCEPTION;
+        List<DebugReport.Entry> entries = kind == DebugEntryKind.META && section.entries() != null
+                ? section.entries().stream()
+                        .map(entry -> new DebugReport.Entry(entry.key(), content(entry.value())))
+                        .toList()
+                : null;
+        return new Display(
+                section.format(),
+                kind == DebugEntryKind.CHECK ? section.level() : null,
+                entries,
+                exception ? section.count() : null,
+                exception ? section.firstSeen() : null,
+                exception ? section.lastSeen() : null);
+    }
+
+    private static boolean tooLong(String time) {
+        return time != null && time.length() > MAX_TIME;
+    }
+
+    private Submitted store(JsonNode pluginMeta, JsonNode serverMeta, List<NewSection> sections, int format) {
         Keys keys = new Keys(newKey(), newKey());
         try {
             reports.create(
                     keys.hash(),
                     hash(keys.deletionHash()),
-                    text(submission.pluginMeta(), "name", "Unknown plugin"),
-                    text(submission.pluginMeta(), "version", "unknown"),
-                    json.writeValueAsString(submission.pluginMeta()),
-                    json.writeValueAsString(
-                            Objects.requireNonNullElse(submission.serverMeta(), json.createObjectNode())),
-                    json.writeValueAsString(sections(submission).stream()
-                            .map(section -> Map.of(
-                                    "kind", section.kind().name(),
-                                    "name", section.name(),
-                                    "content", section.content()))
-                            .toList()));
+                    text(pluginMeta, "name", "Unknown plugin"),
+                    text(pluginMeta, "version", "unknown"),
+                    json.writeValueAsString(pluginMeta),
+                    json.writeValueAsString(Objects.requireNonNullElse(serverMeta, json.createObjectNode())),
+                    json.writeValueAsString(sections.stream().map(this::stored).toList()));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("A parsed report could not be written back as JSON", e);
         }
-        return Optional.of(keys);
+        return new Submitted.Stored(keys, Instant.now().plus(retention()), format);
+    }
+
+    private ObjectNode stored(NewSection section) {
+        ObjectNode node = json.createObjectNode()
+                .put("kind", section.kind().name())
+                .put("name", section.name())
+                .put("content", section.content());
+        Display display = section.display();
+        if (display.format() != null) node.put("format", display.format());
+        if (display.level() != null) node.put("level", display.level());
+        if (display.entries() != null) node.set("entries", json.valueToTree(display.entries()));
+        if (display.occurrences() != null) node.put("occurrences", display.occurrences());
+        if (display.firstSeen() != null) node.put("firstSeen", display.firstSeen());
+        if (display.lastSeen() != null) node.put("lastSeen", display.lastSeen());
+        return node;
     }
 
     public Optional<DebugReport> read(String readKey) {
@@ -177,6 +321,14 @@ public class DebugReportService {
 
     private static String content(String content) {
         return content == null ? "" : content;
+    }
+
+    private static Optional<DebugEntryKind> kind(String kind) {
+        if (kind == null) return Optional.empty();
+        for (DebugEntryKind known : DebugEntryKind.values()) {
+            if (known.name().equals(kind)) return Optional.of(known);
+        }
+        return Optional.empty();
     }
 
     private static String text(JsonNode node, String field, String fallback) {

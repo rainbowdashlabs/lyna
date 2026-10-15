@@ -147,6 +147,20 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A plugin finds its product by name, whatever its case, spaces and punctuation")
+    void theLookupFindsAPluginsProduct() {
+        guild.products().create("Blood Night", role(51L), null, true, false).orElseThrow();
+        ProductLookup lookup = new ProductLookup(guilds);
+
+        assertEquals(
+                "Blood Night", lookup.byPluginName("BloodNight").orElseThrow().name());
+        assertEquals(
+                "Blood Night", lookup.byPluginName("blood-night").orElseThrow().name());
+        assertEquals(product.id(), lookup.byPluginName("WIDGET").orElseThrow().id());
+        assertTrue(lookup.byPluginName("Gadget").isEmpty());
+    }
+
+    @Test
     @DisplayName("A licence is found by key, by id, by its identifier, and by who holds it")
     void licencesAreFoundEveryWay() {
         License license =

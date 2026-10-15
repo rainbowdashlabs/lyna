@@ -542,7 +542,8 @@
       "players": "Players",
       "worlds": "Worlds",
       "uploaded": "Uploaded",
-      "expires": "Expires"
+      "expires": "Expires",
+      "outdated": "Version {latest} is out; this report comes from {reported}. The problem may already be fixed there."
     },
     "debugSearchBar": {
       "placeholder": "Search the whole report",
@@ -557,7 +558,11 @@
       "configs": "Configs",
       "plugins": "Plugins"
     },
+    "debugCheckList": {
+      "title": "Health checks"
+    },
     "debugExceptionGroup": {
+      "seen": "First at {first}, last at {last}",
       "findInLog": "Find in log",
       "toggleTrace": "Show the stack trace"
     },

@@ -11,12 +11,14 @@ import {deleteDebugReport} from '~/api/debug'
 import {usePageTitle} from '~/composables/usePageTitle'
 
 /**
- * Deletes a debug report, at the address UpdateButler printed for it.
+ * Deletes a debug report, at {@code /debug/delete/<key>} and at the address UpdateButler printed
+ * for it.
  *
  * <p>UpdateButler deleted on opening the link. Here it takes a click: a link posted in Discord is
  * opened by Discord itself to build its preview, which would delete the report the moment somebody
  * shared it.
  */
+definePageMeta({alias: ['/debug/delete/:key']})
 const {t} = useI18n()
 usePageTitle(t('page.debug.delete.title'))
 const route = useRoute()
