@@ -5,7 +5,7 @@
  */
 <script lang="ts" setup>
 import {computed} from 'vue'
-import {type TokenKind, yamlTokens} from '~/util/debugLog'
+import {type SectionFormat, type TokenKind, tokensOf} from '~/util/debugLog'
 
 /**
  * A line of a configuration file, coloured as YAML. While a search runs it shows the matches
@@ -15,6 +15,7 @@ const props = defineProps<{
     number: number
     text: string
     pattern: RegExp | null
+    format: SectionFormat
 }>()
 
 const TOKEN_CLASS: Record<TokenKind, string> = {
@@ -26,7 +27,7 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
     plain: '',
 }
 
-const tokens = computed(() => yamlTokens(props.text))
+const tokens = computed(() => tokensOf(props.format, props.text))
 </script>
 
 <template>

@@ -26,7 +26,7 @@ const route = useRoute()
 const readKey = String(route.params.key)
 useDebugPreview(readKey)
 
-const {report, contents, loading, notFound, error, load, content, loadAll, logs, exceptions, configs, metas} = useDebugReport(readKey)
+const {report, contents, loading, notFound, error, load, content, loadAll, logs, exceptions, configs, metas, checks} = useDebugReport(readKey)
 const {query, pattern, invalid, counts} = useDebugSearch(report, contents)
 
 const tab = ref<DebugTab>('overview')
@@ -72,7 +72,7 @@ watch(() => route.hash, readHash)
 
 onMounted(async () => {
     await load()
-    await Promise.all([...exceptions.value, ...configs.value, ...metas.value, ...logs.value.slice(0, 1)]
+    await Promise.all([...checks.value, ...exceptions.value, ...configs.value, ...metas.value, ...logs.value.slice(0, 1)]
         .map(section => content(section.position)))
     readHash(route.hash)
 })
@@ -90,6 +90,7 @@ onMounted(async () => {
             <DebugSectionTabs v-model="tab" :counts="counts"/>
             <DebugReportBody
                 v-model="tab"
+                :checks="checks"
                 :configs="configs"
                 :contents="contents"
                 :exceptions="exceptions"

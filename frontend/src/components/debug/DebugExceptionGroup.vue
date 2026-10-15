@@ -30,6 +30,7 @@ const open = ref(false)
     <div class="space-y-1">
       <LogLineText :pattern="pattern" :text="group.title" class="font-data block text-sm break-all text-error"/>
       <MutedText v-if="group.origin" class="font-data block break-all" size="xs">{{ group.origin }}</MutedText>
+      <MutedText v-if="group.firstSeen" class="font-data block" size="xs">{{ t('ui.debugExceptionGroup.seen', {first: group.firstSeen, last: group.lastSeen ?? group.firstSeen}) }}</MutedText>
       <pre v-if="open" class="font-data overflow-x-auto py-2 text-xs whitespace-pre"><LogLineText :pattern="pattern" :text="group.sample"/></pre>
     </div>
     <template #trailing>

@@ -85,4 +85,34 @@ test.describe('Debug reports in the second format', () => {
         expect(response.status()).toBe(413)
         expect((await response.json()).error).toBe('too_large')
     })
+
+    test('display hints: checks first, metadata as a table, configs by folder, exceptions counted', async ({page, request}) => {
+        const hinted = {
+            ...report('Hinted', '1.0.0'),
+            sections: [
+                {kind: 'CHECK', name: 'Database', content: 'Reachable in 3 ms', level: 'OK'},
+                {kind: 'CHECK', name: 'World nether', content: 'Not loaded', level: 'ERROR'},
+                {kind: 'META', name: 'Hooks', entries: [{key: 'WorldGuard', value: '7.0.9'}]},
+                {kind: 'INTERNAL_EXCEPTION', name: 'Plugin exception 1', content: 'java.lang.IllegalStateException: boom\n\tat x.Main.run(Main.java:1)', count: 4, firstSeen: '12:00:01', lastSeen: '12:30:00'},
+                {kind: 'CONFIG', name: 'config.yml', content: 'enabled: true'},
+                {kind: 'CONFIG', name: 'mobs/zombie.json', content: '{"speed": 1.5}', format: 'json'},
+            ],
+        }
+        const receipt = await (await request.post('/api/v1/debug/submit', {data: hinted})).json()
+
+        await page.goto(`/debug/${receipt.readKey}`)
+        const checks = page.getByRole('listitem')
+        await expect(checks.first()).toContainText('World nether')
+        await expect(checks.nth(1)).toContainText('Database')
+        await expect(page.getByText('WorldGuard', {exact: true})).toBeVisible()
+        await expect(page.getByText('7.0.9', {exact: true})).toBeVisible()
+
+        await page.getByRole('tab', {name: /Exceptions/}).click()
+        await expect(page.getByText('4×')).toBeVisible()
+        await expect(page.getByText('First at 12:00:01, last at 12:30:00')).toBeVisible()
+
+        await page.getByRole('tab', {name: /Config/}).click()
+        await expect(page.getByText('mobs/', {exact: true})).toBeVisible()
+        await expect(page.getByText('zombie.json', {exact: true})).toBeVisible()
+    })
 })

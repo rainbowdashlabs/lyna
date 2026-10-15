@@ -18,6 +18,7 @@ defineProps<{
     exceptions: DebugSection[]
     configs: DebugSection[]
     metas: DebugSection[]
+    checks: DebugSection[]
     target: LineTarget | null
 }>()
 
@@ -32,6 +33,7 @@ const tab = defineModel<DebugTab>({required: true})
 <template>
   <DebugOverview
       v-if="tab === 'overview'"
+      :checks="checks"
       :contents="contents"
       :exceptions="exceptions.length"
       :logs="logs"
