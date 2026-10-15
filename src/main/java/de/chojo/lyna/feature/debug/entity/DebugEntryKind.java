@@ -32,5 +32,9 @@ public enum DebugEntryKind {
     /**
      * One of the plugin's configuration files.
      */
-    CONFIG
+    CONFIG,
+    /**
+     * The outcome of a health check the plugin ran, with its level.
+     */
+    CHECK
 }

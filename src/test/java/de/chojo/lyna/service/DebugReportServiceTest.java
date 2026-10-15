@@ -228,4 +228,61 @@ class DebugReportServiceTest extends RepositoryTestBase {
         var refused = assertInstanceOf(Submitted.Refused.class, service.submit(body));
         assertTrue(refused.reason().contains(expected), refused.reason());
     }
+
+    private static final String REPORT_WITH_HINTS = """
+            {
+              "v": 2,
+              "plugin": {"name": "BloodNight", "version": "2.0.0"},
+              "sections": [
+                {"kind": "CHECK", "name": "Database", "content": "Reachable in 3 ms", "level": "OK"},
+                {"kind": "META", "name": "Hooks", "entries": [{"key": "WorldGuard", "value": "7.0.9"}, {"key": "Vault"}]},
+                {"kind": "INTERNAL_EXCEPTION", "name": "Plugin exception 1", "content": "npe", "count": 3,
+                 "firstSeen": "12:00:01", "lastSeen": "12:30:00", "level": "ERROR", "entries": [{"key": "k", "value": "v"}]},
+                {"kind": "CONFIG", "name": "mobs/zombie.yml", "content": "speed: 1", "format": "yaml", "count": 4}
+              ]
+            }
+            """;
+
+    @Test
+    @DisplayName("Display hints are kept where they fit the kind and dropped where they do not")
+    void displayHints() {
+        var keys = stored(REPORT_WITH_HINTS);
+
+        List<DebugReport.Section> sections =
+                service.read(keys.hash()).orElseThrow().sections();
+
+        assertEquals(
+                new DebugReport.Display(null, "OK", null, null, null, null),
+                sections.get(0).display());
+        assertEquals(
+                List.of(new DebugReport.Entry("WorldGuard", "7.0.9"), new DebugReport.Entry("Vault", "")),
+                sections.get(1).display().entries());
+        assertEquals(
+                new DebugReport.Display(null, null, null, 3, "12:00:01", "12:30:00"),
+                sections.get(2).display());
+        assertEquals(
+                new DebugReport.Display("yaml", null, null, null, null, null),
+                sections.get(3).display());
+        assertEquals(DebugEntryKind.CHECK, sections.get(0).kind());
+    }
+
+    @Test
+    @DisplayName("Display hints that make no sense are refused with a reason")
+    void displayHintRefusals() {
+        String one = "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [%s]}";
+        assertReason("unknown format xml", one.formatted("{\"kind\": \"CONFIG\", \"format\": \"xml\"}"));
+        assertReason("needs a level", one.formatted("{\"kind\": \"CHECK\", \"name\": \"Db\"}"));
+        assertReason("needs a level", one.formatted("{\"kind\": \"CHECK\", \"level\": \"FINE\"}"));
+        assertReason("entry without a key", one.formatted("{\"kind\": \"META\", \"entries\": [{\"value\": \"v\"}]}"));
+        assertReason("a count is at least 1", one.formatted("{\"kind\": \"INTERNAL_EXCEPTION\", \"count\": 0}"));
+        assertReason(
+                "time longer than",
+                one.formatted("{\"kind\": \"INTERNAL_EXCEPTION\", \"firstSeen\": \"%s\"}"
+                        .formatted("1".repeat(DebugReportService.MAX_TIME + 1))));
+        String entries = "{\"key\": \"k\"},".repeat(DebugReportService.MAX_ENTRIES + 1);
+        assertReason(
+                "more than 200 entries",
+                one.formatted("{\"kind\": \"META\", \"entries\": [%s]}"
+                        .formatted(entries.substring(0, entries.length() - 1))));
+    }
 }

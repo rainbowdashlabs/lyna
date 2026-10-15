@@ -23,8 +23,19 @@ import java.util.List;
 public record DebugSubmissionV2(int v, JsonNode plugin, JsonNode server, List<Section> sections) {
 
     /**
+     * Everything but {@code kind} may be missing. See {@link DebugReport.Display} for how the rest is shown.
+     *
      * @param kind decides how the viewer shows it, one of {@link DebugEntryKind}
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Section(String kind, String name, String content) {}
+    public record Section(
+            String kind,
+            String name,
+            String content,
+            String format,
+            String level,
+            List<DebugReport.Entry> entries,
+            Integer count,
+            String firstSeen,
+            String lastSeen) {}
 }

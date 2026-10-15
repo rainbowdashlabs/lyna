@@ -17,6 +17,7 @@ import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.feature.debug.entity.DebugEntryKind;
 import de.chojo.lyna.feature.debug.entity.DebugReport;
+import de.chojo.lyna.feature.debug.entity.DebugReport.Display;
 import de.chojo.lyna.feature.debug.entity.DebugReport.NewSection;
 import de.chojo.lyna.feature.debug.entity.DebugSubmission;
 import de.chojo.lyna.feature.debug.entity.DebugSubmissionV2;
@@ -29,7 +30,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -52,6 +52,8 @@ public class DebugReportService {
     private static final HexFormat HEX = HexFormat.of();
     public static final int MAX_SECTIONS = 200;
     public static final int MAX_NAME = 200;
+    public static final int MAX_ENTRIES = 200;
+    public static final int MAX_TIME = 32;
 
     private final DebugReportRepository reports;
     private final DebugReports settings;
@@ -145,9 +147,69 @@ public class DebugReportService {
                 return new Submitted.Refused(
                         "The name of section %d is longer than %d characters.".formatted(position, MAX_NAME));
             }
-            sections.add(new NewSection(kind.get(), name, content(section.content())));
+            Optional<String> problem = displayProblem(kind.get(), section);
+            if (problem.isPresent()) {
+                return new Submitted.Refused("Section %d %s".formatted(position, problem.get()));
+            }
+            sections.add(new NewSection(kind.get(), name, content(section.content()), display(kind.get(), section)));
         }
         return store(submission.plugin(), submission.server(), sections, 2);
+    }
+
+    /**
+     * @return what is wrong with how the section asks to be shown, as the end of a sentence naming it
+     */
+    private static Optional<String> displayProblem(DebugEntryKind kind, DebugSubmissionV2.Section section) {
+        if (section.format() != null && !Display.FORMATS.contains(section.format())) {
+            return Optional.of("has the unknown format %s; known are %s.".formatted(section.format(), Display.FORMATS));
+        }
+        if (kind == DebugEntryKind.CHECK && !Display.LEVELS.contains(String.valueOf(section.level()))) {
+            return Optional.of("is a check and needs a level, one of %s.".formatted(Display.LEVELS));
+        }
+        List<DebugReport.Entry> entries = nonNull(section.entries());
+        if (entries.size() > MAX_ENTRIES) {
+            return Optional.of("has more than %d entries.".formatted(MAX_ENTRIES));
+        }
+        for (var entry : entries) {
+            if (entry == null
+                    || entry.key() == null
+                    || entry.key().isBlank()
+                    || entry.key().length() > MAX_NAME) {
+                return Optional.of(
+                        "has an entry without a key, or with one longer than %d characters.".formatted(MAX_NAME));
+            }
+        }
+        if (section.count() != null && section.count() < 1) {
+            return Optional.of("occurred %d times; a count is at least 1.".formatted(section.count()));
+        }
+        if (tooLong(section.firstSeen()) || tooLong(section.lastSeen())) {
+            return Optional.of("has a time longer than %d characters.".formatted(MAX_TIME));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Keeps of the display hints what fits the kind: a level on a check, entries on metadata, counts and times on
+     * exceptions.
+     */
+    private static Display display(DebugEntryKind kind, DebugSubmissionV2.Section section) {
+        boolean exception = kind == DebugEntryKind.INTERNAL_EXCEPTION || kind == DebugEntryKind.EXTERNAL_EXCEPTION;
+        List<DebugReport.Entry> entries = kind == DebugEntryKind.META && section.entries() != null
+                ? section.entries().stream()
+                        .map(entry -> new DebugReport.Entry(entry.key(), content(entry.value())))
+                        .toList()
+                : null;
+        return new Display(
+                section.format(),
+                kind == DebugEntryKind.CHECK ? section.level() : null,
+                entries,
+                exception ? section.count() : null,
+                exception ? section.firstSeen() : null,
+                exception ? section.lastSeen() : null);
+    }
+
+    private static boolean tooLong(String time) {
+        return time != null && time.length() > MAX_TIME;
     }
 
     private Submitted store(JsonNode pluginMeta, JsonNode serverMeta, List<NewSection> sections, int format) {
@@ -160,16 +222,26 @@ public class DebugReportService {
                     text(pluginMeta, "version", "unknown"),
                     json.writeValueAsString(pluginMeta),
                     json.writeValueAsString(Objects.requireNonNullElse(serverMeta, json.createObjectNode())),
-                    json.writeValueAsString(sections.stream()
-                            .map(section -> Map.of(
-                                    "kind", section.kind().name(),
-                                    "name", section.name(),
-                                    "content", section.content()))
-                            .toList()));
+                    json.writeValueAsString(sections.stream().map(this::stored).toList()));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("A parsed report could not be written back as JSON", e);
         }
         return new Submitted.Stored(keys, Instant.now().plus(retention()), format);
+    }
+
+    private ObjectNode stored(NewSection section) {
+        ObjectNode node = json.createObjectNode()
+                .put("kind", section.kind().name())
+                .put("name", section.name())
+                .put("content", section.content());
+        Display display = section.display();
+        if (display.format() != null) node.put("format", display.format());
+        if (display.level() != null) node.put("level", display.level());
+        if (display.entries() != null) node.set("entries", json.valueToTree(display.entries()));
+        if (display.occurrences() != null) node.put("occurrences", display.occurrences());
+        if (display.firstSeen() != null) node.put("firstSeen", display.firstSeen());
+        if (display.lastSeen() != null) node.put("lastSeen", display.lastSeen());
+        return node;
     }
 
     public Optional<DebugReport> read(String readKey) {
