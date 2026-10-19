@@ -30,9 +30,11 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -40,17 +42,20 @@ import javax.crypto.spec.SecretKeySpec;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * Announces a product's GitHub releases in its Discord channel.
+ * What a product's GitHub webhook posts in Discord: its releases in the release channel, and pushes to
+ * the default branch, pull requests and issues in the activity channel.
  *
- * <p>The announcement carries a button to the product's page on Lyna, where it is downloaded.
+ * <p>A release announcement carries a button to the product's page on Lyna, where it is downloaded.
+ * Activity carries none: it is for people following the project, not for buyers.
  *
  * <p>GitHub signs every delivery with the webhook's secret, and nothing unsigned is acted on: the
  * address alone is not enough to make the bot post in somebody's channel. Only published releases and
- * pre-releases are announced; drafts, edits and deletions are acknowledged and dropped.
+ * pre-releases are announced; drafts, edits and deletions are acknowledged and dropped, as is any
+ * activity the product switched off.
  */
 @Singleton
-public class ReleasePostService {
-    private static final Logger log = getLogger(ReleasePostService.class);
+public class GithubWebhookService {
+    private static final Logger log = getLogger(GithubWebhookService.class);
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final HexFormat HEX = HexFormat.of();
     private static final Set<String> ANNOUNCED = Set.of("released", "prereleased");
@@ -90,7 +95,7 @@ public class ReleasePostService {
     record Repository(@JsonProperty("full_name") String fullName) {}
 
     @Inject
-    public ReleasePostService(ReleaseWebhookRepository webhooks, ProductLookup products, Gateway gateway, Api api) {
+    public GithubWebhookService(ReleaseWebhookRepository webhooks, ProductLookup products, Gateway gateway, Api api) {
         this.webhooks = webhooks;
         this.products = products;
         this.gateway = gateway;
@@ -113,17 +118,79 @@ public class ReleasePostService {
         Optional<ReleaseWebhook> webhook = webhooks.byToken(token);
         if (webhook.isEmpty()) return Outcome.UNKNOWN;
         if (!signed(webhook.get().secret(), signature, body)) return Outcome.FORBIDDEN;
-        if ("ping".equals(event)) return Outcome.PONG;
-        if (!"release".equals(event)) return Outcome.IGNORED;
-        Payload payload;
-        try {
-            payload = json.readValue(body, Payload.class);
-        } catch (IOException e) {
-            return Outcome.IGNORED;
-        }
-        if (payload.release() == null || !ANNOUNCED.contains(payload.action())) return Outcome.IGNORED;
-        announce(webhook.get(), payload);
+        if (event == null) return Outcome.IGNORED;
+        return switch (event) {
+            case "ping" -> Outcome.PONG;
+            case "release" -> release(webhook.get(), body);
+            case "push" ->
+                activity(
+                        webhook.get(),
+                        body,
+                        PushPost.Payload.class,
+                        (product, payload) ->
+                                webhook.get().activity().push() ? PushPost.embed(product, payload) : Optional.empty());
+            case "pull_request" ->
+                activity(
+                        webhook.get(),
+                        body,
+                        PullRequestPost.Payload.class,
+                        (product, payload) -> PullRequestPost.embed(
+                                product, payload, webhook.get().activity()));
+            case "issues" ->
+                activity(
+                        webhook.get(),
+                        body,
+                        IssuePost.Payload.class,
+                        (product, payload) ->
+                                IssuePost.embed(product, payload, webhook.get().activity()));
+            default -> Outcome.IGNORED;
+        };
+    }
+
+    private Outcome release(ReleaseWebhook webhook, byte[] body) {
+        Optional<Payload> payload = read(body, Payload.class);
+        if (payload.isEmpty()
+                || payload.get().release() == null
+                || !ANNOUNCED.contains(payload.get().action())) return Outcome.IGNORED;
+        announce(webhook, payload.get());
         return Outcome.ANNOUNCED;
+    }
+
+    /**
+     * Posts a push, pull request or issue in the product's activity channel, when the event is one
+     * that is posted at all.
+     *
+     * <p>The post carries embeds only and mentions nobody. Titles and descriptions are written by
+     * whoever opened the issue, and a channel post must not become a way to ping a role.
+     */
+    private <T> Outcome activity(
+            ReleaseWebhook webhook, byte[] body, Class<T> type, BiFunction<String, T, Optional<MessageEmbed>> format) {
+        Optional<T> payload = read(body, type);
+        if (payload.isEmpty()) return Outcome.IGNORED;
+        Optional<Product> product = products.byId(webhook.productId());
+        if (product.isEmpty()) return Outcome.IGNORED;
+        Optional<MessageEmbed> embed = format.apply(product.get().name(), payload.get());
+        if (embed.isEmpty()) return Outcome.IGNORED;
+        Optional<GuildMessageChannel> channel = channel(webhook.activityChannelId());
+        if (channel.isEmpty()) {
+            log.debug("Activity of product {} not posted: no channel the bot can post in", webhook.productId());
+            return Outcome.ANNOUNCED;
+        }
+        channel.get()
+                .sendMessageEmbeds(embed.get())
+                .setAllowedMentions(List.of())
+                .queue(
+                        success -> {},
+                        error -> log.warn("Could not post activity of product {}", webhook.productId(), error));
+        return Outcome.ANNOUNCED;
+    }
+
+    private <T> Optional<T> read(byte[] body, Class<T> type) {
+        try {
+            return Optional.ofNullable(json.readValue(body, type));
+        } catch (IOException e) {
+            return Optional.empty();
+        }
     }
 
     private void announce(ReleaseWebhook webhook, Payload payload) {

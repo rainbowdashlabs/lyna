@@ -641,7 +641,7 @@
       "couldNotSave": "That could not be saved."
     },
     "releaseWebhookDetails": {
-      "howTo": "On GitHub: Settings, Webhooks, Add webhook. Content type application/json, and under events choose only Releases.",
+      "howTo": "On GitHub: Settings, Webhooks, Add webhook. Content type application/json, and under events choose Releases, Pushes, Pull requests and Issues.",
       "payloadUrl": "Payload URL",
       "secret": "Secret"
     },
@@ -803,6 +803,19 @@
       "none": "Not sold through Ko-fi yet.",
       "linkCode": "Link code",
       "add": "Add",
+      "couldNotSave": "That could not be saved."
+    },
+    "releaseActivityForm": {
+      "title": "Repository activity",
+      "explain": "Pushes to the default branch, pull requests and issues, posted in a channel of their own. Without a channel they are not posted.",
+      "channelId": "Activity channel id",
+      "push": "Pushes",
+      "prOpened": "Pull request opened",
+      "prMerged": "Pull request merged",
+      "issueOpened": "Issue opened",
+      "issueClosed": "Issue closed",
+      "save": "Save activity",
+      "saved": "Saved.",
       "couldNotSave": "That could not be saved."
     }
   },

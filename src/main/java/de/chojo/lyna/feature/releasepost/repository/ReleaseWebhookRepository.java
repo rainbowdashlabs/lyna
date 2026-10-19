@@ -23,21 +23,35 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 public class ReleaseWebhookRepository {
 
     /**
-     * @param token     what the webhook address ends in
-     * @param secret    what GitHub signs its deliveries with
-     * @param channelId where releases are announced, or 0 for nowhere yet
+     * @param token             what the webhook address ends in
+     * @param secret            what GitHub signs its deliveries with
+     * @param channelId         where releases are announced, or 0 for nowhere yet
+     * @param activityChannelId where pushes, pull requests and issues are posted, or 0 for nowhere
+     * @param activity          which of those are posted
      */
-    public record ReleaseWebhook(int productId, String token, String secret, long channelId) {}
+    public record ReleaseWebhook(
+            int productId, String token, String secret, long channelId, long activityChannelId, Activity activity) {}
+
+    /**
+     * Which of a repository's goings-on a product posts. All of them unless switched off.
+     */
+    public record Activity(boolean push, boolean prOpened, boolean prMerged, boolean issueOpened, boolean issueClosed) {
+        public static final Activity ALL = new Activity(true, true, true, true, true);
+    }
+
+    private static final String COLUMNS = """
+            product_id, token, secret, channel_id, activity_channel_id,
+            post_push, post_pr_opened, post_pr_merged, post_issue_opened, post_issue_closed""";
 
     public Optional<ReleaseWebhook> byToken(String token) {
-        return query("SELECT product_id, token, secret, channel_id FROM release_webhook WHERE token = ?")
+        return query("SELECT %s FROM release_webhook WHERE token = ?", COLUMNS)
                 .single(call().bind(token))
                 .map(ReleaseWebhookRepository::webhook)
                 .first();
     }
 
     public Optional<ReleaseWebhook> ofProduct(int productId) {
-        return query("SELECT product_id, token, secret, channel_id FROM release_webhook WHERE product_id = ?")
+        return query("SELECT %s FROM release_webhook WHERE product_id = ?", COLUMNS)
                 .single(call().bind(productId))
                 .map(ReleaseWebhookRepository::webhook)
                 .first();
@@ -63,6 +77,29 @@ public class ReleaseWebhookRepository {
                 .changed();
     }
 
+    /**
+     * Sets where a repository's goings-on are posted, and which of them.
+     *
+     * @return whether the product has a webhook to set them on
+     */
+    public boolean activity(int productId, long channelId, Activity activity) {
+        return query("""
+                UPDATE release_webhook
+                SET activity_channel_id = ?, post_push = ?, post_pr_opened = ?, post_pr_merged = ?,
+                    post_issue_opened = ?, post_issue_closed = ?
+                WHERE product_id = ?
+                """)
+                .single(call().bind(channelId == 0 ? null : channelId)
+                        .bind(activity.push())
+                        .bind(activity.prOpened())
+                        .bind(activity.prMerged())
+                        .bind(activity.issueOpened())
+                        .bind(activity.issueClosed())
+                        .bind(productId))
+                .update()
+                .changed();
+    }
+
     public boolean remove(int productId) {
         return query("DELETE FROM release_webhook WHERE product_id = ?")
                 .single(call().bind(productId))
@@ -72,6 +109,16 @@ public class ReleaseWebhookRepository {
 
     private static ReleaseWebhook webhook(Row row) throws SQLException {
         return new ReleaseWebhook(
-                row.getInt("product_id"), row.getString("token"), row.getString("secret"), row.getLong("channel_id"));
+                row.getInt("product_id"),
+                row.getString("token"),
+                row.getString("secret"),
+                row.getLong("channel_id"),
+                row.getLong("activity_channel_id"),
+                new Activity(
+                        row.getBoolean("post_push"),
+                        row.getBoolean("post_pr_opened"),
+                        row.getBoolean("post_pr_merged"),
+                        row.getBoolean("post_issue_opened"),
+                        row.getBoolean("post_issue_closed")));
     }
 }

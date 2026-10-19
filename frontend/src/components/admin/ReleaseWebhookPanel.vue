@@ -16,7 +16,7 @@ import {
 
 /**
  * The GitHub webhook that announces a product's releases in a Discord channel: the address and secret
- * to give GitHub, and the channel to post in.
+ * to give GitHub, the channel to post in, and where the repository's other goings-on go.
  */
 const props = defineProps<{
   guildId: string
@@ -80,6 +80,7 @@ onMounted(() => run(async () => show(await getReleaseWebhook(props.guildId, prop
         <ErrorButton :disabled="busy" @click="remove">{{ t('ui.releaseWebhookPanel.remove') }}</ErrorButton>
         <MutedText v-if="saved" size="sm">{{ t('ui.releaseWebhookPanel.saved') }}</MutedText>
       </div>
+      <ReleaseActivityForm :key="webhook.url" :guild-id="guildId" :product-id="productId" :webhook="webhook"/>
     </template>
     <template v-else>
       <MutedText size="sm" tag="p">{{ t('ui.releaseWebhookPanel.explain') }}</MutedText>
