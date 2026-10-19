@@ -345,6 +345,18 @@ export interface ReleaseWebhook {
     secret: string
     /** Text, because a Discord id is larger than a number holds exactly. */
     channelId: string | null
+    /** Where pushes, pull requests and issues are posted, or null for nowhere. */
+    activityChannelId: string | null
+    activity: ReleaseActivity
+}
+
+/** Which of a repository's goings-on are posted in the activity channel. */
+export interface ReleaseActivity {
+    push: boolean
+    prOpened: boolean
+    prMerged: boolean
+    issueOpened: boolean
+    issueClosed: boolean
 }
 
 /** The product's release webhook, or null when it has none. */
@@ -366,6 +378,11 @@ export async function issueReleaseWebhook(guildId: string, productId: number): P
 
 export async function setReleaseChannel(guildId: string, productId: number, channelId: string | null): Promise<void> {
     await client.put(`/api/admin/g/${guildId}/products/${productId}/release-webhook/channel`, {channelId})
+}
+
+export async function setReleaseActivity(
+    guildId: string, productId: number, channelId: string | null, activity: ReleaseActivity): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/products/${productId}/release-webhook/activity`, {channelId, ...activity})
 }
 
 export async function removeReleaseWebhook(guildId: string, productId: number): Promise<void> {
