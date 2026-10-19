@@ -38,6 +38,13 @@ public class DiscordOAuthClient {
                 HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     }
 
+    /**
+     * The address that asks Discord to vouch for somebody.
+     *
+     * <p>{@code prompt=none}: Discord skips its consent screen for somebody who has granted these
+     * scopes before, so signing in again is a redirect there and back. Somebody who has not is still
+     * asked.
+     */
     public String buildAuthorizeUrl(String state) {
         return AUTHORIZE_URL
                 + "?response_type=code"
@@ -45,7 +52,7 @@ public class DiscordOAuthClient {
                 + "&scope=" + url(SCOPE)
                 + "&redirect_uri=" + url(config.redirectUri())
                 + "&state=" + url(state)
-                + "&prompt=consent";
+                + "&prompt=none";
     }
 
     public String exchangeCode(String code) throws Exception {

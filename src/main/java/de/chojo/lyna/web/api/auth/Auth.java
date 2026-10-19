@@ -23,7 +23,9 @@ import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.SessionService;
 import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
+import io.javalin.http.Cookie;
 import io.javalin.http.HttpStatus;
+import io.javalin.http.SameSite;
 import org.slf4j.Logger;
 
 import java.security.SecureRandom;
@@ -295,9 +297,19 @@ public class Auth {
             ctx.status(HttpStatus.SERVICE_UNAVAILABLE).result("Discord sign-in is not configured on this instance.");
             return;
         }
-        String state = randomState();
-        ctx.cookie(STATE_COOKIE, state, 600);
-        ctx.redirect(oauthClient.buildAuthorizeUrl(state));
+        OAuthState started = new OAuthState(randomState(), ctx.queryParam("next"));
+        ctx.cookie(new Cookie(
+                STATE_COOKIE,
+                started.encode(),
+                "/",
+                600,
+                SessionCookie.secure(ctx),
+                0,
+                true,
+                null,
+                null,
+                SameSite.LAX));
+        ctx.redirect(oauthClient.buildAuthorizeUrl(started.state()));
     }
 
     /**
@@ -328,10 +340,14 @@ public class Auth {
         }
         String state = ctx.queryParam("state");
         String code = ctx.queryParam("code");
-        String cookieState = ctx.cookie(STATE_COOKIE);
+        Optional<OAuthState> started = OAuthState.decode(ctx.cookie(STATE_COOKIE));
         ctx.removeCookie(STATE_COOKIE, "/");
 
-        if (state == null || cookieState == null || !state.equals(cookieState) || code == null) {
+        if (code == null && ctx.queryParam("error") != null) {
+            ctx.redirect("/login");
+            return;
+        }
+        if (state == null || started.isEmpty() || !state.equals(started.get().state()) || code == null) {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid OAuth state");
             return;
         }
@@ -379,7 +395,10 @@ public class Auth {
         if (existing.isEmpty()) {
             SessionCookie.write(ctx, sessions.open(account.id(), ctx.header("User-Agent")));
         }
-        ctx.redirect(existing.isPresent() ? "/account/security?linked=1" : "/account");
+        ctx.redirect(
+                existing.isPresent()
+                        ? "/account/security?linked=1"
+                        : started.get().next());
     }
 
     private Credentials readCredentials(Context ctx) {
