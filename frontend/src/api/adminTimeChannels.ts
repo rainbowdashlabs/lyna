@@ -15,22 +15,10 @@ export interface TimeChannel {
     shows: string
 }
 
-export interface RenameableChannel {
-    id: string
-    name: string
-    type: string
-}
-
 const base = (guildId: string) => `/api/admin/g/${guildId}/time-channels`
 
 export async function listTimeChannels(guildId: string): Promise<TimeChannel[]> {
     const {data} = await client.get<TimeChannel[]>(base(guildId))
-    return data
-}
-
-/** The channels a clock can be put on; empty when no bot is connected. */
-export async function listRenameableChannels(guildId: string): Promise<RenameableChannel[]> {
-    const {data} = await client.get<RenameableChannel[]>(`${base(guildId)}/channels`)
     return data
 }
 

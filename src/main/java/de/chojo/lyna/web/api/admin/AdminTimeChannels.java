@@ -21,7 +21,6 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,8 +33,7 @@ import static io.javalin.apibuilder.ApiBuilder.post;
  * without one nothing can be set up; the list still answers.
  */
 public class AdminTimeChannels {
-    private static final Set<ChannelType> RENAMEABLE =
-            Set.of(ChannelType.VOICE, ChannelType.STAGE, ChannelType.CATEGORY);
+    static final Set<ChannelType> RENAMEABLE = Set.of(ChannelType.VOICE, ChannelType.STAGE, ChannelType.CATEGORY);
 
     private final GuildAdminGuard guard;
     private final TimeChannelRepository channels;
@@ -51,8 +49,6 @@ public class AdminTimeChannels {
     public record TimeChannelView(String channelId, String channelName, String zone, String template, String shows) {}
 
     public record TimeChannelSet(String channelId, String zone, String template) {}
-
-    public record ChannelView(String id, String name, String type) {}
 
     @Inject
     public AdminTimeChannels(
@@ -70,7 +66,6 @@ public class AdminTimeChannels {
         get("time-channels", this::list);
         post("time-channels", this::set);
         delete("time-channels/{channelId}", this::remove);
-        get("time-channels/channels", this::renameable);
         get("time-channels/zones", this::zones);
     }
 
@@ -150,23 +145,6 @@ public class AdminTimeChannels {
             return;
         }
         ctx.status(channels.remove(admin.guild().guildId(), channelId) ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
-    }
-
-    /**
-     * The channels a clock can be put on. Empty without a bot.
-     */
-    private void renameable(Context ctx) {
-        var admin = guard.require(ctx);
-        if (admin == null) return;
-        ctx.json(gateway.guild(admin.guild().guildId())
-                .map(guild -> guild.getChannels().stream()
-                        .filter(channel -> RENAMEABLE.contains(channel.getType()))
-                        .map(channel -> new ChannelView(
-                                channel.getId(),
-                                channel.getName(),
-                                channel.getType().name()))
-                        .toList())
-                .orElse(List.of()));
     }
 
     private void zones(Context ctx) {

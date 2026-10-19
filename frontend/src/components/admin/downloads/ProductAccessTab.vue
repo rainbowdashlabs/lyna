@@ -7,9 +7,7 @@
 import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {
-  type GuildRole,
   grantRoleAccess,
-  listGuildRoles,
   listRoleAccess,
   RELEASE_TYPES,
   type ReleaseType,
@@ -20,22 +18,18 @@ import {useAdminAction} from '~/composables/useAdminAction'
 
 /**
  * Which Discord roles may download which release type of a product: what {@code /downloads roles}
- * manages. With a bot connected roles are picked by name; without one, typed by id.
+ * manages.
  */
 const props = defineProps<{ guildId: string, productId: number }>()
 
 const {t} = useI18n()
 const access = ref<RoleAccess[]>([])
-const roles = ref<GuildRole[]>([])
 const roleId = ref('')
 const releaseType = ref<ReleaseType>('STABLE')
 const {busy, error, run} = useAdminAction(() => t('ui.productAccessTab.couldNotSave'))
 
 async function load() {
-  [access.value, roles.value] = await Promise.all([
-    listRoleAccess(props.guildId, props.productId),
-    listGuildRoles(props.guildId),
-  ])
+  access.value = await listRoleAccess(props.guildId, props.productId)
 }
 
 async function grant() {
@@ -63,11 +57,7 @@ onMounted(load)
     </ul>
     <section class="grid items-end gap-3 border border-border-light p-4 sm:grid-cols-[2fr_1fr_auto] dark:border-border-dark">
       <LabelledField :label="t('ui.productAccessTab.role')">
-        <SelectInput v-if="roles.length" v-model="roleId">
-          <option disabled value="">{{ t('ui.productAccessTab.choose') }}</option>
-          <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.name }}</option>
-        </SelectInput>
-        <TextInput v-else v-model="roleId" :placeholder="t('ui.productAccessTab.roleId')"/>
+        <RolePicker v-model="roleId" :guild-id="guildId"/>
       </LabelledField>
       <LabelledField :label="t('ui.productAccessTab.releaseType')">
         <SelectInput v-model="releaseType">

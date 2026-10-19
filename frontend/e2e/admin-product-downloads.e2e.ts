@@ -48,7 +48,7 @@ test.describe('A product\'s downloads and access', () => {
         await operatorPage(page)
         await page.goto(`/admin/g/${GUILD}/products/${id}?tab=access`)
 
-        await page.getByPlaceholder('Discord role id').fill('123456789')
+        await page.getByPlaceholder('Role id').fill('123456789')
         await page.getByLabel('Release type').selectOption('DEV')
         await page.getByRole('button', {name: 'Grant'}).click()
 

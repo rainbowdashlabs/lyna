@@ -6,13 +6,13 @@
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
 import {ref, watch} from 'vue'
-import {matchingZones, type RenameableChannel, setTimeChannel} from '~/api/adminTimeChannels'
+import {matchingZones, setTimeChannel} from '~/api/adminTimeChannels'
 import {useAdminAction} from '~/composables/useAdminAction'
 
 /**
  * Putting a clock on a channel: which channel, which zone, and what the name says around the time.
  */
-const props = defineProps<{ guildId: string, channels: RenameableChannel[] }>()
+const props = defineProps<{ guildId: string }>()
 const emit = defineEmits<{ saved: [] }>()
 
 const {t} = useI18n()
@@ -37,10 +37,7 @@ async function save() {
     <CardHeader>{{ t('ui.timeChannelForm.title') }}</CardHeader>
     <div class="grid gap-3 sm:grid-cols-3">
       <LabelledField :label="t('ui.timeChannelForm.channel')">
-        <SelectInput v-model="channelId">
-          <option disabled value="">{{ t('ui.timeChannelForm.choose') }}</option>
-          <option v-for="channel in channels" :key="channel.id" :value="channel.id">{{ channel.name }}</option>
-        </SelectInput>
+        <ChannelPicker v-model="channelId" :guild-id="guildId" purpose="renaming"/>
       </LabelledField>
       <LabelledField :label="t('ui.timeChannelForm.zone')">
         <TextInput v-model="zone" :placeholder="t('ui.timeChannelForm.zonePlaceholder')" list="time-zones"/>

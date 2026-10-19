@@ -30,7 +30,7 @@ const save = () => run(() => setReleaseActivity(props.guildId, props.productId, 
     <SectionLabel>{{ t('ui.releaseActivityForm.title') }}</SectionLabel>
     <MutedText class="block" size="xs">{{ t('ui.releaseActivityForm.explain') }}</MutedText>
     <LabelledField :label="t('ui.releaseActivityForm.channelId')">
-      <TextInput v-model="channelId"/>
+      <ChannelPicker v-model="channelId" :guild-id="guildId" optional purpose="posting"/>
     </LabelledField>
     <div class="flex flex-wrap gap-4">
       <label v-for="key in SWITCHES" :key="key" class="flex items-center gap-2 text-sm">

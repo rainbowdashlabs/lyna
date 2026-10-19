@@ -70,11 +70,6 @@ export interface RoleAccess {
     releaseType: ReleaseType
 }
 
-export interface GuildRole {
-    id: string
-    name: string
-}
-
 const product = (guildId: string, productId: number) => `/api/admin/g/${guildId}/products/${productId}`
 
 export async function listProductDownloads(guildId: string, productId: number): Promise<ProductDownload[]> {
@@ -107,10 +102,4 @@ export async function grantRoleAccess(guildId: string, productId: number, roleId
 
 export async function revokeRoleAccess(guildId: string, productId: number, roleId: string, releaseType: ReleaseType): Promise<void> {
     await client.delete(`${product(guildId, productId)}/role-access/${roleId}/${releaseType}`)
-}
-
-/** The guild's roles, for picking one. Empty when no bot is connected; a role is then typed by id. */
-export async function listGuildRoles(guildId: string): Promise<GuildRole[]> {
-    const {data} = await client.get<GuildRole[]>(`/api/admin/g/${guildId}/roles`)
-    return data
 }

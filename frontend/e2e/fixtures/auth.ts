@@ -71,8 +71,12 @@ export async function logOut(page: Page): Promise<void> {
 /**
  * Throws away the session cookie without telling the backend, for stories about what a visitor
  * without one sees.
+ *
+ * <p>Waits for the page to stop talking to the backend first. The stack renews the session on every
+ * request, so an answer still on its way would set the cookie again after it was thrown away.
  */
 export async function forgetSession(page: Page): Promise<void> {
+    await page.waitForLoadState('networkidle')
     await page.context().clearCookies({name: SESSION_COOKIE})
 }
 

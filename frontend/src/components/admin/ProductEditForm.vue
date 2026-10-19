@@ -69,7 +69,7 @@ async function save() {
       <TextInput v-model="name" required/>
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.roleId')">
-      <TextInput v-model="roleId"/>
+      <RolePicker v-model="roleId" :guild-id="guildId"/>
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.projectUrl')">
       <TextInput v-model="url" type="url"/>
