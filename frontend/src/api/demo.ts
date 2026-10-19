@@ -27,7 +27,6 @@ export async function demoAccounts(): Promise<DemoAccount[] | null> {
     }
 }
 
-export async function demoLogin(email: string): Promise<{token: string}> {
-    const {data} = await client.post<{token: string}>('/api/v1/demo/login', {email})
-    return data
+export async function demoLogin(email: string): Promise<void> {
+    await client.post('/api/v1/demo/login', {email})
 }

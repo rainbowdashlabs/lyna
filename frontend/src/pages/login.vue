@@ -4,19 +4,25 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
-import {ref} from 'vue'
+import {computed, ref} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {useRoute, useRouter} from 'vue-router'
 import {login} from '~/api/account'
 import {useSession} from '~/composables/useSession'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import {usePageTitle} from '~/composables/usePageTitle'
+import {discordStartUrl, rememberSignInMethod} from '~/util/signIn'
 
 const {t} = useI18n()
 usePageTitle(t('auth.login'))
 const route = useRoute()
 const router = useRouter()
-const {setToken, hydrate} = useSession()
+const {refresh} = useSession()
+
+const next = computed(() => {
+  const raw = typeof route.query.next === 'string' ? route.query.next : null
+  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/account'
+})
 
 const email = ref('')
 const password = ref('')
@@ -27,11 +33,10 @@ async function submit() {
   submitting.value = true
   errorMessage.value = null
   try {
-    const result = await login({email: email.value, password: password.value})
-    setToken(result.token)
-    await hydrate()
-    const next = typeof route.query.next === 'string' ? route.query.next : '/account'
-    await router.replace(next)
+    await login({email: email.value, password: password.value})
+    rememberSignInMethod('password')
+    await refresh()
+    await router.replace(next.value)
   } catch (e) {
     const error = e as {response?: {status?: number}}
     errorMessage.value = error.response?.status === 401
@@ -63,8 +68,9 @@ async function submit() {
         {{ submitting ? t('auth.signingIn') : t('auth.login') }}
       </PrimaryButton>
       <a
-          href="/api/auth/discord/start"
+          :href="discordStartUrl(next)"
           class="block w-full rounded-theme border border-border-light dark:border-border-dark py-2 text-center font-medium hover:bg-primary/10"
+          @click="rememberSignInMethod('discord')"
       >
         {{ t('auth.loginWithDiscord') }}
       </a>

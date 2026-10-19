@@ -40,7 +40,7 @@ const signedIn = computed(() => account.value !== null)
  * Resolves who is looking before drawing the catalogue.
  *
  * <p>The session decides which chips the filter row offers and whether a premium tile suggests
- * linking Discord, so it is settled first; the catalogue call carries the token either way, which
+ * linking Discord, so it is settled first; the catalogue call carries the session cookie either way, which
  * is what makes a tile say `Owned`.
  */
 async function load() {

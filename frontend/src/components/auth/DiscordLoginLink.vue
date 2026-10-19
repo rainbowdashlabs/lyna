@@ -4,6 +4,8 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
+import {discordStartUrl, rememberSignInMethod} from '~/util/signIn'
+
 withDefaults(defineProps<{
     label?: string
 }>(), {
@@ -14,7 +16,8 @@ withDefaults(defineProps<{
 <template>
   <a
       class="block w-full rounded-theme border border-border-light py-2 text-center font-medium hover:bg-primary/10 dark:border-border-dark"
-      href="/api/auth/discord/start"
+      :href="discordStartUrl()"
+      @click="rememberSignInMethod('discord')"
   >
     {{ label }}
   </a>
