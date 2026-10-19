@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
+import java.util.random.RandomGenerator;
 import java.util.regex.Pattern;
 
 /**
@@ -40,10 +42,20 @@ public class UsernameService {
     private static final int DISCRIMINATOR_ATTEMPTS = 12;
 
     private final AccountRepository accounts;
+    private final Supplier<RandomGenerator> random;
 
     @Inject
     public UsernameService(AccountRepository accounts) {
+        this(accounts, ThreadLocalRandom::current);
+    }
+
+    /**
+     * @param random where the digits tried first come from; the running application asks the
+     *               calling thread's own generator, a test one whose guesses it knows
+     */
+    public UsernameService(AccountRepository accounts, Supplier<RandomGenerator> random) {
         this.accounts = accounts;
+        this.random = random;
     }
 
     /**
@@ -107,7 +119,7 @@ public class UsernameService {
      */
     private Optional<String> allocate(int accountId, String username) {
         for (int attempt = 0; attempt < DISCRIMINATOR_ATTEMPTS; attempt++) {
-            String discriminator = "%04d".formatted(ThreadLocalRandom.current().nextInt(1, 10_000));
+            String discriminator = "%04d".formatted(random.get().nextInt(1, 10_000));
             if (accounts.writeUsername(accountId, username, discriminator)) return Optional.of(discriminator);
         }
         for (String discriminator : free(username)) {
