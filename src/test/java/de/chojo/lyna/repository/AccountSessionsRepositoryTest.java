@@ -14,9 +14,11 @@ import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,14 +85,102 @@ class AccountSessionsRepositoryTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("Being seen again stamps the session with the time")
-    void touchLastSeen() {
+    @DisplayName("Being seen again stamps a live session with the time")
+    void touchIfLiveStampsTheSession() {
         accountSessions.record("seen", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
         assertNull(accountSessions.find("seen").orElseThrow().lastSeenAt());
 
-        accountSessions.touchLastSeen("seen");
+        assertTrue(accountSessions.touchIfLive("seen"));
 
         assertNotNull(accountSessions.find("seen").orElseThrow().lastSeenAt());
+    }
+
+    @Test
+    @DisplayName("Being seen twice within a minute writes the time once")
+    void touchIsThrottled() throws SQLException {
+        accountSessions.record("busy", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.touchIfLive("busy");
+        Instant first = accountSessions.find("busy").orElseThrow().lastSeenAt();
+
+        assertTrue(accountSessions.touchIfLive("busy"));
+        assertEquals(first, accountSessions.find("busy").orElseThrow().lastSeenAt());
+
+        execute("UPDATE %s.account_session SET last_seen_at = now() - INTERVAL '2 minutes' WHERE jti = 'busy'");
+        Instant stale = accountSessions.find("busy").orElseThrow().lastSeenAt();
+        assertTrue(accountSessions.touchIfLive("busy"));
+        assertTrue(accountSessions.find("busy").orElseThrow().lastSeenAt().isAfter(stale));
+    }
+
+    @Test
+    @DisplayName("A revoked, an expired and an unknown session are none of them live")
+    void onlyLiveSessionsAreLive() {
+        accountSessions.record("ended", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.revoke("ended");
+        accountSessions.record("lapsed", account.id(), Instant.now().minus(Duration.ofHours(1)), null);
+
+        assertFalse(accountSessions.touchIfLive("ended"));
+        assertFalse(accountSessions.touchIfLive("lapsed"));
+        assertFalse(accountSessions.touchIfLive("never-issued"));
+        assertNull(accountSessions.find("ended").orElseThrow().lastSeenAt());
+    }
+
+    @Test
+    @DisplayName("Revoking ends the session once and keeps the row, so it can say when")
+    void revokeKeepsTheRow() {
+        accountSessions.record("out", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+
+        assertTrue(accountSessions.revoke("out"));
+        assertFalse(accountSessions.revoke("out"), "a second revocation has nothing left to end");
+
+        AccountSession ended = accountSessions.find("out").orElseThrow();
+        assertNotNull(ended.revokedAt());
+        assertTrue(accountSessions.activeForAccount(account.id()).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Signing out on one device leaves the account's other devices signed in")
+    void revokeIsPerDevice() {
+        accountSessions.record("laptop", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.record("phone", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+
+        accountSessions.revoke("laptop");
+
+        assertFalse(accountSessions.touchIfLive("laptop"));
+        assertTrue(accountSessions.touchIfLive("phone"));
+    }
+
+    @Test
+    @DisplayName("Ending the other sessions keeps the one named and leaves other accounts alone")
+    void revokeOthersKeepsTheCurrentOne() {
+        Account other = accountService.register("bystander@example.invalid", "hash");
+        accountSessions.record("current", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.record("phone", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.record("desktop", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.record("theirs", other.id(), Instant.now().plus(Duration.ofHours(1)), null);
+
+        assertEquals(2, accountSessions.revokeOthers(account.id(), "current"));
+
+        assertEquals(
+                List.of("current"),
+                accountSessions.activeForAccount(account.id()).stream()
+                        .map(AccountSession::jti)
+                        .toList());
+        assertTrue(accountSessions.touchIfLive("theirs"));
+    }
+
+    @Test
+    @DisplayName("Renewing moves a live session's expiry and leaves an ended one ended")
+    void renewMovesTheExpiry() {
+        Instant later = Instant.now().plus(Duration.ofDays(30)).truncatedTo(ChronoUnit.SECONDS);
+        accountSessions.record("kept", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.record("gone", account.id(), Instant.now().plus(Duration.ofHours(1)), null);
+        accountSessions.revoke("gone");
+
+        assertTrue(accountSessions.renew("kept", later));
+        assertFalse(accountSessions.renew("gone", later));
+
+        assertEquals(later, accountSessions.find("kept").orElseThrow().expiresAt());
+        assertFalse(accountSessions.touchIfLive("gone"));
     }
 
     @Test

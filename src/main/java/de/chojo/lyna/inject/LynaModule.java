@@ -51,7 +51,6 @@ import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
-import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
@@ -339,7 +338,6 @@ public class LynaModule extends AbstractModule {
         bind(AccountLicenseRepository.class).in(Singleton.class);
         bind(LicenseInviteRepository.class).in(Singleton.class);
         bind(AccountSessionRepository.class).in(Singleton.class);
-        bind(RevokedJtiRepository.class).in(Singleton.class);
         bind(DownloadLogRepository.class).in(Singleton.class);
         bind(DemoArtifactRepository.class).in(Singleton.class);
         bind(InstanceSettingsRepository.class).in(Singleton.class);

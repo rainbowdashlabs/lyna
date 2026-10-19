@@ -18,7 +18,6 @@ import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
-import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
@@ -48,7 +47,6 @@ public class Auth {
     private final AccountService accountService;
     private final AccountEmailService accountEmails;
     private final AccountSessionRepository accountSessions;
-    private final RevokedJtiRepository revokedJtis;
     private final PasswordResetTokenRepository passwordResetTokens;
     private final EmailVerificationTokenRepository emailTokens;
     private final PasswordHasher passwordHasher;
@@ -65,7 +63,6 @@ public class Auth {
             AccountService accountService,
             AccountEmailService accountEmails,
             AccountSessionRepository accountSessions,
-            RevokedJtiRepository revokedJtis,
             PasswordResetTokenRepository passwordResetTokens,
             EmailVerificationTokenRepository emailTokens,
             PasswordHasher passwordHasher,
@@ -78,7 +75,6 @@ public class Auth {
         this.accountService = accountService;
         this.accountEmails = accountEmails;
         this.accountSessions = accountSessions;
-        this.revokedJtis = revokedJtis;
         this.passwordResetTokens = passwordResetTokens;
         this.emailTokens = emailTokens;
         this.passwordHasher = passwordHasher;
@@ -252,7 +248,7 @@ public class Auth {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
         }
-        revokedJtis.revoke(verified.get().jti(), verified.get().expiresAt());
+        accountSessions.revoke(verified.get().jti());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -414,7 +410,7 @@ public class Auth {
         if (token.isEmpty()) return Optional.empty();
         Optional<JwtService.Verified> verified = jwtService.verify(token);
         if (verified.isEmpty()) return Optional.empty();
-        if (revokedJtis.isRevoked(verified.get().jti())) return Optional.empty();
+        if (!accountSessions.touchIfLive(verified.get().jti())) return Optional.empty();
         return verified;
     }
 

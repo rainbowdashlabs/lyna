@@ -34,7 +34,7 @@ class SessionServiceTest extends RepositoryTestBase {
 
     @BeforeEach
     void freshSession() throws SQLException {
-        clear("account_session", "revoked_jti", "account_identity", "account");
+        clear("account_session", "account_identity", "account");
         Auth config = Mockito.mock(Auth.class);
         Mockito.when(config.jwtSecret()).thenReturn("service-test-secret");
         Mockito.when(config.jwtExpirySeconds()).thenReturn(3600L);
@@ -61,7 +61,7 @@ class SessionServiceTest extends RepositoryTestBase {
         assertEquals(issued.jti(), verified.jti());
 
         assertEquals(1, accountSessions.activeForAccount(account.id()).size());
-        assertFalse(revokedJtis.isRevoked(issued.jti()));
+        assertTrue(accountSessions.touchIfLive(issued.jti()));
     }
 
     @Test
@@ -69,10 +69,10 @@ class SessionServiceTest extends RepositoryTestBase {
     void signOutRevokesTheToken() {
         JwtService.Issued issued = signIn("Firefox");
 
-        revokedJtis.revoke(issued.jti(), issued.expiresAt());
+        accountSessions.revoke(issued.jti());
 
         assertTrue(jwt.verify(issued.token()).isPresent());
-        assertTrue(revokedJtis.isRevoked(issued.jti()));
+        assertFalse(accountSessions.touchIfLive(issued.jti()));
     }
 
     @Test
@@ -82,14 +82,11 @@ class SessionServiceTest extends RepositoryTestBase {
         JwtService.Issued phone = signIn("Safari on iOS");
         JwtService.Issued desktop = signIn("Chrome");
 
-        for (AccountSession session : accountSessions.activeForAccount(account.id())) {
-            if (session.jti().equals(current.jti())) continue;
-            revokedJtis.revoke(session.jti(), session.expiresAt());
-        }
+        accountSessions.revokeOthers(account.id(), current.jti());
 
-        assertFalse(revokedJtis.isRevoked(current.jti()));
-        assertTrue(revokedJtis.isRevoked(phone.jti()));
-        assertTrue(revokedJtis.isRevoked(desktop.jti()));
+        assertTrue(accountSessions.touchIfLive(current.jti()));
+        assertFalse(accountSessions.touchIfLive(phone.jti()));
+        assertFalse(accountSessions.touchIfLive(desktop.jti()));
     }
 
     @Test
@@ -122,7 +119,7 @@ class SessionServiceTest extends RepositoryTestBase {
     void sessionRemembersItsClient() {
         JwtService.Issued issued = signIn("Firefox on Linux");
 
-        accountSessions.touchLastSeen(issued.jti());
+        accountSessions.touchIfLive(issued.jti());
 
         AccountSession session = accountSessions.find(issued.jti()).orElseThrow();
         assertEquals("Firefox on Linux", session.userAgent());

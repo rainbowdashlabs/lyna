@@ -18,7 +18,6 @@ import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
-import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.UsernameService;
@@ -64,7 +63,6 @@ public class Account {
     private final EmailVerificationTokenRepository emailTokens;
     private final Conf configuration;
     private final AccountSessionRepository sessions;
-    private final RevokedJtiRepository revokedJtis;
     private final DownloadLogRepository downloadLog;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
@@ -84,7 +82,6 @@ public class Account {
             EmailVerificationTokenRepository emailTokens,
             Conf configuration,
             AccountSessionRepository sessions,
-            RevokedJtiRepository revokedJtis,
             DownloadLogRepository downloadLog,
             PasswordHasher passwordHasher,
             JwtService jwtService) {
@@ -100,7 +97,6 @@ public class Account {
         this.emailTokens = emailTokens;
         this.configuration = configuration;
         this.sessions = sessions;
-        this.revokedJtis = revokedJtis;
         this.downloadLog = downloadLog;
         this.passwordHasher = passwordHasher;
         this.jwtService = jwtService;
@@ -225,20 +221,14 @@ public class Account {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        revokedJtis.revoke(jti, entry.get().expiresAt());
+        sessions.revoke(jti);
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
     private void endOtherSessions(Context ctx) {
         var session = require(ctx);
         if (session.isEmpty()) return;
-        List<AccountSession> active = sessions.activeForAccount(session.get().accountId());
-        String currentJti = session.get().jti();
-        for (var s : active) {
-            if (!s.jti().equals(currentJti)) {
-                revokedJtis.revoke(s.jti(), s.expiresAt());
-            }
-        }
+        sessions.revokeOthers(session.get().accountId(), session.get().jti());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 

@@ -31,7 +31,6 @@ import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
-import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.guild.Guilds;
@@ -136,7 +135,6 @@ class LynaModuleTest {
                 AccountLicenseRepository.class,
                 LicenseInviteRepository.class,
                 AccountSessionRepository.class,
-                RevokedJtiRepository.class,
                 DownloadLogRepository.class,
                 DemoArtifactRepository.class,
                 InstanceSettingsRepository.class,
