@@ -39,6 +39,43 @@ test.describe('Managing licenses', () => {
         await deleteProduct(operator, id, name)
     })
 
+    test('a license issued without naming release types reaches stable builds', async ({signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Defaulted')
+        const id = await createProduct(operator, name)
+
+        const issued = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
+            data: {productId: id, identifier: uniqueName('buyer').replace(' ', '-')},
+        })).json()
+        const access = await (await operator.get(`/api/admin/g/${GUILD}/licenses/${issued.id}/access`)).json()
+
+        expect(access.releaseTypes).toEqual(['STABLE'])
+        await deleteProduct(operator, id, name)
+    })
+
+    test('a license issued on the page reaches the release types ticked there', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Chosen')
+        const identifier = uniqueName('buyer').replace(' ', '-')
+        const id = await createProduct(operator, name)
+        await operatorPage(page)
+        await page.goto(`/admin/g/${GUILD}/licenses`)
+
+        await page.getByRole('button', {name: 'Issue license'}).click()
+        await page.getByLabel('Product').selectOption({label: name})
+        await page.getByLabel('Identifier (mail / order id)').fill(identifier)
+        await page.locator('label').filter({hasText: 'STABLE'}).getByRole('checkbox').uncheck()
+        await page.locator('label').filter({hasText: 'DEV'}).getByRole('checkbox').check()
+        await page.getByRole('button', {name: 'Issue', exact: true}).click()
+        await expect(page.getByText('License issued')).toBeVisible()
+
+        const licenses = await (await operator.get(`/api/admin/g/${GUILD}/licenses`)).json()
+        const issued = licenses.find((license: {identifier: string}) => license.identifier === identifier)
+        const access = await (await operator.get(`/api/admin/g/${GUILD}/licenses/${issued.id}/access`)).json()
+        expect(access.releaseTypes).toEqual(['DEV'])
+        await deleteProduct(operator, id, name)
+    })
+
     test('a Ko-fi code is unlinked from the Ko-fi page', async ({page, signedIn}) => {
         const operator = await signedIn(OPERATOR)
         const name = uniqueName('Sold')

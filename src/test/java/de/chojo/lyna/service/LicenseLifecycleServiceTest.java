@@ -224,4 +224,19 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
 
         assertEquals(java.util.Optional.of(OTHER), licenseRepository.ownerDiscordId(licenseId));
     }
+
+    @Test
+    @DisplayName("A new licence reaches stable builds unless told otherwise, and what it is told when it is")
+    void initialAccess() {
+        License license = license();
+
+        assertEquals(List.of(ReleaseType.STABLE), licenseService.grantInitialAccess(license, null));
+        assertEquals(
+                List.of(ReleaseType.STABLE, ReleaseType.DEV),
+                licenseService.grantInitialAccess(license, List.of(ReleaseType.DEV)));
+        assertEquals(
+                List.of(ReleaseType.STABLE, ReleaseType.DEV),
+                licenseService.grantInitialAccess(license, List.of()),
+                "naming nothing grants nothing more");
+    }
 }

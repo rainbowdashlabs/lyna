@@ -7,6 +7,7 @@
 import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
+import type {ReleaseType} from '~/api/adminDownloads'
 import {createGuildLicense, listGuildLicenses, listGuildProducts, type LicenseSummary, type ProductSummary} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
@@ -28,6 +29,7 @@ const errorMessage = ref<string | null>(null)
 const showCreate = ref(false)
 const createProductId = ref<number | null>(null)
 const createIdentifier = ref('')
+const createReleaseTypes = ref<ReleaseType[]>(['STABLE'])
 const createBusy = ref(false)
 const createError = ref<string | null>(null)
 const issuedKey = ref<string | null>(null)
@@ -70,7 +72,7 @@ async function submitCreate() {
   createBusy.value = true
   createError.value = null
   try {
-    const detail = await createGuildLicense(guildId.value, createProductId.value, createIdentifier.value)
+    const detail = await createGuildLicense(guildId.value, createProductId.value, createIdentifier.value, createReleaseTypes.value)
     issuedKey.value = detail.key
     createProductId.value = null
     createIdentifier.value = ''
@@ -113,6 +115,7 @@ async function submitCreate() {
           <TextInput v-model="createIdentifier" required/>
         </LabelledField>
       </div>
+      <ReleaseTypePicker v-model="createReleaseTypes" class="mt-3"/>
       <div v-if="createError" class="mt-2 text-sm text-error">
         {{ createError }}
       </div>

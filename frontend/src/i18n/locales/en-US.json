@@ -817,6 +817,9 @@
       "save": "Save activity",
       "saved": "Saved.",
       "couldNotSave": "That could not be saved."
+    },
+    "releaseTypePicker": {
+      "reaches": "Reaches"
     }
   },
   "preview": {
