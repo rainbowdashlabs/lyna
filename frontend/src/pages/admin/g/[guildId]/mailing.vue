@@ -5,10 +5,23 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {onMounted, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
-import {listMailings, type MailBlock, type MailingTemplate} from '~/api/admin'
+import {
+  createMissingMailings,
+  getGuildMail,
+  type GuildMail,
+  listMailings,
+  type MailBlock,
+  type MailingTemplate,
+  previewMailing,
+  saveMailingBlocks,
+  sendTestMail,
+  useDefaultMailing,
+} from '~/api/admin'
+import {useAdminAction} from '~/composables/useAdminAction'
 import {usePageTitle} from '~/composables/usePageTitle'
+import {mailingStateKey, parseMailBlocks} from '~/util/mailing'
 
 const {t} = useI18n()
 usePageTitle(t('layout.admin.mailing'))
@@ -19,17 +32,22 @@ const route = useRoute()
 const guildId = ref(String(route.params.guildId))
 
 const templates = ref<MailingTemplate[]>([])
+const guildMail = ref<GuildMail | null>(null)
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 const editing = ref<MailingTemplate | null>(null)
+const editingDefault = ref(false)
+const {busy, error: actionError, run} = useAdminAction(() => t('page.admin.g.guildId.mailing.couldNotDoThat'))
 
 async function load() {
   loading.value = true
   errorMessage.value = null
   try {
-    templates.value = await listMailings(guildId.value)
+    const [mailings, guild] = await Promise.all([listMailings(guildId.value), getGuildMail(guildId.value)])
+    templates.value = mailings
+    guildMail.value = guild
   } catch (e) {
-    errorMessage.value = (e as Error).message ?? 'Failed to load the templates.'
+    errorMessage.value = (e as Error).message ?? t('page.admin.g.guildId.mailing.couldNotLoad')
   } finally {
     loading.value = false
   }
@@ -38,27 +56,42 @@ async function load() {
 watch(() => route.params.guildId, next => {
   guildId.value = String(next)
   editing.value = null
+  editingDefault.value = false
   void load()
 })
 
 onMounted(load)
+
+const defaultBlocks = computed(() => parseMailBlocks(guildMail.value?.blocks ?? null))
 
 /**
  * What the editor starts with.
  *
  * <p>A mail composed before the editor existed opens as the one HTML block it is, rather than being
  * guessed at: nobody can turn arbitrary markup back into blocks reliably, and silently rewriting
- * somebody's mail is worse than showing it as what it is.
+ * somebody's mail is worse than showing it as what it is. A product on the guild's default opens
+ * empty, which is what saving it empty keeps it on.
  */
 function blocksOf(template: MailingTemplate): MailBlock[] {
-  if (template.blocks) {
-    try {
-      return JSON.parse(template.blocks) as MailBlock[]
-    } catch {
-      return []
-    }
-  }
+  if (template.usesDefault) return []
+  if (template.blocks) return parseMailBlocks(template.blocks)
   return template.mailText ? [{type: 'raw', html: template.mailText}] : []
+}
+
+async function addMissing() {
+  await run(() => createMissingMailings(guildId.value))
+  await load()
+}
+
+async function backToDefault(template: MailingTemplate) {
+  await run(() => useDefaultMailing(guildId.value, template.id))
+  editing.value = null
+  await load()
+}
+
+function close() {
+  editing.value = null
+  editingDefault.value = false
 }
 </script>
 
@@ -71,36 +104,48 @@ function blocksOf(template: MailingTemplate): MailBlock[] {
       {{ t('page.admin.g.guildId.mailing.theMailSentWhenSomebodyBuys') }}
     </MutedText>
 
-    <AsyncSection
-        :empty="!loading && templates.length === 0"
-        :error="errorMessage ?? undefined"
-        :loading="loading"
-        empty-message="No product in this guild has a mail template yet."
-    >
-      <MailingEditorPanel
-          v-if="editing"
-          :blocks="blocksOf(editing)"
+    <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
+      <GuildMailEditor
+          v-if="editingDefault && guildMail"
           :guild-id="guildId"
-          :template="editing"
-          @close="editing = null"
-          @saved="load"
+          :guild-mail="guildMail"
+          :values="templates[0]?.values"
+          @changed="load"
+          @close="close"
       />
-      <ul v-else class="space-y-2">
-        <li v-for="template in templates" :key="template.id">
-          <NeutralContainer>
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <div class="font-medium">{{ template.productName }}</div>
-                <MutedText tag="div">
-                  {{ template.name }}
-                  <template v-if="!template.blocks"> {{ t('page.admin.g.guildId.mailing.middotWrittenBeforeTheEditor') }}</template>
-                </MutedText>
-              </div>
-              <PrimaryButton compact @click="editing = template">{{ t('common.edit') }}</PrimaryButton>
-            </div>
-          </NeutralContainer>
-        </li>
-      </ul>
+
+      <MailingEditorPanel
+          v-else-if="editing"
+          :blocks="blocksOf(editing)"
+          :preview="(blocks: MailBlock[]) => previewMailing(guildId, editing!.id, blocks)"
+          :save="(blocks: MailBlock[]) => saveMailingBlocks(guildId, editing!.id, blocks)"
+          :send-test="(address: string) => sendTestMail(guildId, editing!.id, address)"
+          :starter="{label: t('page.admin.g.guildId.mailing.loadDefault'), blocks: defaultBlocks}"
+          :subtitle="`${editing.name} · ${t(mailingStateKey(editing))}`"
+          :title="editing.productName"
+          :values="editing.values"
+          @close="close"
+          @saved="load"
+      >
+        <template #actions>
+          <SecondaryButton v-if="!editing.usesDefault" :disabled="busy" compact @click="backToDefault(editing)">
+            {{ t('page.admin.g.guildId.mailing.useDefault') }}
+          </SecondaryButton>
+        </template>
+      </MailingEditorPanel>
+
+      <MailingOverview
+          v-else
+          :action-error="actionError"
+          :busy="busy"
+          :guild-id="guildId"
+          :guild-mail="guildMail"
+          :templates="templates"
+          @add-missing="addMissing"
+          @edit="template => editing = template"
+          @edit-default="editingDefault = true"
+          @reload="load"
+      />
     </AsyncSection>
   </div>
 </template>

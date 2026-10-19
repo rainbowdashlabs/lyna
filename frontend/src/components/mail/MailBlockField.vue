@@ -21,28 +21,45 @@ const itemsText = computed({
     get: () => block.value.type === 'list' ? block.value.items.join('\n') : '',
     set: (value: string) => {
         if (block.value.type !== 'list') return
-        block.value = {type: 'list', items: value.split('\n').map(line => line.trim()).filter(Boolean)}
+        block.value = {...block.value, items: value.split('\n').map(line => line.trim()).filter(Boolean)}
+    },
+})
+
+const centred = computed({
+    get: () => (block.value.type === 'heading' || block.value.type === 'paragraph') && block.value.align === 'center',
+    set: (value: boolean) => {
+        if (block.value.type !== 'heading' && block.value.type !== 'paragraph') return
+        block.value = {...block.value, align: value ? 'center' : undefined}
+    },
+})
+
+const emphasis = computed({
+    get: () => block.value.type === 'paragraph' && block.value.emphasis === true,
+    set: (value: boolean) => {
+        if (block.value.type !== 'paragraph') return
+        block.value = {...block.value, emphasis: value || undefined}
     },
 })
 </script>
 
 <template>
   <div class="space-y-2">
-    <LabelledField
-        v-if="block.type === 'heading'"
-        help="Placeholders: {{ name }} {{ key }} {{ product }} {{ downloadUrl }}"
-        :label="t('ui.mailBlockField.heading')"
-    >
-      <TextInput v-model="block.text"/>
-    </LabelledField>
+    <template v-if="block.type === 'heading'">
+      <LabelledField :help="t('ui.mailBlockField.placeholdersWorkHereALinkIs')" :label="t('ui.mailBlockField.heading')">
+        <TextInput v-model="block.text"/>
+      </LabelledField>
+      <label class="flex items-center gap-2 text-sm"><CheckboxInput v-model="centred"/> {{ t('ui.mailBlockField.centred') }}</label>
+    </template>
 
-    <LabelledField
-        v-else-if="block.type === 'paragraph'"
-        :help="t('ui.mailBlockField.placeholdersWorkHereALinkIs')"
-        :label="t('ui.mailBlockField.text')"
-    >
-      <TextAreaInput v-model="block.text" :rows="3"/>
-    </LabelledField>
+    <template v-else-if="block.type === 'paragraph'">
+      <LabelledField :help="t('ui.mailBlockField.placeholdersWorkHereALinkIs')" :label="t('ui.mailBlockField.text')">
+        <TextAreaInput v-model="block.text" :rows="3"/>
+      </LabelledField>
+      <div class="flex flex-wrap gap-4">
+        <label class="flex items-center gap-2 text-sm"><CheckboxInput v-model="centred"/> {{ t('ui.mailBlockField.centred') }}</label>
+        <label class="flex items-center gap-2 text-sm"><CheckboxInput v-model="emphasis"/> {{ t('ui.mailBlockField.italics') }}</label>
+      </div>
+    </template>
 
     <LabelledField
         v-else-if="block.type === 'key'"
@@ -56,7 +73,7 @@ const itemsText = computed({
       <LabelledField :label="t('ui.mailBlockField.buttonText')">
         <TextInput v-model="block.label"/>
       </LabelledField>
-      <LabelledField help="Has to be an http address. {{ downloadUrl }} works here." :label="t('ui.mailBlockField.address')">
+      <LabelledField :help="t('ui.mailBlockField.addressHelp')" :label="t('ui.mailBlockField.address')">
         <TextInput v-model="block.url" type="url"/>
       </LabelledField>
     </div>
@@ -64,6 +81,17 @@ const itemsText = computed({
     <LabelledField v-else-if="block.type === 'list'" :help="t('ui.mailBlockField.oneLinePerItem')" :label="t('ui.mailBlockField.items')">
       <TextAreaInput v-model="itemsText" :rows="3"/>
     </LabelledField>
+
+    <div v-else-if="block.type === 'image'" class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <LabelledField :help="t('ui.mailBlockField.addressHelp')" :label="t('ui.mailBlockField.imageAddress')">
+        <TextInput v-model="block.url"/>
+      </LabelledField>
+      <LabelledField :label="t('ui.mailBlockField.altText')">
+        <TextInput v-model="block.alt"/>
+      </LabelledField>
+    </div>
+
+    <MutedText v-else-if="block.type === 'links'" size="sm">{{ t('ui.mailBlockField.theGuildsLinks') }}</MutedText>
 
     <LabelledField
         v-else-if="block.type === 'raw'"
@@ -74,5 +102,9 @@ const itemsText = computed({
     </LabelledField>
 
     <MutedText v-else size="sm">{{ t('ui.mailBlockField.aLineAcrossTheMail') }}</MutedText>
+
+    <MutedText v-if="block.requires?.length" class="block" size="xs">
+      {{ t('ui.mailBlockField.leftOutUnless', {names: block.requires.join(', ')}) }}
+    </MutedText>
   </div>
 </template>

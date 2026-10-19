@@ -21,6 +21,8 @@ const TYPES: {type: MailBlock['type']; label: string; make: () => MailBlock}[] =
     {type: 'key', label: 'Licence key', make: () => ({type: 'key', label: 'Your licence key'})},
     {type: 'button', label: 'Button', make: () => ({type: 'button', label: 'Download', url: '{{ downloadUrl }}'})},
     {type: 'list', label: 'List', make: () => ({type: 'list', items: ['First', 'Second']})},
+    {type: 'image', label: 'Image', make: () => ({type: 'image', url: '{{ productIcon }}', alt: '{{ product }}'})},
+    {type: 'links', label: 'Links', make: () => ({type: 'links'})},
     {type: 'divider', label: 'Divider', make: () => ({type: 'divider'})},
 ]
 
