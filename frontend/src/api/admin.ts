@@ -124,8 +124,10 @@ export async function listGuildLicenses(guildId: string): Promise<LicenseSummary
     return data
 }
 
-export async function createGuildLicense(guildId: string, productId: number, identifier: string): Promise<LicenseDetail> {
-    const {data} = await client.post<LicenseDetail>(`/api/admin/g/${guildId}/licenses`, {productId, identifier})
+/** Issues a licence reaching the release types named. */
+export async function createGuildLicense(
+    guildId: string, productId: number, identifier: string, releaseTypes: ReleaseType[]): Promise<LicenseDetail> {
+    const {data} = await client.post<LicenseDetail>(`/api/admin/g/${guildId}/licenses`, {productId, identifier, releaseTypes})
     return data
 }
 
@@ -425,9 +427,10 @@ export async function createMailing(guildId: string, productId: number, name: st
     await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing`, {name})
 }
 
-/** Issues a license for the address and mails it there. */
-export async function sendMailing(guildId: string, productId: number, address: string, name: string): Promise<void> {
-    await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing/send`, {address, name})
+/** Issues a license reaching the release types named for the address, and mails it there. */
+export async function sendMailing(
+    guildId: string, productId: number, address: string, name: string, releaseTypes: ReleaseType[]): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/products/${productId}/mailing/send`, {address, name, releaseTypes})
 }
 
 /** Sets whether the product page shows the project's GitHub README instead of its description. */

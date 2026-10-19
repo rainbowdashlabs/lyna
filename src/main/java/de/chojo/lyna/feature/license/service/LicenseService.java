@@ -16,6 +16,7 @@ import de.chojo.lyna.feature.product.service.ProductRoleService;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
 
+import java.util.Collection;
 import java.util.List;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -167,6 +168,20 @@ public class LicenseService {
         long guildId = license.product().products().licenseGuild().guildId();
         license.product().products().licenseGuild().roles().revoke(guildId, owner, license.product());
         return licenses.delete(license.id());
+    }
+
+    /**
+     * Gives a licence that has just been issued what it reaches.
+     *
+     * @param types the release types asked for, or null for stable builds only, which is what every
+     *              other way of issuing a licence grants
+     * @return what the licence reaches now
+     */
+    public List<ReleaseType> grantInitialAccess(License license, Collection<ReleaseType> types) {
+        for (ReleaseType type : types == null ? List.of(ReleaseType.STABLE) : types) {
+            grantAccess(license, type);
+        }
+        return access(license);
     }
 
     public boolean grantAccess(License license, ReleaseType type) {

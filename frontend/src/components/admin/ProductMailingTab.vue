@@ -7,6 +7,7 @@
 import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {createMailing, listMailings, type MailingTemplate, sendMailing} from '~/api/admin'
+import type {ReleaseType} from '~/api/adminDownloads'
 import {useAdminAction} from '~/composables/useAdminAction'
 
 /**
@@ -22,6 +23,7 @@ const loaded = ref(false)
 const mailName = ref('')
 const address = ref('')
 const recipient = ref('')
+const releaseTypes = ref<ReleaseType[]>(['STABLE'])
 const {busy, done, error, run} = useAdminAction(() => t('ui.productMailingTab.couldNotSend'))
 
 async function load() {
@@ -35,7 +37,7 @@ async function create() {
 }
 
 async function send() {
-  await run(() => sendMailing(props.guildId, props.productId, address.value.trim(), recipient.value.trim()))
+  await run(() => sendMailing(props.guildId, props.productId, address.value.trim(), recipient.value.trim(), releaseTypes.value))
   if (!error.value) {
     address.value = ''
     recipient.value = ''
@@ -63,6 +65,7 @@ onMounted(load)
           <LabelledField :label="t('ui.productMailingTab.address')"><EmailInput v-model="address"/></LabelledField>
           <LabelledField :label="t('ui.productMailingTab.recipient')"><TextInput v-model="recipient"/></LabelledField>
         </div>
+        <ReleaseTypePicker v-model="releaseTypes"/>
         <PrimaryButton :disabled="busy || !address.trim() || !recipient.trim()" @click="send">{{ t('ui.productMailingTab.send') }}</PrimaryButton>
         <MutedText v-if="done" size="sm">{{ t('ui.productMailingTab.sent') }}</MutedText>
       </section>

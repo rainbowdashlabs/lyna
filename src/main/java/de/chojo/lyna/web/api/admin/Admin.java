@@ -13,6 +13,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
@@ -642,6 +643,7 @@ public class Admin {
             return;
         }
         var l = license.get();
+        licenseService.grantInitialAccess(l, body.releaseTypes());
         ctx.status(HttpStatus.CREATED)
                 .json(new LicenseDetail(
                         l.id(),
@@ -1123,7 +1125,10 @@ public class Admin {
             long owner,
             List<String> sharees) {}
 
-    public record CreateLicense(Integer productId, String identifier) {}
+    /**
+     * @param releaseTypes what the licence reaches, or nothing for stable builds only
+     */
+    public record CreateLicense(Integer productId, String identifier, List<ReleaseType> releaseTypes) {}
 
     public record RegistrationInfo(
             long discordId,

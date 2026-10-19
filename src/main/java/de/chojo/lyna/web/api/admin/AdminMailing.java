@@ -61,9 +61,10 @@ public class AdminMailing {
     public record MailingCreated(int id, String name) {}
 
     /**
-     * @param name how the mail greets the recipient
+     * @param name         how the mail greets the recipient
+     * @param releaseTypes what the licence reaches, or nothing for stable builds only
      */
-    public record MailingSend(String address, String name) {}
+    public record MailingSend(String address, String name, List<ReleaseType> releaseTypes) {}
 
     /**
      * @param blocks      the mail as its operator composed it, or nothing
@@ -169,7 +170,8 @@ public class AdminMailing {
     }
 
     /**
-     * Issues a license for the address and mails it there, with access to stable builds. An address
+     * Issues a license for the address and mails it there, reaching the release types asked for or
+     * stable builds when none are named. An address
      * that has a license for the product already is sent that one again, never a second.
      */
     private void send(Context ctx) {
@@ -197,7 +199,7 @@ public class AdminMailing {
             ctx.status(HttpStatus.CONFLICT).result("A license already exists for this address");
             return;
         }
-        licenses.grantAccess(license.get(), ReleaseType.STABLE);
+        licenses.grantInitialAccess(license.get(), body.releaseTypes());
         purchases.announce(mailing.get(), license.get(), body.name().strip(), address);
         ctx.status(HttpStatus.NO_CONTENT);
     }
