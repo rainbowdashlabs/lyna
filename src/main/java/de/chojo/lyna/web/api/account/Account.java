@@ -28,6 +28,7 @@ import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
+import de.chojo.lyna.web.api.auth.SessionCookie;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -260,6 +261,7 @@ public class Account {
         }
         sessions.deleteAllForAccount(acc.get().id());
         accountService.delete(acc.get().id());
+        SessionCookie.clear(ctx);
         ctx.status(HttpStatus.NO_CONTENT);
     }
 

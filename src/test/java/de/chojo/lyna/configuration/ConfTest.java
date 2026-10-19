@@ -51,6 +51,23 @@ class ConfTest {
     }
 
     @Test
+    @DisplayName(
+            "A file still naming the old token lifetime is read, the old key ignored and the session defaults used")
+    void oldTokenLifetimeIsIgnored(@TempDir Path directory) throws IOException {
+        Files.writeString(directory.resolve("config.yaml"), """
+                auth:
+                  jwtExpirySeconds: 86400
+                  jwtSecret: "kept"
+                """);
+
+        Conf conf = new Conf(directory);
+
+        assertEquals("kept", conf.main().auth().jwtSecret());
+        assertEquals(30, conf.main().auth().sessionDays());
+        assertEquals(24, conf.main().auth().renewAfterHours());
+    }
+
+    @Test
     @DisplayName("A directory holding only the old JSON is read, and gains a config.yaml")
     void legacyJsonIsAdopted(@TempDir Path directory) throws IOException {
         Files.writeString(directory.resolve("config.json"), """

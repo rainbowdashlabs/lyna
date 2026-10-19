@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.Api;
+import de.chojo.lyna.web.api.auth.ClientHeaderGuard;
 import de.chojo.lyna.web.legacy.ButlerApi;
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
@@ -153,6 +154,8 @@ public class WebService {
                                                             .length(),
                                                     180)));
         });
+
+        before("/api/*", ClientHeaderGuard::check);
 
         api.init();
         butler.init();

@@ -8,8 +8,9 @@ api:
   staticUi: false
   url: "http://localhost:25292"
 auth:
-  jwtExpirySeconds: 86400
   jwtSecret: "end-to-end-suite-secret-not-a-real-one"
+  renewAfterHours: 24
+  sessionDays: 30
 baseSettings:
   botEnabled: false
   botGuild: 0

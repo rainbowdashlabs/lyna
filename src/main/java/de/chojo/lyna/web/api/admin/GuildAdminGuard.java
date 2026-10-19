@@ -116,10 +116,9 @@ public class GuildAdminGuard {
     }
 
     /**
-     * @return the caller's Discord id, from the session or the account's link, or null
+     * @return the Discord id the caller's account is linked to now, or null
      */
     public Long discordId(JwtService.Verified verified) {
-        if (verified.discordId() != null) return verified.discordId();
         return accounts.findLinkByAccountId(verified.accountId())
                 .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
