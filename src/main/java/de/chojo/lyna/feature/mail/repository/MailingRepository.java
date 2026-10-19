@@ -46,4 +46,30 @@ public class MailingRepository {
                 .update()
                 .changed();
     }
+
+    /**
+     * Empties a mail, so that its product sends its guild's default again.
+     */
+    public boolean clearBody(int mailingId) {
+        return query("UPDATE mail_products SET blocks = NULL, mail_text = '' WHERE id = ?")
+                .single(call().bind(mailingId))
+                .update()
+                .changed();
+    }
+
+    /**
+     * Gives every product of a guild that has no mail an empty one, named after the product, so that
+     * each sends the guild's default and can be matched against a receipt by its name.
+     *
+     * @return how many mails were made
+     */
+    public int createMissing(long guildId) {
+        return query("""
+                INSERT INTO mail_products (product_id, name, mail_text)
+                SELECT p.id, p.name, ''
+                FROM product p
+                WHERE p.guild_id = ?
+                  AND NOT EXISTS (SELECT 1 FROM mail_products m WHERE m.product_id = p.id)
+                """).single(call().bind(guildId)).insert().rows();
+    }
 }

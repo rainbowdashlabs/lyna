@@ -31,7 +31,7 @@ public class KioskProductRepository {
      */
     public List<KioskProduct> all() {
         return query("""
-                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, kp.link_code
+                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, p.wiki_url, kp.link_code
                 FROM product p
                 LEFT JOIN LATERAL (
                     SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
@@ -49,7 +49,8 @@ public class KioskProductRepository {
                         row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
                         row.getString("description"),
                         row.getBoolean("trial"),
-                        row.getBoolean("page_readme")))
+                        row.getBoolean("page_readme"),
+                        row.getString("wiki_url")))
                 .all();
     }
 
@@ -64,7 +65,7 @@ public class KioskProductRepository {
      */
     public java.util.Optional<KioskProduct> byId(int productId) {
         return query("""
-                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, kp.link_code
+                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, p.wiki_url, kp.link_code
                 FROM product p
                 LEFT JOIN LATERAL (
                     SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
@@ -82,7 +83,8 @@ public class KioskProductRepository {
                         row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
                         row.getString("description"),
                         row.getBoolean("trial"),
-                        row.getBoolean("page_readme")))
+                        row.getBoolean("page_readme"),
+                        row.getString("wiki_url")))
                 .first();
     }
 

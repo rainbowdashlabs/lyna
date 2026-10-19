@@ -5,10 +5,13 @@
  */
 package de.chojo.lyna.service;
 
+import de.chojo.lyna.feature.mail.entity.MailLink;
+import de.chojo.lyna.mail.blocks.DefaultPurchaseMail;
 import de.chojo.lyna.mail.blocks.MailBlockRenderer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -211,5 +214,175 @@ class MailBlockRendererTest {
         assertTrue(html.contains("Chatty"));
         assertTrue(html.contains("LYNA-DEMO-KEY-0000"));
         assertTrue(html.contains("href=\"https://example.invalid/download\""));
+    }
+
+    private static Map<String, Object> with(Object... pairs) {
+        Map<String, Object> values = new java.util.LinkedHashMap<>(VALUES);
+        for (int i = 0; i < pairs.length; i += 2) values.put((String) pairs[i], pairs[i + 1]);
+        return values;
+    }
+
+    @Test
+    @DisplayName("A link can point at a placeholder, and becomes a link once the value is an address")
+    void placeholderLinksResolve() {
+        String html = renderer.render("""
+                [{"type":"paragraph","text":"Read the [wiki]({{ wikiUrl }})"}]
+                """, with("wikiUrl", "https://example.invalid/wiki?a=1&b=2"));
+
+        assertTrue(html.contains("href=\"https://example.invalid/wiki?a=1&amp;b=2\">wiki</a>"));
+    }
+
+    @Test
+    @DisplayName("A paragraph whose every placeholder link is empty is left out")
+    void paragraphWithOnlyEmptyLinksIsSkipped() {
+        assertEquals("", renderer.render("""
+                [{"type":"paragraph","text":"Read the [wiki]({{ wikiUrl }})"}]
+                """, with("wikiUrl", "")));
+    }
+
+    @Test
+    @DisplayName("A paragraph with one link left keeps the others as their label")
+    void partlyEmptyLinksKeepTheirLabel() {
+        String html = renderer.render("""
+                [{"type":"paragraph","text":"On [GitHub]({{ productUrl }}) or [Discord]({{ discordUrl }})"}]
+                """, with("productUrl", "https://example.invalid/src", "discordUrl", null));
+
+        assertTrue(html.contains(">GitHub</a>"));
+        assertTrue(html.contains("or Discord"));
+        assertFalse(html.contains(">Discord</a>"));
+    }
+
+    @Test
+    @DisplayName("A placeholder link is only made to somewhere on the web")
+    void placeholderLinksMustBeHttp() {
+        String html = renderer.render("""
+                [{"type":"paragraph","text":"See [this]({{ wikiUrl }}) and more"}]
+                """, with("wikiUrl", "javascript:alert(1)"));
+
+        assertEquals("", html, "its only link came up empty, so the paragraph goes");
+    }
+
+    @Test
+    @DisplayName("A heading and a list item go the same way as a paragraph")
+    void headingsAndItemsAreSkippedToo() {
+        Map<String, Object> values = with("wikiUrl", "");
+        assertEquals("", renderer.render("""
+                [{"type":"heading","text":"[Docs]({{ wikiUrl }})"}]
+                """, values));
+
+        String list = renderer.render("""
+                [{"type":"list","items":["[Docs]({{ wikiUrl }})","Plain"]}]
+                """, values);
+        assertFalse(list.contains("Docs"));
+        assertTrue(list.contains("<li>Plain</li>"));
+
+        assertEquals("", renderer.render("""
+                [{"type":"list","items":["[Docs]({{ wikiUrl }})"]}]
+                """, values), "a list with nothing left is no list");
+    }
+
+    @Test
+    @DisplayName("A block that requires a placeholder is left out when it stands for nothing, zero included")
+    void requiresSkipsTheBlock() {
+        String blocks = """
+                [{"type":"paragraph","text":"Share with {{ shares }}","requires":["shares"]}]
+                """;
+
+        assertTrue(renderer.render(blocks, with("shares", 2)).contains("Share with 2"));
+        assertEquals("", renderer.render(blocks, with("shares", 0)));
+        assertEquals("", renderer.render(blocks, with("shares", null)));
+        assertEquals("", renderer.render(blocks, with("shares", "false")));
+    }
+
+    @Test
+    @DisplayName("A paragraph can be centred and set in italics")
+    void paragraphAlignAndEmphasis() {
+        String html = render("""
+                [{"type":"paragraph","text":"Thanks","align":"center","emphasis":true}]
+                """);
+
+        assertTrue(html.contains("text-align:center;"));
+        assertTrue(html.contains("<em>Thanks</em>"));
+    }
+
+    @Test
+    @DisplayName("An image shows from an address, and not at all without one")
+    void imageRenders() {
+        String blocks = """
+                [{"type":"image","url":"{{ productIcon }}","alt":"{{ product }}"}]
+                """;
+
+        String html = renderer.render(blocks, with("productIcon", "https://example.invalid/i.png"));
+        assertTrue(html.contains("<img src=\"https://example.invalid/i.png\" alt=\"Chatty\""));
+        assertEquals("", renderer.render(blocks, with("productIcon", null)));
+        assertEquals("", renderer.render(blocks, with("productIcon", "data:image/png;base64,AA")));
+    }
+
+    @Test
+    @DisplayName("The links block shows the guild's links in a row, and only those somewhere on the web")
+    void linksBlockRenders() {
+        String html = renderer.render(
+                """
+                [{"type":"links"}]
+                """,
+                with(
+                        MailBlockRenderer.LINKS,
+                        List.of(
+                                new MailLink("GitHub", "https://example.invalid/gh"),
+                                new MailLink("<b>Bad</b>", "javascript:alert(1)"),
+                                new MailLink("Patreon", "https://example.invalid/p"))));
+
+        assertTrue(html.contains(">GitHub</a> &middot; <a"));
+        assertTrue(html.contains(">Patreon</a>"));
+        assertFalse(html.contains("javascript"));
+        assertEquals("", renderer.render("""
+                [{"type":"links"}]
+                """, VALUES), "no links, no row");
+    }
+
+    @Test
+    @DisplayName("A list of links is never written into the text as a value")
+    void collectionsAreNotSubstituted() {
+        String html = renderer.render(
+                """
+                [{"type":"paragraph","text":"x {{ links }} y"}]
+                """, with(MailBlockRenderer.LINKS, List.of(new MailLink("GitHub", "https://example.invalid/gh"))));
+
+        assertTrue(html.contains("x {{ links }} y"));
+    }
+
+    @Test
+    @DisplayName("The shipped default reads whole for a product with everything set")
+    void shippedDefaultRendersFully() {
+        String html = renderer.render(DefaultPurchaseMail.BLOCKS, MailBlockRenderer.sampleValues("Chatty"));
+
+        assertTrue(html.contains("Thank you for purchasing Chatty!"));
+        assertTrue(html.contains("LYNA-DEMO-KEY-0000"));
+        assertTrue(html.contains("Join the Discord"));
+        assertTrue(html.contains("Leave a review"));
+        assertTrue(html.contains("share access with up to 2 more people"));
+        assertTrue(html.contains(">GitHub</a>"));
+    }
+
+    @Test
+    @DisplayName("The shipped default leaves out what a bare product has nothing for")
+    void shippedDefaultRendersForABareProduct() {
+        Map<String, Object> bare = new java.util.LinkedHashMap<>();
+        bare.put("name", "Ada");
+        bare.put("key", "KEY-1");
+        bare.put("product", "Chatty");
+        bare.put("productPage", "https://example.invalid/products/1");
+        bare.put("shares", 0);
+
+        String html = renderer.render(DefaultPurchaseMail.BLOCKS, bare);
+
+        assertTrue(html.contains("Thank you for purchasing Chatty!"));
+        assertTrue(html.contains("KEY-1"));
+        assertTrue(html.contains("Chatty on our store"));
+        assertFalse(html.contains("Discord"), "no invite, nothing about Discord");
+        assertFalse(html.contains("review"), "nowhere to review, no ask");
+        assertFalse(html.contains("Documentation"), "no wiki, no wiki link");
+        assertFalse(html.contains("<img"), "no icon, no image");
+        assertFalse(html.contains("&middot;"), "no links, no row");
     }
 }

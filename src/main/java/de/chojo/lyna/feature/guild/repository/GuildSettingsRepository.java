@@ -23,6 +23,17 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 @Singleton
 public class GuildSettingsRepository {
 
+    /**
+     * @return how many people a licence of this guild may be shared with
+     */
+    public int shares(long guildId) {
+        return query("SELECT shares FROM license_settings WHERE guild_id = ?")
+                .single(call().bind(guildId))
+                .map(row -> row.getInt("shares"))
+                .first()
+                .orElse(0);
+    }
+
     public boolean setShares(long guildId, int shares) {
         return query("""
                 INSERT INTO license_settings(guild_id, shares) VALUES(?,?)

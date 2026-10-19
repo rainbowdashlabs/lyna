@@ -5,16 +5,15 @@
  */
 package de.chojo.lyna.service;
 
-import de.chojo.lyna.feature.mail.entity.Mailing;
-import de.chojo.lyna.feature.product.entity.Product;
-import de.chojo.lyna.feature.product.repository.Products;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailTemplateRenderer;
 import de.chojo.lyna.mail.PurchaseRecipient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -32,12 +31,12 @@ class MailCreatorTest {
     private final MailTemplateRenderer renderer = new MailTemplateRenderer("Workbench", BASE);
 
     private Mail render(String address, PurchaseRecipient recipient) {
-        Products products = Mockito.mock(Products.class);
-        Product product = new Product(products, 1, "Widget", "https://example.invalid/widget", 0L, false, false);
-        Mailing mailing =
-                new Mailing(1, product, "widget mail", "<p>Thanks for buying {{ product }}.</p><p>{{ key }}</p>", null);
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("name", "Ada Lovelace");
+        values.put("key", "LYNA-TEST-KEY-0001");
+        values.put("product", "Widget");
         return MailCreator.createLicenseMessage(
-                renderer, mailing, "LYNA-TEST-KEY-0001", "Ada Lovelace", address, product.url(), recipient);
+                renderer, null, "<p>Thanks for buying {{ product }}.</p><p>{{ key }}</p>", values, address, recipient);
     }
 
     @Test
@@ -93,5 +92,21 @@ class MailCreatorTest {
         assertTrue(
                 body.contains("email=ada%2Bkofi%40example.invalid"),
                 "a plus that reaches the signup form as a space loses the purchase");
+    }
+
+    @Test
+    @DisplayName("A mail composed from blocks renders them in place of any HTML")
+    void blocksWinOverHtml() {
+        String body = MailCreator.createLicenseMessage(
+                        renderer,
+                        "[{\"type\":\"paragraph\",\"text\":\"Composed for {{ name }}\"}]",
+                        "<p>old html</p>",
+                        Map.of("name", "Ada", "key", "K"),
+                        "buyer@example.invalid",
+                        PurchaseRecipient.UNSTATED)
+                .text();
+
+        assertTrue(body.contains("Composed for Ada"));
+        assertFalse(body.contains("old html"));
     }
 }

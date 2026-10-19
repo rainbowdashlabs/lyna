@@ -5,10 +5,7 @@
  */
 package de.chojo.lyna.mail;
 
-import de.chojo.lyna.feature.mail.entity.Mailing;
-
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -23,36 +20,39 @@ public final class MailCreator {
             new de.chojo.lyna.mail.blocks.MailBlockRenderer();
 
     /** What a per-product template may refer to. */
-    private static final String[] PLACEHOLDERS = {"name", "key", "product", "downloadUrl"};
+    private static final String[] PLACEHOLDERS = {
+        "name",
+        "key",
+        "product",
+        "downloadUrl",
+        "productUrl",
+        "productPage",
+        "wikiUrl",
+        "reviewUrl",
+        "discordUrl",
+        "shares"
+    };
 
     private MailCreator() {}
 
     /**
      * The mail telling somebody their licence.
      *
-     * @param mailing     the product's own template, whose text becomes the body
-     * @param key         the licence key
-     * @param name        who bought it, as they gave it
-     * @param address     where to send it
-     * @param downloadUrl where the product can be downloaded, or null when there is nowhere to point
-     * @param recipient   what the application knows about who is receiving it
+     * @param blocks    the blocks the body is composed from, or null to send {@code html} instead
+     * @param html      the HTML of a mail written before blocks existed, sent when there are no blocks
+     * @param values    what the placeholders stand for, including {@code key} and {@code name}
+     * @param address   where to send it
+     * @param recipient what the application knows about who is receiving it
      */
     public static Mail createLicenseMessage(
             MailTemplateRenderer renderer,
-            Mailing mailing,
-            String key,
-            String name,
+            String blocks,
+            String html,
+            Map<String, Object> values,
             String address,
-            String downloadUrl,
             PurchaseRecipient recipient) {
-        Map<String, Object> values = new LinkedHashMap<>();
-        values.put("name", name);
-        values.put("key", key);
-        values.put("product", mailing.product().name());
-        values.put("downloadUrl", downloadUrl);
-
         Map<String, Object> context = new HashMap<>(values);
-        context.put("body", body(mailing, values));
+        context.put("body", body(blocks, html, values));
         context.put("tellAboutAccount", recipient != PurchaseRecipient.UNSTATED);
         context.put("hasAccount", recipient == PurchaseRecipient.WITH_ACCOUNT);
         context.put("buyerAddress", address);
@@ -64,17 +64,12 @@ public final class MailCreator {
     }
 
     /**
-     * The body of the mail: what the operator composed, however they composed it.
-     *
-     * <p>A product whose mail was written before blocks existed still has only its HTML, and it is
-     * carried across as it was. One composed since renders from its blocks, where the escaping is
-     * decided per block rather than left to whoever typed it.
+     * The body of the mail: the blocks it is composed from, or the HTML a mail written before blocks
+     * existed still carries, filled in as it always was.
      */
-    private static String body(Mailing mailing, Map<String, Object> values) {
-        if (mailing.blocks() != null && !mailing.blocks().isBlank()) {
-            return BLOCKS.render(mailing.blocks(), values);
-        }
-        return substitute(mailing.mailText(), values);
+    private static String body(String blocks, String html, Map<String, Object> values) {
+        if (blocks != null) return BLOCKS.render(blocks, values);
+        return substitute(html == null ? "" : html, values);
     }
 
     /**
