@@ -227,14 +227,13 @@ public class AccountRepository {
      */
     public boolean rememberHandle(String provider, String externalId, String handle) {
         if (handle == null || handle.isBlank()) return false;
-        boolean changed = query("""
+        return query("""
                 UPDATE account_identity SET handle = ?, handle_seen_at = now()
                 WHERE provider = ? AND external_id = ? AND handle IS DISTINCT FROM ?
                 """)
                 .single(call().bind(handle).bind(provider).bind(externalId).bind(handle))
                 .update()
                 .changed();
-        return changed;
     }
 
     /**

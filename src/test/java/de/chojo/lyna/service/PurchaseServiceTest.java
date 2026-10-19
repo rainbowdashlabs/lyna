@@ -116,7 +116,7 @@ class PurchaseServiceTest extends RepositoryTestBase {
         assertEquals(BUYER, license.get().userIdentifier());
         assertFalse(licenseService.access(license.get()).isEmpty(), "the stable release is granted");
         assertEquals(1, sent.size(), "the buyer is told");
-        assertTrue(sent.get(0).text().contains(license.get().key()), "and the key is in it");
+        assertTrue(sent.getFirst().text().contains(license.get().key()), "and the key is in it");
     }
 
     @Test
@@ -133,7 +133,7 @@ class PurchaseServiceTest extends RepositoryTestBase {
                 accountLicenses.owned(account.id()).stream()
                         .map(de.chojo.lyna.feature.account.entity.AccountLicense::id)
                         .toList());
-        assertTrue(sent.get(0).text().contains("Open your licences"), "and the mail says so");
+        assertTrue(sent.getFirst().text().contains("Open your licences"), "and the mail says so");
     }
 
     @Test
@@ -145,7 +145,7 @@ class PurchaseServiceTest extends RepositoryTestBase {
         purchases.issue(product, BUYER, "Ada Lovelace", LicenseSource.KOFI);
 
         assertTrue(accountLicenses.owned(account.id()).isEmpty(), "claiming took nothing");
-        assertTrue(sent.get(0).text().contains("Create an account"), "and the mail invites them instead");
+        assertTrue(sent.getFirst().text().contains("Create an account"), "and the mail invites them instead");
     }
 
     @Test
@@ -188,7 +188,7 @@ class PurchaseServiceTest extends RepositoryTestBase {
         Optional<License> license = purchases.issue(reloaded, BUYER, "Ada Lovelace", LicenseSource.KOFI);
 
         assertTrue(license.isPresent());
-        String text = sent.get(0).text();
+        String text = sent.getFirst().text();
         assertTrue(text.contains("Thank you for purchasing Widget!"), "the shipped default is sent");
         assertTrue(text.contains(license.get().key()), "with the key in it");
         assertTrue(text.contains("https://example.invalid/widget"), "and the product's own address");

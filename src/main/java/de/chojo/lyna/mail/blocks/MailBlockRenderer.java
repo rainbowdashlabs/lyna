@@ -191,10 +191,8 @@ public class MailBlockRenderer {
         if (!(values.get(LINKS) instanceof Collection<?> links)) return "";
         List<String> anchors = new ArrayList<>();
         for (Object entry : links) {
-            if (entry instanceof MailLink link
-                    && link.url() != null
-                    && isWeb(link.url().trim())) {
-                anchors.add(anchor(escape(link.url().trim()), escape(link.label() == null ? "" : link.label())));
+            if (entry instanceof MailLink(String label, String url) && url != null && isWeb(url.trim())) {
+                anchors.add(anchor(escape(url.trim()), escape(label == null ? "" : label)));
             }
         }
         if (anchors.isEmpty()) return "";

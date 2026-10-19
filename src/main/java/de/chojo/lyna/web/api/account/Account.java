@@ -123,9 +123,7 @@ public class Account {
             get("sessions", this::listSessions);
             delete("sessions", this::endOtherSessions);
             delete("sessions/{jti}", this::revokeSession);
-            path("discord", () -> {
-                delete(this::unlinkDiscord);
-            });
+            path("discord", () -> delete(this::unlinkDiscord));
             get("downloads", this::listDownloads);
             path("licenses", () -> {
                 get(this::listLicenses);
@@ -311,7 +309,7 @@ public class Account {
         String raw = ctx.queryParam(name);
         if (raw == null) return fallback;
         try {
-            return Math.min(Math.max(Integer.parseInt(raw), min), max);
+            return Math.clamp(Integer.parseInt(raw), min, max);
         } catch (NumberFormatException e) {
             return fallback;
         }

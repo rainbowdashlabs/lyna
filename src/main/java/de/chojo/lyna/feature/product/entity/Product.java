@@ -126,7 +126,7 @@ public class Product {
                     .direction(Direction.DESC)
                     .complete();
             if (complete.isEmpty()) continue;
-            assets.add(Version.parse(complete.items().get(0).version()));
+            assets.add(Version.parse(complete.items().getFirst().version()));
         }
         return assets.stream().max(Version::compareTo);
     }

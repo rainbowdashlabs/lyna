@@ -113,7 +113,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         assertEquals("Fixes", embed.getDescription());
         assertEquals("Spooky", embed.getAuthor().getName());
         assertEquals("x/y", embed.getFooter().getText());
-        assertEquals("Stable", embed.getFields().get(0).getValue());
+        assertEquals("Stable", embed.getFields().getFirst().getValue());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<java.util.Collection<net.dv8tion.jda.api.components.actionrow.ActionRow>> rows =
                 ArgumentCaptor.forClass(java.util.Collection.class);
@@ -141,7 +141,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         assertEquals(MessageEmbed.DESCRIPTION_MAX_LENGTH, embed.getDescription().length());
         assertNull(embed.getAuthor());
         assertNull(embed.getFooter());
-        assertEquals("Pre-release", embed.getFields().get(0).getValue());
+        assertEquals("Pre-release", embed.getFields().getFirst().getValue());
     }
 
     @Test

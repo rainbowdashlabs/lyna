@@ -17,8 +17,10 @@ import de.chojo.lyna.feature.mail.entity.Mailing;
 import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
+import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -124,17 +126,17 @@ class GuildFindersTest extends RepositoryTestBase {
         assertEquals(
                 List.of("Gadget"),
                 guild.products().complete("ga", true).stream()
-                        .map(c -> c.getName())
+                        .map(Command.Choice::getName)
                         .toList());
         assertEquals(
                 List.of("Widget", "Gizmo"),
                 guild.products().complete("", false).stream()
-                        .map(c -> c.getName())
+                        .map(Command.Choice::getName)
                         .toList());
         assertEquals(
                 List.of("Gizmo"),
                 guild.products().completeTrials("").stream()
-                        .map(c -> c.getName())
+                        .map(Command.Choice::getName)
                         .toList());
     }
 
@@ -323,7 +325,9 @@ class GuildFindersTest extends RepositoryTestBase {
         assertTrue(kofi.byCode("nope").isEmpty());
         assertEquals(
                 List.of(product.id()),
-                kofi.listForGuild(GUILD).stream().map(m -> m.productId()).toList());
+                kofi.listForGuild(GUILD).stream()
+                        .map(KoFiProductRepository.Mapping::productId)
+                        .toList());
 
         assertFalse(kofi.remove(OTHER_GUILD, "abc123"), "another guild cannot unlink it");
         assertTrue(kofi.remove(GUILD, "abc123"));

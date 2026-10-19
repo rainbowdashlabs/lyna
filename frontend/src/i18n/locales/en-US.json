@@ -416,7 +416,12 @@
       "downloadsAreUnavailableTheDiscordBot": "Downloads are unavailable: the Discord bot is not connected."
     },
     "kioskFilters": {
-      "searchPlugins": "Search plugins…"
+      "searchPlugins": "Search plugins…",
+      "tiles": "Tiles",
+      "list": "List",
+      "sortBy": "Sort by",
+      "sortName": "Name",
+      "sortUpdated": "Last updated"
     },
     "productTile": {
       "free": "Free",

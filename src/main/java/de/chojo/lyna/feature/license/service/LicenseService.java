@@ -8,6 +8,7 @@ package de.chojo.lyna.feature.license.service;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.license.entity.License;
@@ -124,7 +125,7 @@ public class LicenseService {
     }
 
     private java.util.Optional<Long> discordId(int accountId) {
-        return accountLinks.discordIdentity(accountId).map(identity -> identity.externalIdAsLong());
+        return accountLinks.discordIdentity(accountId).map(AccountIdentity::externalIdAsLong);
     }
 
     private static long guildId(License license) {

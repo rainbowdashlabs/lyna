@@ -17,7 +17,7 @@ import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class DownloadTypes {
-    LicenseGuild guild;
+    final LicenseGuild guild;
 
     public DownloadTypes(LicenseGuild guild) {
         this.guild = guild;

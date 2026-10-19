@@ -21,7 +21,7 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 public class Downloads {
     private static final DownloadRepository REPOSITORY = new DownloadRepository();
 
-    Product product;
+    final Product product;
 
     public Downloads(Product product) {
         this.product = product;

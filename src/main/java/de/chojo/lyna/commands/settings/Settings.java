@@ -24,7 +24,6 @@ public class Settings implements SlashProvider<Slash> {
 
     @Override
     public Slash slash() {
-        ;
         return Slash.of("settings", "Manage guild settings")
                 .unlocalized()
                 .adminCommand()

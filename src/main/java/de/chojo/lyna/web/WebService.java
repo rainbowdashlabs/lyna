@@ -135,25 +135,23 @@ public class WebService {
                     loggedBody(ctx));
         });
 
-        after(ctx -> {
-            log.trace(
-                    "Answered request on route: {} {}\nStatus: {}\nHeaders:\n{}\nBody:\n{}",
-                    ctx.method() + " " + ctx.url(),
-                    ctx.queryString(),
-                    ctx.status(),
-                    ctx.res().getHeaderNames().stream()
-                            .map(h -> "   " + h + ": " + ctx.res().getHeader(h))
-                            .collect(Collectors.joining("\n")),
-                    ContentType.OCTET_STREAM.equals(ctx.contentType())
-                            ? "Bytes"
-                            : Objects.requireNonNullElse(ctx.result(), "")
-                                    .substring(
-                                            0,
-                                            Math.min(
-                                                    Objects.requireNonNullElse(ctx.result(), "")
-                                                            .length(),
-                                                    180)));
-        });
+        after(ctx -> log.trace(
+                "Answered request on route: {} {}\nStatus: {}\nHeaders:\n{}\nBody:\n{}",
+                ctx.method() + " " + ctx.url(),
+                ctx.queryString(),
+                ctx.status(),
+                ctx.res().getHeaderNames().stream()
+                        .map(h -> "   " + h + ": " + ctx.res().getHeader(h))
+                        .collect(Collectors.joining("\n")),
+                ContentType.OCTET_STREAM.equals(ctx.contentType())
+                        ? "Bytes"
+                        : Objects.requireNonNullElse(ctx.result(), "")
+                                .substring(
+                                        0,
+                                        Math.min(
+                                                Objects.requireNonNullElse(ctx.result(), "")
+                                                        .length(),
+                                                180))));
 
         before("/api/*", ClientHeaderGuard::check);
 

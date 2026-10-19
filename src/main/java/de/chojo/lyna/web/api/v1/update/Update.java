@@ -110,7 +110,7 @@ public class Update {
             return new UpdateResponse(false, current.version(), 0);
         }
 
-        AssetXO latestAsset = assetXOS.get(0);
+        AssetXO latestAsset = assetXOS.getFirst();
 
         Version latest = Version.parse(latestAsset.maven2().version());
 
@@ -167,7 +167,7 @@ public class Update {
         if (assetXOS.isEmpty()) {
             return new UpdateResponse(false, current.version(), 0);
         }
-        AssetXO latestAsset = assetXOS.get(0);
+        AssetXO latestAsset = assetXOS.getFirst();
 
         Version latest = Version.parse(latestAsset.maven2().version());
 

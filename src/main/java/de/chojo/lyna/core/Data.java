@@ -11,7 +11,7 @@ import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.sadu.datasource.DataSourceCreator;
 import de.chojo.sadu.postgresql.databases.PostgreSql;
-import de.chojo.sadu.queries.configuration.QueryConfiguration;
+import de.chojo.sadu.queries.api.configuration.QueryConfiguration;
 import de.chojo.sadu.updater.QueryReplacement;
 import de.chojo.sadu.updater.SqlUpdater;
 import org.slf4j.Logger;

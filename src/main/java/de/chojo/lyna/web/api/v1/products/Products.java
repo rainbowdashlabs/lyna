@@ -15,6 +15,7 @@ import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.kiosk.service.DescriptionAbstract;
 import de.chojo.lyna.feature.kiosk.service.ProductPageService;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.web.api.auth.Auth;
@@ -202,6 +203,8 @@ public class Products {
     /**
      * @param latestVersion the newest stable version, or null when there is none
      * @param updatedAt     when it was published, or null when there is none
+     * @param summary       the first lines of its description as plain text, for the list view; null
+     *                      when it has none
      */
     private record KioskEntry(
             int id,
@@ -213,7 +216,8 @@ public class Products {
             String purchaseUrl,
             boolean entitled,
             String latestVersion,
-            @JsonFormat(shape = JsonFormat.Shape.STRING) Instant updatedAt) {
+            @JsonFormat(shape = JsonFormat.Shape.STRING) Instant updatedAt,
+            String summary) {
         static KioskEntry of(
                 KioskProduct product,
                 boolean entitled,
@@ -229,7 +233,8 @@ public class Products {
                     product.purchaseUrl(),
                     entitled,
                     latest.map(ProductVersionService.VersionView::version).orElse(null),
-                    latest.map(ProductVersionService.VersionView::publishedAt).orElse(null));
+                    latest.map(ProductVersionService.VersionView::publishedAt).orElse(null),
+                    DescriptionAbstract.of(product.description()));
         }
     }
 

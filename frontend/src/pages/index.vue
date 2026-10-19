@@ -5,11 +5,12 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {type KioskProduct, listProducts} from '~/api/kiosk'
 import {useSession} from '~/composables/useSession'
 import {useLinkPreview} from '~/composables/useLinkPreview'
 import {useServerFetch} from '~/composables/useServerFetch'
+import {rememberedView, rememberView, sortProducts, type StorefrontSort, type StorefrontView} from '~/util/storefrontView'
 
 const {t} = useI18n()
 
@@ -33,6 +34,9 @@ const errorMessage = ref<string | null>(null)
 const wizardProduct = ref<KioskProduct | null>(null)
 const search = ref('')
 const filter = ref('all')
+const view = ref<StorefrontView>('tiles')
+const sort = ref<StorefrontSort>('name')
+watch(view, rememberView)
 
 const signedIn = computed(() => account.value !== null)
 
@@ -54,16 +58,19 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  view.value = rememberedView()
+  void load()
+})
 
 const shown = computed(() => {
   const term = search.value.trim().toLowerCase()
-  return products.value.filter(product => {
+  return sortProducts(products.value.filter(product => {
     if (term && !product.name.toLowerCase().includes(term)) return false
     if (filter.value === 'free') return product.free
     if (filter.value === 'owned') return product.entitled
     return true
-  })
+  }), sort.value)
 })
 
 function clearFilters() {
@@ -93,7 +100,7 @@ function clearFilters() {
     </header>
 
     <section class="mx-auto max-w-6xl px-4 py-6">
-      <KioskFilters v-model:filter="filter" v-model:search="search" :loading="loading" :signed-in="signedIn"/>
+      <KioskFilters v-model:filter="filter" v-model:search="search" v-model:sort="sort" v-model:view="view" :loading="loading" :signed-in="signedIn"/>
       <AsyncSection
           :empty="!loading && shown.length === 0"
           :error="errorMessage ?? undefined"
@@ -105,15 +112,7 @@ function clearFilters() {
             <SecondaryButton compact @click="clearFilters">{{ t('page.home.clearFilters') }}</SecondaryButton>
           </EmptyState>
         </template>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <ProductTile
-              v-for="product in shown"
-              :key="product.id"
-              :product="product"
-              :signed-in="signedIn"
-              @download="wizardProduct = $event"
-          />
-        </div>
+        <ProductCatalogue :products="shown" :signed-in="signedIn" :view="view" @download="wizardProduct = $event"/>
       </AsyncSection>
     </section>
 

@@ -19,6 +19,8 @@ export interface KioskProduct {
     latestVersion: string | null
     /** When the newest stable version was published. */
     updatedAt: string | null
+    /** The first lines of its description as plain text, or null when it has none. */
+    summary: string | null
 }
 
 /**

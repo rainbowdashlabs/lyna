@@ -115,8 +115,8 @@ class RemainingCoverageTest extends RepositoryTestBase {
 
         var listed = kioskProducts.all();
         assertEquals(1, listed.size());
-        assertEquals("https://example.invalid/icon.png", listed.get(0).iconUrl());
-        assertTrue(listed.get(0).free());
+        assertEquals("https://example.invalid/icon.png", listed.getFirst().iconUrl());
+        assertTrue(listed.getFirst().free());
     }
 
     @Test

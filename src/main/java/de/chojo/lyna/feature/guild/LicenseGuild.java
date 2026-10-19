@@ -34,22 +34,22 @@ public class LicenseGuild {
     /**
      * Providing access to registered products on this guild.
      */
-    Products products;
+    final Products products;
 
     private final Conf configuration;
 
     /**
      * Providing access to licenses created on this guild.
      */
-    Licenses licenses;
+    final Licenses licenses;
 
-    Settings settings;
-    DownloadTypes downloadTypes;
+    final Settings settings;
+    final DownloadTypes downloadTypes;
 
     /**
      * The recently accessed users
      */
-    Cache<Long, LicenseUser> users =
+    final Cache<Long, LicenseUser> users =
             CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
     private final Guilds guilds;

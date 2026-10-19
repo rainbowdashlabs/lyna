@@ -77,87 +77,89 @@ public class Proxy {
     }
 
     public void init() {
-        path("proxy", () -> {
-            get(ctx -> {
-                String token = ctx.queryParam("token");
-                if (token == null) {
-                    ctx.status(HttpStatus.BAD_REQUEST);
-                    ctx.result("Missing token");
-                    return;
-                }
-                AssetDownload download = tokens.getIfPresent(token);
-                if (download == null) {
-                    ctx.status(HttpStatus.BAD_REQUEST);
-                    ctx.result("Invalid token.");
-                    return;
-                }
+        path(
+                "proxy",
+                () -> get(ctx -> {
+                    String token = ctx.queryParam("token");
+                    if (token == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result("Missing token");
+                        return;
+                    }
+                    AssetDownload download = tokens.getIfPresent(token);
+                    if (download == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result("Invalid token.");
+                        return;
+                    }
 
-                tokens.invalidate(token);
-                String agent = ctx.header("User-Agent");
-                if (agent != null && agent.toLowerCase(Locale.ROOT).contains("discordbot")) {
-                    ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML).result(shareHtml);
-                    return;
-                }
+                    tokens.invalidate(token);
+                    String agent = ctx.header("User-Agent");
+                    if (agent != null && agent.toLowerCase(Locale.ROOT).contains("discordbot")) {
+                        ctx.status(HttpStatus.OK)
+                                .contentType(ContentType.TEXT_HTML)
+                                .result(shareHtml);
+                        return;
+                    }
 
-                var asset = nexus.v1().assets().get(download.assetId()).complete();
-                String filename = download.filename() != null
-                        ? download.filename()
-                        : "%s-%s.%s"
-                                .formatted(
-                                        asset.maven2().artifactId(),
-                                        asset.maven2().version(),
-                                        asset.maven2().extension());
+                    var asset = nexus.v1().assets().get(download.assetId()).complete();
+                    String filename = download.filename() != null
+                            ? download.filename()
+                            : "%s-%s.%s"
+                                    .formatted(
+                                            asset.maven2().artifactId(),
+                                            asset.maven2().version(),
+                                            asset.maven2().extension());
 
-                download.postDownload().run();
+                    download.postDownload().run();
 
-                if (download.productId() != null
-                        && download.downloadId() != null
-                        && download.version() != null
-                        && download.source() != null) {
+                    if (download.productId() != null
+                            && download.downloadId() != null
+                            && download.version() != null
+                            && download.source() != null) {
+                        try {
+                            downloadLog.record(
+                                    download.accountId(),
+                                    download.discordId(),
+                                    download.licenseId(),
+                                    download.productId(),
+                                    download.downloadId(),
+                                    download.version(),
+                                    download.source(),
+                                    ctx.header("User-Agent"),
+                                    ipHash(ctx.ip()));
+                        } catch (Exception e) {
+                            log.warn(LogNotify.NOTIFY_ADMIN, "Failed to record download log entry", e);
+                        }
+                    }
+
+                    var complete = asset.downloadStream().complete();
+                    ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
+                            .header("X-Content-Type-Options", "nosniff")
+                            .contentType(ContentType.APPLICATION_OCTET_STREAM)
+                            .status(HttpStatus.OK);
+
+                    if (downloads.skipJarSigning()) {
+                        ctx.result(complete);
+                        return;
+                    }
+
+                    Map<String, String> replacements = Map.of(
+                            "%%__USER__%%", download.userId(),
+                            "%%__RESOURCE__%%", download.assetId(),
+                            "%%__NONCE__%%", snowflakeCreator.nextString());
+
+                    byte[] replacedJarFile;
                     try {
-                        downloadLog.record(
-                                download.accountId(),
-                                download.discordId(),
-                                download.licenseId(),
-                                download.productId(),
-                                download.downloadId(),
-                                download.version(),
-                                download.source(),
-                                ctx.header("User-Agent"),
-                                ipHash(ctx.ip()));
+                        replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
                     } catch (Exception e) {
-                        log.warn(LogNotify.NOTIFY_ADMIN, "Failed to record download log entry", e);
+                        log.error(LogNotify.NOTIFY_ADMIN, "Could not replace strings in jar.", e);
+                        try (var in = asset.downloadStream().complete()) {
+                            replacedJarFile = in.readAllBytes();
+                        }
                     }
-                }
-
-                var complete = asset.downloadStream().complete();
-                ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
-                        .header("X-Content-Type-Options", "nosniff")
-                        .contentType(ContentType.APPLICATION_OCTET_STREAM)
-                        .status(HttpStatus.OK);
-
-                if (downloads.skipJarSigning()) {
-                    ctx.result(complete);
-                    return;
-                }
-
-                Map<String, String> replacements = Map.of(
-                        "%%__USER__%%", download.userId(),
-                        "%%__RESOURCE__%%", download.assetId(),
-                        "%%__NONCE__%%", snowflakeCreator.nextString());
-
-                byte[] replacedJarFile;
-                try {
-                    replacedJarFile = JarUtil.replaceStringsInJar(complete, replacements);
-                } catch (Exception e) {
-                    log.error(LogNotify.NOTIFY_ADMIN, "Could not replace strings in jar.", e);
-                    try (var in = asset.downloadStream().complete()) {
-                        replacedJarFile = in.readAllBytes();
-                    }
-                }
-                ctx.result(replacedJarFile);
-            });
-        });
+                    ctx.result(replacedJarFile);
+                }));
     }
 
     public String registerAsset(AssetDownload assetDownload) {

@@ -6,6 +6,7 @@
 package de.chojo.lyna.web.api.v1.products;
 
 import com.google.inject.Inject;
+import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
@@ -136,7 +137,7 @@ public class Wizard {
         AssetXO asset = download.assetByVersion(version).orElseThrow(() -> new NotFoundResponse("Unknown version"));
 
         var session = auth.currentSession(ctx);
-        Integer accountId = session.map(verified -> verified.accountId()).orElse(null);
+        Integer accountId = session.map(JwtService.Verified::accountId).orElse(null);
         Long discordId = session.flatMap(verified -> accounts.findLinkByAccountId(verified.accountId()))
                 .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
@@ -218,7 +219,7 @@ public class Wizard {
         String raw = ctx.queryParam("limit");
         if (raw == null) return DEFAULT_VERSION_LIMIT;
         try {
-            return Math.min(Math.max(Integer.parseInt(raw), 1), MAX_VERSION_LIMIT);
+            return Math.clamp(Integer.parseInt(raw), 1, MAX_VERSION_LIMIT);
         } catch (NumberFormatException e) {
             return DEFAULT_VERSION_LIMIT;
         }

@@ -22,11 +22,11 @@ import static de.chojo.sadu.queries.api.query.Query.query;
 
 public class LicenseUser {
     private final LicenseGuild licenseGuild;
-    long id;
+    final long id;
     /**
      * The member attached to this user
      */
-    Member member;
+    final Member member;
 
     public LicenseUser(LicenseGuild licenseGuild, Member member) {
         this.licenseGuild = licenseGuild;
