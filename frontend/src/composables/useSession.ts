@@ -26,14 +26,20 @@ let hydrating: Promise<void> | null = null
 
 /**
  * Hands a token kept in local storage by an older version to the backend, which answers with the
- * session cookie for the same session. The token is forgotten either way.
+ * session cookie for the same session.
+ *
+ * <p>The token is forgotten once the backend has answered, whatever it said. Not before: a page left
+ * while the request is under way would otherwise lose the token without the cookie ever arriving,
+ * and sign somebody out who was meant to stay in.
  */
 async function adoptLegacyToken(): Promise<void> {
     if (typeof localStorage === 'undefined') return
     const legacy = localStorage.getItem(LEGACY_TOKEN_KEY)
     if (!legacy) return
-    localStorage.removeItem(LEGACY_TOKEN_KEY)
-    await client.post('/api/auth/adopt', null, {headers: {Authorization: `Bearer ${legacy}`}}).catch(() => undefined)
+    const answered = await client.post('/api/auth/adopt', null, {headers: {Authorization: `Bearer ${legacy}`}})
+        .then(() => true)
+        .catch((error: {response?: unknown}) => error.response !== undefined)
+    if (answered) localStorage.removeItem(LEGACY_TOKEN_KEY)
 }
 
 /**
