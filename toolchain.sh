@@ -319,11 +319,16 @@ case "$cmd" in
     docker-e2e-prune)
         # A worktree that has been deleted leaves its stack behind, and nothing else will ever take
         # it down: the project name encodes a path that no longer exists, so no checkout claims it.
+        # Every checkout git still knows claims its own, so a stack is taken down only when none does.
+        live="$(git -C "$ROOT" worktree list --porcelain |
+            sed -n 's/^worktree //p' |
+            while read -r path; do e2e_project_name "$path"; echo; done)"
         docker compose ls --all --format json |
-            sed -n 's/.*"Name":"\(lyna-e2e-[^"]*\)".*/\1/p' |
+            { grep -o '"Name":"lyna-e2e-[^"]*"' || true; } |
+            sed 's/^"Name":"//; s/"$//' |
             sort -u |
             while read -r project; do
-                [ "$project" = "$COMPOSE_PROJECT_NAME" ] && continue
+                printf '%s\n' "$live" | grep -qxF "$project" && continue
                 echo "Taking down $project" >&2
                 COMPOSE_PROJECT_NAME="$project" docker compose -f "$COMPOSE" --profile e2e down -v
             done
