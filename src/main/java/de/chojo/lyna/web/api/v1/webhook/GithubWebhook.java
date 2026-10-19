@@ -6,7 +6,7 @@
 package de.chojo.lyna.web.api.v1.webhook;
 
 import com.google.inject.Inject;
-import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
+import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 
@@ -16,10 +16,10 @@ import static io.javalin.apibuilder.ApiBuilder.post;
  * Where GitHub delivers a product's release events.
  */
 public class GithubWebhook {
-    private final ReleasePostService releases;
+    private final GithubWebhookService releases;
 
     @Inject
-    public GithubWebhook(ReleasePostService releases) {
+    public GithubWebhook(GithubWebhookService releases) {
         this.releases = releases;
     }
 

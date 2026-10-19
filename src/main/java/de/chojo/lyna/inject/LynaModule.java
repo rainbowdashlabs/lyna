@@ -92,7 +92,7 @@ import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
-import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
+import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import de.chojo.lyna.feature.timechannel.repository.TimeChannelRepository;
 import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.gateway.Gateway;
@@ -338,7 +338,7 @@ public class LynaModule extends AbstractModule {
         bind(TimeChannelRepository.class).in(Singleton.class);
         bind(TimeChannelSchedule.class).in(Singleton.class);
         bind(ReleaseWebhookRepository.class).in(Singleton.class);
-        bind(ReleasePostService.class).in(Singleton.class);
+        bind(GithubWebhookService.class).in(Singleton.class);
         bind(ProductIconService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);

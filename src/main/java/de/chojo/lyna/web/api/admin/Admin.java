@@ -30,7 +30,7 @@ import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
-import de.chojo.lyna.feature.releasepost.service.ReleasePostService;
+import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -77,7 +77,7 @@ public class Admin {
     private final KioskProductRepository kioskProducts;
     private final ButlerApplicationRepository butlerApplications;
     private final ReleaseWebhookRepository releaseWebhooks;
-    private final ReleasePostService releasePosts;
+    private final GithubWebhookService releasePosts;
     private final ProductRepository productRepository;
     private final ProductLinksRepository productLinks;
     private final GuildAdminGuard guard;
@@ -103,7 +103,7 @@ public class Admin {
             ProductIconService productIcons,
             ButlerApplicationRepository butlerApplications,
             ReleaseWebhookRepository releaseWebhooks,
-            ReleasePostService releasePosts,
+            GithubWebhookService releasePosts,
             ProductRepository productRepository,
             ProductLinksRepository productLinks,
             GuildAdminGuard guard) {
@@ -143,6 +143,7 @@ public class Admin {
                 get("products/{productId}/release-webhook", this::releaseWebhook);
                 post("products/{productId}/release-webhook", this::issueReleaseWebhook);
                 put("products/{productId}/release-webhook/channel", this::releaseWebhookChannel);
+                put("products/{productId}/release-webhook/activity", this::releaseWebhookActivity);
                 delete("products/{productId}/release-webhook", this::removeReleaseWebhook);
                 get("licenses", this::listLicenses);
                 post("licenses", this::createLicense);
@@ -394,23 +395,64 @@ public class Admin {
     }
 
     /**
-     * Sets where releases are announced. With a bot connected the channel must be one of this guild's
-     * that messages can be sent to; without one there is nothing to ask.
+     * Sets where releases are announced.
      */
     private void releaseWebhookChannel(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
         var product = productFromPath(ctx, resolved);
         if (product == null) return;
-        long channelId;
+        ReleaseChannel body;
         try {
-            var body = json.readValue(ctx.body(), ReleaseChannel.class);
-            channelId = body.channelId() == null || body.channelId().isBlank()
-                    ? 0
-                    : Long.parseLong(body.channelId().strip());
+            body = json.readValue(ctx.body(), ReleaseChannel.class);
         } catch (Exception e) {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not a channel id");
             return;
+        }
+        Long channelId = postableChannel(ctx, resolved, body.channelId());
+        if (channelId == null) return;
+        ctx.status(releaseWebhooks.channel(product.id(), channelId) ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Sets where pushes, pull requests and issues are posted, and which of them. Checked like the
+     * release channel.
+     */
+    private void releaseWebhookActivity(Context ctx) {
+        var resolved = requireGuildAdmin(ctx);
+        if (resolved == null) return;
+        var product = productFromPath(ctx, resolved);
+        if (product == null) return;
+        ReleaseActivity body;
+        try {
+            body = json.readValue(ctx.body(), ReleaseActivity.class);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
+            return;
+        }
+        Long channelId = postableChannel(ctx, resolved, body.channelId());
+        if (channelId == null) return;
+        var activity = new ReleaseWebhookRepository.Activity(
+                body.push(), body.prOpened(), body.prMerged(), body.issueOpened(), body.issueClosed());
+        ctx.status(
+                releaseWebhooks.activity(product.id(), channelId, activity)
+                        ? HttpStatus.NO_CONTENT
+                        : HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Reads a channel id an operator typed. With a bot connected the channel must be one of this
+     * guild's that messages can be sent to; without one there is nothing to ask.
+     *
+     * @return the id, 0 for none, or null when the request has been answered with what is wrong
+     */
+    private Long postableChannel(Context ctx, Resolved resolved, String raw) {
+        long channelId;
+        try {
+            channelId = raw == null || raw.isBlank() ? 0 : Long.parseLong(raw.strip());
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("That is not a channel id");
+            return null;
         }
         if (channelId != 0
                 && gateway.connected()
@@ -418,9 +460,9 @@ public class Admin {
                         .map(guild -> guild.getChannelById(GuildMessageChannel.class, channelId))
                         .isEmpty()) {
             ctx.status(HttpStatus.BAD_REQUEST).result("This guild has no channel with that id the bot can post in");
-            return;
+            return null;
         }
-        ctx.status(releaseWebhooks.channel(product.id(), channelId) ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
+        return channelId;
     }
 
     private void removeReleaseWebhook(Context ctx) {
@@ -437,7 +479,9 @@ public class Admin {
                 "%s/api/v1/webhook/github/%s"
                         .formatted(configuration.main().api().url(), webhook.token()),
                 webhook.secret(),
-                webhook.channelId() == 0 ? null : Long.toString(webhook.channelId()));
+                webhook.channelId() == 0 ? null : Long.toString(webhook.channelId()),
+                webhook.activityChannelId() == 0 ? null : Long.toString(webhook.activityChannelId()),
+                webhook.activity());
     }
 
     /**
@@ -1013,7 +1057,24 @@ public class Admin {
      * @param secret    what to paste into GitHub as the secret
      * @param channelId as text, since a Discord id is larger than a JavaScript number holds exactly
      */
-    public record ReleaseWebhookView(String url, String secret, String channelId) {}
+    /**
+     * @param activityChannelId where pushes, pull requests and issues are posted, or nothing
+     * @param activity          which of those are posted
+     */
+    public record ReleaseWebhookView(
+            String url,
+            String secret,
+            String channelId,
+            String activityChannelId,
+            ReleaseWebhookRepository.Activity activity) {}
+
+    public record ReleaseActivity(
+            String channelId,
+            boolean push,
+            boolean prOpened,
+            boolean prMerged,
+            boolean issueOpened,
+            boolean issueClosed) {}
 
     public record ReleaseChannel(String channelId) {}
 
