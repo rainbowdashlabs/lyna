@@ -796,6 +796,14 @@
       "save": "Save",
       "saved": "Saved.",
       "couldNotSave": "That could not be saved."
+    },
+    "productKofiCodes": {
+      "title": "Ko-fi shop items",
+      "explain": "The direct-link code of each Ko-fi shop item that sells this product, the part after ko-fi.com/s/. An order for one issues a licence for this product.",
+      "none": "Not sold through Ko-fi yet.",
+      "linkCode": "Link code",
+      "add": "Add",
+      "couldNotSave": "That could not be saved."
     }
   },
   "preview": {
