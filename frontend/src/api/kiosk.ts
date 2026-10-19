@@ -36,6 +36,8 @@ export interface KioskProductDetail extends KioskProduct {
     readmeUrl: string | null
     /** Whether somebody without a license may download it once to try it. */
     trial: boolean
+    /** The product's documentation, or null when it has none. */
+    wikiUrl: string | null
 }
 
 /**

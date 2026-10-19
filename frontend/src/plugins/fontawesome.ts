@@ -13,6 +13,7 @@ import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome'
 import {
     faArrowLeft,
     faArrowRight,
+    faBook,
     faCartShopping,
     faCheck,
     faCircleCheck,
@@ -48,6 +49,7 @@ config.autoAddCss = false
  */
 library.add(faArrowLeft)
 library.add(faArrowRight)
+library.add(faBook)
 library.add(faCartShopping)
 library.add(faCheck)
 library.add(faCircleCheck)
