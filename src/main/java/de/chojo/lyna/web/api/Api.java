@@ -10,6 +10,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.account.AccountLicenseActions;
 import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.admin.AdminDiscord;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
 import de.chojo.lyna.web.api.admin.AdminLicenses;
 import de.chojo.lyna.web.api.admin.AdminMailing;
@@ -31,6 +32,7 @@ public class Api {
     private final Account account;
     private final Theme theme;
     private final Admin admin;
+    private final AdminDiscord adminDiscord;
     private final AdminDownloads adminDownloads;
     private final AdminLicenses adminLicenses;
     private final AdminMailing adminMailing;
@@ -48,6 +50,7 @@ public class Api {
             Account account,
             Theme theme,
             Admin admin,
+            AdminDiscord adminDiscord,
             AdminDownloads adminDownloads,
             AdminLicenses adminLicenses,
             AdminMailing adminMailing,
@@ -56,6 +59,7 @@ public class Api {
         this.accountLicenseActions = accountLicenseActions;
         this.adminTimeChannels = adminTimeChannels;
         this.adminMailing = adminMailing;
+        this.adminDiscord = adminDiscord;
         this.adminDownloads = adminDownloads;
         this.adminLicenses = adminLicenses;
         this.configuration = configuration;
@@ -76,6 +80,7 @@ public class Api {
             theme.init();
             admin.init();
             path("admin/g/{guildId}", () -> {
+                adminDiscord.init();
                 adminDownloads.init();
                 adminLicenses.init();
                 adminMailing.init();

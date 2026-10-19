@@ -97,7 +97,7 @@ async function save() {
           :help="t('page.admin.g.guildId.settings.membersOfThisRoleAdministerThis')"
           :label="t('page.admin.g.guildId.settings.adminRoleIdOptional')"
       >
-        <TextInput v-model="adminRoleId" inputmode="numeric" placeholder="e.g. 1065674230362017813"/>
+        <RolePicker v-model="adminRoleId" :guild-id="guildId" optional/>
       </LabelledField>
       <div v-if="message" class="text-sm" :class="isError ? 'text-error' : 'text-success'">
         {{ message }}

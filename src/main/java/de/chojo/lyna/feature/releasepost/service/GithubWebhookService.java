@@ -20,7 +20,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -171,16 +170,16 @@ public class GithubWebhookService {
         if (product.isEmpty()) return Outcome.IGNORED;
         Optional<MessageEmbed> embed = format.apply(product.get().name(), payload.get());
         if (embed.isEmpty()) return Outcome.IGNORED;
-        Optional<GuildMessageChannel> channel = channel(webhook.activityChannelId());
-        if (channel.isEmpty()) {
+        Optional<ChannelTarget> target = ChannelTarget.resolve(gateway.guilds(), webhook.activityChannelId());
+        if (target.isEmpty()) {
             log.debug("Activity of product {} not posted: no channel the bot can post in", webhook.productId());
             return Outcome.ANNOUNCED;
         }
-        channel.get()
-                .sendMessageEmbeds(embed.get())
-                .setAllowedMentions(List.of())
-                .queue(
-                        success -> {},
+        target.get()
+                .post(
+                        embed.get().getTitle(),
+                        embed.get(),
+                        List.of(),
                         error -> log.warn("Could not post activity of product {}", webhook.productId(), error));
         return Outcome.ANNOUNCED;
     }
@@ -195,17 +194,21 @@ public class GithubWebhookService {
 
     private void announce(ReleaseWebhook webhook, Payload payload) {
         Optional<Product> product = products.byId(webhook.productId());
-        Optional<GuildMessageChannel> channel = channel(webhook.channelId());
-        if (product.isEmpty() || channel.isEmpty()) {
+        Optional<ChannelTarget> target = ChannelTarget.resolve(gateway.guilds(), webhook.channelId());
+        if (product.isEmpty() || target.isEmpty()) {
             log.debug("Release of product {} not announced: no channel the bot can post in", webhook.productId());
             return;
         }
-        channel.get()
-                .sendMessageEmbeds(embed(product.get(), payload))
-                .addComponents(ActionRow.of(Button.link(
-                        "%s/products/%d".formatted(api.url(), product.get().id()), "Download on Lyna")))
-                .queue(
-                        success -> {},
+        target.get()
+                .post(
+                        "%s %s"
+                                .formatted(
+                                        product.get().name(), payload.release().tag()),
+                        embed(product.get(), payload),
+                        List.of(ActionRow.of(Button.link(
+                                "%s/products/%d"
+                                        .formatted(api.url(), product.get().id()),
+                                "Download on Lyna"))),
                         error -> log.warn("Could not announce a release of product {}", webhook.productId(), error));
     }
 
@@ -230,14 +233,6 @@ public class GithubWebhookService {
         }
         if (payload.repository() != null) embed.setFooter(payload.repository().fullName());
         return embed.build();
-    }
-
-    private Optional<GuildMessageChannel> channel(long channelId) {
-        if (channelId == 0) return Optional.empty();
-        return gateway.guilds().stream()
-                .map(guild -> guild.getChannelById(GuildMessageChannel.class, channelId))
-                .filter(Objects::nonNull)
-                .findFirst();
     }
 
     static boolean signed(String secret, String signature, byte[] body) {

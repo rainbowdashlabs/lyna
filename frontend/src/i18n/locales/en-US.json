@@ -172,7 +172,7 @@
             "premium": "Premium",
             "noProductsYet": "No products yet.",
             "name": "Name",
-            "roleId": "Role id",
+            "roleId": "Role",
             "projectUrlOptional": "Project URL (optional)",
             "productId": {
               "notFound": "This guild has no such product.",
@@ -201,7 +201,7 @@
             "trialServerTimeMinutes": "Trial server time (minutes)",
             "trialAccountTimeMinutes": "Trial account time (minutes)",
             "membersOfThisRoleAdministerThis": "Members of this role administer this guild here. Leave empty so only Manage Server does.",
-            "adminRoleIdOptional": "Admin role id (optional)"
+            "adminRoleIdOptional": "Admin role (optional)"
           },
           "trial": {
             "trial": "Trial",
@@ -524,7 +524,7 @@
     },
     "productEditForm": {
       "name": "Name",
-      "roleId": "Discord role id",
+      "roleId": "Role",
       "projectUrl": "Project URL",
       "trialAvailable": "Trial available",
       "freeToEveryone": "Free to everyone",
@@ -633,7 +633,7 @@
       "title": "Release announcements",
       "explain": "Announce this product's GitHub releases in a Discord channel. Lyna gives you an address and a secret to enter in the repository's webhook settings.",
       "create": "Set up webhook",
-      "channelId": "Discord channel id",
+      "channelId": "Release channel",
       "saveChannel": "Save channel",
       "rotate": "New address and secret",
       "remove": "Remove webhook",
@@ -701,8 +701,6 @@
     "productAccessTab": {
       "none": "No role grants access to this product's downloads.",
       "role": "Role",
-      "choose": "Choose…",
-      "roleId": "Discord role id",
       "releaseType": "Release type",
       "grant": "Grant",
       "revoke": "Revoke",
@@ -735,7 +733,6 @@
     "timeChannelForm": {
       "title": "Show the time on a channel",
       "channel": "Voice channel or category",
-      "choose": "Choose…",
       "zone": "Time zone",
       "template": "Name",
       "templateHint": "Where {'{'}time{'}'} goes, the time is shown. Empty: Developer Time: {'{'}time{'}'}",
@@ -808,7 +805,7 @@
     "releaseActivityForm": {
       "title": "Repository activity",
       "explain": "Pushes to the default branch, pull requests and issues, posted in a channel of their own. Without a channel they are not posted.",
-      "channelId": "Activity channel id",
+      "channelId": "Activity channel",
       "push": "Pushes",
       "prOpened": "Pull request opened",
       "prMerged": "Pull request merged",
@@ -820,6 +817,17 @@
     },
     "releaseTypePicker": {
       "reaches": "Reaches"
+    },
+    "discordPicker": {
+      "chooseRole": "Choose a role…",
+      "chooseChannel": "Choose a channel…",
+      "none": "None",
+      "unknownRole": "A role this guild no longer has",
+      "unknownChannel": "A channel this guild no longer shows",
+      "forum": "{name} (new forum post each time)",
+      "roleId": "Role id",
+      "channelId": "Channel id",
+      "noBot": "No bot is connected, so there are no names to choose from. Enter the id."
     }
   },
   "preview": {

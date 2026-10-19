@@ -72,8 +72,6 @@ public class AdminDownloads {
 
     public record RoleAccessGrant(String roleId, ReleaseType releaseType) {}
 
-    public record RoleView(String id, String name) {}
-
     @Inject
     public AdminDownloads(
             GuildAdminGuard guard, DownloadTypeRepository types, DownloadRepository downloads, Gateway gateway) {
@@ -91,7 +89,6 @@ public class AdminDownloads {
         post("download-types", this::createType);
         put("download-types/{typeId}", this::editType);
         delete("download-types/{typeId}", this::deleteType);
-        get("roles", this::listRoles);
         get("products/{productId}/downloads", this::listDownloads);
         post("products/{productId}/downloads", this::createDownload);
         put("products/{productId}/downloads/{typeId}", this::editDownload);
@@ -99,20 +96,6 @@ public class AdminDownloads {
         get("products/{productId}/role-access", this::listRoleAccess);
         post("products/{productId}/role-access", this::grantRoleAccess);
         delete("products/{productId}/role-access/{roleId}/{releaseType}", this::revokeRoleAccess);
-    }
-
-    /**
-     * The guild's roles, for picking one. Empty without a gateway, where a role is named by id.
-     */
-    private void listRoles(Context ctx) {
-        var admin = guard.require(ctx);
-        if (admin == null) return;
-        ctx.json(gateway.guild(admin.guild().guildId())
-                .map(guild -> guild.getRoles().stream()
-                        .filter(role -> !role.isPublicRole() && !role.isManaged())
-                        .map(role -> new RoleView(role.getId(), role.getName()))
-                        .toList())
-                .orElse(List.of()));
     }
 
     private void listDownloads(Context ctx) {

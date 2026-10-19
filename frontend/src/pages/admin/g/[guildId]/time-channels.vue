@@ -7,7 +7,8 @@
 import {useI18n} from 'vue-i18n'
 import {onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
-import {listRenameableChannels, listTimeChannels, removeTimeChannel, type RenameableChannel, type TimeChannel} from '~/api/adminTimeChannels'
+import {listChannels} from '~/api/adminDiscord'
+import {listTimeChannels, removeTimeChannel, type TimeChannel} from '~/api/adminTimeChannels'
 import {usePageTitle} from '~/composables/usePageTitle'
 
 /**
@@ -21,13 +22,15 @@ usePageTitle(t('layout.admin.timeChannels'))
 const guildId = String(useRoute().params.guildId)
 
 const channels = ref<TimeChannel[]>([])
-const renameable = ref<RenameableChannel[]>([])
+const botConnected = ref(true)
 const loading = ref(true)
 const error = ref('')
 
 async function load() {
   try {
-    [channels.value, renameable.value] = await Promise.all([listTimeChannels(guildId), listRenameableChannels(guildId)])
+    const [listed, renameable] = await Promise.all([listTimeChannels(guildId), listChannels(guildId, 'renaming')])
+    channels.value = listed
+    botConnected.value = renameable.connected
   } catch (e) {
     error.value = (e as Error).message
   } finally {
@@ -58,8 +61,8 @@ onMounted(load)
           <ErrorButton compact @click="remove(channel.channelId)">{{ t('page.admin.g.guildId.timeChannels.remove') }}</ErrorButton>
         </li>
       </ul>
-      <Alert v-if="!renameable.length" class="mt-4" variant="info">{{ t('page.admin.g.guildId.timeChannels.needsBot') }}</Alert>
-      <TimeChannelForm v-else :channels="renameable" :guild-id="guildId" class="mt-4" @saved="load"/>
+      <Alert v-if="!botConnected" class="mt-4" variant="info">{{ t('page.admin.g.guildId.timeChannels.needsBot') }}</Alert>
+      <TimeChannelForm v-else :guild-id="guildId" class="mt-4" @saved="load"/>
     </AsyncSection>
   </div>
 </template>

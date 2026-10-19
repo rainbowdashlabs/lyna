@@ -54,7 +54,7 @@ onMounted(load)
 
 async function submitCreate() {
   if (!createName.value || !createRoleId.value) {
-    createError.value = 'Name and role id are required.'
+    createError.value = 'Name and role are required.'
     return
   }
   createBusy.value = true
@@ -106,7 +106,7 @@ async function submitCreate() {
           <TextInput v-model="createName" required/>
         </LabelledField>
         <LabelledField :label="t('page.admin.g.guildId.products.roleId')">
-          <TextInput v-model="createRoleId" required/>
+          <RolePicker v-model="createRoleId" :guild-id="guildId"/>
         </LabelledField>
         <LabelledField :label="t('page.admin.g.guildId.products.projectUrlOptional')">
           <TextInput v-model="createUrl" type="url"/>

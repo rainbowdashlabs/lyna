@@ -80,13 +80,13 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         when(products.byId(productId)).thenReturn(Optional.of(product));
         Guild guild = mock(Guild.class);
         when(gateway.guilds()).thenReturn(List.of(guild));
-        when(guild.getChannelById(GuildMessageChannel.class, 42L)).thenReturn(channel);
+        when(guild.getGuildChannelById(42L)).thenReturn(channel);
         when(channel.sendMessageEmbeds(any(MessageEmbed.class))).thenReturn(send);
-        when(guild.getChannelById(GuildMessageChannel.class, 77L)).thenReturn(activityChannel);
+        when(guild.getGuildChannelById(77L)).thenReturn(activityChannel);
         when(activityChannel.sendMessageEmbeds(any(MessageEmbed.class))).thenReturn(activitySend);
         when(activitySend.setAllowedMentions(any())).thenReturn(activitySend);
-        when(send.addComponents(any(net.dv8tion.jda.api.components.MessageTopLevelComponent[].class)))
-                .thenReturn(send);
+        when(send.addComponents(any(java.util.Collection.class))).thenReturn(send);
+        when(send.setAllowedMentions(any())).thenReturn(send);
         Api api = mock(Api.class);
         when(api.url()).thenReturn("https://lyna.example");
         service = new GithubWebhookService(webhooks, products, gateway, api);
@@ -112,13 +112,18 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         assertEquals("Spooky", embed.getAuthor().getName());
         assertEquals("x/y", embed.getFooter().getText());
         assertEquals("Stable", embed.getFields().get(0).getValue());
-        ArgumentCaptor<net.dv8tion.jda.api.components.actionrow.ActionRow> row =
-                ArgumentCaptor.forClass(net.dv8tion.jda.api.components.actionrow.ActionRow.class);
-        verify(send).addComponents(row.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.Collection<net.dv8tion.jda.api.components.actionrow.ActionRow>> rows =
+                ArgumentCaptor.forClass(java.util.Collection.class);
+        verify(send).addComponents(rows.capture());
+        verify(send).setAllowedMentions(List.of());
         assertEquals(
                 "https://lyna.example/products/" + productId,
-                ((net.dv8tion.jda.api.components.buttons.Button)
-                                row.getValue().getComponents().getFirst())
+                ((net.dv8tion.jda.api.components.buttons.Button) rows.getValue()
+                                .iterator()
+                                .next()
+                                .getComponents()
+                                .getFirst())
                         .getUrl());
     }
 

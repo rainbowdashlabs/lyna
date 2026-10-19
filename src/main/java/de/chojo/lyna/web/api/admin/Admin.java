@@ -31,6 +31,7 @@ import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
+import de.chojo.lyna.feature.releasepost.service.ChannelTarget;
 import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
@@ -38,7 +39,6 @@ import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -458,7 +458,7 @@ public class Admin {
         if (channelId != 0
                 && gateway.connected()
                 && discordGuild(resolved.guild().guildId())
-                        .map(guild -> guild.getChannelById(GuildMessageChannel.class, channelId))
+                        .flatMap(guild -> ChannelTarget.resolve(List.of(guild), channelId))
                         .isEmpty()) {
             ctx.status(HttpStatus.BAD_REQUEST).result("This guild has no channel with that id the bot can post in");
             return null;

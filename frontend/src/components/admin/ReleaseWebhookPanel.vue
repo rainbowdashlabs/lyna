@@ -72,7 +72,7 @@ onMounted(() => run(async () => show(await getReleaseWebhook(props.guildId, prop
     <template v-if="webhook">
       <ReleaseWebhookDetails :webhook="webhook"/>
       <LabelledField :label="t('ui.releaseWebhookPanel.channelId')">
-        <TextInput v-model="channelId"/>
+        <ChannelPicker v-model="channelId" :guild-id="guildId" optional purpose="posting"/>
       </LabelledField>
       <div class="flex flex-wrap items-center gap-3">
         <PrimaryButton :disabled="busy" @click="saveChannel">{{ t('ui.releaseWebhookPanel.saveChannel') }}</PrimaryButton>
