@@ -13,6 +13,7 @@ import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.mail.entity.Mailing;
+import de.chojo.lyna.feature.mail.service.PurchaseMailService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
@@ -36,12 +37,18 @@ public class PurchaseService {
     private final LicenseService licenses;
     private final PurchaseCollectionService collection;
     private final MailingService mailing;
+    private final PurchaseMailService purchaseMail;
 
     @Inject
-    public PurchaseService(LicenseService licenses, PurchaseCollectionService collection, MailingService mailing) {
+    public PurchaseService(
+            LicenseService licenses,
+            PurchaseCollectionService collection,
+            MailingService mailing,
+            PurchaseMailService purchaseMail) {
         this.licenses = licenses;
         this.collection = collection;
         this.mailing = mailing;
+        this.purchaseMail = purchaseMail;
     }
 
     /**
@@ -74,11 +81,10 @@ public class PurchaseService {
         boolean handedOver = collection.handOver(license.id(), address);
         Mail mail = MailCreator.createLicenseMessage(
                 mailing.renderer(),
-                mailTemplate,
-                license.key(),
-                name,
+                purchaseMail.blocksFor(mailTemplate),
+                mailTemplate.mailText(),
+                purchaseMail.values(mailTemplate.product(), name, license.key()),
                 address,
-                mailTemplate.product().url(),
                 handedOver ? PurchaseRecipient.WITH_ACCOUNT : PurchaseRecipient.WITHOUT_ACCOUNT);
         mailing.sendMail(mail);
     }

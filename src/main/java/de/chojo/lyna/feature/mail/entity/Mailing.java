@@ -78,4 +78,31 @@ public class Mailing {
             this.mailText = mailText;
         }
     }
+
+    /**
+     * @return whether the operator wrote anything for this product, rather than leaving it to the
+     *         guild's default
+     */
+    public boolean hasOwnBody() {
+        return hasBlocks(blocks) || (mailText != null && !mailText.isBlank());
+    }
+
+    /**
+     * Empties the mail, so the product sends its guild's default again.
+     */
+    public void useDefault() {
+        if (REPOSITORY.clearBody(id)) {
+            this.blocks = null;
+            this.mailText = "";
+        }
+    }
+
+    /**
+     * @return whether a block document holds at least one block
+     */
+    public static boolean hasBlocks(String blocks) {
+        if (blocks == null) return false;
+        String trimmed = blocks.strip();
+        return !trimmed.isEmpty() && !trimmed.replaceAll("\\s", "").equals("[]");
+    }
 }

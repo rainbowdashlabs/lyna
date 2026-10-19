@@ -31,7 +31,7 @@ class ProductPageServiceTest {
     private final ProductPageService pages = new ProductPageService(readmes);
 
     private static KioskProduct product(String url, String description, boolean readme) {
-        return new KioskProduct(1, 2L, "P", url, null, true, null, description, false, readme);
+        return new KioskProduct(1, 2L, "P", url, null, true, null, description, false, readme, null);
     }
 
     @Test

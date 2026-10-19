@@ -31,6 +31,16 @@ defineProps<{ product: KioskProductDetail }>()
           <font-awesome-icon :icon="['fab', 'github']"/>
           <span class="ml-1">{{ t('page.products.id.projectPage') }}</span>
         </a>
+        <a
+            v-if="product.wikiUrl"
+            :href="product.wikiUrl"
+            class="text-sm text-(--text-muted) hover:text-(--text)"
+            rel="noopener noreferrer"
+            target="_blank"
+        >
+          <font-awesome-icon :icon="['fas', 'book']"/>
+          <span class="ml-1">{{ t('page.products.id.wiki') }}</span>
+        </a>
       </div>
     </div>
   </header>

@@ -9,9 +9,13 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
+import de.chojo.lyna.feature.guild.repository.GuildSettingsRepository;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.LicenseSource;
+import de.chojo.lyna.feature.mail.repository.MailGuildSettingsRepository;
+import de.chojo.lyna.feature.mail.service.PurchaseMailService;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailingService;
@@ -55,6 +59,7 @@ class PurchaseServiceTest extends RepositoryTestBase {
                 "license_access",
                 "license",
                 "mail_products",
+                "mail_guild_settings",
                 "product",
                 "account_email",
                 "account_identity",
@@ -89,7 +94,17 @@ class PurchaseServiceTest extends RepositoryTestBase {
                 .when(mailing)
                 .sendMail(Mockito.any());
 
-        purchases = new PurchaseService(licenseService, purchaseCollection, mailing);
+        purchases = new PurchaseService(
+                licenseService,
+                purchaseCollection,
+                mailing,
+                new PurchaseMailService(
+                        new MailGuildSettingsRepository(),
+                        new ProductLinksRepository(),
+                        productIcons,
+                        kioskProducts,
+                        new GuildSettingsRepository(),
+                        configuration.main().links()));
     }
 
     @Test
@@ -159,5 +174,23 @@ class PurchaseServiceTest extends RepositoryTestBase {
             rows.next();
             assertEquals("MAIL", rows.getString(1));
         }
+    }
+
+    @Test
+    @DisplayName("A product whose mail has no body sends the default, key and all")
+    void anEmptyMailSendsTheDefault() throws SQLException {
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
+            statement.execute("UPDATE %s.mail_products SET mail_text = ''".formatted(schemaName));
+        }
+        Product reloaded = product.products().byId(product.id()).orElseThrow();
+
+        Optional<License> license = purchases.issue(reloaded, BUYER, "Ada Lovelace", LicenseSource.KOFI);
+
+        assertTrue(license.isPresent());
+        String text = sent.get(0).text();
+        assertTrue(text.contains("Thank you for purchasing Widget!"), "the shipped default is sent");
+        assertTrue(text.contains(license.get().key()), "with the key in it");
+        assertTrue(text.contains("https://example.invalid/widget"), "and the product's own address");
     }
 }

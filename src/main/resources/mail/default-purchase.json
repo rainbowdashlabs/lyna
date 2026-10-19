@@ -1,0 +1,22 @@
+[
+  {"type": "image", "url": "{{ productIcon }}", "alt": "{{ product }}"},
+  {"type": "heading", "text": "Thank you for purchasing {{ product }}!", "align": "center"},
+  {"type": "paragraph", "text": "Hello {{ name }}, thank you for your support - it means a lot."},
+  {"type": "key", "label": "Your licence key"},
+  {"type": "paragraph", "text": "Redeem it on our [Discord]({{ discordUrl }}) with /register to get the buyer role and access to the support channels."},
+  {"type": "paragraph", "text": "You can share access with up to {{ shares }} more people with /registrations share add.", "requires": ["shares", "discordUrl"]},
+  {"type": "button", "label": "Join the Discord", "url": "{{ discordUrl }}"},
+  {"type": "divider"},
+  {"type": "heading", "text": "Getting started"},
+  {"type": "list", "items": [
+    "[{{ product }} on our store]({{ productPage }})",
+    "[Documentation]({{ wikiUrl }})",
+    "[Source, issues and ideas]({{ productUrl }})"
+  ]},
+  {"type": "divider"},
+  {"type": "paragraph", "text": "If you like {{ product }}, a review helps a lot.", "align": "center", "requires": ["reviewUrl"]},
+  {"type": "button", "label": "Leave a review", "url": "{{ reviewUrl }}"},
+  {"type": "paragraph", "text": "Missing a feature or found a bug? Tell us on the [project page]({{ productUrl }}) or on [Discord]({{ discordUrl }}).", "align": "center"},
+  {"type": "paragraph", "text": "Thank you again, and good luck with your projects!", "align": "center", "emphasis": true},
+  {"type": "links"}
+]

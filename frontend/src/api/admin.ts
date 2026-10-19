@@ -27,6 +27,10 @@ export interface ProductSummary {
     butlerId?: number | null
     /** Whether the product page shows the GitHub README instead of the description. */
     pageReadme?: boolean
+    /** The product's documentation, shown on its page and linked from its purchase mail. */
+    wikiUrl?: string | null
+    /** Where the purchase mail asks a buyer to leave a review. */
+    reviewUrl?: string | null
 }
 
 export interface CreateProductPayload {
@@ -100,6 +104,8 @@ export interface ProductEditPayload {
     /** An address to fetch the icon from, for an instance that would rather point at its own CDN. */
     iconUrl: string | null
     butlerId: number | null
+    wikiUrl: string | null
+    reviewUrl: string | null
 }
 
 /** Everything about a product except its icon, saved in one go. */
@@ -173,14 +179,24 @@ export interface InstanceOperator {
     configured: boolean
 }
 
-export type MailBlock =
-    | {type: 'heading'; text: string}
-    | {type: 'paragraph'; text: string}
+/**
+ * Names placeholders a block needs: it is left out of the mail when any of them stands for nothing.
+ */
+interface Requiring {
+    requires?: string[]
+}
+
+export type MailBlock = Requiring & (
+    | {type: 'heading'; text: string; align?: 'center'}
+    | {type: 'paragraph'; text: string; align?: 'center'; emphasis?: boolean}
     | {type: 'key'; label: string}
     | {type: 'button'; label: string; url: string}
     | {type: 'list'; items: string[]}
+    | {type: 'image'; url: string; alt: string}
+    | {type: 'links'}
     | {type: 'divider'}
     | {type: 'raw'; html: string}
+)
 
 export interface MailingTemplate {
     id: number
@@ -190,6 +206,29 @@ export interface MailingTemplate {
     /** The mail as its operator composed it, or null for one written before blocks existed. */
     blocks: string | null
     mailText: string | null
+    /** Whether the product sends the guild's default, having no body of its own. */
+    usesDefault: boolean
+    /** What each placeholder stands for in this product's mail. */
+    values: Record<string, string>
+}
+
+export interface MailLink {
+    label: string
+    url: string
+}
+
+/** What every purchase mail of a guild shares. */
+export interface GuildMail {
+    /** The default as it is sent: the guild's own, or the one the application ships. */
+    blocks: string
+    /** Whether the guild wrote its own default. */
+    custom: boolean
+    /** The shipped default. */
+    builtIn: string
+    discordUrl: string | null
+    links: MailLink[]
+    /** Products without a mail, which a receipt cannot be matched to yet. */
+    productsWithoutMail: string[]
 }
 
 export async function listMailings(guildId: string): Promise<MailingTemplate[]> {
@@ -209,6 +248,45 @@ export async function previewMailing(guildId: string, id: number, blocks: MailBl
 
 export async function sendTestMail(guildId: string, id: number, address: string): Promise<void> {
     await client.post(`/api/admin/g/${guildId}/mailing/${id}/test`, {address})
+}
+
+/** Hands a product's mail back to the guild's default. */
+export async function useDefaultMailing(guildId: string, id: number): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/mailing/${id}/use-default`)
+}
+
+/** Gives every product without a mail an empty one, which sends the default. */
+export async function createMissingMailings(guildId: string): Promise<number> {
+    const {data} = await client.post<{created: number}>(`/api/admin/g/${guildId}/mailing`)
+    return data.created
+}
+
+export async function getGuildMail(guildId: string): Promise<GuildMail> {
+    const {data} = await client.get<GuildMail>(`/api/admin/g/${guildId}/guild-mail`)
+    return data
+}
+
+export async function saveGuildMailBlocks(guildId: string, blocks: MailBlock[]): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/guild-mail/blocks`, {blocks: JSON.stringify(blocks)})
+}
+
+/** Goes back to the default the application ships. */
+export async function resetGuildMailBlocks(guildId: string): Promise<void> {
+    await client.delete(`/api/admin/g/${guildId}/guild-mail/blocks`)
+}
+
+export async function saveGuildMailContact(guildId: string, discordUrl: string | null, links: MailLink[]): Promise<void> {
+    await client.put(`/api/admin/g/${guildId}/guild-mail/contact`, {discordUrl, links})
+}
+
+export async function previewGuildMail(guildId: string, blocks: MailBlock[]): Promise<string> {
+    const {data} = await client.post<string>(
+        `/api/admin/g/${guildId}/guild-mail/preview`, {blocks: JSON.stringify(blocks)})
+    return data
+}
+
+export async function sendGuildTestMail(guildId: string, address: string): Promise<void> {
+    await client.post(`/api/admin/g/${guildId}/guild-mail/test`, {address})
 }
 
 export interface KofiMapping {

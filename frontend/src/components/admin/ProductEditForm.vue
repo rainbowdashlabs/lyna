@@ -19,6 +19,8 @@ const roleId = ref(props.product.roleId)
 const free = ref(props.product.free)
 const trial = ref(props.product.trial)
 const butlerId = ref(props.product.butlerId?.toString() ?? '')
+const wikiUrl = ref(props.product.wikiUrl ?? '')
+const reviewUrl = ref(props.product.reviewUrl ?? '')
 // An uploaded icon is served from this instance; that path is not an address to type back.
 const iconUrl = ref(props.product.iconUrl?.startsWith('/api/') ? '' : props.product.iconUrl ?? '')
 
@@ -45,6 +47,8 @@ async function save() {
       trial: trial.value,
       iconUrl: iconUrl.value.trim() ? iconUrl.value.trim() : null,
       butlerId: butlerId.value.trim() ? Number(butlerId.value.trim()) : null,
+      wikiUrl: wikiUrl.value.trim() || null,
+      reviewUrl: reviewUrl.value.trim() || null,
     })
     saved.value = true
     emit('saved')
@@ -69,6 +73,14 @@ async function save() {
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.projectUrl')">
       <TextInput v-model="url" type="url"/>
+    </LabelledField>
+    <LabelledField :label="t('ui.productEditForm.wikiUrl')">
+      <TextInput v-model="wikiUrl" type="url"/>
+      <MutedText size="xs" tag="p">{{ t('ui.productEditForm.wikiHint') }}</MutedText>
+    </LabelledField>
+    <LabelledField :label="t('ui.productEditForm.reviewUrl')">
+      <TextInput v-model="reviewUrl" type="url"/>
+      <MutedText size="xs" tag="p">{{ t('ui.productEditForm.reviewHint') }}</MutedText>
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.iconAddress')">
       <TextInput v-model="iconUrl" type="url"/>

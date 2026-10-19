@@ -24,6 +24,7 @@ defineEmits<{ changed: [], deleted: [] }>()
         @changed="$emit('changed')"
     />
     <ProductEditForm :key="product.id" :guild-id="guildId" :product="product" @saved="$emit('changed')"/>
+    <ProductKofiCodes :key="`kofi-${product.id}`" :guild-id="guildId" :product-id="product.id"/>
     <ProductDeleteZone :guild-id="guildId" :product="product" @deleted="$emit('deleted')"/>
   </div>
   <ProductPageEditor v-else-if="tab === 'page'" :guild-id="guildId" :product="product" @saved="$emit('changed')"/>

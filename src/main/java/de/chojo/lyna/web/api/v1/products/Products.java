@@ -243,6 +243,7 @@ public class Products {
      * @param pageSource  which of the two it is
      * @param readmeUrl   the README's page on GitHub, when the page shows it
      * @param trial       whether somebody without a license may download it once to try it
+     * @param wikiUrl     the product's documentation, or null when it has none
      */
     private record KioskDetail(
             int id,
@@ -256,7 +257,8 @@ public class Products {
             String description,
             ProductPageService.Source pageSource,
             String readmeUrl,
-            boolean trial) {
+            boolean trial,
+            String wikiUrl) {
         static KioskDetail of(KioskProduct product, boolean entitled, boolean uploaded, ProductPageService.Page page) {
             return new KioskDetail(
                     product.id(),
@@ -270,7 +272,8 @@ public class Products {
                     page.markdown(),
                     page.source(),
                     page.readmeUrl(),
-                    product.trial());
+                    product.trial(),
+                    product.wikiUrl());
         }
     }
 }

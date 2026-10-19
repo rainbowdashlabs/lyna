@@ -146,7 +146,22 @@
           "mailing": {
             "mailingTemplates": "Mailing templates",
             "theMailSentWhenSomebodyBuys": "The mail sent when somebody buys a product. Composed in blocks and rendered into the same layout every other mail uses, so it arrives looking like one.",
-            "middotWrittenBeforeTheEditor": "· written before the editor"
+            "middotWrittenBeforeTheEditor": "written before the editor",
+            "couldNotDoThat": "That did not work.",
+            "couldNotLoad": "Failed to load the mails.",
+            "usesDefault": "sends the guild default",
+            "ownMail": "its own mail",
+            "guildDefault": "Guild default",
+            "defaultExplain": "Sent for every product whose mail is empty.",
+            "shippedDefault": "The default Lyna ships. Edit it to make it your own.",
+            "customDefault": "Your own default.",
+            "loadShipped": "Load shipped default",
+            "resetToShipped": "Reset to shipped default",
+            "loadDefault": "Load guild default",
+            "useDefault": "Use guild default",
+            "contact": "Discord and links",
+            "withoutMail": "No mail yet, so no receipt can be matched to them: {products}.",
+            "addMissing": "Add a mail for each, sending the default"
           },
           "products": {
             "products": "Products",
@@ -246,6 +261,7 @@
       "id": {
         "about": "About",
         "projectPage": "Project page",
+        "wiki": "Wiki",
         "noDescriptionYet": "Nothing has been written about this one yet.",
         "noSuchProduct": "There is no such product.",
         "couldNotLoad": "Could not load this product.",
@@ -442,7 +458,7 @@
     "mailBlockField": {
       "aLineAcrossTheMail": "A line across the mail.",
       "heading": "Heading",
-      "placeholdersWorkHereALinkIs": "Placeholders work here. A link is written [label](https://…).",
+      "placeholdersWorkHereALinkIs": "Placeholders work here. A link is written [label](https://…) or [label]({'{'}{'{'} wikiUrl {'}'}{'}'}).",
       "text": "Text",
       "theLicenceKeyItselfIsFilled": "The licence key itself is filled in when the mail is sent.",
       "labelAboveTheKey": "Label above the key",
@@ -451,7 +467,14 @@
       "oneLinePerItem": "One line per item.",
       "items": "Items",
       "sentAsWrittenThisIsWhat": "Sent as written. This is what a mail composed before the editor kept.",
-      "html": "HTML"
+      "html": "HTML",
+      "centred": "Centred",
+      "italics": "Italics",
+      "addressHelp": "Has to be an http address, or a placeholder such as {'{'}{'{'} reviewUrl {'}'}{'}'}. Left out when it is neither.",
+      "imageAddress": "Image address",
+      "altText": "Text when the image does not load",
+      "theGuildsLinks": "The guild's links, in a row. They are set on the mailing page.",
+      "leftOutUnless": "Left out unless these are set: {names}"
     },
     "mailingEditorPanel": {
       "backToTheList": "Back to the list",
@@ -460,7 +483,18 @@
       "withStandInValuesTheOnly": "With stand-in values. The only real check is what a mail client makes of it.",
       "send": "Send",
       "whatTheMailLooksLike": "What the mail looks like",
-      "address": "Address"
+      "address": "Address",
+      "save": "Save",
+      "saved": "Saved.",
+      "working": "Working…",
+      "couldNotSave": "Could not save the mail.",
+      "couldNotPreview": "Could not render the preview.",
+      "couldNotSend": "Could not send it.",
+      "sentTo": "Sent to {address}.",
+      "replaceBlocks": "Replace the current blocks?",
+      "placeholders": "Placeholders",
+      "placeholdersExplain": "What each stands for in this mail. A link to one that is unset is left out.",
+      "unset": "unset"
     },
     "emailList": {
       "title": "Email addresses",
@@ -501,7 +535,11 @@
       "iconAddress": "Icon address",
       "usedWhenNothingIsUploaded": "Used only when no icon has been uploaded.",
       "butlerId": "UpdateButler id",
-      "butlerIdHint": "The id plugins built for UpdateButler ask for updates by. Leave empty if it never had one."
+      "butlerIdHint": "The id plugins built for UpdateButler ask for updates by. Leave empty if it never had one.",
+      "wikiUrl": "Wiki URL",
+      "wikiHint": "Shown on the product page and linked from its purchase mail.",
+      "reviewUrl": "Review URL",
+      "reviewHint": "Where the purchase mail asks a buyer to leave a review."
     },
     "productVersions": {
       "versions": "Versions",
@@ -746,6 +784,26 @@
         "NO_VERIFIED_EMAIL": "Verify an email address on your account first, or link your Discord account.",
         "DISPOSABLE_EMAIL": "Throwaway email addresses do not count. Verify another address, or link your Discord account."
       }
+    },
+    "guildMailContactForm": {
+      "discord": "Discord invite",
+      "discordHelp": "Where buyers join to redeem their key. Fills in {'{'}{'{'} discordUrl {'}'}{'}'}.",
+      "links": "Links",
+      "linksHelp": "Shown in a row at the end of every purchase mail.",
+      "label": "Label",
+      "address": "Address",
+      "addLink": "Add link",
+      "save": "Save",
+      "saved": "Saved.",
+      "couldNotSave": "That could not be saved."
+    },
+    "productKofiCodes": {
+      "title": "Ko-fi shop items",
+      "explain": "The direct-link code of each Ko-fi shop item that sells this product, the part after ko-fi.com/s/. An order for one issues a licence for this product.",
+      "none": "Not sold through Ko-fi yet.",
+      "linkCode": "Link code",
+      "add": "Add",
+      "couldNotSave": "That could not be saved."
     }
   },
   "preview": {
