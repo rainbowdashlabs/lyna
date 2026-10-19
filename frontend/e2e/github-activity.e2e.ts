@@ -4,8 +4,9 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {createHmac} from 'node:crypto'
-import {type APIRequestContext, expect, test} from '@playwright/test'
-import {createProduct, deleteProduct, GUILD, operatorHeaders, uniqueName} from './fixtures/admin'
+import type {APIRequestContext} from '@playwright/test'
+import {expect, test} from './fixtures/session'
+import {createProduct, deleteProduct, GUILD, OPERATOR, uniqueName} from './fixtures/admin'
 
 /**
  * What a product's GitHub webhook answers to a repository's goings-on. The stack has no bot, so
@@ -27,10 +28,8 @@ test.describe('A product\'s GitHub webhook', () => {
         repository: {full_name: 'x/y'},
     })
 
-    async function webhook(request: APIRequestContext, productId: number): Promise<{token: string, secret: string}> {
-        const issued = await request.post(`/api/admin/g/${GUILD}/products/${productId}/release-webhook`, {
-            headers: await operatorHeaders(request),
-        })
+    async function webhook(operator: APIRequestContext, productId: number): Promise<{token: string, secret: string}> {
+        const issued = await operator.post(`/api/admin/g/${GUILD}/products/${productId}/release-webhook`)
         expect(issued.status()).toBe(200)
         const {url, secret} = await issued.json()
         return {token: url.split('/').pop(), secret}
@@ -44,10 +43,11 @@ test.describe('A product\'s GitHub webhook', () => {
         })
     }
 
-    test('posts pushes to the default branch, opened and merged PRs, and opened issues', async ({request}) => {
+    test('posts pushes to the default branch, opened and merged PRs, and opened issues', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Active')
-        const id = await createProduct(request, name)
-        const hook = await webhook(request, id)
+        const id = await createProduct(operator, name)
+        const hook = await webhook(operator, id)
 
         expect((await deliver(request, hook, 'push', push('main'))).status()).toBe(200)
         expect((await deliver(request, hook, 'push', push('feature/x'))).status()).toBe(204)
@@ -57,15 +57,15 @@ test.describe('A product\'s GitHub webhook', () => {
         expect((await deliver(request, hook, 'issues', issue('opened'))).status()).toBe(200)
         expect((await deliver(request, hook, 'issues', issue('closed'))).status()).toBe(200)
 
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 
-    test('drops what the product switched off, and refuses what is not signed', async ({request}) => {
+    test('drops what the product switched off, and refuses what is not signed', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Quiet')
-        const id = await createProduct(request, name)
-        const hook = await webhook(request, id)
-        const saved = await request.put(`/api/admin/g/${GUILD}/products/${id}/release-webhook/activity`, {
-            headers: await operatorHeaders(request),
+        const id = await createProduct(operator, name)
+        const hook = await webhook(operator, id)
+        const saved = await operator.put(`/api/admin/g/${GUILD}/products/${id}/release-webhook/activity`, {
             data: {channelId: null, push: false, prOpened: true, prMerged: true, issueOpened: false, issueClosed: true},
         })
         expect(saved.status()).toBe(204)
@@ -75,11 +75,9 @@ test.describe('A product\'s GitHub webhook', () => {
         expect((await deliver(request, hook, 'issues', issue('closed'))).status()).toBe(200)
         expect((await deliver(request, {...hook, secret: 'wrong'}, 'issues', issue('closed'))).status()).toBe(401)
 
-        const read = await (await request.get(`/api/admin/g/${GUILD}/products/${id}/release-webhook`, {
-            headers: await operatorHeaders(request),
-        })).json()
+        const read = await (await operator.get(`/api/admin/g/${GUILD}/products/${id}/release-webhook`)).json()
         expect(read.activity).toEqual({push: false, prOpened: true, prMerged: true, issueOpened: false, issueClosed: true})
 
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 })
