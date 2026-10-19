@@ -7,12 +7,14 @@ package de.chojo.lyna.repository;
 
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
+import de.chojo.lyna.feature.account.service.UsernameService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.random.RandomGenerator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -348,8 +350,19 @@ class AccountsRepositoryTest extends RepositoryTestBase {
             writeName(filler.id(), "crowded", "%04d".formatted(taken));
         }
         Account late = accountService.register("late@example.invalid", "hash");
+        UsernameService unlucky = new UsernameService(accounts, () -> new RandomGenerator() {
+            @Override
+            public long nextLong() {
+                return 0;
+            }
 
-        String discriminator = usernameService.setUsername(late.id(), "crowded");
+            @Override
+            public int nextInt(int origin, int bound) {
+                return origin;
+            }
+        });
+
+        String discriminator = unlucky.setUsername(late.id(), "crowded");
 
         assertEquals("9999", discriminator);
     }
