@@ -28,6 +28,14 @@ public class Auth {
     @Overwrite(env = @Env, prop = @Prop)
     private int renewAfterHours = 24;
 
+    /**
+     * The key stored Discord tokens are encrypted with, base64. Empty means the key file beside the
+     * configuration, which is made on first start. Supply it as {@code AUTH_TOKENKEY} to keep it out
+     * of files altogether.
+     */
+    @Overwrite(env = @Env, prop = @Prop)
+    private String tokenKey = "";
+
     public String jwtSecret() {
         return jwtSecret;
     }
@@ -38,5 +46,9 @@ public class Auth {
 
     public int renewAfterHours() {
         return renewAfterHours;
+    }
+
+    public String tokenKey() {
+        return tokenKey;
     }
 }

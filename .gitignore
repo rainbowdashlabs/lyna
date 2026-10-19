@@ -39,3 +39,4 @@ CLAUDE.md
 .concept
 # Stray scratch directories, which have no business in the tree
 /tmp/
+/docker/config-e2e/token.key

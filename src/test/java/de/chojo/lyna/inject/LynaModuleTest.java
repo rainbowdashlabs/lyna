@@ -11,6 +11,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
+import de.chojo.lyna.auth.TokenKey;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.TestConf;
@@ -29,8 +30,10 @@ import de.chojo.lyna.demo.DemoService;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.DiscordTokenRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
+import de.chojo.lyna.feature.account.service.DiscordTokenRefresher;
 import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.guild.Guilds;
@@ -135,6 +138,7 @@ class LynaModuleTest {
                 AccountLicenseRepository.class,
                 LicenseInviteRepository.class,
                 AccountSessionRepository.class,
+                DiscordTokenRepository.class,
                 DownloadLogRepository.class,
                 DemoArtifactRepository.class,
                 InstanceSettingsRepository.class,
@@ -205,6 +209,8 @@ class LynaModuleTest {
         assertNotNull(injector.getInstance(WebService.class));
         assertNotNull(injector.getInstance(Bot.class));
         assertNotNull(injector.getInstance(DemoSchedule.class));
+        assertNotNull(injector.getInstance(DiscordTokenRefresher.class));
+        assertSame(injector.getInstance(TokenKey.class), injector.getInstance(TokenKey.class));
     }
 
     @Test

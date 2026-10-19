@@ -20,6 +20,7 @@ import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.DiscordConnectionService;
 import de.chojo.lyna.feature.account.service.SessionService;
 import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
@@ -53,6 +54,7 @@ public class Auth {
     private final PasswordHasher passwordHasher;
     private final DiscordOAuthClient oauthClient;
     private final OAuth oauthConfig;
+    private final DiscordConnectionService discordConnections;
     private final MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
@@ -68,6 +70,7 @@ public class Auth {
             PasswordHasher passwordHasher,
             DiscordOAuthClient oauthClient,
             OAuth oauthConfig,
+            DiscordConnectionService discordConnections,
             MailingService mailingService) {
         this.configuration = configuration;
         this.accountLinkService = accountLinkService;
@@ -79,6 +82,7 @@ public class Auth {
         this.passwordHasher = passwordHasher;
         this.oauthClient = oauthClient;
         this.oauthConfig = oauthConfig;
+        this.discordConnections = discordConnections;
         this.mailingService = mailingService;
     }
 
@@ -312,27 +316,6 @@ public class Auth {
         ctx.redirect(oauthClient.buildAuthorizeUrl(started.state()));
     }
 
-    /**
-     * Gives the account the address Discord signed in with, as a proved one.
-     *
-     * <p>Only an address Discord says it has verified. An unverified one is a string somebody typed
-     * into Discord, and proving it here would hand them the licences bought with it - which is the
-     * whole point of a proved address.
-     *
-     * <p>An address another account already holds is left alone rather than taken, and the sign-in
-     * carries on: somebody arriving through Discord should not be refused because an address they
-     * also use belongs elsewhere.
-     */
-    private void attachDiscordEmail(int accountId, DiscordOAuthClient.DiscordUser discordUser) {
-        discordUser.provedEmail().ifPresent(email -> {
-            try {
-                accountEmails.confirm(accountId, email);
-            } catch (IllegalStateException e) {
-                log.info("Not attaching {} from Discord to account {}: {}", email, accountId, e.getMessage());
-            }
-        });
-    }
-
     private void discordCallback(Context ctx) {
         if (!oauthConfig.configured()) {
             ctx.status(HttpStatus.SERVICE_UNAVAILABLE).result("Discord sign-in is not configured on this instance.");
@@ -352,10 +335,11 @@ public class Auth {
             return;
         }
 
+        DiscordOAuthClient.Grant grant;
         DiscordOAuthClient.DiscordUser discordUser;
         try {
-            String accessToken = oauthClient.exchangeCode(code);
-            discordUser = oauthClient.fetchUser(accessToken);
+            grant = oauthClient.exchangeCode(code);
+            discordUser = oauthClient.fetchUser(grant.accessToken());
         } catch (Exception e) {
             log.warn("Discord OAuth callback failed", e);
             ctx.status(HttpStatus.BAD_GATEWAY).result("Discord OAuth failed");
@@ -380,7 +364,6 @@ public class Auth {
                 ctx.redirect("/account/security?linked=taken");
                 return;
             }
-            attachDiscordEmail(account.id(), discordUser);
         } else {
             account = accountService.findByDiscordId(discordUser.id()).orElseGet(() -> {
                 Account created = accountService.register(null, null);
@@ -388,10 +371,10 @@ public class Auth {
                         created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
                 return created;
             });
-            accountLinkService.rememberHandle(discordUser.id(), discordUser.handle());
-            attachDiscordEmail(account.id(), discordUser);
             accountService.touchLastLogin(account.id());
         }
+        discordConnections.remember(account.id(), discordUser);
+        discordConnections.store(account.id(), grant);
         if (existing.isEmpty()) {
             SessionCookie.write(ctx, sessions.open(account.id(), ctx.header("User-Agent")));
         }

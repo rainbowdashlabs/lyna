@@ -20,6 +20,7 @@ import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.DiscordConnectionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
@@ -67,6 +68,7 @@ public class Account {
     private final DownloadLogRepository downloadLog;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
+    private final DiscordConnectionService discordConnections;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Inject
@@ -85,7 +87,8 @@ public class Account {
             AccountSessionRepository sessions,
             DownloadLogRepository downloadLog,
             PasswordHasher passwordHasher,
-            JwtService jwtService) {
+            JwtService jwtService,
+            DiscordConnectionService discordConnections) {
         this.auth = auth;
         this.accountService = accountService;
         this.usernameService = usernameService;
@@ -101,6 +104,7 @@ public class Account {
         this.downloadLog = downloadLog;
         this.passwordHasher = passwordHasher;
         this.jwtService = jwtService;
+        this.discordConnections = discordConnections;
     }
 
     public void init() {
@@ -237,6 +241,7 @@ public class Account {
         var session = require(ctx);
         if (session.isEmpty()) return;
         accountLinkService.unlink(session.get().accountId());
+        discordConnections.forget(session.get().accountId());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 

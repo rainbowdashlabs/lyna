@@ -11,6 +11,7 @@ import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.DiscordTokenRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
@@ -83,6 +84,7 @@ public abstract class RepositoryTestBase {
     protected static AccountEmailRepository accountEmails;
     protected static LicenseInviteRepository licenseInvites;
     protected static AccountSessionRepository accountSessions;
+    protected static DiscordTokenRepository discordTokens;
     protected static DownloadLogRepository downloadLog;
     protected static DemoArtifactRepository demoArtifacts;
     protected static InstanceSettingsRepository instanceSettings;
@@ -137,6 +139,7 @@ public abstract class RepositoryTestBase {
         accountEmails = new AccountEmailRepository();
         licenseInvites = new LicenseInviteRepository();
         accountSessions = new AccountSessionRepository();
+        discordTokens = new DiscordTokenRepository();
         downloadLog = new DownloadLogRepository();
         demoArtifacts = new DemoArtifactRepository();
         instanceSettings = new InstanceSettingsRepository();
