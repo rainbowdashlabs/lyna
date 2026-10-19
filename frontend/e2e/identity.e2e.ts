@@ -3,8 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {PASSWORD} from './fixtures/auth'
+import {expect, test} from './fixtures/session'
 import {uniqueEmail} from './fixtures/unique'
 
 /**
@@ -15,70 +14,62 @@ import {uniqueEmail} from './fixtures/unique'
  * reachable in full, and is where the rules actually live.
  */
 test.describe('Account identity', () => {
-    async function signUpFor(request: import('@playwright/test').APIRequestContext, prefix: string) {
-        const email = uniqueEmail(prefix)
-        const signup = await request.post('/api/auth/signup', {data: {email, password: PASSWORD}})
-        expect(signup.ok()).toBe(true)
-        const {token} = await signup.json()
-        return {email, headers: {Authorization: `Bearer ${token}`}}
-    }
+    test('a new account has no name until it picks one', async ({signedUp}) => {
+        const {api} = await signedUp('unnamed')
 
-    test('a new account has no name until it picks one', async ({request}) => {
-        const {headers} = await signUpFor(request, 'unnamed')
-
-        const {account} = await (await request.get('/api/account', {headers})).json()
+        const {account} = await (await api.get('/api/account')).json()
 
         expect(account.username).toBeNull()
         expect(account.nameIsTheirs).toBe(true)
     })
 
-    test('picking a name adds four digits to it', async ({request}) => {
-        const {headers} = await signUpFor(request, 'picks-a-name')
+    test('picking a name adds four digits to it', async ({signedUp}) => {
+        const {api} = await signedUp('picks-a-name')
 
-        const response = await request.put('/api/account/username', {headers, data: {username: 'ada'}})
+        const response = await api.put('/api/account/username', {data: {username: 'ada'}})
 
         expect(response.ok()).toBe(true)
         const {username} = await response.json()
         expect(username).toMatch(/^ada#\d{4}$/)
 
-        const {account} = await (await request.get('/api/account', {headers})).json()
+        const {account} = await (await api.get('/api/account')).json()
         expect(account.username).toBe(username)
     })
 
-    test('two people may both be ada, and are told apart by their digits', async ({request}) => {
-        const first = await signUpFor(request, 'ada-one')
-        const second = await signUpFor(request, 'ada-two')
+    test('two people may both be ada, and are told apart by their digits', async ({signedUp}) => {
+        const first = await signedUp('ada-one')
+        const second = await signedUp('ada-two')
 
-        const one = await (await request.put('/api/account/username',
-            {headers: first.headers, data: {username: 'sharedname'}})).json()
-        const two = await (await request.put('/api/account/username',
-            {headers: second.headers, data: {username: 'sharedname'}})).json()
+        const one = await (await first.api.put('/api/account/username',
+            {data: {username: 'sharedname'}})).json()
+        const two = await (await second.api.put('/api/account/username',
+            {data: {username: 'sharedname'}})).json()
 
         expect(one.username).toMatch(/^sharedname#\d{4}$/)
         expect(two.username).toMatch(/^sharedname#\d{4}$/)
         expect(one.username).not.toBe(two.username)
     })
 
-    test('a name nobody may take is refused rather than trimmed into something else', async ({request}) => {
-        const {headers} = await signUpFor(request, 'bad-name')
+    test('a name nobody may take is refused rather than trimmed into something else', async ({signedUp}) => {
+        const {api} = await signedUp('bad-name')
 
         for (const username of ['ab', 'a b', 'ada!', '.ada', '', 'a'.repeat(33)]) {
-            const response = await request.put('/api/account/username', {headers, data: {username}})
+            const response = await api.put('/api/account/username', {data: {username}})
             expect(response.status(), `should have refused ${JSON.stringify(username)}`).toBe(400)
         }
 
-        const {account} = await (await request.get('/api/account', {headers})).json()
+        const {account} = await (await api.get('/api/account')).json()
         expect(account.username).toBeNull()
     })
 
-    test('a name can be changed, and the old one is given up', async ({request}) => {
-        const {headers} = await signUpFor(request, 'renames')
+    test('a name can be changed, and the old one is given up', async ({signedUp}) => {
+        const {api} = await signedUp('renames')
 
-        await request.put('/api/account/username', {headers, data: {username: 'firstname'}})
-        const second = await request.put('/api/account/username', {headers, data: {username: 'secondname'}})
+        await api.put('/api/account/username', {data: {username: 'firstname'}})
+        const second = await api.put('/api/account/username', {data: {username: 'secondname'}})
 
         expect(second.ok()).toBe(true)
-        const {account} = await (await request.get('/api/account', {headers})).json()
+        const {account} = await (await api.get('/api/account')).json()
         expect(account.username).toMatch(/^secondname#\d{4}$/)
     })
 
@@ -88,12 +79,12 @@ test.describe('Account identity', () => {
         expect(response.status()).toBe(401)
     })
 
-    test('sharing a licence you do not hold finds nothing to share', async ({request}) => {
-        const {headers} = await signUpFor(request, 'not-an-owner')
+    test('sharing a licence you do not hold finds nothing to share', async ({signedUp}) => {
+        const {api} = await signedUp('not-an-owner')
 
-        const share = await request.post('/api/account/licenses/1/sharees',
-            {headers, data: {subject: 'someone'}})
-        const revoke = await request.delete('/api/account/licenses/1/sharees/a1', {headers})
+        const share = await api.post('/api/account/licenses/1/sharees',
+            {data: {subject: 'someone'}})
+        const revoke = await api.delete('/api/account/licenses/1/sharees/a1')
 
         expect(share.status()).toBe(404)
         expect(revoke.status()).toBe(404)
@@ -105,10 +96,10 @@ test.describe('Account identity', () => {
         expect((await request.delete('/api/account/licenses/1/sharees/a1')).status()).toBe(401)
     })
 
-    test('an account lists the addresses it holds', async ({request}) => {
-        const {email, headers} = await signUpFor(request, 'one-address')
+    test('an account lists the addresses it holds', async ({signedUp}) => {
+        const {email, api} = await signedUp('one-address')
 
-        const response = await request.get('/api/account/emails', {headers})
+        const response = await api.get('/api/account/emails')
 
         expect(response.ok()).toBe(true)
         const addresses = await response.json()
@@ -118,13 +109,13 @@ test.describe('Account identity', () => {
         expect(addresses[0].verified).toBe(false)
     })
 
-    test('another address can be claimed, and arrives unproved', async ({request}) => {
-        const {headers} = await signUpFor(request, 'two-addresses')
+    test('another address can be claimed, and arrives unproved', async ({signedUp}) => {
+        const {api} = await signedUp('two-addresses')
         const second = uniqueEmail('second')
 
-        expect((await request.post('/api/account/emails', {headers, data: {address: second}})).status()).toBe(202)
+        expect((await api.post('/api/account/emails', {data: {address: second}})).status()).toBe(202)
 
-        const addresses = await (await request.get('/api/account/emails', {headers})).json()
+        const addresses = await (await api.get('/api/account/emails')).json()
         expect(addresses).toHaveLength(2)
         expect(addresses.find((a: {address: string}) => a.address === second).verified).toBe(false)
     })
@@ -133,27 +124,26 @@ test.describe('Account identity', () => {
      * The address an account is written to is where a password reset is sent, so it cannot be given
      * up and cannot be replaced by one nobody has proved.
      */
-    test('the address the account is written to is held down', async ({request}) => {
-        const {email, headers} = await signUpFor(request, 'primary-held')
+    test('the address the account is written to is held down', async ({signedUp}) => {
+        const {email, api} = await signedUp('primary-held')
         const second = uniqueEmail('cannot-be-primary')
-        await request.post('/api/account/emails', {headers, data: {address: second}})
+        await api.post('/api/account/emails', {data: {address: second}})
 
-        const removePrimary = await request.delete(`/api/account/emails/${encodeURIComponent(email)}`, {headers})
-        const promoteUnproved = await request.post(
-            `/api/account/emails/${encodeURIComponent(second)}/primary`, {headers})
+        const removePrimary = await api.delete(`/api/account/emails/${encodeURIComponent(email)}`)
+        const promoteUnproved = await api.post(`/api/account/emails/${encodeURIComponent(second)}/primary`)
 
         expect(removePrimary.status()).toBe(409)
         expect(promoteUnproved.status()).toBe(409)
     })
 
-    test('a claimed address can be given up again', async ({request}) => {
-        const {headers} = await signUpFor(request, 'gives-up')
+    test('a claimed address can be given up again', async ({signedUp}) => {
+        const {api} = await signedUp('gives-up')
         const second = uniqueEmail('given-up')
-        await request.post('/api/account/emails', {headers, data: {address: second}})
+        await api.post('/api/account/emails', {data: {address: second}})
 
-        expect((await request.delete(`/api/account/emails/${encodeURIComponent(second)}`, {headers})).status()).toBe(204)
+        expect((await api.delete(`/api/account/emails/${encodeURIComponent(second)}`)).status()).toBe(204)
 
-        expect(await (await request.get('/api/account/emails', {headers})).json()).toHaveLength(1)
+        expect(await (await api.get('/api/account/emails')).json()).toHaveLength(1)
     })
 
     test('the addresses are shut to a visitor who is not signed in', async ({request}) => {

@@ -3,9 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
+import {expect, test} from './fixtures/session'
 import {PASSWORD, signUp} from './fixtures/auth'
-import {uniqueEmail} from './fixtures/unique'
 
 /**
  * Who may reach the instance area, and who may hand it out.
@@ -25,34 +24,24 @@ test.describe('The operator endpoints', () => {
         expect((await request.delete('/api/admin/instance/operators/123456789')).status()).toBe(401)
     })
 
-    test('are shut to somebody signed in who administers nothing', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('not-operator'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
-        const authorized = {Authorization: `Bearer ${token}`}
+    test('are shut to somebody signed in who administers nothing', async ({signedUp}) => {
+        const {api} = await signedUp('not-operator')
 
-        expect((await request.get('/api/admin/instance/operators', {headers: authorized})).status()).toBe(404)
-        expect((await request.post('/api/admin/instance/operators',
-            {headers: authorized, data: {discordId: '123456789'}})).status()).toBe(404)
-        expect((await request.delete('/api/admin/instance/operators/123456789',
-            {headers: authorized})).status()).toBe(404)
+        expect((await api.get('/api/admin/instance/operators')).status()).toBe(404)
+        expect((await api.post('/api/admin/instance/operators',
+            {data: {discordId: '123456789'}})).status()).toBe(404)
+        expect((await api.delete('/api/admin/instance/operators/123456789')).status()).toBe(404)
     })
 
-    test('an ordinary account cannot grant itself the instance', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('self-grant'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
+    test('an ordinary account cannot grant itself the instance', async ({signedUp}) => {
+        const {api} = await signedUp('self-grant')
 
-        const granted = await request.post('/api/admin/instance/operators', {
-            headers: {Authorization: `Bearer ${token}`},
+        const granted = await api.post('/api/admin/instance/operators', {
             data: {discordId: '4242424242'},
         })
 
         expect(granted.status()).toBe(404)
-        // And the guild list it would have opened stays empty.
-        const guilds = await request.get('/api/admin/guilds', {headers: {Authorization: `Bearer ${token}`}})
+        const guilds = await api.get('/api/admin/guilds')
         expect(await guilds.json()).toEqual([])
     })
 })
@@ -72,30 +61,19 @@ test.describe('The operators page', () => {
      * no guild to find. An operator holds the whole instance and has no membership to check, so
      * there is nothing for the gateway to answer.
      */
-    test('an operator administers a guild even with no bot connected', async ({request, baseURL}) => {
-        const signIn = await request.post('/api/auth/login', {
-            data: {email: 'entitled@example.invalid', password: PASSWORD},
-        })
-        expect(signIn.ok()).toBe(true)
-        const {token} = await signIn.json()
+    test('an operator administers a guild even with no bot connected', async ({signedIn}) => {
+        const operator = await signedIn({email: 'entitled@example.invalid', password: PASSWORD})
 
-        const products = await request.get('/api/admin/g/4242/products', {
-            headers: {Authorization: `Bearer ${token}`},
-        })
+        const products = await operator.get('/api/admin/g/4242/products')
 
         expect(products.status()).toBe(200)
         expect(Array.isArray(await products.json())).toBe(true)
     })
 
-    test('somebody who is not an operator still gets nothing, bot or no bot', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('not-an-operator'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
+    test('somebody who is not an operator still gets nothing, bot or no bot', async ({signedUp}) => {
+        const {api} = await signedUp('not-an-operator')
 
-        const products = await request.get('/api/admin/g/4242/products', {
-            headers: {Authorization: `Bearer ${token}`},
-        })
+        const products = await api.get('/api/admin/g/4242/products')
 
         expect(products.status()).toBe(404)
     })

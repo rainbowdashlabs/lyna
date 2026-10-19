@@ -3,8 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {PASSWORD} from './fixtures/auth'
+import {expect, sessionCookieOf, test} from './fixtures/session'
+import {PASSWORD, SESSION_COOKIE} from './fixtures/auth'
 import {uniqueEmail} from './fixtures/unique'
 
 /**
@@ -30,55 +30,46 @@ test.describe('The HTTP API through the frontend proxy', () => {
         expect(typeof assets[0].published).toBe('number')
     })
 
-    test('the account endpoints refuse a request carrying no token', async ({request}) => {
+    test('the account endpoints refuse a request carrying no session', async ({request}) => {
         const response = await request.get('/api/account')
 
         expect(response.status()).toBe(401)
     })
 
-    test('the account endpoints refuse a token that was not signed here', async ({request}) => {
+    test('the account endpoints refuse a session cookie that was not signed here', async ({request}) => {
         const response = await request.get('/api/account', {
-            headers: {Authorization: 'Bearer not.a.real.token'},
+            headers: {Cookie: `${SESSION_COOKIE}=not.a.real.token`},
         })
 
         expect(response.status()).toBe(401)
     })
 
-    test('signing up answers with a token that the account endpoint then accepts', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('api'), password: PASSWORD},
-        })
+    test('signing up answers with the account and a session cookie, never a token', async ({anonymous}) => {
+        const api = await anonymous()
+
+        const signup = await api.post('/api/auth/signup', {data: {email: uniqueEmail('api'), password: PASSWORD}})
+
         expect(signup.ok()).toBe(true)
-        const {token} = await signup.json()
-
-        const account = await request.get('/api/account', {headers: {Authorization: `Bearer ${token}`}})
-
-        expect(account.ok()).toBe(true)
-        expect((await account.json()).account.hasPassword).toBe(true)
+        const body = await signup.json()
+        expect(body.token).toBeUndefined()
+        expect(body.account.hasPassword).toBe(true)
+        expect(await sessionCookieOf(api)).toBeDefined()
+        expect((await (await api.get('/api/account')).json()).account.hasPassword).toBe(true)
     })
 
-    test('a token stops being accepted once it is logged out', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('revoked'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
-        const authorized = {Authorization: `Bearer ${token}`}
-        expect((await request.get('/api/account', {headers: authorized})).ok()).toBe(true)
+    test('a session token is not accepted as a Bearer header any more', async ({request, signedUp}) => {
+        const {api} = await signedUp('bearer')
+        const token = await sessionCookieOf(api)
 
-        await request.post('/api/auth/logout', {headers: authorized})
+        const response = await request.get('/api/account', {headers: {Authorization: `Bearer ${token}`}})
 
-        expect((await request.get('/api/account', {headers: authorized})).status()).toBe(401)
+        expect(response.status()).toBe(401)
     })
 
-    test('the admin guild list is empty for an account with no Discord link', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('no-guilds'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
+    test('the admin guild list is empty for an account with no Discord link', async ({signedUp}) => {
+        const {api} = await signedUp('no-guilds')
 
-        const response = await request.get('/api/admin/guilds', {
-            headers: {Authorization: `Bearer ${token}`},
-        })
+        const response = await api.get('/api/admin/guilds')
 
         expect(response.ok()).toBe(true)
         expect(await response.json()).toEqual([])
@@ -101,6 +92,7 @@ test.describe('Discord sign-in', () => {
         expect(location.origin).toBe('https://discord.com')
         expect(location.searchParams.get('client_id')).toBe('4242000000000000001')
         expect(location.searchParams.get('scope')).toBe('identify email')
+        expect(location.searchParams.get('prompt')).toBe('none')
     })
 
     test('remembers who it sent, so the way back can be checked', async ({request}) => {

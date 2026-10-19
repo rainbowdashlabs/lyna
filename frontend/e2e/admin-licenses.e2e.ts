@@ -3,19 +3,19 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {createProduct, deleteProduct, GUILD, operatorHeaders, operatorPage, uniqueName} from './fixtures/admin'
+import {expect, test} from './fixtures/session'
+import {createProduct, deleteProduct, GUILD, OPERATOR, operatorPage, uniqueName} from './fixtures/admin'
 
 /**
  * Licenses found, given release types and ended on the licenses page, and Ko-fi codes unlinked.
  */
 test.describe('Managing licenses', () => {
-    test('a license is found by search, reaches a release type, and is deleted after a second click', async ({page, request}) => {
+    test('a license is found by search, reaches a release type, and is deleted after a second click', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Licensed')
         const identifier = uniqueName('buyer').replace(' ', '-')
-        const id = await createProduct(request, name)
-        await request.post(`/api/admin/g/${GUILD}/licenses`, {
-            headers: await operatorHeaders(request),
+        const id = await createProduct(operator, name)
+        await operator.post(`/api/admin/g/${GUILD}/licenses`, {
             data: {productId: id, identifier},
         })
         await operatorPage(page)
@@ -36,14 +36,15 @@ test.describe('Managing licenses', () => {
         await row.getByRole('button', {name: 'Delete license'}).click()
         await row.getByRole('button', {name: 'Really delete'}).click()
         await expect(row).toHaveCount(0)
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 
-    test('a Ko-fi code is unlinked from the Ko-fi page', async ({page, request}) => {
+    test('a Ko-fi code is unlinked from the Ko-fi page', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Sold')
         const code = `e2e${Date.now()}`
-        const id = await createProduct(request, name)
-        await request.post(`/api/admin/g/${GUILD}/kofi`, {headers: await operatorHeaders(request), data: {linkCode: code, productId: id}})
+        const id = await createProduct(operator, name)
+        await operator.post(`/api/admin/g/${GUILD}/kofi`, {data: {linkCode: code, productId: id}})
         await operatorPage(page)
         await page.goto(`/admin/g/${GUILD}/kofi`)
 
@@ -51,6 +52,6 @@ test.describe('Managing licenses', () => {
         await mapping.getByRole('button', {name: 'Remove'}).click()
 
         await expect(mapping).toHaveCount(0)
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 })

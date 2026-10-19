@@ -9,8 +9,9 @@ api:
   url: "http://localhost:25292"
 auth:
   jwtSecret: "end-to-end-suite-secret-not-a-real-one"
-  renewAfterHours: 24
+  renewAfterHours: 0
   sessionDays: 30
+  tokenKey: ""
 baseSettings:
   botEnabled: false
   botGuild: 0
@@ -33,6 +34,7 @@ discord:
     clientId: "4242000000000000001"
     clientSecret: "e2e-not-a-real-secret"
     redirectUri: "http://localhost:8890/api/auth/discord/callback"
+    apiUrl: "https://nexus-e2e/discord/api"
 downloads:
   skipJarSigning: false
 kofi:

@@ -3,20 +3,20 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {createProduct, deleteProduct, GUILD, operatorHeaders, operatorPage, uniqueName} from './fixtures/admin'
+import {expect, test} from './fixtures/session'
+import {createProduct, deleteProduct, GUILD, OPERATOR, operatorPage, uniqueName} from './fixtures/admin'
 
 /**
  * A product's downloads and the roles that reach them, managed on the product's page. The stack runs
  * no bot, so roles are typed by id.
  */
 test.describe('A product\'s downloads and access', () => {
-    test('a download is added against Nexus, edited, and removed', async ({page, request}) => {
+    test('a download is added against Nexus, edited, and removed', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Downloadable')
         const typeName = uniqueName('Kind')
-        const id = await createProduct(request, name)
-        await request.post(`/api/admin/g/${GUILD}/download-types`, {
-            headers: await operatorHeaders(request),
+        const id = await createProduct(operator, name)
+        await operator.post(`/api/admin/g/${GUILD}/download-types`, {
             data: {name: typeName, description: '', releaseType: 'STABLE'},
         })
         await operatorPage(page)
@@ -38,12 +38,13 @@ test.describe('A product\'s downloads and access', () => {
 
         await row.getByRole('button', {name: 'Remove'}).click()
         await expect(row).toHaveCount(0)
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 
-    test('a role is granted a release type and has it revoked again', async ({page, request}) => {
+    test('a role is granted a release type and has it revoked again', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Guarded')
-        const id = await createProduct(request, name)
+        const id = await createProduct(operator, name)
         await operatorPage(page)
         await page.goto(`/admin/g/${GUILD}/products/${id}?tab=access`)
 
@@ -55,6 +56,6 @@ test.describe('A product\'s downloads and access', () => {
         await expect(grant).toContainText('DEV')
         await grant.getByRole('button', {name: 'Revoke'}).click()
         await expect(grant).toHaveCount(0)
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 })

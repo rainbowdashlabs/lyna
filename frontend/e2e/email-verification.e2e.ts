@@ -3,8 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {PASSWORD, signUp} from './fixtures/auth'
+import {expect, test} from './fixtures/session'
+import {signUp} from './fixtures/auth'
 import {uniqueEmail} from './fixtures/unique'
 
 /**
@@ -14,71 +14,56 @@ import {uniqueEmail} from './fixtures/unique'
  * is refused rather than accepted.
  */
 test.describe('Email verification', () => {
-    test('a fresh account reads as unconfirmed', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('unverified'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
+    test('a fresh account reads as unconfirmed', async ({signedUp}) => {
+        const {api} = await signedUp('unverified')
 
-        const me = await request.get('/api/account', {headers: {Authorization: `Bearer ${token}`}})
+        const me = await api.get('/api/account')
 
         const {account} = await me.json()
         expect(account.emailVerified).toBe(false)
     })
 
-    test('claiming another address leaves the one the account is written to alone', async ({request}) => {
-        const original = uniqueEmail('keeps-address')
-        const signup = await request.post('/api/auth/signup', {data: {email: original, password: PASSWORD}})
-        const {token} = await signup.json()
-        const authorized = {Authorization: `Bearer ${token}`}
+    test('claiming another address leaves the one the account is written to alone', async ({signedUp}) => {
+        const {email: original, api} = await signedUp('keeps-address')
 
-        const claim = await request.post('/api/account/emails', {
-            headers: authorized,
+        const claim = await api.post('/api/account/emails', {
             data: {address: uniqueEmail('not-yet-mine')},
         })
         expect(claim.status()).toBe(202)
 
-        const {account} = await (await request.get('/api/account', {headers: authorized})).json()
+        const {account} = await (await api.get('/api/account')).json()
         expect(account.email).toBe(original)
         expect(account.emailVerified).toBe(false)
 
-        const addresses = await (await request.get('/api/account/emails', {headers: authorized})).json()
+        const addresses = await (await api.get('/api/account/emails')).json()
         expect(addresses).toHaveLength(2)
         expect(addresses.every((a: {verified: boolean}) => !a.verified)).toBe(true)
     })
 
-    test('an address that is not one is refused', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('bad-address'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
+    test('an address that is not one is refused', async ({signedUp}) => {
+        const {api} = await signedUp('bad-address')
 
-        const claim = await request.post('/api/account/emails', {
-            headers: {Authorization: `Bearer ${token}`},
+        const claim = await api.post('/api/account/emails', {
             data: {address: 'not an address'},
         })
 
         expect(claim.status()).toBe(400)
     })
 
-    test('an address somebody else holds is answered as though it had been sent', async ({request}) => {
-        const taken = uniqueEmail('already-taken')
-        await request.post('/api/auth/signup', {data: {email: taken, password: PASSWORD}})
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('wants-it'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
-        const authorized = {Authorization: `Bearer ${token}`}
+    /**
+     * Accepted rather than refused: saying "that one is taken" tells a stranger who has an account
+     * here. What it must not do is give the address away.
+     */
+    test('an address somebody else holds is answered as though it had been sent', async ({signedUp}) => {
+        const {email: taken} = await signedUp('already-taken')
+        const {api} = await signedUp('wants-it')
 
-        const claim = await request.post('/api/account/emails', {
-            headers: authorized,
+        const claim = await api.post('/api/account/emails', {
             data: {address: taken},
         })
 
-        // Accepted rather than refused: saying "that one is taken" tells a stranger who has an
-        // account here. What it must not do is give the address away.
         expect(claim.status()).toBe(202)
-        const addresses = await (await request.get('/api/account/emails', {headers: authorized})).json()
+        const addresses = await (await api.get('/api/account/emails')).json()
         expect(addresses.some((a: {address: string}) => a.address === taken)).toBe(false)
     })
 
@@ -91,16 +76,13 @@ test.describe('Email verification', () => {
      * There is no separate way to ask for the link again: claiming an address the account already
      * claims sends it once more, which is the same act.
      */
-    test('claiming an address the account already claims sends the link again', async ({request}) => {
-        const address = uniqueEmail('again')
-        const signup = await request.post('/api/auth/signup', {data: {email: address, password: PASSWORD}})
-        const {token} = await signup.json()
-        const authorized = {Authorization: `Bearer ${token}`}
+    test('claiming an address the account already claims sends the link again', async ({signedUp}) => {
+        const {email: address, api} = await signedUp('again')
 
-        expect((await request.post('/api/account/emails',
-            {headers: authorized, data: {address}})).status()).toBe(202)
+        expect((await api.post('/api/account/emails',
+            {data: {address}})).status()).toBe(202)
 
-        const addresses = await (await request.get('/api/account/emails', {headers: authorized})).json()
+        const addresses = await (await api.get('/api/account/emails')).json()
         expect(addresses).toHaveLength(1)
     })
 

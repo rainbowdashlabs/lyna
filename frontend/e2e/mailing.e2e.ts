@@ -3,8 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {PASSWORD, signUp} from './fixtures/auth'
+import {expect, test} from './fixtures/session'
+import {signUp} from './fixtures/auth'
 import {uniqueEmail} from './fixtures/unique'
 
 /**
@@ -28,28 +28,20 @@ test.describe('The mailing endpoints', () => {
             {data: {address: uniqueEmail('test')}})).status()).toBe(401)
     })
 
-    test('are shut to somebody signed in who administers nothing', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('not-admin'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
-        const authorized = {Authorization: `Bearer ${token}`}
+    test('are shut to somebody signed in who administers nothing', async ({signedUp}) => {
+        const {api} = await signedUp('not-admin')
 
-        expect((await request.get(`/api/admin/g/${guild}/mailing`, {headers: authorized})).status()).toBe(404)
-        expect((await request.put(`/api/admin/g/${guild}/mailing/1`,
-            {headers: authorized, data: {blocks: '[]'}})).status()).toBe(404)
-        expect((await request.post(`/api/admin/g/${guild}/mailing/1/preview`,
-            {headers: authorized, data: {blocks: '[]'}})).status()).toBe(404)
+        expect((await api.get(`/api/admin/g/${guild}/mailing`)).status()).toBe(404)
+        expect((await api.put(`/api/admin/g/${guild}/mailing/1`,
+            {data: {blocks: '[]'}})).status()).toBe(404)
+        expect((await api.post(`/api/admin/g/${guild}/mailing/1/preview`,
+            {data: {blocks: '[]'}})).status()).toBe(404)
     })
 
-    test('sending a test mail is not a way to make the instance mail a stranger', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('would-spam'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
+    test('sending a test mail is not a way to make the instance mail a stranger', async ({signedUp}) => {
+        const {api} = await signedUp('would-spam')
 
-        const sent = await request.post(`/api/admin/g/${guild}/mailing/1/test`, {
-            headers: {Authorization: `Bearer ${token}`},
+        const sent = await api.post(`/api/admin/g/${guild}/mailing/1/test`, {
             data: {address: 'somebody-else@example.invalid'},
         })
 

@@ -3,7 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, type Page, test} from '@playwright/test'
+import {type Page} from '@playwright/test'
+import {expect, test} from './fixtures/session'
 import {signUp} from './fixtures/auth'
 
 /**
@@ -151,17 +152,12 @@ test.describe('The catalogue endpoint', () => {
         expect(response.ok()).toBe(true)
     })
 
-    test('a premium product refuses its releases to somebody holding no license', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: `kiosk-forbidden-${Date.now()}@example.invalid`, password: 'end-to-end-password'},
-        })
-        const {token} = await signup.json()
+    test('a premium product refuses its releases to somebody holding no license', async ({request, signedUp}) => {
+        const {api} = await signedUp('kiosk-forbidden')
         const products = await (await request.get('/api/v1/products')).json() as {id: number; name: string}[]
         const premium = products.find(product => product.name === 'E2E Premium')!
 
-        const response = await request.get(`/api/v1/releases/${premium.id}`, {
-            headers: {Authorization: `Bearer ${token}`},
-        })
+        const response = await api.get(`/api/v1/releases/${premium.id}`)
 
         expect(response.status()).toBe(403)
     })

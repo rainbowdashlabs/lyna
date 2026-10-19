@@ -21,3 +21,9 @@ path and prove nothing about the rewrite.
 It also answers GitHub's `GET /repos/{owner}/{repo}/readme` for the one repository the stories name
 (`e2e-owner/e2e-plugin`), so a product page showing its README is tested without reaching GitHub. The
 e2e configuration points `github.apiUrl` here.
+
+It stands in for Discord's API as well, under `/discord/api`: the token endpoint trades a code of
+`user-<id>` for a grant, and a refresh token it minted for a new one, and `users/@me` names whoever an
+access token was minted for. That is enough for a story to finish a Discord sign-in without reaching
+Discord. The e2e configuration points `discord.oauth.apiUrl` here; the page a browser is sent to for
+signing in is still Discord's own, which the stories intercept.

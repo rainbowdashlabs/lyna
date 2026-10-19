@@ -4,7 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {expect, test} from '@playwright/test'
-import {forgetSession, logIn, logOut, PASSWORD, signUp, storedToken} from './fixtures/auth'
+import {forgetSession, logIn, logOut, PASSWORD, sessionCookie, signUp} from './fixtures/auth'
 import {uniqueEmail} from './fixtures/unique'
 
 test.describe('Signing up and in', () => {
@@ -12,7 +12,7 @@ test.describe('Signing up and in', () => {
         await signUp(page, 'signup')
 
         await expect(page.getByRole('heading', {level: 1, name: 'Account'})).toBeVisible()
-        expect(await storedToken(page)).not.toBeNull()
+        expect(await sessionCookie(page)).not.toBeNull()
     })
 
     test('an address that is already taken is refused', async ({page}) => {
@@ -38,7 +38,7 @@ test.describe('Signing up and in', () => {
         await page.getByRole('button', {name: 'Sign up'}).click()
 
         await expect(page.getByText('Passwords do not match.')).toBeVisible()
-        expect(await storedToken(page)).toBeNull()
+        expect(await sessionCookie(page)).toBeNull()
     })
 
     test('an account signs back in after its session was thrown away', async ({page}) => {
@@ -48,7 +48,7 @@ test.describe('Signing up and in', () => {
         await logIn(page, account)
 
         await expect(page).toHaveURL(/\/account$/)
-        expect(await storedToken(page)).not.toBeNull()
+        expect(await sessionCookie(page)).not.toBeNull()
     })
 
     test('the wrong password does not sign anyone in', async ({page}) => {
@@ -58,14 +58,14 @@ test.describe('Signing up and in', () => {
         await logIn(page, {...account, password: 'not the password'})
 
         await expect(page).toHaveURL(/\/login$/)
-        expect(await storedToken(page)).toBeNull()
+        expect(await sessionCookie(page)).toBeNull()
     })
 
     test('an address nobody registered does not sign anyone in', async ({page}) => {
         await logIn(page, {email: uniqueEmail('stranger'), password: PASSWORD})
 
         await expect(page).toHaveURL(/\/login$/)
-        expect(await storedToken(page)).toBeNull()
+        expect(await sessionCookie(page)).toBeNull()
     })
 })
 
@@ -76,7 +76,7 @@ test.describe('Signing out', () => {
         await logOut(page)
 
         await expect(page).toHaveURL(/\/login/)
-        expect(await storedToken(page)).toBeNull()
+        expect(await sessionCookie(page)).toBeNull()
     })
 })
 
