@@ -4,7 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {expect, test} from '@playwright/test'
-import {logIn, PASSWORD, signUp, storedToken} from './fixtures/auth'
+import {forgetSession, logIn, PASSWORD, sessionCookie, signUp} from './fixtures/auth'
 
 test.describe('The account overview', () => {
     test('shows the address the account signed up with, and that Discord is not linked', async ({page}) => {
@@ -48,7 +48,7 @@ test.describe('The security page', () => {
         await page.getByRole('button', {name: 'Update password'}).click()
         await expect(page.getByText(/Password updated|Saved/i)).toBeVisible()
 
-        await page.evaluate(() => window.localStorage.clear())
+        await forgetSession(page)
         await logIn(page, {...account, password: next})
         await expect(page).toHaveURL(/\/account$/)
     })
@@ -64,11 +64,11 @@ test.describe('The security page', () => {
         await page.getByRole('button', {name: 'Update password'}).click()
         await expect(page.getByText(/Password updated|Saved/i)).toBeVisible()
 
-        await page.evaluate(() => window.localStorage.clear())
+        await forgetSession(page)
         await logIn(page, {...account, password: PASSWORD})
 
         await expect(page).toHaveURL(/\/login$/)
-        expect(await storedToken(page)).toBeNull()
+        expect(await sessionCookie(page)).toBeNull()
     })
 })
 

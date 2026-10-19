@@ -31,7 +31,7 @@ const signedIn = computed(() => account.value !== null)
 
 /**
  * Resolves who is looking before drawing the product, the same way the storefront does: the badge
- * says `Owned` only when the catalogue call carried a token.
+ * says `Owned` only when the catalogue call carried a session.
  */
 async function load() {
   const id = Number(route.params.id)

@@ -7,10 +7,12 @@ package de.chojo.lyna;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import de.chojo.lyna.auth.TokenKey;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.demo.DemoSchedule;
+import de.chojo.lyna.feature.account.service.DiscordTokenRefresher;
 import de.chojo.lyna.feature.debug.service.DebugReportExpiry;
 import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.feature.trial.service.DisposableEmailRefresh;
@@ -42,6 +44,7 @@ public class Lyna {
         Injector injector = Guice.createInjector(new LynaModule(new Conf()));
 
         injector.getInstance(Data.class).start();
+        injector.getInstance(TokenKey.class).load();
         injector.getInstance(MailingService.class).start();
         injector.getInstance(DebugReportExpiry.class).start();
         injector.getInstance(DisposableEmailRefresh.class).start();
@@ -49,5 +52,6 @@ public class Lyna {
         injector.getInstance(Bot.class).start();
         injector.getInstance(DemoSchedule.class).start();
         injector.getInstance(TimeChannelSchedule.class).start();
+        injector.getInstance(DiscordTokenRefresher.class).start();
     }
 }

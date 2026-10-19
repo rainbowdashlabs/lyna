@@ -3,9 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {PASSWORD, signUp} from './fixtures/auth'
-import {createProduct, deleteProduct, GUILD, operatorHeaders, uniqueName} from './fixtures/admin'
+import {expect, test} from './fixtures/session'
+import {signUp} from './fixtures/auth'
+import {createProduct, deleteProduct, GUILD, OPERATOR, uniqueName} from './fixtures/admin'
 import {uniqueEmail} from './fixtures/unique'
 
 /**
@@ -13,16 +13,14 @@ import {uniqueEmail} from './fixtures/unique'
  * /registrations transfer do on Discord.
  */
 test.describe('Licenses in the account area', () => {
-    test('a key is redeemed once, then transferred to another account, which holds it from then on', async ({page, request}) => {
+    test('a key is redeemed once, then transferred to another account, which holds it from then on', async ({page, signedIn, signedUp}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Redeemable')
-        const id = await createProduct(request, name)
-        const issued = await (await request.post(`/api/admin/g/${GUILD}/licenses`, {
-            headers: await operatorHeaders(request),
+        const id = await createProduct(operator, name)
+        const issued = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
             data: {productId: id, identifier: uniqueEmail('given')},
         })).json()
-        const receiver = uniqueEmail('receiver')
-        const signup = await request.post('/api/auth/signup', {data: {email: receiver, password: PASSWORD}})
-        const receiverToken = (await signup.json()).token
+        const {email: receiver, api: receiverApi} = await signedUp('receiver')
 
         await signUp(page, 'redeemer')
         await page.goto('/account/licenses')
@@ -41,9 +39,9 @@ test.describe('Licenses in the account area', () => {
         await page.getByRole('button', {name: `Really give it to ${receiver}`}).click()
         await expect(page).toHaveURL(/\/account\/licenses$/)
 
-        const theirs = await (await request.get('/api/account/licenses', {headers: {Authorization: `Bearer ${receiverToken}`}})).json()
+        const theirs = await (await receiverApi.get('/api/account/licenses')).json()
         expect(theirs.owned.some((license: {productName: string}) => license.productName === name)).toBe(true)
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 
     test('a key nobody issued is refused', async ({page}) => {

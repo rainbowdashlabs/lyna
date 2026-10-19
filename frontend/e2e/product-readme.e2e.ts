@@ -3,8 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {createProduct, deleteProduct, GUILD, operatorHeaders, operatorPage, uniqueName} from './fixtures/admin'
+import {expect, test} from './fixtures/session'
+import {createProduct, deleteProduct, GUILD, OPERATOR, operatorPage, uniqueName} from './fixtures/admin'
 
 /**
  * A product page showing the project's GitHub README. The stack's stand-in answers for
@@ -13,9 +13,10 @@ import {createProduct, deleteProduct, GUILD, operatorHeaders, operatorPage, uniq
 const REPOSITORY = 'https://github.com/e2e-owner/e2e-plugin'
 
 test.describe('A product page from the README', () => {
-    test('a product with no description shows its README, with links made absolute and a way to GitHub', async ({page, request}) => {
+    test('a product with no description shows its README, with links made absolute and a way to GitHub', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Readme')
-        const id = await createProduct(request, name, false, {url: REPOSITORY})
+        const id = await createProduct(operator, name, false, {url: REPOSITORY})
 
         await page.goto(`/products/${id}`)
 
@@ -30,14 +31,14 @@ test.describe('A product page from the README', () => {
         await expect(download).toHaveAttribute('href', `/products/${id}?download=1`)
         await download.click()
         await expect(page.getByRole('heading', {name, level: 3})).toBeVisible()
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 
-    test('a product with its own words keeps them until the README is switched on in the admin area', async ({page, request}) => {
+    test('a product with its own words keeps them until the README is switched on in the admin area', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Worded')
-        const id = await createProduct(request, name, false, {url: REPOSITORY})
-        await request.put(`/api/admin/g/${GUILD}/products/${id}/description`, {
-            headers: await operatorHeaders(request),
+        const id = await createProduct(operator, name, false, {url: REPOSITORY})
+        await operator.put(`/api/admin/g/${GUILD}/products/${id}/description`, {
             data: {description: '# Written in Lyna'},
         })
         await page.goto(`/products/${id}`)
@@ -50,6 +51,6 @@ test.describe('A product page from the README', () => {
 
         await page.goto(`/products/${id}`)
         await expect(page.getByRole('heading', {name: 'E2E Plugin from GitHub'})).toBeVisible()
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 })

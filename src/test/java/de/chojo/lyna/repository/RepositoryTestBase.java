@@ -11,9 +11,9 @@ import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.repository.DiscordTokenRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
-import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
@@ -84,7 +84,7 @@ public abstract class RepositoryTestBase {
     protected static AccountEmailRepository accountEmails;
     protected static LicenseInviteRepository licenseInvites;
     protected static AccountSessionRepository accountSessions;
-    protected static RevokedJtiRepository revokedJtis;
+    protected static DiscordTokenRepository discordTokens;
     protected static DownloadLogRepository downloadLog;
     protected static DemoArtifactRepository demoArtifacts;
     protected static InstanceSettingsRepository instanceSettings;
@@ -139,7 +139,7 @@ public abstract class RepositoryTestBase {
         accountEmails = new AccountEmailRepository();
         licenseInvites = new LicenseInviteRepository();
         accountSessions = new AccountSessionRepository();
-        revokedJtis = new RevokedJtiRepository();
+        discordTokens = new DiscordTokenRepository();
         downloadLog = new DownloadLogRepository();
         demoArtifacts = new DemoArtifactRepository();
         instanceSettings = new InstanceSettingsRepository();
@@ -179,6 +179,18 @@ public abstract class RepositoryTestBase {
                 var rows = statement.executeQuery("SELECT count(*) FROM %s.%s".formatted(schemaName, table))) {
             rows.next();
             return rows.getInt(1);
+        }
+    }
+
+    /**
+     * Runs a statement against the test schema, for setting up a state no repository method writes.
+     *
+     * @param sql the statement, with {@code %s} where the schema name goes
+     */
+    protected static void execute(String sql) throws SQLException {
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement()) {
+            statement.execute(sql.formatted(schemaName));
         }
     }
 

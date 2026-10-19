@@ -3,9 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {type APIRequestContext, expect, request as playwrightRequest, test} from '@playwright/test'
-import {PASSWORD} from './fixtures/auth'
-import {uniqueEmail} from './fixtures/unique'
+import {type APIRequestContext} from '@playwright/test'
+import {expect, test} from './fixtures/session'
 
 /**
  * The four questions the download wizard asks, from the outside.
@@ -14,17 +13,6 @@ import {uniqueEmail} from './fixtures/unique'
  * which release types, which versions, and then the file itself.
  */
 const ENTITLED = {email: 'entitled@example.invalid', password: 'end-to-end-password'}
-
-async function tokenFor(baseURL: string, account: {email: string; password: string}): Promise<string> {
-    const context = await playwrightRequest.newContext({baseURL})
-    try {
-        const response = await context.post('/api/auth/login', {data: account})
-        if (!response.ok()) throw new Error(`Login for ${account.email} answered ${response.status()}`)
-        return (await response.json()).token
-    } finally {
-        await context.dispose()
-    }
-}
 
 async function productId(request: {get: (url: string) => Promise<{json: () => Promise<unknown>}>}, name: string) {
     const products = await (await request.get('/api/v1/products')).json() as {id: number; name: string}[]
@@ -38,11 +26,12 @@ async function productId(request: {get: (url: string) => Promise<{json: () => Pr
  * the plugin is maintained. Whether they may download is said alongside; the link itself is guarded.
  */
 test.describe('Step one, the release types', () => {
-    async function releaseTypes(request: APIRequestContext, name: string, token?: string) {
+    /**
+     * @param request whoever is asking: the story's own context for a visitor, an account's for somebody signed in
+     */
+    async function releaseTypes(request: APIRequestContext, name: string) {
         const id = await productId(request, name)
-        const response = await request.get(`/api/v1/products/${id}/release-types`, {
-            headers: token ? {Authorization: `Bearer ${token}`} : {},
-        })
+        const response = await request.get(`/api/v1/products/${id}/release-types`)
         expect(response.ok()).toBe(true)
         return await response.json() as {id: string; downloadable: boolean}[]
     }
@@ -51,19 +40,16 @@ test.describe('Step one, the release types', () => {
         expect(await releaseTypes(request, 'E2E Premium')).toEqual([expect.objectContaining({id: 'STABLE', downloadable: false})])
     })
 
-    test('signing in without a license changes nothing about that', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('wizard-nolicense'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
+    test('signing in without a license changes nothing about that', async ({signedUp}) => {
+        const {api} = await signedUp('wizard-nolicense')
 
-        expect(await releaseTypes(request, 'E2E Premium', token)).toEqual([expect.objectContaining({downloadable: false})])
+        expect(await releaseTypes(api, 'E2E Premium')).toEqual([expect.objectContaining({downloadable: false})])
     })
 
-    test('a license makes the release type it covers downloadable', async ({request, baseURL}) => {
-        const token = await tokenFor(baseURL!, ENTITLED)
+    test('a license makes the release type it covers downloadable', async ({signedIn}) => {
+        const entitled = await signedIn(ENTITLED)
 
-        expect(await releaseTypes(request, 'E2E Premium', token)).toEqual([expect.objectContaining({id: 'STABLE', downloadable: true})])
+        expect(await releaseTypes(entitled, 'E2E Premium')).toEqual([expect.objectContaining({id: 'STABLE', downloadable: true})])
     })
 
     test('a free product is downloadable by anybody', async ({request}) => {
@@ -115,16 +101,11 @@ test.describe('Step four, the link', () => {
         expect(response.status()).toBe(401)
     })
 
-    test('issuing is refused to somebody signed in without a license', async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('wizard-issue'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
-        const id = await productId(request, 'E2E Premium')
+    test('issuing is refused to somebody signed in without a license', async ({signedUp}) => {
+        const {api} = await signedUp('wizard-issue')
+        const id = await productId(api, 'E2E Premium')
 
-        const response = await request.post(`/api/v1/products/${id}/versions/1.0.0/downloads/1/issue`, {
-            headers: {Authorization: `Bearer ${token}`},
-        })
+        const response = await api.post(`/api/v1/products/${id}/versions/1.0.0/downloads/1/issue`)
 
         expect(response.status()).toBe(403)
     })
@@ -239,24 +220,19 @@ test.describe('All four steps, through to the file', () => {
         expect((await issued.json()).filename).toBe(`E2EFreebie-${oldest.version}.jar`)
     })
 
-    test("a signed-in visitor's download shows up in their own history", async ({request}) => {
-        const signup = await request.post('/api/auth/signup', {
-            data: {email: uniqueEmail('wizard-history'), password: PASSWORD},
-        })
-        const {token} = await signup.json()
-        const authorized = {Authorization: `Bearer ${token}`}
+    test("a signed-in visitor's download shows up in their own history", async ({request, signedUp}) => {
+        const {api} = await signedUp('wizard-history')
         const id = await productId(request, 'E2E Freebie')
         const versions = await (await request.get(
             `/api/v1/products/${id}/release-types/STABLE/versions`)).json() as
             {version: string; downloadTypeIds: number[]}[]
         const newest = versions[0]!
 
-        const {url} = await (await request.post(
-            `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`,
-            {headers: authorized})).json()
+        const {url} = await (await api.post(
+            `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`)).json()
         expect((await request.get(url)).ok()).toBe(true)
 
-        const history = await request.get('/api/account/downloads', {headers: authorized})
+        const history = await api.get('/api/account/downloads')
 
         expect(history.ok()).toBe(true)
         const {rows} = await history.json() as {rows: {version: string; source: string}[]}

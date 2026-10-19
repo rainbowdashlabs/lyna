@@ -10,13 +10,14 @@ import {useRoute, useRouter} from 'vue-router'
 import {signup} from '~/api/account'
 import {useSession} from '~/composables/useSession'
 import {usePageTitle} from '~/composables/usePageTitle'
+import {rememberSignInMethod} from '~/util/signIn'
 
 const {t} = useI18n()
 usePageTitle(t('auth.signup'))
 
 const route = useRoute()
 const router = useRouter()
-const {setToken, hydrate} = useSession()
+const {refresh} = useSession()
 
 /**
  * The address a licence mail points here with, so somebody who bought with one address does not
@@ -42,9 +43,9 @@ async function submit() {
   }
   submitting.value = true
   try {
-    const result = await signup({email: email.value, password: password.value})
-    setToken(result.token)
-    await hydrate()
+    await signup({email: email.value, password: password.value})
+    rememberSignInMethod('password')
+    await refresh()
     await router.replace('/account')
   } catch (e) {
     const error = e as {response?: {status?: number, data?: string}}

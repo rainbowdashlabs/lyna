@@ -22,6 +22,7 @@ import {useSession} from '~/composables/useSession'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
 import {usePageTitle} from '~/composables/usePageTitle'
+import {rememberSignInMethod} from '~/util/signIn'
 
 const {t} = useI18n()
 usePageTitle(t('layout.account.security'))
@@ -108,6 +109,7 @@ async function doDeleteAccount() {
   deleteBusy.value = true
   try {
     await deleteAccount(deleteConfirm.value)
+    rememberSignInMethod(null)
     clear()
     await router.replace('/')
   } catch (e) {

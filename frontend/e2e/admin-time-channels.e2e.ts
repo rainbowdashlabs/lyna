@@ -3,15 +3,16 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {GUILD, operatorHeaders, operatorPage} from './fixtures/admin'
+import {expect, test} from './fixtures/session'
+import {GUILD, OPERATOR, operatorPage} from './fixtures/admin'
 
 /**
  * The time channels page. The stack runs no bot, so what it can show is the page saying so, and the
  * endpoint refusing a channel it cannot rename.
  */
 test.describe('The time channels page', () => {
-    test('without a bot it says that none can be set up, and setting one is refused', async ({page, request}) => {
+    test('without a bot it says that none can be set up, and setting one is refused', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         await operatorPage(page)
         await page.goto(`/admin/g/${GUILD}/time-channels`)
 
@@ -19,12 +20,11 @@ test.describe('The time channels page', () => {
         await expect(page.getByText('The bot renames these channels, and none is connected')).toBeVisible()
         await expect(page).toHaveTitle('Time channels · Lyna')
 
-        const refused = await request.post(`/api/admin/g/${GUILD}/time-channels`, {
-            headers: await operatorHeaders(request),
+        const refused = await operator.post(`/api/admin/g/${GUILD}/time-channels`, {
             data: {channelId: '1', zone: 'Europe/Berlin', template: null},
         })
         expect(refused.status()).toBe(409)
-        const zones = await request.get(`/api/admin/g/${GUILD}/time-channels/zones?q=berlin`, {headers: await operatorHeaders(request)})
+        const zones = await operator.get(`/api/admin/g/${GUILD}/time-channels/zones?q=berlin`)
         expect(await zones.json()).toContain('Europe/Berlin')
     })
 })

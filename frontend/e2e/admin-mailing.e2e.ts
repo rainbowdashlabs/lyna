@@ -3,8 +3,8 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {createProduct, deleteProduct, GUILD, operatorHeaders, operatorPage, uniqueName} from './fixtures/admin'
+import {expect, test} from './fixtures/session'
+import {createProduct, deleteProduct, GUILD, OPERATOR, operatorPage, uniqueName} from './fixtures/admin'
 import {uniqueEmail} from './fixtures/unique'
 
 /**
@@ -12,10 +12,11 @@ import {uniqueEmail} from './fixtures/unique'
  * so what the story sees is the license the sending issued.
  */
 test.describe('A product\'s mailing', () => {
-    test('a mailing is made, a license is issued and mailed, and sending again resends that license', async ({page, request}) => {
+    test('a mailing is made, a license is issued and mailed, and sending again resends that license', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Mailed')
         const address = uniqueEmail('buyer')
-        const id = await createProduct(request, name)
+        const id = await createProduct(operator, name)
         await operatorPage(page)
         await page.goto(`/admin/g/${GUILD}/products/${id}?tab=mailing`)
 
@@ -33,8 +34,8 @@ test.describe('A product\'s mailing', () => {
         await page.getByRole('button', {name: 'Issue license and send'}).click()
         await expect(page.getByText('Sent.')).toBeVisible()
 
-        const licenses = await (await request.get(`/api/admin/g/${GUILD}/licenses`, {headers: await operatorHeaders(request)})).json()
+        const licenses = await (await operator.get(`/api/admin/g/${GUILD}/licenses`)).json()
         expect(licenses.filter((license: {identifier: string}) => license.identifier === address)).toHaveLength(1)
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 })

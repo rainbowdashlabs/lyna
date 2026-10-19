@@ -97,6 +97,30 @@ def without_bytes(asset):
     return {key: value for key, value in asset.items() if key != "_bytes"}
 
 
+def discord_user(access_token):
+    """The person a stand-in Discord access token belongs to.
+
+    Tokens are minted as ``access-<id>`` from a code of ``user-<id>``, so a story picks who signs in
+    by the code it hands the callback, and every story can be somebody new.
+    """
+    match = re.fullmatch(r"access-(\d+)(?:-\d+)?", access_token or "")
+    if match is None:
+        return None
+    user_id = match.group(1)
+    return {"id": user_id, "username": f"stub-{user_id}", "global_name": None, "email": None, "verified": False}
+
+
+def discord_grant(user_id, generation):
+    """A grant the way Discord's token endpoint answers it."""
+    return {
+        "access_token": f"access-{user_id}-{generation}",
+        "refresh_token": f"refresh-{user_id}-{generation}",
+        "token_type": "Bearer",
+        "scope": "identify email",
+        "expires_in": 604800,
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print(f"{self.address_string()} {fmt % args}", flush=True)
@@ -122,9 +146,41 @@ class Handler(BaseHTTPRequestHandler):
             "html_url": f"https://github.com/{owner}/{repository}/blob/main/README.md",
         })
 
+    def _discord_token(self):
+        """Discord's token endpoint: a code of ``user-<id>`` or a refresh token minted here is traded
+        for a grant; anything else is refused the way Discord refuses it."""
+        length = int(self.headers.get("Content-Length", 0))
+        form = parse_qs(self.rfile.read(length).decode())
+        grant_type = form.get("grant_type", [None])[0]
+        if grant_type == "authorization_code":
+            match = re.fullmatch(r"user-(\d+)", form.get("code", [""])[0])
+        elif grant_type == "refresh_token":
+            match = re.fullmatch(r"refresh-(\d+)-\d+", form.get("refresh_token", [""])[0])
+        else:
+            match = None
+        if match is None:
+            self._json({"error": "invalid_grant"}, status=400)
+            return
+        self._json(discord_grant(match.group(1), int(datetime.now(timezone.utc).timestamp())))
+
+    def do_POST(self):
+        if urlparse(self.path).path == "/discord/api/oauth2/token":
+            self._discord_token()
+            return
+        self._json({"message": f"unhandled {self.path}"}, status=404)
+
     def do_GET(self):
         url = urlparse(self.path)
         query = parse_qs(url.query)
+
+        if url.path == "/discord/api/users/@me":
+            authorization = self.headers.get("Authorization", "")
+            user = discord_user(authorization.removeprefix("Bearer "))
+            if user is None:
+                self._json({"message": "401: Unauthorized", "code": 0}, status=401)
+            else:
+                self._json(user)
+            return
 
         if url.path == "/service/rest/v1/search/assets":
             wanted = query.get("maven.baseVersion", [None])[0]

@@ -10,12 +10,13 @@ import {useRouter} from 'vue-router'
 import {demoLogin} from '~/api/demo'
 import {useDemo} from '~/composables/useDemo'
 import {useSession} from '~/composables/useSession'
+import {rememberSignInMethod} from '~/util/signIn'
 
 const {t} = useI18n()
 
 const router = useRouter()
 const {accounts, load} = useDemo()
-const {setToken, hydrate} = useSession()
+const {refresh} = useSession()
 
 const busy = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
@@ -30,9 +31,9 @@ async function signInAs(email: string) {
   busy.value = email
   errorMessage.value = null
   try {
-    const {token} = await demoLogin(email)
-    setToken(token)
-    await hydrate()
+    await demoLogin(email)
+    rememberSignInMethod(null)
+    await refresh()
     await router.replace('/account')
   } catch (e) {
     const error = e as {response?: {data?: string}}

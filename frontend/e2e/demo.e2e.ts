@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
+import {expect, test} from './fixtures/session'
 
 /**
  * Demo mode, from the outside of an instance that is not one.
@@ -80,9 +80,8 @@ test.describe('Demo mode, switched on', () => {
         expect(response.status()).toBe(401)
     })
 
-    test('an account somebody made themselves cannot be signed in as either', async ({request}) => {
-        const email = `real-${Date.now()}@example.invalid`
-        await request.post('/api/auth/signup', {data: {email, password: 'end-to-end-password'}})
+    test('an account somebody made themselves cannot be signed in as either', async ({request, signedUp}) => {
+        const {email} = await signedUp('real')
 
         const response = await request.post('/api/v1/demo/login', {data: {email}})
 

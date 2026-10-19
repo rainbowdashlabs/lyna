@@ -29,6 +29,13 @@ public class OAuth {
     @Overwrite(env = @Env, prop = @Prop)
     private String redirectUri = "";
 
+    /**
+     * Where Discord's API answers. Only ever changed to point a test stack at a stand-in for it; the
+     * page a browser is sent to for signing in is always Discord's own.
+     */
+    @Overwrite(env = @Env, prop = @Prop)
+    private String apiUrl = "https://discord.com/api";
+
     public String clientId() {
         return clientId;
     }
@@ -39,6 +46,10 @@ public class OAuth {
 
     public String redirectUri() {
         return redirectUri;
+    }
+
+    public String apiUrl() {
+        return apiUrl;
     }
 
     /**

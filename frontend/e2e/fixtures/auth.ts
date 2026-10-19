@@ -3,7 +3,7 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, type Page} from '@playwright/test'
+import {type Cookie, expect, type Page} from '@playwright/test'
 import {uniqueEmail} from './unique'
 
 export interface Account {
@@ -16,6 +16,9 @@ export interface Account {
  * same everywhere because it is the address that tells the accounts apart, not the password.
  */
 export const PASSWORD = 'end-to-end-password'
+
+/** The cookie the backend keeps a session in, out of reach of the page's scripts. */
+export const SESSION_COOKIE = 'lyna_session'
 
 /**
  * Signs a brand new account up through the form, the way a visitor would.
@@ -66,16 +69,17 @@ export async function logOut(page: Page): Promise<void> {
 }
 
 /**
- * Throws away the stored session without telling the backend, for stories about what a visitor
+ * Throws away the session cookie without telling the backend, for stories about what a visitor
  * without one sees.
  */
 export async function forgetSession(page: Page): Promise<void> {
-    await page.evaluate(() => window.localStorage.clear())
+    await page.context().clearCookies({name: SESSION_COOKIE})
 }
 
 /**
- * @return the session token the application stored, or null when it stored none
+ * @return the session cookie the browser holds, or null when it holds none
  */
-export function storedToken(page: Page): Promise<string | null> {
-    return page.evaluate(() => window.localStorage.getItem('auth'))
+export async function sessionCookie(page: Page): Promise<Cookie | null> {
+    const cookies = await page.context().cookies()
+    return cookies.find(cookie => cookie.name === SESSION_COOKIE) ?? null
 }

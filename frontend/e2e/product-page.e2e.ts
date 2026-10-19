@@ -3,8 +3,9 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {type APIRequestContext, expect, type Page, test} from '@playwright/test'
-import {PASSWORD} from './fixtures/auth'
+import {type APIRequestContext, type Page} from '@playwright/test'
+import {expect, test} from './fixtures/session'
+import {OPERATOR} from './fixtures/admin'
 
 /**
  * The page a product has of its own.
@@ -144,26 +145,16 @@ test.describe('A product an operator administers', () => {
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
         'base64')
 
-    /** The seeded account is named as an operator by the Discord id it is linked to. */
-    async function operator(request: APIRequestContext): Promise<Record<string, string>> {
-        const login = await request.post('/api/auth/login', {
-            data: {email: 'entitled@example.invalid', password: PASSWORD},
-        })
-        const {token} = await login.json()
-        return {Authorization: `Bearer ${token}`}
-    }
-
     async function productNamed(request: APIRequestContext, name: string) {
         const products = await (await request.get('/api/v1/products')).json()
         return products.find((p: { name: string }) => p.name === name)
     }
 
-    test('an uploaded icon is served back as an image', async ({request}) => {
-        const headers = await operator(request)
+    test('an uploaded icon is served back as an image', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const product = await productNamed(request, 'E2E Freebie')
 
-        const upload = await request.post(`/api/admin/g/4242/products/${product.id}/icon`, {
-            headers,
+        const upload = await operator.post(`/api/admin/g/4242/products/${product.id}/icon`, {
             multipart: {icon: {name: 'icon.png', mimeType: 'image/png', buffer: PNG}},
         })
         expect(upload.status()).toBe(204)
@@ -174,11 +165,10 @@ test.describe('A product an operator administers', () => {
         expect((await served.body()).length).toBeGreaterThan(0)
     })
 
-    test('the catalogue then points at the icon this instance serves', async ({request}) => {
-        const headers = await operator(request)
+    test('the catalogue then points at the icon this instance serves', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const product = await productNamed(request, 'E2E Freebie')
-        await request.post(`/api/admin/g/4242/products/${product.id}/icon`, {
-            headers,
+        await operator.post(`/api/admin/g/4242/products/${product.id}/icon`, {
             multipart: {icon: {name: 'icon.png', mimeType: 'image/png', buffer: PNG}},
         })
 
@@ -186,25 +176,23 @@ test.describe('A product an operator administers', () => {
         expect(again.iconUrl).toBe(`/api/v1/products/${product.id}/icon`)
     })
 
-    test('a removed icon is gone, and the product says it has none', async ({request}) => {
-        const headers = await operator(request)
+    test('a removed icon is gone, and the product says it has none', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const product = await productNamed(request, 'E2E Freebie')
-        await request.post(`/api/admin/g/4242/products/${product.id}/icon`, {
-            headers,
+        await operator.post(`/api/admin/g/4242/products/${product.id}/icon`, {
             multipart: {icon: {name: 'icon.png', mimeType: 'image/png', buffer: PNG}},
         })
 
-        expect((await request.delete(`/api/admin/g/4242/products/${product.id}/icon`, {headers})).status())
+        expect((await operator.delete(`/api/admin/g/4242/products/${product.id}/icon`)).status())
             .toBe(204)
         expect((await request.get(`/api/v1/products/${product.id}/icon`)).status()).toBe(404)
     })
 
-    test('a file that is not an image is refused', async ({request}) => {
-        const headers = await operator(request)
+    test('a file that is not an image is refused', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const product = await productNamed(request, 'E2E Freebie')
 
-        const upload = await request.post(`/api/admin/g/4242/products/${product.id}/icon`, {
-            headers,
+        const upload = await operator.post(`/api/admin/g/4242/products/${product.id}/icon`, {
             multipart: {icon: {name: 'icon.png', mimeType: 'image/png', buffer: Buffer.from('not an image')}},
         })
         expect(upload.status()).toBe(400)
@@ -217,12 +205,11 @@ test.describe('A product an operator administers', () => {
         expect((await request.get(`/api/v1/products/${product.id}/icon`)).status()).toBe(404)
     })
 
-    test('everything about a product can be changed in one save', async ({request}) => {
-        const headers = await operator(request)
+    test('everything about a product can be changed in one save', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const product = await productNamed(request, 'E2E Unsellable')
 
-        const saved = await request.put(`/api/admin/g/4242/products/${product.id}`, {
-            headers,
+        const saved = await operator.put(`/api/admin/g/4242/products/${product.id}`, {
             data: {
                 name: 'E2E Unsellable',
                 url: 'https://example.invalid/edited',

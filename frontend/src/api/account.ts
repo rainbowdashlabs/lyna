@@ -53,14 +53,14 @@ export interface SessionRow {
     current: boolean
 }
 
-export async function login(payload: LoginPayload): Promise<{token: string}> {
-    const {data} = await client.post('/api/auth/login', payload)
-    return data
+/** Signs in. The backend answers with the session cookie, which this page never sees. */
+export async function login(payload: LoginPayload): Promise<void> {
+    await client.post('/api/auth/login', payload)
 }
 
-export async function signup(payload: LoginPayload): Promise<{token: string}> {
-    const {data} = await client.post('/api/auth/signup', payload)
-    return data
+/** Signs up and in. The backend answers with the session cookie, which this page never sees. */
+export async function signup(payload: LoginPayload): Promise<void> {
+    await client.post('/api/auth/signup', payload)
 }
 
 export async function logout(): Promise<void> {

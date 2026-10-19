@@ -7,11 +7,10 @@ package de.chojo.lyna.web.api.v1.demo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
-import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.demo.DemoService;
-import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
-import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
+import de.chojo.lyna.feature.account.service.SessionService;
+import de.chojo.lyna.web.api.auth.SessionCookie;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -38,17 +37,14 @@ public class DemoApi {
 
     private final DemoService demo;
     private final AccountRepository accounts;
-    private final AccountSessionRepository sessions;
-    private final JwtService jwtService;
+    private final SessionService sessions;
     private final ObjectMapper json = new ObjectMapper();
 
     @Inject
-    public DemoApi(
-            DemoService demo, AccountRepository accounts, AccountSessionRepository sessions, JwtService jwtService) {
+    public DemoApi(DemoService demo, AccountRepository accounts, SessionService sessions) {
         this.demo = demo;
         this.accounts = accounts;
         this.sessions = sessions;
-        this.jwtService = jwtService;
     }
 
     public void init() {
@@ -101,14 +97,10 @@ public class DemoApi {
             ctx.status(HttpStatus.UNAUTHORIZED).result("That is not one of the demo accounts");
             return;
         }
-        Long discordId = accounts.findLinkByAccountId(account.get().id())
-                .map(AccountIdentity::externalIdAsLong)
-                .orElse(null);
-        var issued = jwtService.issue(account.get().id(), discordId);
-        sessions.record(issued.jti(), account.get().id(), issued.expiresAt(), ctx.header("User-Agent"));
+        SessionCookie.write(ctx, sessions.open(account.get().id(), ctx.header("User-Agent")));
         accounts.touchLastLogin(account.get().id());
         log.info("[demo] signed in as {} without a password", email);
-        ctx.json(new DemoSession(issued.token(), issued.expiresAt().toString()));
+        ctx.status(HttpStatus.NO_CONTENT);
     }
 
     private void reset(Context ctx) {
@@ -123,6 +115,4 @@ public class DemoApi {
     }
 
     public record DemoLogin(String email) {}
-
-    public record DemoSession(String token, String expiresAt) {}
 }

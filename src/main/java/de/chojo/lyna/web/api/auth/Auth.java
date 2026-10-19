@@ -15,20 +15,20 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
-import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
-import de.chojo.lyna.feature.account.repository.RevokedJtiRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.account.service.AccountService;
+import de.chojo.lyna.feature.account.service.DiscordConnectionService;
+import de.chojo.lyna.feature.account.service.SessionService;
 import de.chojo.lyna.mail.MailingService;
 import io.javalin.http.Context;
+import io.javalin.http.Cookie;
 import io.javalin.http.HttpStatus;
+import io.javalin.http.SameSite;
 import org.slf4j.Logger;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.HexFormat;
 import java.util.Optional;
@@ -42,19 +42,19 @@ public class Auth {
     private static final Logger log = getLogger(Auth.class);
     private static final String STATE_COOKIE = "lyna_oauth_state";
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String SESSION_ATTRIBUTE = "lyna.session";
 
     private final Conf configuration;
     private final AccountLinkService accountLinkService;
     private final AccountService accountService;
     private final AccountEmailService accountEmails;
-    private final AccountSessionRepository accountSessions;
-    private final RevokedJtiRepository revokedJtis;
+    private final SessionService sessions;
     private final PasswordResetTokenRepository passwordResetTokens;
     private final EmailVerificationTokenRepository emailTokens;
     private final PasswordHasher passwordHasher;
-    private final JwtService jwtService;
     private final DiscordOAuthClient oauthClient;
     private final OAuth oauthConfig;
+    private final DiscordConnectionService discordConnections;
     private final MailingService mailingService;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
@@ -64,27 +64,25 @@ public class Auth {
             AccountLinkService accountLinkService,
             AccountService accountService,
             AccountEmailService accountEmails,
-            AccountSessionRepository accountSessions,
-            RevokedJtiRepository revokedJtis,
+            SessionService sessions,
             PasswordResetTokenRepository passwordResetTokens,
             EmailVerificationTokenRepository emailTokens,
             PasswordHasher passwordHasher,
-            JwtService jwtService,
             DiscordOAuthClient oauthClient,
             OAuth oauthConfig,
+            DiscordConnectionService discordConnections,
             MailingService mailingService) {
         this.configuration = configuration;
         this.accountLinkService = accountLinkService;
         this.accountService = accountService;
         this.accountEmails = accountEmails;
-        this.accountSessions = accountSessions;
-        this.revokedJtis = revokedJtis;
+        this.sessions = sessions;
         this.passwordResetTokens = passwordResetTokens;
         this.emailTokens = emailTokens;
         this.passwordHasher = passwordHasher;
-        this.jwtService = jwtService;
         this.oauthClient = oauthClient;
         this.oauthConfig = oauthConfig;
+        this.discordConnections = discordConnections;
         this.mailingService = mailingService;
     }
 
@@ -93,6 +91,7 @@ public class Auth {
             post("signup", this::signup);
             post("login", this::login);
             post("logout", this::logout);
+            post("adopt", this::adopt);
             get("me", this::me);
             path("discord", () -> {
                 get("start", this::discordStart);
@@ -246,13 +245,38 @@ public class Auth {
         issueAndWrite(ctx, account, discordId, HttpStatus.OK);
     }
 
+    /**
+     * Ends the session of the device asking, and only that one. The cookie is cleared either way, so a
+     * browser holding a dead session is not left holding it.
+     */
     private void logout(Context ctx) {
         Optional<JwtService.Verified> verified = currentSession(ctx);
+        SessionCookie.clear(ctx);
         if (verified.isEmpty()) {
             ctx.status(HttpStatus.UNAUTHORIZED);
             return;
         }
-        revokedJtis.revoke(verified.get().jti(), verified.get().expiresAt());
+        sessions.end(verified.get().jti());
+        ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    // TODO: remove once sessions from before the session cookie have run out, 30 days after release.
+    /**
+     * Moves a session from a token the page kept in its own storage into the cookie, so that nobody
+     * is signed out by the change from one to the other. The session stays the same one, with the same
+     * id and the same place in the account's session list.
+     */
+    private void adopt(Context ctx) {
+        String header = ctx.header("Authorization");
+        String token = header != null && header.startsWith("Bearer ")
+                ? header.substring("Bearer ".length()).trim()
+                : null;
+        Optional<JwtService.Issued> adopted = sessions.adopt(token);
+        if (adopted.isEmpty()) {
+            ctx.status(HttpStatus.UNAUTHORIZED);
+            return;
+        }
+        SessionCookie.write(ctx, adopted.get());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -277,30 +301,19 @@ public class Auth {
             ctx.status(HttpStatus.SERVICE_UNAVAILABLE).result("Discord sign-in is not configured on this instance.");
             return;
         }
-        String state = randomState();
-        ctx.cookie(STATE_COOKIE, state, 600);
-        ctx.redirect(oauthClient.buildAuthorizeUrl(state));
-    }
-
-    /**
-     * Gives the account the address Discord signed in with, as a proved one.
-     *
-     * <p>Only an address Discord says it has verified. An unverified one is a string somebody typed
-     * into Discord, and proving it here would hand them the licences bought with it - which is the
-     * whole point of a proved address.
-     *
-     * <p>An address another account already holds is left alone rather than taken, and the sign-in
-     * carries on: somebody arriving through Discord should not be refused because an address they
-     * also use belongs elsewhere.
-     */
-    private void attachDiscordEmail(int accountId, DiscordOAuthClient.DiscordUser discordUser) {
-        discordUser.provedEmail().ifPresent(email -> {
-            try {
-                accountEmails.confirm(accountId, email);
-            } catch (IllegalStateException e) {
-                log.info("Not attaching {} from Discord to account {}: {}", email, accountId, e.getMessage());
-            }
-        });
+        OAuthState started = new OAuthState(randomState(), ctx.queryParam("next"));
+        ctx.cookie(new Cookie(
+                STATE_COOKIE,
+                started.encode(),
+                "/",
+                600,
+                SessionCookie.secure(ctx),
+                0,
+                true,
+                null,
+                null,
+                SameSite.LAX));
+        ctx.redirect(oauthClient.buildAuthorizeUrl(started.state()));
     }
 
     private void discordCallback(Context ctx) {
@@ -310,18 +323,23 @@ public class Auth {
         }
         String state = ctx.queryParam("state");
         String code = ctx.queryParam("code");
-        String cookieState = ctx.cookie(STATE_COOKIE);
+        Optional<OAuthState> started = OAuthState.decode(ctx.cookie(STATE_COOKIE));
         ctx.removeCookie(STATE_COOKIE, "/");
 
-        if (state == null || cookieState == null || !state.equals(cookieState) || code == null) {
+        if (code == null && ctx.queryParam("error") != null) {
+            ctx.redirect("/login");
+            return;
+        }
+        if (state == null || started.isEmpty() || !state.equals(started.get().state()) || code == null) {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid OAuth state");
             return;
         }
 
+        DiscordOAuthClient.Grant grant;
         DiscordOAuthClient.DiscordUser discordUser;
         try {
-            String accessToken = oauthClient.exchangeCode(code);
-            discordUser = oauthClient.fetchUser(accessToken);
+            grant = oauthClient.exchangeCode(code);
+            discordUser = oauthClient.fetchUser(grant.accessToken());
         } catch (Exception e) {
             log.warn("Discord OAuth callback failed", e);
             ctx.status(HttpStatus.BAD_GATEWAY).result("Discord OAuth failed");
@@ -346,7 +364,6 @@ public class Auth {
                 ctx.redirect("/account/security?linked=taken");
                 return;
             }
-            attachDiscordEmail(account.id(), discordUser);
         } else {
             account = accountService.findByDiscordId(discordUser.id()).orElseGet(() -> {
                 Account created = accountService.register(null, null);
@@ -354,13 +371,17 @@ public class Auth {
                         created.id(), discordUser.id(), AccountIdentity.Verification.OAUTH, discordUser.handle());
                 return created;
             });
-            accountLinkService.rememberHandle(discordUser.id(), discordUser.handle());
-            attachDiscordEmail(account.id(), discordUser);
             accountService.touchLastLogin(account.id());
         }
-        JwtService.Issued issued = jwtService.issue(account.id(), discordUser.id());
-        accountSessions.record(issued.jti(), account.id(), issued.expiresAt(), ctx.header("User-Agent"));
-        ctx.redirect(landing(issued.token(), existing.isPresent() ? "/account/security?linked=1" : "/account"));
+        discordConnections.remember(account.id(), discordUser);
+        discordConnections.store(account.id(), grant);
+        if (existing.isEmpty()) {
+            SessionCookie.write(ctx, sessions.open(account.id(), ctx.header("User-Agent")));
+        }
+        ctx.redirect(
+                existing.isPresent()
+                        ? "/account/security?linked=1"
+                        : started.get().next());
     }
 
     private Credentials readCredentials(Context ctx) {
@@ -382,13 +403,9 @@ public class Auth {
     }
 
     private void issueAndWrite(Context ctx, Account account, Long discordId, HttpStatus status) {
-        JwtService.Issued issued = jwtService.issue(account.id(), discordId);
-        accountSessions.record(issued.jti(), account.id(), issued.expiresAt(), ctx.header("User-Agent"));
+        SessionCookie.write(ctx, sessions.open(account.id(), ctx.header("User-Agent")));
         ctx.status(status)
-                .json(new LoginResponse(
-                        issued.token(),
-                        issued.expiresAt().toString(),
-                        toMePayload(account, discordId == null ? null : new MiniLink(discordId))));
+                .json(new LoginResponse(toMePayload(account, discordId == null ? null : new MiniLink(discordId))));
     }
 
     private Object toMePayload(Account account, AccountIdentity link) {
@@ -407,32 +424,21 @@ public class Auth {
                 account.darkMode());
     }
 
-    public Optional<JwtService.Verified> currentSession(Context ctx) {
-        String header = ctx.header("Authorization");
-        if (header == null || !header.startsWith("Bearer ")) return Optional.empty();
-        String token = header.substring("Bearer ".length()).trim();
-        if (token.isEmpty()) return Optional.empty();
-        Optional<JwtService.Verified> verified = jwtService.verify(token);
-        if (verified.isEmpty()) return Optional.empty();
-        if (revokedJtis.isRevoked(verified.get().jti())) return Optional.empty();
-        return verified;
-    }
-
     /**
-     * A page that sends the browser somewhere, for the paths that end without a session to store.
-     */
-    /**
-     * Where the browser goes once Discord has vouched for somebody: the page that keeps the session.
+     * The session the request was made with, if it carries a live one.
      *
-     * <p>The token travels in the fragment, which a browser never sends to a server, so it stays out of
-     * every access log between here and there. A page written from here with an inline script would
-     * do the same job, and is refused by the content security policy every response carries.
+     * <p>Answered once per request and remembered on it, however many handlers ask. A token old
+     * enough to renew is replaced on the way: the successor goes out as a cookie on this same
+     * response, which is all renewal is - no endpoint, no timer, just being used.
      */
-    static String landing(String token, String next) {
-        return "/auth/discord#token=%s&next=%s"
-                .formatted(
-                        URLEncoder.encode(token, StandardCharsets.UTF_8),
-                        URLEncoder.encode(next, StandardCharsets.UTF_8));
+    public Optional<JwtService.Verified> currentSession(Context ctx) {
+        Optional<JwtService.Verified> known = ctx.attribute(SESSION_ATTRIBUTE);
+        if (known != null) return known;
+        Optional<SessionService.Recognised> recognised = sessions.recognise(SessionCookie.read(ctx));
+        recognised.flatMap(SessionService.Recognised::renewal).ifPresent(renewed -> SessionCookie.write(ctx, renewed));
+        Optional<JwtService.Verified> session = recognised.map(SessionService.Recognised::session);
+        ctx.attribute(SESSION_ATTRIBUTE, session);
+        return session;
     }
 
     private static String randomState() {
@@ -443,7 +449,7 @@ public class Auth {
 
     public record Credentials(String email, String password) {}
 
-    public record LoginResponse(String token, String expiresAt, Object account) {}
+    public record LoginResponse(Object account) {}
 
     public record AccountResponse(
             int id,

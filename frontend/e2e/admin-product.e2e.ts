@@ -3,16 +3,17 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
-import {createProduct, deleteProduct, GUILD, operatorPage, uniqueName} from './fixtures/admin'
+import {expect, test} from './fixtures/session'
+import {createProduct, deleteProduct, GUILD, OPERATOR, operatorPage, uniqueName} from './fixtures/admin'
 
 /**
  * A product's own admin page: reached from the list, its page written there, and deleted from there.
  */
 test.describe('A product\'s admin page', () => {
-    test('the list leads to the product, whose page is written beside a preview and then shown publicly', async ({page, request}) => {
+    test('the list leads to the product, whose page is written beside a preview and then shown publicly', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Paged')
-        const id = await createProduct(request, name)
+        const id = await createProduct(operator, name)
         await operatorPage(page)
 
         await page.goto(`/admin/g/${GUILD}/products`)
@@ -27,12 +28,13 @@ test.describe('A product\'s admin page', () => {
 
         await page.goto(`/products/${id}`)
         await expect(page.getByRole('heading', {name: 'Written here'})).toBeVisible()
-        await deleteProduct(request, id, name)
+        await deleteProduct(operator, id, name)
     })
 
-    test('a product is deleted only once its name is typed out', async ({page, request}) => {
+    test('a product is deleted only once its name is typed out', async ({page, request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
         const name = uniqueName('Doomed')
-        const id = await createProduct(request, name)
+        const id = await createProduct(operator, name)
         await operatorPage(page)
 
         await page.goto(`/admin/g/${GUILD}/products/${id}`)

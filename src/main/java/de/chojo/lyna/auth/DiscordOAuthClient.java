@@ -16,11 +16,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 
 public class DiscordOAuthClient {
     private static final String AUTHORIZE_URL = "https://discord.com/oauth2/authorize";
-    private static final String TOKEN_URL = "https://discord.com/api/oauth2/token";
-    private static final String USER_URL = "https://discord.com/api/users/@me";
+    /** What Discord grants an access token for when its answer does not say: a week. */
+    private static final long DEFAULT_EXPIRY_SECONDS = 604_800L;
     /**
      * {@code email} as well as {@code identify}, so that somebody signing in with Discord arrives
      * with an address already attached. Discord says whether it has verified that address, and only
@@ -29,15 +30,27 @@ public class DiscordOAuthClient {
     private static final String SCOPE = "identify email";
 
     private final OAuth config;
+    private final String tokenUrl;
+    private final String userUrl;
     private final HttpClient http;
     private final ObjectMapper json = new ObjectMapper();
 
     public DiscordOAuthClient(OAuth config) {
         this.config = config;
+        String api = config.apiUrl().replaceAll("/+$", "");
+        this.tokenUrl = api + "/oauth2/token";
+        this.userUrl = api + "/users/@me";
         this.http =
                 HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     }
 
+    /**
+     * The address that asks Discord to vouch for somebody.
+     *
+     * <p>{@code prompt=none}: Discord skips its consent screen for somebody who has granted these
+     * scopes before, so signing in again is a redirect there and back. Somebody who has not is still
+     * asked.
+     */
     public String buildAuthorizeUrl(String state) {
         return AUTHORIZE_URL
                 + "?response_type=code"
@@ -45,17 +58,32 @@ public class DiscordOAuthClient {
                 + "&scope=" + url(SCOPE)
                 + "&redirect_uri=" + url(config.redirectUri())
                 + "&state=" + url(state)
-                + "&prompt=consent";
+                + "&prompt=none";
     }
 
-    public String exchangeCode(String code) throws Exception {
-        String body = "grant_type=authorization_code"
-                + "&code=" + url(code)
-                + "&redirect_uri=" + url(config.redirectUri())
-                + "&client_id=" + url(config.clientId())
-                + "&client_secret=" + url(config.clientSecret());
+    /**
+     * Trades the code Discord handed back for a grant.
+     */
+    public Grant exchangeCode(String code) throws Exception {
+        return requestToken(
+                "grant_type=authorization_code" + "&code=" + url(code) + "&redirect_uri=" + url(config.redirectUri()));
+    }
 
-        HttpRequest request = HttpRequest.newBuilder(URI.create(TOKEN_URL))
+    /**
+     * Trades a refresh token for a new grant. Discord rotates the refresh token as it does so: the one
+     * passed in is spent, and only the one in the answer works from now on.
+     *
+     * @throws InvalidGrantException when Discord no longer honours the refresh token, which is what
+     *     somebody removing the application from their Discord account looks like from here
+     */
+    public Grant refresh(String refreshToken) throws Exception {
+        return requestToken("grant_type=refresh_token&refresh_token=" + url(refreshToken));
+    }
+
+    private Grant requestToken(String grant) throws Exception {
+        String body = grant + "&client_id=" + url(config.clientId()) + "&client_secret=" + url(config.clientSecret());
+
+        HttpRequest request = HttpRequest.newBuilder(URI.create(tokenUrl))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .header("Accept", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
@@ -63,18 +91,33 @@ public class DiscordOAuthClient {
 
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() / 100 != 2) {
-            throw new OAuthException("Token exchange failed: HTTP " + response.statusCode() + " " + response.body());
+            if ("invalid_grant".equals(errorOf(response.body()))) {
+                throw new InvalidGrantException("Discord refused the grant: " + response.body());
+            }
+            throw new OAuthException("Token request failed: HTTP " + response.statusCode() + " " + response.body());
         }
         JsonNode node = json.readTree(response.body());
-        JsonNode accessToken = node.get("access_token");
-        if (accessToken == null || accessToken.isNull()) {
+        String accessToken = node.path("access_token").asText(null);
+        if (accessToken == null) {
             throw new OAuthException("Token response missing access_token: " + response.body());
         }
-        return accessToken.asText();
+        return new Grant(
+                accessToken,
+                node.path("refresh_token").asText(null),
+                node.path("scope").asText(""),
+                node.path("expires_in").asLong(DEFAULT_EXPIRY_SECONDS));
+    }
+
+    private String errorOf(String body) {
+        try {
+            return json.readTree(body).path("error").asText(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public DiscordUser fetchUser(String accessToken) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(USER_URL))
+        HttpRequest request = HttpRequest.newBuilder(URI.create(userUrl))
                 .header("Authorization", "Bearer " + accessToken)
                 .header("Accept", "application/json")
                 .GET()
@@ -127,8 +170,29 @@ public class DiscordOAuthClient {
         }
     }
 
+    /**
+     * What Discord granted.
+     *
+     * @param refreshToken null when Discord sent none, which leaves nothing to refresh with
+     * @param expiresIn    how long the access token lasts, in seconds
+     */
+    public record Grant(String accessToken, String refreshToken, String scope, long expiresIn) {
+        public Instant expiresAt(Instant now) {
+            return now.plusSeconds(expiresIn);
+        }
+    }
+
     public static class OAuthException extends Exception {
         public OAuthException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Discord no longer honours a grant.
+     */
+    public static class InvalidGrantException extends OAuthException {
+        public InvalidGrantException(String message) {
             super(message);
         }
     }

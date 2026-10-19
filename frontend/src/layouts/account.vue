@@ -10,6 +10,7 @@ import {useRouter} from 'vue-router'
 import {logout} from '~/api/account'
 import {useSession} from '~/composables/useSession'
 import {useAdminGuilds} from '~/composables/useAdminGuilds'
+import {rememberSignInMethod} from '~/util/signIn'
 import type {Tab} from '~/components/chrome/TabStrip.vue'
 import type {StatusItem} from '~/components/chrome/StatusBar.vue'
 
@@ -22,11 +23,12 @@ const {guilds, load} = useAdminGuilds()
 onMounted(() => load().catch(() => undefined))
 
 /**
- * Ends the session here whatever the backend answers: the token is gone from this browser either
- * way, and a backend that could not be told is one the token expires out of on its own.
+ * Ends the session on this device whatever the backend answers, and forgets how it was opened, so
+ * signing out never bounces straight back in through Discord.
  */
 async function doLogout() {
   await logout().catch(() => undefined)
+  rememberSignInMethod(null)
   clear()
   await router.replace('/login')
 }

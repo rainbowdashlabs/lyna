@@ -4,6 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {useSession} from '~/composables/useSession'
+import {signInAgain} from '~/util/signIn'
 
 export default defineNuxtRouteMiddleware(async (to) => {
     if (typeof window === 'undefined') return
@@ -11,6 +12,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const {hydrate, account} = useSession()
     await hydrate()
     if (!account.value) {
-        return navigateTo({path: '/login', query: {next: to.fullPath}})
+        const target = signInAgain(to.fullPath)
+        return navigateTo(target.to, {external: target.external})
     }
 })
