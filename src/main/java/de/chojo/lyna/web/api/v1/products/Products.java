@@ -7,9 +7,9 @@ package de.chojo.lyna.web.api.v1.products;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.inject.Inject;
-import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.download.service.ProductVersionService;
 import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
@@ -35,7 +35,7 @@ import static io.javalin.apibuilder.ApiBuilder.path;
  *
  * <p>Every product, not only the free ones: a premium product a visitor cannot download is still
  * something they may want to buy, and a tile that is missing tells them nothing. What each visitor
- * may do with a product is answered per request from the licenses their Discord id holds.
+ * may do with a product is answered per request from their licenses and Discord roles.
  */
 public class Products {
     private final KioskProductRepository kiosk;
@@ -43,7 +43,7 @@ public class Products {
     private final ProductIconRepository icons;
     private final Auth auth;
     private final AccountRepository accounts;
-    private final AccountLicenseRepository licenses;
+    private final DownloadAccessService licenses;
 
     private final ProductPageService pages;
     private final ProductLookup productLookup;
@@ -54,7 +54,7 @@ public class Products {
             KioskProductRepository kiosk,
             Auth auth,
             AccountRepository accounts,
-            AccountLicenseRepository licenses,
+            DownloadAccessService licenses,
             ProductIconRepository icons,
             ProductIconService productIcons,
             ProductPageService pages,

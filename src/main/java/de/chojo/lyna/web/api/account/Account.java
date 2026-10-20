@@ -19,6 +19,7 @@ import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountRoleSync;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.DiscordConnectionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
@@ -66,6 +67,7 @@ public class Account {
     private final Conf configuration;
     private final AccountSessionRepository sessions;
     private final DownloadLogRepository downloadLog;
+    private final AccountRoleSync roleSync;
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final DiscordConnectionService discordConnections;
@@ -88,7 +90,9 @@ public class Account {
             DownloadLogRepository downloadLog,
             PasswordHasher passwordHasher,
             JwtService jwtService,
-            DiscordConnectionService discordConnections) {
+            DiscordConnectionService discordConnections,
+            AccountRoleSync roleSync) {
+        this.roleSync = roleSync;
         this.auth = auth;
         this.accountService = accountService;
         this.usernameService = usernameService;
@@ -240,6 +244,7 @@ public class Account {
         if (session.isEmpty()) return;
         accountLinkService.unlink(session.get().accountId());
         discordConnections.forget(session.get().accountId());
+        roleSync.unlinked(session.get().accountId());
         ctx.status(HttpStatus.NO_CONTENT);
     }
 

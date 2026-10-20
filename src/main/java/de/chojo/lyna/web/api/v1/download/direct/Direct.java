@@ -6,8 +6,8 @@
 package de.chojo.lyna.web.api.v1.download.direct;
 
 import com.google.inject.Inject;
-import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.download.service.DownloadFilename;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
@@ -28,7 +28,7 @@ public class Direct {
     private final ProductLookup products;
     private final Auth auth;
     private final AccountRepository accounts;
-    private final AccountLicenseRepository licenses;
+    private final DownloadAccessService licenses;
     private final KioskProductRepository kiosk;
 
     @Inject
@@ -36,7 +36,7 @@ public class Direct {
             ProductLookup products,
             Auth auth,
             AccountRepository accounts,
-            AccountLicenseRepository licenses,
+            DownloadAccessService licenses,
             KioskProductRepository kiosk) {
         this.products = products;
         this.auth = auth;

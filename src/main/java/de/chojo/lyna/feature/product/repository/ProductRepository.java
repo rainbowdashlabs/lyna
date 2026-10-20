@@ -10,6 +10,7 @@ import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
 
 import java.util.List;
+import java.util.Set;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -88,6 +89,16 @@ public class ProductRepository {
                 .single(call().bind(productId).bind(roleIds, PostgreSqlTypes.BIGINT))
                 .map(row -> row.getEnum("release_type", ReleaseType.class))
                 .all();
+    }
+
+    /**
+     * @return the products any of these Discord roles opens
+     */
+    public Set<Integer> productsByRoles(List<Long> roleIds) {
+        return Set.copyOf(query("SELECT DISTINCT product_id FROM role_access WHERE ARRAY[role_id] && ?")
+                .single(call().bind(roleIds, PostgreSqlTypes.BIGINT))
+                .map(row -> row.getInt("product_id"))
+                .all());
     }
 
     /**

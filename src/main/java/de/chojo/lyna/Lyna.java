@@ -12,6 +12,7 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
 import de.chojo.lyna.demo.DemoSchedule;
+import de.chojo.lyna.feature.account.service.AccountRoleSchedule;
 import de.chojo.lyna.feature.account.service.DiscordTokenRefresher;
 import de.chojo.lyna.feature.debug.service.DebugReportExpiry;
 import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
@@ -53,5 +54,6 @@ public class Lyna {
         injector.getInstance(DemoSchedule.class).start();
         injector.getInstance(TimeChannelSchedule.class).start();
         injector.getInstance(DiscordTokenRefresher.class).start();
+        injector.getInstance(AccountRoleSchedule.class).start();
     }
 }
