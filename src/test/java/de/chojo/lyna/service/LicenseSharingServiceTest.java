@@ -10,6 +10,8 @@ import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.lyna.repository.RepositoryTestBase;
+import de.chojo.sadu.queries.api.call.Call;
+import de.chojo.sadu.queries.api.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -372,8 +374,8 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
     }
 
     private static void expireInvites() {
-        de.chojo.sadu.queries.api.query.Query.query("UPDATE license_invite SET expires_at = now() - INTERVAL '1 day'")
-                .single(de.chojo.sadu.queries.api.call.Call.call())
+        Query.query("UPDATE license_invite SET expires_at = now() - INTERVAL '1 day'")
+                .single(Call.call())
                 .update();
     }
 }

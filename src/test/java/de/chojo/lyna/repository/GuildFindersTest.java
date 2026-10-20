@@ -9,6 +9,7 @@ import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.repository.DownloadTypeRepository;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.license.entity.License;
@@ -18,7 +19,10 @@ import de.chojo.lyna.feature.mail.repository.MailingLookup;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
+import de.chojo.lyna.web.api.v1.kofi.payloads.DataType;
+import de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost;
 import de.chojo.nexus.NexusRest;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +30,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -288,7 +294,7 @@ class GuildFindersTest extends RepositoryTestBase {
                 guild.downloadTypes().create("dev", "", ReleaseType.DEV).orElseThrow();
         product.downloads().create(used, "releases", "de.chojo", "widget", null).orElseThrow();
 
-        var types = new de.chojo.lyna.feature.download.repository.DownloadTypeRepository();
+        var types = new DownloadTypeRepository();
         assertEquals(List.of("Widget"), types.productsUsing(used.id()));
         assertEquals(List.of(), types.productsUsing(unused.id()));
     }
@@ -318,7 +324,7 @@ class GuildFindersTest extends RepositoryTestBase {
     @Test
     @DisplayName("A Ko-fi link code resolves to a product, and the sale is written down")
     void kofiMappings() {
-        var kofi = new de.chojo.lyna.feature.purchase.repository.KoFiProductRepository(new ProductLookup(guilds));
+        var kofi = new KoFiProductRepository(new ProductLookup(guilds));
         kofi.create(product, "abc123");
 
         assertEquals(product.id(), kofi.byCode("abc123").orElseThrow().id());
@@ -342,7 +348,7 @@ class GuildFindersTest extends RepositoryTestBase {
                 guild.licenses().create(product, "owner@example.invalid").orElseThrow();
         licenseRepository.claim(accountLinks.accountIdForDiscord(OWNER), owned.id());
 
-        var member = Mockito.mock(net.dv8tion.jda.api.entities.Member.class);
+        var member = Mockito.mock(Member.class);
         Mockito.when(member.getIdLong()).thenReturn(OWNER);
         var user = guild.user(member);
 
@@ -361,7 +367,7 @@ class GuildFindersTest extends RepositoryTestBase {
     @Test
     @DisplayName("Somebody holding nothing can reach nothing")
     void licenceUserWithNothing() {
-        var member = Mockito.mock(net.dv8tion.jda.api.entities.Member.class);
+        var member = Mockito.mock(Member.class);
         Mockito.when(member.getIdLong()).thenReturn(9999L);
         var user = guild.user(member);
 
@@ -391,7 +397,7 @@ class GuildFindersTest extends RepositoryTestBase {
         assertEquals(
                 List.of("buyer@example.invalid"),
                 guild.licenses().completeIdentifier("buyer").stream()
-                        .map(net.dv8tion.jda.api.interactions.commands.Command.Choice::getName)
+                        .map(Command.Choice::getName)
                         .toList());
         assertTrue(otherGuild.products().complete("").isEmpty(), "another guild offers nothing");
     }
@@ -404,7 +410,7 @@ class GuildFindersTest extends RepositoryTestBase {
         licenseRepository.claim(accountLinks.accountIdForDiscord(OWNER), owned.id());
         licenseRepository.grantAccess(owned.id(), ReleaseType.STABLE);
 
-        var member = Mockito.mock(net.dv8tion.jda.api.entities.Member.class);
+        var member = Mockito.mock(Member.class);
         Mockito.when(member.getIdLong()).thenReturn(OWNER);
         Mockito.when(member.getRoles()).thenReturn(List.of());
         var user = guild.user(member);
@@ -419,12 +425,12 @@ class GuildFindersTest extends RepositoryTestBase {
     @Test
     @DisplayName("A Ko-fi sale is written down whether or not it names a shop item")
     void kofiSalesAreLogged() throws Exception {
-        var kofi = new de.chojo.lyna.feature.purchase.repository.KoFiProductRepository(new ProductLookup(guilds));
-        var post = new de.chojo.lyna.web.api.v1.kofi.payloads.KofiPost(
-                java.util.UUID.randomUUID(),
-                java.util.UUID.randomUUID(),
-                java.time.OffsetDateTime.now(),
-                de.chojo.lyna.web.api.v1.kofi.payloads.DataType.SHOP_ORDER,
+        var kofi = new KoFiProductRepository(new ProductLookup(guilds));
+        var post = new KofiPost(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                OffsetDateTime.now(),
+                DataType.SHOP_ORDER,
                 true,
                 "Ada Lovelace",
                 null,
@@ -434,7 +440,7 @@ class GuildFindersTest extends RepositoryTestBase {
                 "EUR",
                 false,
                 false,
-                java.util.UUID.randomUUID(),
+                UUID.randomUUID(),
                 null,
                 "tier",
                 null);
@@ -443,10 +449,8 @@ class GuildFindersTest extends RepositoryTestBase {
         assertEquals(1, countRows("kofi_sales"));
     }
 
-    private static List<String> names(List<net.dv8tion.jda.api.interactions.commands.Command.Choice> choices) {
-        return choices.stream()
-                .map(net.dv8tion.jda.api.interactions.commands.Command.Choice::getName)
-                .toList();
+    private static List<String> names(List<Command.Choice> choices) {
+        return choices.stream().map(Command.Choice::getName).toList();
     }
 
     @Test

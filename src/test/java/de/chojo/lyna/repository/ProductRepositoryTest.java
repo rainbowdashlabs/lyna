@@ -6,6 +6,7 @@
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.repository.DownloadRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -168,24 +169,22 @@ class ProductRepositoryTest extends RepositoryTestBase {
                             .formatted(schemaName, GUILD, GUILD + 1));
         }
 
-        assertEquals(java.util.List.of(GUILD, GUILD + 1), productRepository.guildsWithProducts());
+        assertEquals(List.of(GUILD, GUILD + 1), productRepository.guildsWithProducts());
     }
 
     @Test
     @DisplayName("The roles granted a product are listed with their release type, and revoking takes one away")
     void roleAccessIsListed() {
-        var downloads = new de.chojo.lyna.feature.download.repository.DownloadRepository();
-        downloads.grantRole(20L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.STABLE);
-        downloads.grantRole(10L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.DEV);
+        var downloads = new DownloadRepository();
+        downloads.grantRole(20L, productId, ReleaseType.STABLE);
+        downloads.grantRole(10L, productId, ReleaseType.DEV);
 
         assertEquals(
-                java.util.List.of(
-                        new de.chojo.lyna.feature.download.repository.DownloadRepository.RoleAccess(
-                                10L, de.chojo.lyna.feature.download.entity.ReleaseType.DEV),
-                        new de.chojo.lyna.feature.download.repository.DownloadRepository.RoleAccess(
-                                20L, de.chojo.lyna.feature.download.entity.ReleaseType.STABLE)),
+                List.of(
+                        new DownloadRepository.RoleAccess(10L, ReleaseType.DEV),
+                        new DownloadRepository.RoleAccess(20L, ReleaseType.STABLE)),
                 downloads.roleAccess(productId));
-        assertTrue(downloads.revokeRole(10L, productId, de.chojo.lyna.feature.download.entity.ReleaseType.DEV));
+        assertTrue(downloads.revokeRole(10L, productId, ReleaseType.DEV));
         assertEquals(1, downloads.roleAccess(productId).size());
     }
 }

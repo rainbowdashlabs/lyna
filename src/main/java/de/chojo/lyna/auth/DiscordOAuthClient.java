@@ -17,6 +17,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 
 public class DiscordOAuthClient {
     private static final String AUTHORIZE_URL = "https://discord.com/oauth2/authorize";
@@ -156,9 +157,9 @@ public class DiscordOAuthClient {
         /**
          * @return the address, but only when Discord has verified it
          */
-        public java.util.Optional<String> provedEmail() {
-            if (!emailVerified || email == null || email.isBlank()) return java.util.Optional.empty();
-            return java.util.Optional.of(email.trim());
+        public Optional<String> provedEmail() {
+            if (!emailVerified || email == null || email.isBlank()) return Optional.empty();
+            return Optional.of(email.trim());
         }
 
         /**

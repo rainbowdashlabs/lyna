@@ -11,6 +11,7 @@ import de.chojo.lyna.mail.blocks.MailBlockRenderer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -217,7 +218,7 @@ class MailBlockRendererTest {
     }
 
     private static Map<String, Object> with(Object... pairs) {
-        Map<String, Object> values = new java.util.LinkedHashMap<>(VALUES);
+        Map<String, Object> values = new LinkedHashMap<>(VALUES);
         for (int i = 0; i < pairs.length; i += 2) values.put((String) pairs[i], pairs[i + 1]);
         return values;
     }
@@ -367,7 +368,7 @@ class MailBlockRendererTest {
     @Test
     @DisplayName("The shipped default leaves out what a bare product has nothing for")
     void shippedDefaultRendersForABareProduct() {
-        Map<String, Object> bare = new java.util.LinkedHashMap<>();
+        Map<String, Object> bare = new LinkedHashMap<>();
         bare.put("name", "Ada");
         bare.put("key", "KEY-1");
         bare.put("product", "Chatty");

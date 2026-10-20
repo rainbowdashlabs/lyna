@@ -40,7 +40,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
@@ -427,7 +429,7 @@ public class Account {
         String link = configuration.main().links().frontend() + "/verify-email?token=" + issued.token();
         try {
             var renderer = mailingService.renderer();
-            var values = java.util.Map.<String, Object>of("url", link);
+            var values = Map.<String, Object>of("url", link);
             mailingService.send(
                     email,
                     renderer.subject("verify-email", "en", values),
@@ -546,7 +548,7 @@ public class Account {
      * it that is safe to print. Addresses appear only for invites, which the owner typed themselves.
      */
     private List<ShareeView> shareesOf(int licenseId) {
-        List<ShareeView> views = new java.util.ArrayList<>();
+        List<ShareeView> views = new ArrayList<>();
         for (int shareeId : licenses.sharees(licenseId)) {
             String name = accountService
                     .findById(shareeId)
@@ -668,7 +670,7 @@ public class Account {
                     .map(de.chojo.lyna.feature.account.entity.Account::displayName)
                     .orElse("the owner");
             var renderer = mailingService.renderer();
-            var values = java.util.Map.<String, Object>of(
+            var values = Map.<String, Object>of(
                     "owner", owner == null ? "the owner" : owner, "product", license.productName());
             mailingService.send(
                     sharee.email(), renderer.subject(template, "en", values), renderer.render(template, "en", values));

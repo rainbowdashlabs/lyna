@@ -23,6 +23,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -193,13 +194,13 @@ class ChannelTargetTest {
 
         ArgumentCaptor<String> titles = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MessageCreateData> messages = ArgumentCaptor.forClass(MessageCreateData.class);
-        verify(forum, org.mockito.Mockito.times(2)).createForumPost(titles.capture(), messages.capture());
+        verify(forum, Mockito.times(2)).createForumPost(titles.capture(), messages.capture());
         assertEquals(
                 ChannelTarget.POST_TITLE_LIMIT, titles.getAllValues().get(0).length());
         assertEquals("Widget v1", titles.getAllValues().get(1));
         assertEquals(1, messages.getAllValues().get(0).getComponents().size());
         assertEquals(0, messages.getAllValues().get(1).getComponents().size());
         assertEquals(List.of(EMBED), messages.getAllValues().get(1).getEmbeds());
-        verify(action, org.mockito.Mockito.times(2)).queue(any(), any());
+        verify(action, Mockito.times(2)).queue(any(), any());
     }
 }

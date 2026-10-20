@@ -10,6 +10,8 @@ import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import io.javalin.http.Context;
 
+import java.util.List;
+
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
@@ -43,8 +45,5 @@ public class Theme {
     }
 
     public record PublicTheme(
-            String defaultTheme,
-            boolean allowUserTheme,
-            java.util.List<String> enabledThemes,
-            String customThemeColors) {}
+            String defaultTheme, boolean allowUserTheme, List<String> enabledThemes, String customThemeColors) {}
 }

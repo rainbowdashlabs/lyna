@@ -9,6 +9,7 @@ import com.google.inject.Singleton;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -50,8 +51,8 @@ public class ProductIconRepository {
     /**
      * @return the ids of every product carrying an icon, for the catalogue to say which have one
      */
-    public java.util.Set<Integer> withIcon() {
-        return java.util.Set.copyOf(query("SELECT product_id FROM product_icon")
+    public Set<Integer> withIcon() {
+        return Set.copyOf(query("SELECT product_id FROM product_icon")
                 .single()
                 .map(row -> row.getInt("product_id"))
                 .all());

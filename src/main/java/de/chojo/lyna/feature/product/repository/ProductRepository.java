@@ -8,9 +8,11 @@ package de.chojo.lyna.feature.product.repository;
 import com.google.inject.Singleton;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.sadu.postgresql.types.PostgreSqlTypes;
+import de.chojo.sadu.queries.api.call.Call;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -129,11 +131,7 @@ public class ProductRepository {
      * <p>The column is interpolated because a placeholder cannot name one. Every caller passes a
      * literal, and nothing here takes a column name from outside.
      */
-    public boolean set(
-            int productId,
-            String column,
-            java.util.function.Function<de.chojo.sadu.queries.api.call.Call, de.chojo.sadu.queries.api.call.Call>
-                    value) {
+    public boolean set(int productId, String column, Function<Call, Call> value) {
         return query("""
                 UPDATE
                     product

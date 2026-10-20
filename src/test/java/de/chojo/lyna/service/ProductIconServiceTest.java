@@ -17,6 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -108,7 +109,7 @@ class ProductIconServiceTest extends RepositoryTestBase {
     void theOriginalIsCapped() throws Exception {
         icons.store(productId, image(1600, 1600, "png"));
 
-        BufferedImage largest = ImageIO.read(new java.io.ByteArrayInputStream(
+        BufferedImage largest = ImageIO.read(new ByteArrayInputStream(
                 storage.read(productId, ProductIconService.MAX_PIXEL_SIZE).orElseThrow()));
         assertEquals(ProductIconService.MAX_PIXEL_SIZE, largest.getWidth());
     }
@@ -119,7 +120,7 @@ class ProductIconServiceTest extends RepositoryTestBase {
         icons.store(productId, image(48, 48, "png"));
 
         BufferedImage stored = ImageIO.read(
-                new java.io.ByteArrayInputStream(storage.read(productId, 256).orElseThrow()));
+                new ByteArrayInputStream(storage.read(productId, 256).orElseThrow()));
         assertEquals(48, stored.getWidth());
     }
 
@@ -129,9 +130,9 @@ class ProductIconServiceTest extends RepositoryTestBase {
         icons.store(productId, image(400, 400, "png"));
 
         BufferedImage big = ImageIO.read(
-                new java.io.ByteArrayInputStream(storage.read(productId, 256).orElseThrow()));
+                new ByteArrayInputStream(storage.read(productId, 256).orElseThrow()));
         BufferedImage small = ImageIO.read(
-                new java.io.ByteArrayInputStream(storage.read(productId, 64).orElseThrow()));
+                new ByteArrayInputStream(storage.read(productId, 64).orElseThrow()));
         assertEquals(256, big.getWidth());
         assertEquals(64, small.getWidth());
     }
@@ -141,8 +142,8 @@ class ProductIconServiceTest extends RepositoryTestBase {
     void readingRoundsUp() throws Exception {
         icons.store(productId, image(400, 400, "png"));
 
-        BufferedImage served = ImageIO.read(
-                new java.io.ByteArrayInputStream(icons.read(productId, 100).orElseThrow()));
+        BufferedImage served =
+                ImageIO.read(new ByteArrayInputStream(icons.read(productId, 100).orElseThrow()));
         assertEquals(128, served.getWidth());
     }
 

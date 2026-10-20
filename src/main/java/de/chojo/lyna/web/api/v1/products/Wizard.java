@@ -32,6 +32,7 @@ import io.javalin.http.UnauthorizedResponse;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -213,7 +214,7 @@ public class Wizard {
         return Optional.ofNullable(ctx.pathParam("releaseType"))
                 .map(raw -> {
                     try {
-                        return ReleaseType.valueOf(raw.toUpperCase(java.util.Locale.ROOT));
+                        return ReleaseType.valueOf(raw.toUpperCase(Locale.ROOT));
                     } catch (IllegalArgumentException e) {
                         throw new NotFoundResponse("Unknown release type");
                     }

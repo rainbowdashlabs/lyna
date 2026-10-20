@@ -5,10 +5,14 @@
  */
 package de.chojo.lyna.service;
 
+import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.repository.RepositoryTestBase;
+import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +23,7 @@ import org.mockito.Mockito;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -61,10 +66,7 @@ class RemainingCoverageTest extends RepositoryTestBase {
     }
 
     private Product productOf() {
-        var guilds = new de.chojo.lyna.feature.guild.Guilds(
-                Mockito.mock(de.chojo.nexus.NexusRest.class),
-                de.chojo.lyna.configuration.TestConf.defaults(),
-                accountLinks);
+        var guilds = new Guilds(Mockito.mock(NexusRest.class), TestConf.defaults(), accountLinks);
         return guilds.guild(GUILD).products().byId(productId).orElseThrow();
     }
 
@@ -87,8 +89,7 @@ class RemainingCoverageTest extends RepositoryTestBase {
         assertTrue(productRoles.canAccess(product, member));
         assertTrue(productRoles.canDownload(product, member));
         assertEquals(
-                java.util.Set.of(de.chojo.lyna.feature.download.entity.ReleaseType.values())
-                        .size(),
+                Set.of(ReleaseType.values()).size(),
                 productRoles.availableReleaseTypes(product, member).size(),
                 "a free product offers every release");
     }
@@ -173,7 +174,7 @@ class RemainingCoverageTest extends RepositoryTestBase {
                     .formatted(schemaName, licenseId));
         }
 
-        assertEquals(java.util.Set.of("STABLE"), accountLicenses.releaseTypes(account.id(), productId));
+        assertEquals(Set.of("STABLE"), accountLicenses.releaseTypes(account.id(), productId));
         assertTrue(accountLicenses.entitledProductIds(account.id()).contains(productId));
     }
 
