@@ -5,73 +5,143 @@
  */
 package de.chojo.lyna.util;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class JarUtil {
+/**
+ * Writes who a download was issued to into the string constants of a jar's classes.
+ *
+ * <p>A plugin marks the places with placeholders such as {@code %%__USER__%%}. A placeholder is replaced
+ * wherever it appears in a constant, not only where it is the whole constant: javac copies a
+ * {@code static final} string into every place that uses it and merges it with the text around it, so
+ * {@code "licensed to " + USER} is one constant by the time it reaches the jar.
+ *
+ * <p>Every entry is written anew rather than copied with the metadata it was read with, since a changed
+ * class no longer matches the size and checksum an uncompressed entry carries. A class that cannot be
+ * read is passed through untouched instead of failing the jar, and the jar's own signature is dropped,
+ * because it stops matching the moment a class changes.
+ *
+ * <p>Originally written by goldmensch.
+ */
+public final class JarUtil {
+    private static final int CLASS_MAGIC = 0xCAFEBABE;
+    private static final int UTF8 = 1;
+    private static final int LONG = 5;
+    private static final int DOUBLE = 6;
 
-    // Made by goldmensch (contact goldmensch on discord, or write email to nickhensel25@icloud.com if it breaks)
+    private JarUtil() {}
+
+    /**
+     * @return the jar with the replacements applied to every class it holds
+     */
     public static byte[] replaceStringsInJar(InputStream stream, Map<String, String> replacements) throws IOException {
         var bytesOut = new ByteArrayOutputStream();
         try (var outputZip = new ZipOutputStream(bytesOut);
                 var inputZip = new ZipInputStream(stream)) {
             ZipEntry entry;
             while ((entry = inputZip.getNextEntry()) != null) {
+                if (isSignature(entry.getName())) continue;
+                outputZip.putNextEntry(copyOf(entry));
                 if (!entry.isDirectory()) {
-                    outputZip.putNextEntry(entry);
-                    if (entry.getName().endsWith(".class")) {
-                        byte[] bytes = replaceStringsInClass(inputZip, replacements);
-                        outputZip.write(bytes);
-                    } else {
-                        inputZip.transferTo(outputZip);
-                    }
-
-                    outputZip.closeEntry();
+                    byte[] content = inputZip.readAllBytes();
+                    outputZip.write(
+                            entry.getName().endsWith(".class") ? replaceOrKeep(content, replacements) : content);
                 }
+                outputZip.closeEntry();
             }
         }
         return bytesOut.toByteArray();
     }
 
-    // Made by goldmensch (contact goldmensch on discord, or write email to nickhensel25@icloud.com if it breaks)
+    /**
+     * @return the class with the replacements applied to its string constants
+     * @throws IOException if the stream is not a class file this can read
+     */
     public static byte[] replaceStringsInClass(InputStream inputStream, Map<String, String> replacements)
             throws IOException {
         DataInputStream input = new DataInputStream(inputStream);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream output = new DataOutputStream(byteArrayOutputStream);
 
-        output.write(input.readNBytes(8));
-        int poolCount = input.readUnsignedShort() - 1;
-        output.writeShort((poolCount + 1) & 0xFFFF);
+        int magic = input.readInt();
+        if (magic != CLASS_MAGIC) throw new IOException("Not a class file");
+        output.writeInt(magic);
+        output.write(input.readNBytes(4));
+        int poolCount = input.readUnsignedShort();
+        output.writeShort(poolCount);
 
-        for (int i = 0; i < poolCount; i++) {
+        for (int i = 1; i < poolCount; i++) {
             int tag = input.readUnsignedByte();
             output.write(tag);
-            if (tag == 1) {
-                String str = input.readUTF();
-
-                var out = replacements.getOrDefault(str, str);
-                output.writeUTF(out);
-            } else {
-                var skip =
-                        switch (tag) {
-                            case 3, 4, 9, 10, 11, 12, 17, 18 -> 4;
-                            case 7, 8, 16, 19, 20 -> 2;
-                            case 5, 6 -> {
-                                i++;
-                                yield 8;
-                            }
-                            case 15 -> 3;
-                            default -> throw new IllegalArgumentException("No tag found for %s".formatted(tag));
-                        };
-                output.write(input.readNBytes(skip));
+            if (tag == UTF8) {
+                output.writeUTF(replace(input.readUTF(), replacements));
+                continue;
             }
+            if (tag == LONG || tag == DOUBLE) i++;
+            output.write(input.readNBytes(constantLength(tag)));
         }
 
         output.write(input.readAllBytes());
         return byteArrayOutputStream.toByteArray();
+    }
+
+    private static byte[] replaceOrKeep(byte[] content, Map<String, String> replacements) {
+        try {
+            return replaceStringsInClass(new ByteArrayInputStream(content), replacements);
+        } catch (IOException | IllegalArgumentException e) {
+            return content;
+        }
+    }
+
+    private static String replace(String constant, Map<String, String> replacements) {
+        String replaced = constant;
+        for (var replacement : replacements.entrySet()) {
+            replaced = replaced.replace(replacement.getKey(), replacement.getValue());
+        }
+        return replaced;
+    }
+
+    /**
+     * The length of a constant pool entry after its tag, for every kind but UTF-8, whose length is part of
+     * the entry.
+     */
+    private static int constantLength(int tag) {
+        return switch (tag) {
+            case 3, 4, 9, 10, 11, 12, 17, 18 -> 4;
+            case 7, 8, 16, 19, 20 -> 2;
+            case LONG, DOUBLE -> 8;
+            case 15 -> 3;
+            default -> throw new IllegalArgumentException("Unknown constant pool tag %d".formatted(tag));
+        };
+    }
+
+    private static ZipEntry copyOf(ZipEntry entry) {
+        ZipEntry copy = new ZipEntry(entry.getName());
+        copy.setTime(entry.getTime());
+        if (entry.getComment() != null) copy.setComment(entry.getComment());
+        return copy;
+    }
+
+    /**
+     * Whether an entry is part of the jar's signature: the signature files directly under
+     * {@code META-INF/}.
+     */
+    private static boolean isSignature(String name) {
+        String upper = name.toUpperCase(Locale.ROOT);
+        if (!upper.startsWith("META-INF/") || upper.indexOf('/', "META-INF/".length()) >= 0) return false;
+        return upper.endsWith(".SF")
+                || upper.endsWith(".RSA")
+                || upper.endsWith(".DSA")
+                || upper.endsWith(".EC")
+                || upper.startsWith("META-INF/SIG-");
     }
 }
