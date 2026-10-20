@@ -3,5 +3,12 @@
   "baseBranchPatterns": ["main"],
   "extends": [
     "github>rainbowdashlabs/rainbowdashlabs"
+  ],
+  "packageRules": [
+    {
+      "description": "Pinned to the version whose browsers shell.nix provides; bump together with nixpkgs.",
+      "matchPackageNames": ["@playwright/test"],
+      "enabled": false
+    }
   ]
 }
