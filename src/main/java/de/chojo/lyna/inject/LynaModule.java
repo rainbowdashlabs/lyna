@@ -99,6 +99,9 @@ import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import de.chojo.lyna.feature.timechannel.repository.TimeChannelRepository;
 import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
+import de.chojo.lyna.feature.updater.repository.UpdateTokenQuotaRepository;
+import de.chojo.lyna.feature.updater.repository.UpdateTokenRepository;
+import de.chojo.lyna.feature.updater.service.UpdateTokenService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
@@ -365,6 +368,9 @@ public class LynaModule extends AbstractModule {
         bind(PasswordResetTokenRepository.class).in(Singleton.class);
         bind(EmailVerificationTokenRepository.class).in(Singleton.class);
         bind(KioskProductRepository.class).in(Singleton.class);
+        bind(UpdateTokenRepository.class).in(Singleton.class);
+        bind(UpdateTokenQuotaRepository.class).in(Singleton.class);
+        bind(UpdateTokenService.class).in(Singleton.class);
         bind(PasswordHasher.class).in(Singleton.class);
     }
 
