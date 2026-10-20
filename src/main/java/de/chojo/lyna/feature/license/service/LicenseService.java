@@ -11,6 +11,7 @@ import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.guild.roles.RoleSync;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -124,7 +126,7 @@ public class LicenseService {
         return true;
     }
 
-    private java.util.Optional<Long> discordId(int accountId) {
+    private Optional<Long> discordId(int accountId) {
         return accountLinks.discordIdentity(accountId).map(AccountIdentity::externalIdAsLong);
     }
 
@@ -132,7 +134,7 @@ public class LicenseService {
         return license.product().products().licenseGuild().guildId();
     }
 
-    private static de.chojo.lyna.feature.guild.roles.RoleSync roles(License license) {
+    private static RoleSync roles(License license) {
         return license.product().products().licenseGuild().roles();
     }
 

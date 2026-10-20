@@ -20,6 +20,7 @@ import de.chojo.lyna.auth.TokenCipher;
 import de.chojo.lyna.auth.TokenKey;
 import de.chojo.lyna.commands.info.Info;
 import de.chojo.lyna.commands.kofi.KoFi;
+import de.chojo.lyna.commands.products.Products;
 import de.chojo.lyna.commands.register.Register;
 import de.chojo.lyna.commands.registrations.Registrations;
 import de.chojo.lyna.commands.settings.Settings;
@@ -99,12 +100,27 @@ import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import de.chojo.lyna.feature.timechannel.repository.TimeChannelRepository;
 import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
+import de.chojo.lyna.feature.trial.service.DisposableEmailDomains;
+import de.chojo.lyna.feature.trial.service.DisposableEmailRefresh;
+import de.chojo.lyna.feature.trial.service.WebTrialService;
+import de.chojo.lyna.feature.updater.repository.UpdateTokenQuotaRepository;
+import de.chojo.lyna.feature.updater.repository.UpdateTokenRepository;
+import de.chojo.lyna.feature.updater.service.UpdateTokenService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.WebService;
 import de.chojo.lyna.web.api.account.Account;
+import de.chojo.lyna.web.api.account.AccountLicenseActions;
+import de.chojo.lyna.web.api.account.AccountUpdateTokens;
 import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.admin.AdminDiscord;
+import de.chojo.lyna.web.api.admin.AdminDownloads;
+import de.chojo.lyna.web.api.admin.AdminLicenses;
+import de.chojo.lyna.web.api.admin.AdminMailing;
+import de.chojo.lyna.web.api.admin.AdminTimeChannels;
+import de.chojo.lyna.web.api.admin.AdminUpdateTokens;
+import de.chojo.lyna.web.api.admin.GuildAdminGuard;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
 import de.chojo.lyna.web.api.v1.debug.DebugApi;
@@ -113,9 +129,11 @@ import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.web.api.v1.download.direct.Direct;
 import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
+import de.chojo.lyna.web.api.v1.products.TrialApi;
 import de.chojo.lyna.web.api.v1.products.Wizard;
 import de.chojo.lyna.web.api.v1.releases.Releases;
 import de.chojo.lyna.web.api.v1.update.Update;
+import de.chojo.lyna.web.api.v1.update.UpdateTokenExchange;
 import de.chojo.lyna.web.api.v1.webhook.GithubWebhook;
 import de.chojo.lyna.web.legacy.ButlerApi;
 import de.chojo.nexus.NexusRest;
@@ -128,7 +146,7 @@ import de.chojo.nexus.NexusRest;
  * letting them ask for what they need removes both the order and the back-patch.
  *
  * <p>Configuration elements are bound one by one rather than only as a whole, so a class asks for the
- * {@link de.chojo.lyna.configuration.elements.Database} settings instead of reaching through the file
+ * {@link Database} settings instead of reaching through the file
  * for them. What a class needs is then visible in its constructor.
  */
 public class LynaModule extends AbstractModule {
@@ -259,7 +277,7 @@ public class LynaModule extends AbstractModule {
      *
      * <p>They speak to the database through sadu's global query configuration rather than a
      * {@code DataSource} of their own, which is why building one is safe before the pool exists.
-     * Using one is not, and {@link de.chojo.lyna.core.Data#start()} is what makes it so.
+     * Using one is not, and {@link Data#start()} is what makes it so.
      *
      * <p>{@link Threading} is held once for a harder reason: it owns the thread pools, and a second
      * one would quietly be a second set of them.
@@ -267,7 +285,7 @@ public class LynaModule extends AbstractModule {
     @Override
     protected void configure() {
         Multibinder<SlashProvider<Slash>> commands = Multibinder.newSetBinder(binder(), new TypeLiteral<>() {});
-        commands.addBinding().to(de.chojo.lyna.commands.products.Products.class);
+        commands.addBinding().to(Products.class);
         commands.addBinding().to(de.chojo.lyna.commands.license.License.class);
         commands.addBinding().to(Register.class);
         commands.addBinding().to(Registrations.class);
@@ -291,20 +309,23 @@ public class LynaModule extends AbstractModule {
         bind(Account.class).in(Singleton.class);
         bind(Theme.class).in(Singleton.class);
         bind(Admin.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.admin.GuildAdminGuard.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.admin.AdminDiscord.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.admin.AdminDownloads.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.admin.AdminLicenses.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.admin.AdminMailing.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.admin.AdminTimeChannels.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.account.AccountLicenseActions.class).in(Singleton.class);
-        bind(de.chojo.lyna.web.api.v1.products.TrialApi.class).in(Singleton.class);
-        bind(de.chojo.lyna.feature.trial.service.DisposableEmailDomains.class).in(Singleton.class);
-        bind(de.chojo.lyna.feature.trial.service.WebTrialService.class).in(Singleton.class);
-        bind(de.chojo.lyna.feature.trial.service.DisposableEmailRefresh.class).in(Singleton.class);
+        bind(GuildAdminGuard.class).in(Singleton.class);
+        bind(AdminDiscord.class).in(Singleton.class);
+        bind(AdminDownloads.class).in(Singleton.class);
+        bind(AdminLicenses.class).in(Singleton.class);
+        bind(AdminMailing.class).in(Singleton.class);
+        bind(AdminTimeChannels.class).in(Singleton.class);
+        bind(AdminUpdateTokens.class).in(Singleton.class);
+        bind(AccountLicenseActions.class).in(Singleton.class);
+        bind(AccountUpdateTokens.class).in(Singleton.class);
+        bind(TrialApi.class).in(Singleton.class);
+        bind(DisposableEmailDomains.class).in(Singleton.class);
+        bind(WebTrialService.class).in(Singleton.class);
+        bind(DisposableEmailRefresh.class).in(Singleton.class);
         bind(Download.class).in(Singleton.class);
         bind(Direct.class).in(Singleton.class);
         bind(Update.class).in(Singleton.class);
+        bind(UpdateTokenExchange.class).in(Singleton.class);
         bind(KoFiApi.class).in(Singleton.class);
         bind(Releases.class).in(Singleton.class);
         bind(Wizard.class).in(Singleton.class);
@@ -365,6 +386,9 @@ public class LynaModule extends AbstractModule {
         bind(PasswordResetTokenRepository.class).in(Singleton.class);
         bind(EmailVerificationTokenRepository.class).in(Singleton.class);
         bind(KioskProductRepository.class).in(Singleton.class);
+        bind(UpdateTokenRepository.class).in(Singleton.class);
+        bind(UpdateTokenQuotaRepository.class).in(Singleton.class);
+        bind(UpdateTokenService.class).in(Singleton.class);
         bind(PasswordHasher.class).in(Singleton.class);
     }
 

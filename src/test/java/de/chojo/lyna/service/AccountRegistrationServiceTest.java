@@ -6,6 +6,7 @@
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -71,8 +72,7 @@ class AccountRegistrationServiceTest extends RepositoryTestBase {
     @DisplayName("An account is found by address, by Discord id and by the name it shows")
     void theReadsThePagesUse() {
         Account created = accountService.register("found@example.invalid", "hash");
-        accountLinks.link(
-                created.id(), 7001L, de.chojo.lyna.feature.account.entity.AccountIdentity.Verification.OAUTH, "ada");
+        accountLinks.link(created.id(), 7001L, AccountIdentity.Verification.OAUTH, "ada");
 
         assertEquals(
                 created.id(),

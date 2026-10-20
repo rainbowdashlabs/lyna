@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -168,7 +169,7 @@ class DiscordConnectionServiceTest extends RepositoryTestBase {
     @DisplayName("Discord being unreachable keeps the grant for the next run")
     void failureKeepsTheGrant() throws Exception {
         connections.store(account.id(), grant("a", "r", 3600));
-        when(discord.refresh("r")).thenThrow(new java.io.IOException("unreachable"));
+        when(discord.refresh("r")).thenThrow(new IOException("unreachable"));
 
         assertEquals(0, connections.refreshExpiring());
 

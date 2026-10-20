@@ -13,6 +13,7 @@ import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.Context;
@@ -27,7 +28,7 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 
 public class Releases {
-    private final de.chojo.lyna.feature.product.repository.ProductLookup products;
+    private final ProductLookup products;
     private final Auth auth;
     private final AccountRepository accounts;
     private final DownloadAccessService licenses;
@@ -35,7 +36,7 @@ public class Releases {
 
     @Inject
     public Releases(
-            de.chojo.lyna.feature.product.repository.ProductLookup products,
+            ProductLookup products,
             Auth auth,
             AccountRepository accounts,
             DownloadAccessService licenses,

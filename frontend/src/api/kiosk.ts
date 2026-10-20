@@ -73,7 +73,8 @@ export interface IssuedDownload {
     url: string
     filename: string
     sizeBytes: number | null
-    expiresAt: string
+    /** When a one-time link lapses, and null for the public link of a free product. */
+    expiresAt: string | null
 }
 
 export async function listProducts(): Promise<KioskProduct[]> {

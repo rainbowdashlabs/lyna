@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -89,7 +90,7 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
 
     @Test
     @DisplayName("The catalogue is alphabetical whatever the case of a name")
-    void catalogueIgnoresCase() throws java.sql.SQLException {
+    void catalogueIgnoresCase() throws SQLException {
         try (var connection = dataSource.getConnection();
                 var statement = connection.createStatement()) {
             statement.execute("INSERT INTO %s.product (guild_id, name, role, free) VALUES (%d, 'better tools', 1, TRUE)"
@@ -168,7 +169,7 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A license owner is entitled to the product it covers")
     void ownerIsEntitled() {
-        assertEquals(java.util.Set.of(premiumProduct), accountLicenses.entitledProductIds(buyer));
+        assertEquals(Set.of(premiumProduct), accountLicenses.entitledProductIds(buyer));
     }
 
     @Test
@@ -176,7 +177,7 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
     void shareeIsEntitled() {
         accountLicenses.addSharee(premiumLicense, sharee);
 
-        assertEquals(java.util.Set.of(premiumProduct), accountLicenses.entitledProductIds(sharee));
+        assertEquals(Set.of(premiumProduct), accountLicenses.entitledProductIds(sharee));
     }
 
     @Test

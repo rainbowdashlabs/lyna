@@ -7,6 +7,7 @@ package de.chojo.lyna.feature.download.repository;
 
 import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.sadu.mapper.wrapper.Row;
+import de.chojo.sadu.queries.api.call.Call;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -171,7 +172,7 @@ public class DownloadLogRepository {
                 .all();
     }
 
-    private static de.chojo.sadu.queries.api.call.Call bindFilters(
+    private static Call bindFilters(
             Integer accountId, Integer licenseId, Integer productId, String source, Instant from, Instant to) {
         return call().bind(accountId)
                 .bind(accountId)

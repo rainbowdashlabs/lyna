@@ -37,6 +37,7 @@ const tabs = computed<Tab[]>(() => [
   {to: '/account', label: t('layout.account.overview'), exact: true},
   {to: '/account/licenses', label: t('layout.account.licenses')},
   {to: '/account/downloads', label: t('layout.account.downloads')},
+  {to: '/account/updaters', label: t('layout.account.updaters')},
   {to: '/account/security', label: t('layout.account.security')},
   {to: '/account/appearance', label: t('layout.account.appearance')},
   ...(guilds.value.length > 0 ? [{to: '/admin', label: t('common.admin')}] : []),

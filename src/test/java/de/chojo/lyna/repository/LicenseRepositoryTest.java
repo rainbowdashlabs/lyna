@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 
@@ -150,7 +151,7 @@ class LicenseRepositoryTest extends RepositoryTestBase {
                     INSERT INTO %s.license_invite (license_id, email, expires_at)
                     VALUES (%d, 'stale@example.invalid', '%s')
                     """.formatted(
-                    schemaName, licenseId, java.sql.Timestamp.from(Instant.now().minusSeconds(60))));
+                            schemaName, licenseId, Timestamp.from(Instant.now().minusSeconds(60))));
         }
         assertEquals(0, licenseRepository.shareCount(licenseId));
     }

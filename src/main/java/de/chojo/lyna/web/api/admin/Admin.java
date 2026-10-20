@@ -20,6 +20,7 @@ import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.Sharee;
@@ -49,6 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
@@ -180,18 +183,13 @@ public class Admin {
     private void listProducts(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
-        var kioskById = kioskProducts.all().stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        de.chojo.lyna.feature.kiosk.entity.KioskProduct::id, product -> product));
+        var kioskById = kioskProducts.all().stream().collect(Collectors.toMap(KioskProduct::id, product -> product));
         Map<Integer, Integer> butlerIds = butlerApplications.butlerIdsByProduct();
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream().map(p -> summary(p, kioskById, butlerIds)).toList());
     }
 
-    private ProductSummary summary(
-            Product p,
-            Map<Integer, de.chojo.lyna.feature.kiosk.entity.KioskProduct> kioskById,
-            Map<Integer, Integer> butlerIds) {
+    private ProductSummary summary(Product p, Map<Integer, KioskProduct> kioskById, Map<Integer, Integer> butlerIds) {
         ProductLinks links = productLinks.get(p.id());
         return new ProductSummary(
                 p.id(),
@@ -530,7 +528,7 @@ public class Admin {
      * @return the product the path names, within the guild being administered, or null having already
      *         answered
      */
-    private de.chojo.lyna.feature.product.entity.Product productFromPath(Context ctx, Resolved resolved) {
+    private Product productFromPath(Context ctx, Resolved resolved) {
         int productId;
         try {
             productId = Integer.parseInt(ctx.pathParam("productId"));
@@ -564,7 +562,7 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("roleId required");
             return;
         }
-        Optional<de.chojo.lyna.feature.product.entity.Product> product;
+        Optional<Product> product;
         if (gateway.connected()) {
             var role = discordGuild(resolved.guild().guildId())
                     .map(g -> g.getRoleById(body.roleId()))
@@ -971,7 +969,7 @@ public class Admin {
      * were granted here and can be withdrawn here.
      */
     private List<AdminGuild> knownGuilds() {
-        Set<Long> ids = new java.util.TreeSet<>(productRepository.guildsWithProducts());
+        Set<Long> ids = new TreeSet<>(productRepository.guildsWithProducts());
         long configured = configuration.main().baseSettings().botGuild();
         if (configured != 0) ids.add(configured);
         return ids.stream()

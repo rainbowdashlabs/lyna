@@ -8,6 +8,8 @@ package de.chojo.lyna.repository;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.sadu.queries.api.call.Call;
+import de.chojo.sadu.queries.api.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -239,13 +241,13 @@ class AccountsRepositoryTest extends RepositoryTestBase {
         accountLinks.link(second.id(), 4102L, AccountIdentity.Verification.OAUTH, "grace");
         accountLinks.link(third.id(), 4103L, AccountIdentity.Verification.BOT_DM_CODE);
 
-        var handles = accounts.handles(java.util.List.of(4101L, 4102L, 4103L, 4104L));
+        var handles = accounts.handles(List.of(4101L, 4102L, 4103L, 4104L));
 
         assertEquals(2, handles.size());
         assertEquals("ada", handles.get(4101L));
         assertEquals("grace", handles.get(4102L));
         assertNull(handles.get(4103L));
-        assertTrue(accounts.handles(java.util.List.of()).isEmpty());
+        assertTrue(accounts.handles(List.of()).isEmpty());
     }
 
     @Test
@@ -437,11 +439,8 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     }
 
     private static void writeName(int accountId, String username, String discriminator) {
-        de.chojo.sadu.queries.api.query.Query.query("UPDATE account SET username = ?, discriminator = ? WHERE id = ?")
-                .single(de.chojo.sadu.queries.api.call.Call.call()
-                        .bind(username)
-                        .bind(discriminator)
-                        .bind(accountId))
+        Query.query("UPDATE account SET username = ?, discriminator = ? WHERE id = ?")
+                .single(Call.call().bind(username).bind(discriminator).bind(accountId))
                 .update();
     }
 }

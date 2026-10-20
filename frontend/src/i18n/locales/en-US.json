@@ -119,6 +119,20 @@
         "confirmNewPassword": "Confirm new password",
         "typeYourEmailToConfirm": "Type your email to confirm",
         "passwordUpdated": "Password updated."
+      },
+      "updaters": {
+        "updaters": "Updaters",
+        "intro": "An updater on your server holds an upgrade token and trades it for each download. Every trade gives it a new token, so a copied token is good for one download at most.",
+        "nothingToUpdate": "You hold nothing an updater could fetch. Free products need no token: their download links are public.",
+        "refusal": {
+          "NO_ACCESS": "You may not download this product.",
+          "FREE": "This product is free. Its download links are public and need no token.",
+          "LIMIT_REACHED": "You have used every updater this product allows. Request more below.",
+          "INVALID_NAME": "Give the updater a name of up to 64 characters.",
+          "INVALID_REQUEST": "Ask for between 1 and 100 more, and say what for.",
+          "PENDING": "A request for this product is already waiting.",
+          "NOT_FOUND": "That updater no longer exists."
+        }
       }
     },
     "admin": {
@@ -223,6 +237,14 @@
             "none": "No channel shows the time.",
             "remove": "Stop",
             "needsBot": "The bot renames these channels, and none is connected, so no new one can be set up."
+          },
+          "updaters": {
+            "updaters": "Updaters",
+            "intro": "Every account may run ten updaters per product. Accounts that need more ask here; approving adds what they asked for.",
+            "requests": "Requests for more",
+            "noRequests": "Nobody is waiting for more updaters.",
+            "raised": "Raised allowances",
+            "noneRaised": "Every account is on the default of ten."
           }
         }
       },
@@ -294,7 +316,8 @@
       "appearance": "Appearance",
       "anonymous": "Anonymous",
       "notLinked": "no Discord",
-      "storefront": "Storefront"
+      "storefront": "Storefront",
+      "updaters": "Updaters"
     },
     "admin": {
       "administering": "Administering",
@@ -317,7 +340,8 @@
       "guildAdmin": "guild admin",
       "downloadTypes": "Download types",
       "timeChannels": "Time channels",
-      "yourAccount": "Your account"
+      "yourAccount": "Your account",
+      "updaters": "Updaters"
     }
   },
   "ui": {
@@ -450,8 +474,8 @@
       "withdraw": "Withdraw"
     },
     "licenseUpdaterLink": {
-      "directLinkUpdaters": "Direct-link updaters",
-      "aHeadlessUpdaterCanFetchFrom": "A headless updater can fetch from this address without signing in. Treat it as the key it carries."
+      "directLinkUpdaters": "Automatic updates",
+      "aHeadlessUpdaterCanFetchFrom": "A server can update this product by itself with an upgrade token. Make one under"
     },
     "licenseUsage": {
       "usage": "Usage",
@@ -833,6 +857,51 @@
       "roleId": "Role id",
       "channelId": "Channel id",
       "noBot": "No bot is connected, so there are no names to choose from. Enter the id."
+    },
+    "updaterTokenRow": {
+      "name": "Name",
+      "show": "Show",
+      "hide": "Hide",
+      "copy": "Copy",
+      "created": "created {at}",
+      "lastUsed": "last used {at}",
+      "neverUsed": "never used",
+      "reused": "A token this updater had already traded in was used again at {at}. Somebody holds a copy: reissue the token.",
+      "rename": "Rename",
+      "reissue": "Reissue",
+      "reallyReissue": "Really reissue",
+      "reallyRevoke": "Really revoke"
+    },
+    "updaterProductSection": {
+      "noUpdaters": "No updaters yet.",
+      "namePlaceholder": "Name, e.g. the server it runs on",
+      "add": "Add updater",
+      "requestPending": "Request pending",
+      "anAdminWillDecide": "An admin will decide on it.",
+      "lastDeclined": "Your last request was declined."
+    },
+    "updaterRequestForm": {
+      "allUsed": "Every updater this product allows is in use. Ask an admin for more.",
+      "amount": "How many",
+      "reason": "What for",
+      "reasonPlaceholder": "e.g. a network of twelve servers",
+      "request": "Request"
+    },
+    "updaterHowTo": {
+      "howItWorks": "How an updater uses its token",
+      "trade": "Trade the upgrade token for a download:",
+      "storeNewToken": "Store upgradeToken at once. The token you sent no longer works.",
+      "linkLasts": "downloadUrl serves the build for five minutes, as often as needed to get it whole.",
+      "chooseBuild": "Send a JSON body with downloadType and version to choose a build. Without one you get the newest build you may have.",
+      "lostToken": "If the updater lost its token, reissue it here and give it the new one."
+    },
+    "updaterRequestRow": {
+      "approve": "Approve",
+      "decline": "Decline"
+    },
+    "raisedAllowanceRow": {
+      "inUse": "{used} in use",
+      "extra": "Extra"
     }
   },
   "preview": {

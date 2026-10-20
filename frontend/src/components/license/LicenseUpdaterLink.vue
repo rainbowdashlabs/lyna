@@ -7,17 +7,14 @@
 import {useI18n} from 'vue-i18n'
 
 const {t} = useI18n()
-defineProps<{
-    licenseKey: string
-}>()
 </script>
 
 <template>
   <section>
     <CardHeader>{{ t('ui.licenseUpdaterLink.directLinkUpdaters') }}</CardHeader>
-    <CodeSnippet block>/api/v1/download/direct/{{ licenseKey }}</CodeSnippet>
-    <MutedText class="mt-2 block" size="sm">
+    <MutedText class="block" size="sm">
       {{ t('ui.licenseUpdaterLink.aHeadlessUpdaterCanFetchFrom') }}
+      <NuxtLink class="text-primary hover:underline" to="/account/updaters">{{ t('layout.account.updaters') }}</NuxtLink>
     </MutedText>
   </section>
 </template>

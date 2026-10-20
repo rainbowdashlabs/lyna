@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -119,13 +120,10 @@ class ExtractedRepositoriesTest extends RepositoryTestBase {
     void rolesAreGrantedAndRevoked() {
         assertTrue(downloads.grantRole(42L, productId, ReleaseType.DEV));
         assertFalse(downloads.grantRole(42L, productId, ReleaseType.DEV), "twice grants nothing new");
-        assertEquals(
-                java.util.List.of(ReleaseType.DEV), productRepository.accessByRoles(productId, java.util.List.of(42L)));
+        assertEquals(List.of(ReleaseType.DEV), productRepository.accessByRoles(productId, List.of(42L)));
 
         assertTrue(downloads.revokeRole(42L, productId, ReleaseType.DEV));
-        assertTrue(productRepository
-                .accessByRoles(productId, java.util.List.of(42L))
-                .isEmpty());
+        assertTrue(productRepository.accessByRoles(productId, List.of(42L)).isEmpty());
     }
 
     @Test

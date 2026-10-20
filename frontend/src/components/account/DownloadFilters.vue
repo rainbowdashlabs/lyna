@@ -18,8 +18,8 @@ defineProps<{
     products: ProductOption[]
 }>()
 
-/** The entitlement paths the proxy records, which is what `source` can hold. */
-const SOURCES = ['license', 'sub_license', 'trial', 'free']
+/** The ways a download is recorded, which is what `source` can hold. */
+const SOURCES = ['license', 'sub_license', 'trial', 'free', 'updater']
 </script>
 
 <template>

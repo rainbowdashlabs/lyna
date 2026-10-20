@@ -130,7 +130,7 @@ test.describe('The wizard on the page', () => {
         await page.getByRole('button', {name: /1\.1\.0/}).click()
 
         await expect(page.getByText('E2EFreebie-1.1.0.jar')).toBeVisible()
-        await expect(page.getByText(/one-time link/i)).toBeVisible()
+        await expect(page.getByText(/one-time link/i)).toHaveCount(0)
     })
 
     test('the download type step is skipped, because the version has only one', async ({page}) => {
@@ -191,19 +191,19 @@ test.describe('All four steps, through to the file', () => {
         expect((await file.body()).subarray(0, 2).toString('latin1')).toBe('PK')
     })
 
-    test('the link is good once and once only', async ({request}) => {
+    test("a free product's link is its public address, and stays good", async ({request}) => {
         const id = await productId(request, 'E2E Freebie')
         const versions = await (await request.get(
             `/api/v1/products/${id}/release-types/STABLE/versions`)).json() as
             {version: string; downloadTypeIds: number[]}[]
         const newest = versions[0]!
-        const {url} = await (await request.post(
+        const {url, expiresAt} = await (await request.post(
             `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`)).json()
 
+        expect(url).toContain(`/api/v1/download/direct/${id}/${newest.downloadTypeIds[0]}/${newest.version}`)
+        expect(expiresAt).toBeNull()
         expect((await request.get(url)).ok()).toBe(true)
-
-        const second = await request.get(url)
-        expect(second.ok()).toBe(false)
+        expect((await request.get(url)).ok()).toBe(true)
     })
 
     test('an older version can still be chosen', async ({request}) => {
@@ -230,7 +230,7 @@ test.describe('All four steps, through to the file', () => {
 
         const {url} = await (await api.post(
             `/api/v1/products/${id}/versions/${newest.version}/downloads/${newest.downloadTypeIds[0]}/issue`)).json()
-        expect((await request.get(url)).ok()).toBe(true)
+        expect((await api.get(url)).ok()).toBe(true)
 
         const history = await api.get('/api/account/downloads')
 

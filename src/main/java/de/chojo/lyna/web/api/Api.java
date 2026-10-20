@@ -9,12 +9,14 @@ import com.google.inject.Inject;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.account.AccountLicenseActions;
+import de.chojo.lyna.web.api.account.AccountUpdateTokens;
 import de.chojo.lyna.web.api.admin.Admin;
 import de.chojo.lyna.web.api.admin.AdminDiscord;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
 import de.chojo.lyna.web.api.admin.AdminLicenses;
 import de.chojo.lyna.web.api.admin.AdminMailing;
 import de.chojo.lyna.web.api.admin.AdminTimeChannels;
+import de.chojo.lyna.web.api.admin.AdminUpdateTokens;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
@@ -37,7 +39,9 @@ public class Api {
     private final AdminLicenses adminLicenses;
     private final AdminMailing adminMailing;
     private final AdminTimeChannels adminTimeChannels;
+    private final AdminUpdateTokens adminUpdateTokens;
     private final AccountLicenseActions accountLicenseActions;
+    private final AccountUpdateTokens accountUpdateTokens;
 
     private static final Logger log = getLogger(Api.class);
 
@@ -55,9 +59,13 @@ public class Api {
             AdminLicenses adminLicenses,
             AdminMailing adminMailing,
             AdminTimeChannels adminTimeChannels,
-            AccountLicenseActions accountLicenseActions) {
+            AdminUpdateTokens adminUpdateTokens,
+            AccountLicenseActions accountLicenseActions,
+            AccountUpdateTokens accountUpdateTokens) {
         this.accountLicenseActions = accountLicenseActions;
+        this.accountUpdateTokens = accountUpdateTokens;
         this.adminTimeChannels = adminTimeChannels;
+        this.adminUpdateTokens = adminUpdateTokens;
         this.adminMailing = adminMailing;
         this.adminDiscord = adminDiscord;
         this.adminDownloads = adminDownloads;
@@ -77,6 +85,7 @@ public class Api {
             auth.init();
             account.init();
             path("account/licenses", accountLicenseActions::init);
+            path("account/update-tokens", accountUpdateTokens::init);
             theme.init();
             admin.init();
             path("admin/g/{guildId}", () -> {
@@ -85,6 +94,7 @@ public class Api {
                 adminLicenses.init();
                 adminMailing.init();
                 adminTimeChannels.init();
+                adminUpdateTokens.init();
             });
         });
     }

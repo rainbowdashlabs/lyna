@@ -226,7 +226,7 @@ function back() {
             <font-awesome-icon :icon="['fas', 'download']" class="mr-1"/>
             {{ t('common.download') }}
           </a>
-          <MutedText class="block" size="sm">{{ t('ui.downloadWizard.thisIsAOneTimeLink') }}</MutedText>
+          <MutedText v-if="issued.expiresAt" class="block" size="sm">{{ t('ui.downloadWizard.thisIsAOneTimeLink') }}</MutedText>
         </div>
       </AsyncSection>
 

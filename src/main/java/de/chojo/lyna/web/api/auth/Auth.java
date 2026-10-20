@@ -31,7 +31,10 @@ import io.javalin.http.SameSite;
 import org.slf4j.Logger;
 
 import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.Optional;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -123,11 +126,10 @@ public class Auth {
         if (body.email() == null || body.email().isBlank()) return;
         var account = accountService.findByEmail(body.email());
         if (account.isEmpty()) return;
-        var issued = passwordResetTokens.issue(
-                account.get().id(), java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+        var issued = passwordResetTokens.issue(account.get().id(), Instant.now().plus(Duration.ofHours(1)));
         String link = configuration.main().links().frontend() + "/reset-password?token=" + issued.token();
         var renderer = mailingService.renderer();
-        var values = java.util.Map.<String, Object>of("url", link);
+        var values = Map.<String, Object>of("url", link);
         try {
             mailingService.send(
                     body.email(),
@@ -146,10 +148,10 @@ public class Auth {
      * a signup.
      */
     private void sendVerification(int accountId, String email) {
-        var issued = emailTokens.issue(accountId, email, java.time.Instant.now().plus(java.time.Duration.ofDays(1)));
+        var issued = emailTokens.issue(accountId, email, Instant.now().plus(Duration.ofDays(1)));
         String link = configuration.main().links().frontend() + "/verify-email?token=" + issued.token();
         try {
-            var values = java.util.Map.<String, Object>of("url", link);
+            var values = Map.<String, Object>of("url", link);
             mailingService.send(
                     email,
                     mailingService.renderer().subject("verify-email", "en", values),

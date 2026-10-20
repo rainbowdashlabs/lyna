@@ -8,6 +8,7 @@ package de.chojo.lyna.feature.kiosk.repository;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 
 import java.util.List;
+import java.util.Optional;
 
 import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
@@ -63,7 +64,7 @@ public class KioskProductRepository {
      * @param productId the product
      * @return the product, or nothing when no such product exists
      */
-    public java.util.Optional<KioskProduct> byId(int productId) {
+    public Optional<KioskProduct> byId(int productId) {
         return query("""
                 SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, p.wiki_url, kp.link_code
                 FROM product p

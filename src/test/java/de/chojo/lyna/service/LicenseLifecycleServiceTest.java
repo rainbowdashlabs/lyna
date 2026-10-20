@@ -11,10 +11,12 @@ import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.license.entity.License;
+import de.chojo.lyna.feature.license.repository.LicenseLookup;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import de.chojo.nexus.NexusRest;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.requests.restaction.CacheRestAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import org.mockito.Mockito;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -86,8 +89,7 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
         // A transfer asks Discord who held it before. Nobody is there in a test, which is also what
         // happens when the previous holder has left the guild.
         @SuppressWarnings("unchecked")
-        net.dv8tion.jda.api.requests.restaction.CacheRestAction<Member> absent =
-                Mockito.mock(net.dv8tion.jda.api.requests.restaction.CacheRestAction.class);
+        CacheRestAction<Member> absent = Mockito.mock(CacheRestAction.class);
         Mockito.when(absent.complete()).thenReturn(null);
         Mockito.when(guild.retrieveMemberById(Mockito.anyLong())).thenReturn(absent);
         Member member = Mockito.mock(Member.class);
@@ -147,8 +149,7 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
         Member arriving = member(OTHER);
         // Discord still knows the previous holder, so the transfer has somebody to take the role from.
         @SuppressWarnings("unchecked")
-        net.dv8tion.jda.api.requests.restaction.CacheRestAction<Member> found =
-                Mockito.mock(net.dv8tion.jda.api.requests.restaction.CacheRestAction.class);
+        CacheRestAction<Member> found = Mockito.mock(CacheRestAction.class);
         Mockito.when(found.complete()).thenReturn(previous);
         Mockito.when(arriving.getGuild().retrieveMemberById(Mockito.anyLong())).thenReturn(found);
 
@@ -193,7 +194,7 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
     @DisplayName("An account without Discord claims a licence by key; a second claim of it fails")
     void accountClaims() {
         int account = accounts.insert(null).id();
-        License license = new de.chojo.lyna.feature.license.repository.LicenseLookup(
+        License license = new LicenseLookup(
                         new Guilds(Mockito.mock(NexusRest.class), TestConf.defaults(), accountLinks))
                 .byKey("LIFE-KEY")
                 .orElseThrow();
@@ -206,8 +207,7 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A key nobody issued finds nothing")
     void unknownKey() {
-        var lookup = new de.chojo.lyna.feature.license.repository.LicenseLookup(
-                new Guilds(Mockito.mock(NexusRest.class), TestConf.defaults(), accountLinks));
+        var lookup = new LicenseLookup(new Guilds(Mockito.mock(NexusRest.class), TestConf.defaults(), accountLinks));
 
         assertTrue(lookup.byKey("NOPE").isEmpty());
     }
@@ -218,11 +218,11 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
         int owner = accountLinks.accountIdForDiscord(OWNER);
         int receiver = accountLinks.accountIdForDiscord(OTHER);
         assertTrue(licenseService.claim(license(), owner));
-        assertEquals(java.util.Optional.of(OWNER), licenseRepository.ownerDiscordId(licenseId));
+        assertEquals(Optional.of(OWNER), licenseRepository.ownerDiscordId(licenseId));
 
         assertTrue(licenseService.transfer(license(), receiver));
 
-        assertEquals(java.util.Optional.of(OTHER), licenseRepository.ownerDiscordId(licenseId));
+        assertEquals(Optional.of(OTHER), licenseRepository.ownerDiscordId(licenseId));
     }
 
     @Test

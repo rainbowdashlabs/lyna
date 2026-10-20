@@ -5,17 +5,20 @@
  */
 package de.chojo.lyna.configuration;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import dev.chojo.ocular.Configurations;
 import dev.chojo.ocular.dataformats.YamlDataFormat;
 import dev.chojo.ocular.key.Key;
 import org.slf4j.Logger;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -128,15 +131,14 @@ public class Conf extends Configurations<ConfigFile> {
             // private fields and offer no setters, so a mapper left on its defaults sees an empty
             // object and would decide that nothing is missing.
             YAMLMapper mapper = YAMLMapper.builder()
-                    .changeDefaultVisibility(checker -> checker.withFieldVisibility(
-                                    com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
-                            .withGetterVisibility(com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE))
+                    .changeDefaultVisibility(checker -> checker.withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+                            .withGetterVisibility(JsonAutoDetect.Visibility.NONE))
                     .build();
             JsonNode existing = mapper.readTree(Files.readString(yaml));
             if (!existing.isObject()) return directory;
             JsonNode defaults = mapper.valueToTree(new ConfigFile());
-            List<String> added = new java.util.ArrayList<>();
-            merge((tools.jackson.databind.node.ObjectNode) existing, defaults, "", added);
+            List<String> added = new ArrayList<>();
+            merge((ObjectNode) existing, defaults, "", added);
             if (added.isEmpty()) return directory;
             Files.writeString(yaml, mapper.writeValueAsString(existing));
             log.info(
@@ -160,8 +162,7 @@ public class Conf extends Configurations<ConfigFile> {
      *
      * @param added the paths that were added, for saying so afterwards
      */
-    private static void merge(
-            tools.jackson.databind.node.ObjectNode target, JsonNode defaults, String path, List<String> added) {
+    private static void merge(ObjectNode target, JsonNode defaults, String path, List<String> added) {
         defaults.propertyNames().forEach(name -> {
             JsonNode fallback = defaults.get(name);
             String here = path.isEmpty() ? name : path + "." + name;
@@ -170,7 +171,7 @@ public class Conf extends Configurations<ConfigFile> {
                 target.set(name, fallback);
                 added.add(here);
             } else if (present.isObject() && fallback.isObject()) {
-                merge((tools.jackson.databind.node.ObjectNode) present, fallback, here, added);
+                merge((ObjectNode) present, fallback, here, added);
             }
         });
     }

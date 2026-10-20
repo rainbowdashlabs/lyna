@@ -6,6 +6,7 @@
 package de.chojo.lyna.service;
 
 import com.icegreen.greenmail.util.GreenMail;
+import com.icegreen.greenmail.util.GreenMailUtil;
 import com.icegreen.greenmail.util.ServerSetup;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
@@ -23,6 +24,7 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -105,7 +107,7 @@ class MailingServiceTest {
 
         assertTrue(greenMail.waitForIncomingEmail(10_000, 1));
         Message[] received = greenMail.getReceivedMessagesForDomain("example.invalid");
-        Message delivered = java.util.Arrays.stream(received)
+        Message delivered = Arrays.stream(received)
                 .filter(message -> subjectOf(message).equals("Your license"))
                 .findFirst()
                 .orElseThrow();
@@ -166,7 +168,7 @@ class MailingServiceTest {
     }
 
     private void deliverToInbox(String subject) {
-        com.icegreen.greenmail.util.GreenMailUtil.sendTextEmail(
+        GreenMailUtil.sendTextEmail(
                 USER, "service@paypal.de", subject, "body", greenMail.getSmtp().getServerSetup());
         assertTrue(greenMail.waitForIncomingEmail(10_000, 1));
     }

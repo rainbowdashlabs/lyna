@@ -35,7 +35,7 @@ public class Mailing {
      * read as though it were being made and passed whatever it was given.
      */
     @Overwrite(env = @Env, prop = @Prop)
-    private List<String> originMail = java.util.List.of();
+    private List<String> originMail = List.of();
     /**
      * Takes any sender's mail as a payment receipt instead of only the addresses that are trusted.
      *

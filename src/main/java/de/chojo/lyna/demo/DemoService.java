@@ -28,6 +28,8 @@ import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.gateway.Gateway;
+import de.chojo.sadu.queries.api.call.Call;
+import de.chojo.sadu.queries.api.query.Query;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
@@ -306,9 +308,8 @@ public class DemoService {
      * state, not acting out somebody claiming one.
      */
     private void claim(License licence, long discordId) {
-        de.chojo.sadu.queries.api.query.Query.query(
-                        "INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
-                .single(de.chojo.sadu.queries.api.call.Call.call()
+        Query.query("INSERT INTO user_license(account_id, license_id) VALUES(?,?) ON CONFLICT DO NOTHING")
+                .single(Call.call()
                         .bind(accountLinkService.accountIdForDiscord(discordId))
                         .bind(licence.id()))
                 .insert();

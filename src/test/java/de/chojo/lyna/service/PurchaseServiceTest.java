@@ -7,6 +7,7 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.TestConf;
+import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
 import de.chojo.lyna.feature.guild.repository.GuildSettingsRepository;
@@ -18,6 +19,7 @@ import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.purchase.service.PurchaseService;
 import de.chojo.lyna.mail.Mail;
+import de.chojo.lyna.mail.MailTemplateRenderer;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.repository.RepositoryTestBase;
 import de.chojo.nexus.NexusRest;
@@ -28,6 +30,7 @@ import org.mockito.Mockito;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,10 +89,9 @@ class PurchaseServiceTest extends RepositoryTestBase {
         }
         product = licenseGuild.products().byId(productId).orElseThrow();
 
-        sent = new java.util.ArrayList<>();
+        sent = new ArrayList<>();
         MailingService mailing = Mockito.mock(MailingService.class);
-        Mockito.when(mailing.renderer())
-                .thenReturn(new de.chojo.lyna.mail.MailTemplateRenderer("Lyna", "https://x.invalid"));
+        Mockito.when(mailing.renderer()).thenReturn(new MailTemplateRenderer("Lyna", "https://x.invalid"));
         Mockito.doAnswer(invocation -> sent.add(invocation.getArgument(0)))
                 .when(mailing)
                 .sendMail(Mockito.any());
@@ -131,7 +133,7 @@ class PurchaseServiceTest extends RepositoryTestBase {
         assertEquals(
                 List.of(license.get().id()),
                 accountLicenses.owned(account.id()).stream()
-                        .map(de.chojo.lyna.feature.account.entity.AccountLicense::id)
+                        .map(AccountLicense::id)
                         .toList());
         assertTrue(sent.getFirst().text().contains("Open your licences"), "and the mail says so");
     }

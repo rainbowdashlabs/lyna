@@ -5,6 +5,8 @@
  */
 package de.chojo.lyna.mail;
 
+import de.chojo.lyna.mail.blocks.MailBlockRenderer;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,8 +18,7 @@ import java.util.Map;
  * rather than from a sentence built here.
  */
 public final class MailCreator {
-    private static final de.chojo.lyna.mail.blocks.MailBlockRenderer BLOCKS =
-            new de.chojo.lyna.mail.blocks.MailBlockRenderer();
+    private static final MailBlockRenderer BLOCKS = new MailBlockRenderer();
 
     /** What a per-product template may refer to. */
     private static final String[] PLACEHOLDERS = {

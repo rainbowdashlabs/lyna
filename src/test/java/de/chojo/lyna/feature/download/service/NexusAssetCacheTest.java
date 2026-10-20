@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
+import org.mockito.ArgumentMatchers;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -181,7 +182,7 @@ class NexusAssetCacheTest {
         verify(search).mavenArtifactId("plugin-paper");
         verify(search).mavenExtension("jar");
         verify(search).mavenClassifier("all");
-        verify(search, never()).mavenBaseVersion(org.mockito.ArgumentMatchers.anyString());
+        verify(search, never()).mavenBaseVersion(ArgumentMatchers.anyString());
     }
 
     @Test
@@ -194,7 +195,7 @@ class NexusAssetCacheTest {
         List<AssetXO> found = new NexusAssetCache(nexus).latest(plain);
 
         assertEquals(1, found.size());
-        verify(search, never()).mavenClassifier(org.mockito.ArgumentMatchers.anyString());
+        verify(search, never()).mavenClassifier(ArgumentMatchers.anyString());
     }
 
     @Test
