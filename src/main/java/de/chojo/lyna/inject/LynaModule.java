@@ -57,9 +57,10 @@ import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountRoleSchedule;
+import de.chojo.lyna.feature.account.service.AccountRoleSync;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.DiscordConnectionService;
-import de.chojo.lyna.feature.account.service.AccountRoleSync;
 import de.chojo.lyna.feature.account.service.DiscordTokenRefresher;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.account.service.SessionService;
@@ -353,6 +354,7 @@ public class LynaModule extends AbstractModule {
         bind(DiscordConnectionService.class).in(Singleton.class);
         bind(DiscordTokenRefresher.class).in(Singleton.class);
         bind(AccountRoleSync.class).in(Singleton.class);
+        bind(AccountRoleSchedule.class).in(Singleton.class);
         bind(SessionService.class).in(Singleton.class);
         bind(TokenKey.class).in(Singleton.class);
         bind(TokenCipher.class).in(Singleton.class);

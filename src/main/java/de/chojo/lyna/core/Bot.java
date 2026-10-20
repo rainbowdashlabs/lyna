@@ -11,9 +11,12 @@ import de.chojo.jdautil.interactions.slash.Slash;
 import de.chojo.jdautil.interactions.slash.provider.SlashProvider;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.Conf;
+import de.chojo.lyna.feature.account.service.AccountRoleSchedule;
+import de.chojo.lyna.feature.account.service.AccountRoleSync;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
 import de.chojo.lyna.mail.MailingService;
+import de.chojo.lyna.services.AccountRoleListener;
 import de.chojo.lyna.services.RoleListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -33,6 +36,8 @@ public class Bot {
     private final Conf configuration;
     private final Set<SlashProvider<Slash>> commands;
     private final MailingService mailingService;
+    private final AccountRoleSync roleSync;
+    private final AccountRoleSchedule roleSchedule;
     private ShardManager shardManager;
 
     @Inject
@@ -42,8 +47,12 @@ public class Bot {
             Conf configuration,
             Set<SlashProvider<Slash>> commands,
             MailingService mailingService,
-            ProductRoleService productRoles) {
+            ProductRoleService productRoles,
+            AccountRoleSync roleSync,
+            AccountRoleSchedule roleSchedule) {
         this.productRoles = productRoles;
+        this.roleSync = roleSync;
+        this.roleSchedule = roleSchedule;
         this.guilds = guilds;
         this.threading = threading;
         this.configuration = configuration;
@@ -77,7 +86,9 @@ public class Bot {
                 .setEnableShutdownHook(false)
                 .setThreadFactory(Threading.createThreadFactory(threading.jdaGroup()))
                 .setEventPool(threading.jdaWorker())
-                .addEventListeners(new RoleListener(guilds, productRoles))
+                .setRawEventsEnabled(true)
+                .addEventListeners(
+                        new RoleListener(guilds, productRoles), new AccountRoleListener(roleSync, roleSchedule))
                 .build();
     }
 
