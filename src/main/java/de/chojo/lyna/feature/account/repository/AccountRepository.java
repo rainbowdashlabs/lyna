@@ -96,6 +96,20 @@ public class AccountRepository {
      * nobody until one of them proves it.
      */
     public Optional<Account> findByEmail(String email) {
+        return findByAddress(email, "m.verified_at IS NOT NULL OR m.is_primary");
+    }
+
+    /**
+     * The account that proved an address, which is the only one anything may be handed to by that address.
+     *
+     * <p>Narrower than {@link #findByEmail}: an address written to an account but never proved names
+     * whoever typed it, and anybody can type somebody else's address when signing up.
+     */
+    public Optional<Account> findByVerifiedEmail(String email) {
+        return findByAddress(email, "m.verified_at IS NOT NULL");
+    }
+
+    private Optional<Account> findByAddress(String email, String condition) {
         return query("""
                 SELECT a.id, e.email, (e.verified_at IS NOT NULL) AS email_verified, a.password_hash, a.theme,
                        a.dark_mode, a.username, a.discriminator, a.created_at, a.last_login_at
@@ -103,8 +117,8 @@ public class AccountRepository {
                 WHERE EXISTS (SELECT 1 FROM account_email m
                               WHERE m.account_id = a.id
                                 AND LOWER(m.email) = LOWER(?)
-                                AND (m.verified_at IS NOT NULL OR m.is_primary))
-                """)
+                                AND (%s))
+                """.formatted(condition))
                 .single(call().bind(email))
                 .map(row -> new Account(
                         row.getInt("id"),

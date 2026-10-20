@@ -590,8 +590,9 @@ public class Account {
             return;
         }
 
-        Optional<de.chojo.lyna.feature.account.entity.Account> target =
-                subject.contains("@") ? accountService.findByEmail(subject) : accountService.findByUsername(subject);
+        Optional<de.chojo.lyna.feature.account.entity.Account> target = subject.contains("@")
+                ? accountService.findByVerifiedEmail(subject)
+                : accountService.findByUsername(subject);
 
         if (target.isEmpty() && !subject.contains("@")) {
             ctx.status(HttpStatus.NOT_FOUND).result("Nobody here goes by that name");

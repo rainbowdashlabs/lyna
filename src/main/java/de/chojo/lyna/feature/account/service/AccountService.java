@@ -58,6 +58,13 @@ public class AccountService {
         return accounts.findByEmail(email);
     }
 
+    /**
+     * @return the account that proved the address, which is who a share or a transfer to it may reach
+     */
+    public Optional<Account> findByVerifiedEmail(String email) {
+        return accounts.findByVerifiedEmail(email);
+    }
+
     public Optional<Account> findByDiscordId(long discordUserId) {
         return accounts.findByIdentity(AccountIdentity.DISCORD, Long.toString(discordUserId));
     }
