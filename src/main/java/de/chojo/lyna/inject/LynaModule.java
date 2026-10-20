@@ -301,6 +301,7 @@ public class LynaModule extends AbstractModule {
         bind(de.chojo.lyna.web.api.admin.AdminMailing.class).in(Singleton.class);
         bind(de.chojo.lyna.web.api.admin.AdminTimeChannels.class).in(Singleton.class);
         bind(de.chojo.lyna.web.api.account.AccountLicenseActions.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.account.AccountUpdateTokens.class).in(Singleton.class);
         bind(de.chojo.lyna.web.api.v1.products.TrialApi.class).in(Singleton.class);
         bind(de.chojo.lyna.feature.trial.service.DisposableEmailDomains.class).in(Singleton.class);
         bind(de.chojo.lyna.feature.trial.service.WebTrialService.class).in(Singleton.class);
