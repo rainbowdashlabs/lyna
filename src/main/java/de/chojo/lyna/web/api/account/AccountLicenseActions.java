@@ -127,7 +127,7 @@ public class AccountLicenseActions {
             ctx.status(HttpStatus.BAD_REQUEST).result("Name the account by username or address");
             return;
         }
-        var target = subject.contains("@") ? accounts.findByEmail(subject) : accounts.findByUsername(subject);
+        var target = subject.contains("@") ? accounts.findByVerifiedEmail(subject) : accounts.findByUsername(subject);
         if (target.isEmpty()) {
             ctx.status(HttpStatus.NOT_FOUND).result("Nobody here goes by that");
             return;

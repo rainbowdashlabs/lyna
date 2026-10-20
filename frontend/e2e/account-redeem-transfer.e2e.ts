@@ -4,7 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {expect, test} from './fixtures/session'
-import {signUp} from './fixtures/auth'
+import {PASSWORD, signUp} from './fixtures/auth'
 import {createProduct, deleteProduct, GUILD, OPERATOR, uniqueName} from './fixtures/admin'
 import {uniqueEmail} from './fixtures/unique'
 
@@ -20,7 +20,8 @@ test.describe('Licenses in the account area', () => {
         const issued = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
             data: {productId: id, identifier: uniqueEmail('given')},
         })).json()
-        const {email: receiver, api: receiverApi} = await signedUp('receiver')
+        const {api: receiverApi} = await signedUp('receiver')
+        const {username: receiver} = await (await receiverApi.put('/api/account/username', {data: {username: 'receiver'}})).json()
 
         await signUp(page, 'redeemer')
         await page.goto('/account/licenses')
@@ -51,5 +52,54 @@ test.describe('Licenses in the account area', () => {
         await page.getByRole('button', {name: 'Redeem'}).click()
 
         await expect(page.getByText('That is not a license key')).toBeVisible()
+    })
+})
+
+/**
+ * Somebody who signs up with another person's address has typed it, not proved it. A licence handed to
+ * that address must wait for whoever proves it, not land with whoever typed it first.
+ */
+test.describe('Handing a licence to an address', () => {
+    test('a share to an address only typed at sign-up waits as an invite', async ({signedIn, signedUp, anonymous}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Squatted')
+        const id = await createProduct(operator, name)
+        const issued = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
+            data: {productId: id, identifier: uniqueEmail('bought')},
+        })).json()
+        const {api: owner} = await signedUp('owner')
+        expect((await owner.post('/api/account/licenses/redeem', {data: {key: issued.key}})).status()).toBe(201)
+        const victim = uniqueEmail('victim')
+        const squatter = await anonymous()
+        expect((await squatter.post('/api/auth/signup', {data: {email: victim, password: PASSWORD}})).ok()).toBe(true)
+
+        const share = await owner.post(`/api/account/licenses/${issued.id}/sharees`, {data: {subject: victim}})
+
+        expect(share.status()).toBe(201)
+        expect((await share.json()).pending).toBe(true)
+        const theirs = await (await squatter.get('/api/account/licenses')).json()
+        expect(theirs.shared).toEqual([])
+        await deleteProduct(operator, id, name)
+    })
+
+    test('a transfer to an address only typed at sign-up is refused', async ({signedIn, signedUp, anonymous}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Unproved')
+        const id = await createProduct(operator, name)
+        const issued = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
+            data: {productId: id, identifier: uniqueEmail('bought')},
+        })).json()
+        const {api: owner} = await signedUp('giver')
+        expect((await owner.post('/api/account/licenses/redeem', {data: {key: issued.key}})).status()).toBe(201)
+        const victim = uniqueEmail('victim')
+        const squatter = await anonymous()
+        expect((await squatter.post('/api/auth/signup', {data: {email: victim, password: PASSWORD}})).ok()).toBe(true)
+
+        const transfer = await owner.post(`/api/account/licenses/${issued.id}/transfer`, {data: {subject: victim}})
+
+        expect(transfer.status()).toBe(404)
+        const theirs = await (await squatter.get('/api/account/licenses')).json()
+        expect(theirs.owned).toEqual([])
+        await deleteProduct(operator, id, name)
     })
 })

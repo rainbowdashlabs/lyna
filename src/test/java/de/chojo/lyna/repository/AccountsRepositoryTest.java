@@ -70,6 +70,25 @@ class AccountsRepositoryTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("Only a proved address names the account something may be handed to")
+    void verifiedEmailOnly() {
+        Account squatter = accountService.register("victim@example.invalid", "hash");
+
+        assertEquals(
+                squatter.id(),
+                accounts.findByEmail("victim@example.invalid").orElseThrow().id());
+        assertTrue(
+                accounts.findByVerifiedEmail("victim@example.invalid").isEmpty(), "typing an address proves nothing");
+
+        accountEmails.verify(squatter.id(), "victim@example.invalid");
+        assertEquals(
+                squatter.id(),
+                accounts.findByVerifiedEmail("VICTIM@example.invalid")
+                        .orElseThrow()
+                        .id());
+    }
+
+    @Test
     @DisplayName("The same address cannot be registered twice")
     void emailIsUnique() {
         accountService.register("duplicate@example.invalid", "hash");
