@@ -163,15 +163,29 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("An allowance starts at nothing granted and can be set and lowered again")
+    @DisplayName("An allowance starts at nothing granted, is set per guild, and can be lowered again")
     void granted() {
         assertEquals(0, quota.granted(account, product));
+        assertEquals(List.of(), quota.raisedInGuild(GUILD));
 
-        quota.setGranted(account, product, 5);
+        assertTrue(quota.setGranted(GUILD, account, product, 5));
+        tokens.create(account, product, "lobby", "lyu_one");
+        assertEquals(5, quota.granted(account, product));
+        assertEquals(1, quota.raisedInGuild(GUILD).size());
+        var raised = quota.raisedInGuild(GUILD).getFirst();
+        assertEquals(5, raised.granted());
+        assertEquals(1, raised.used());
+        assertEquals("Chatty", raised.productName());
+        assertEquals(account, raised.accountId());
+        assertEquals(product, raised.productId());
+        assertNotNull(raised.account());
+
+        assertFalse(quota.setGranted(GUILD + 5, account, product, 9), "another guild's admin cannot");
         assertEquals(5, quota.granted(account, product));
 
-        quota.setGranted(account, product, -3);
+        quota.setGranted(GUILD, account, product, -3);
         assertEquals(0, quota.granted(account, product), "an allowance never goes below the default");
+        assertEquals(List.of(), quota.raisedInGuild(GUILD));
     }
 
     @Test

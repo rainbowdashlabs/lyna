@@ -9,6 +9,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.updater.entity.RaisedAllowance;
 import de.chojo.lyna.feature.updater.entity.UpdateToken;
 import de.chojo.lyna.feature.updater.entity.UpdateTokenRequest;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenQuotaRepository;
@@ -269,6 +270,23 @@ public class UpdateTokenService {
      */
     public Outcome<UpdateTokenRequest> decide(long guildId, int requestId, boolean approve, @Nullable Long decidedBy) {
         return Outcome.of(quota.decide(guildId, requestId, approve, decidedBy), Refusal.NOT_FOUND);
+    }
+
+    /**
+     * @return the accounts allowed more than the default on the guild's products
+     */
+    public List<RaisedAllowance> raised(long guildId) {
+        return quota.raisedInGuild(guildId);
+    }
+
+    /**
+     * Sets how many tokens an account may hold on a product of the guild beyond the default. Lowering it
+     * revokes nothing.
+     *
+     * @return whether the product belongs to the guild
+     */
+    public boolean setGranted(long guildId, int accountId, int productId, int granted) {
+        return quota.setGranted(guildId, accountId, productId, granted);
     }
 
     private Outcome<UpdateToken> notCurrent(String token) {

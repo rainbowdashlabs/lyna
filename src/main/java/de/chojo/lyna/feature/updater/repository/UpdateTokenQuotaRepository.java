@@ -5,6 +5,7 @@
  */
 package de.chojo.lyna.feature.updater.repository;
 
+import de.chojo.lyna.feature.updater.entity.RaisedAllowance;
 import de.chojo.lyna.feature.updater.entity.UpdateTokenRequest;
 import de.chojo.sadu.mapper.wrapper.Row;
 
@@ -44,16 +45,51 @@ public class UpdateTokenQuotaRepository {
     }
 
     /**
-     * Sets the tokens allowed on top of the default. Lowering it ends no entry: an account above its
-     * allowance keeps what it has and cannot add more.
+     * Sets the tokens allowed on top of the default, for a product of the guild. Lowering it ends no
+     * entry: an account above its allowance keeps what it has and cannot add more.
+     *
+     * @return whether the product belongs to the guild
      */
-    public void setGranted(int accountId, int productId, int granted) {
-        query("""
-                INSERT INTO update_token_quota (account_id, product_id, granted) VALUES (?, ?, ?)
+    public boolean setGranted(long guildId, int accountId, int productId, int granted) {
+        return query("""
+                INSERT INTO update_token_quota (account_id, product_id, granted)
+                SELECT ?, id, ? FROM product WHERE id = ? AND guild_id = ?
                 ON CONFLICT (account_id, product_id) DO UPDATE SET granted = EXCLUDED.granted
                 """)
-                .single(call().bind(accountId).bind(productId).bind(Math.max(0, granted)))
-                .insert();
+                .single(call().bind(accountId)
+                        .bind(Math.max(0, granted))
+                        .bind(productId)
+                        .bind(guildId))
+                .insert()
+                .changed();
+    }
+
+    /**
+     * @return the accounts allowed more than the default on the guild's products, by product and account
+     */
+    public List<RaisedAllowance> raisedInGuild(long guildId) {
+        return query("""
+                SELECT q.account_id, q.product_id, p.name AS product_name, q.granted,
+                       (SELECT count(*) FROM update_token t
+                        WHERE t.account_id = q.account_id AND t.product_id = q.product_id) AS used,
+                       coalesce(CASE WHEN a.discriminator IS NULL THEN a.username
+                                     ELSE a.username || '#' || a.discriminator END,
+                                'account ' || a.id) AS account
+                FROM update_token_quota q
+                JOIN product p ON p.id = q.product_id
+                JOIN account a ON a.id = q.account_id
+                WHERE p.guild_id = ? AND q.granted > 0
+                ORDER BY p.name, account
+                """)
+                .single(call().bind(guildId))
+                .map(row -> new RaisedAllowance(
+                        row.getInt("account_id"),
+                        row.getString("account"),
+                        row.getInt("product_id"),
+                        row.getString("product_name"),
+                        row.getInt("granted"),
+                        row.getInt("used")))
+                .all();
     }
 
     /**

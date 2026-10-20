@@ -6,7 +6,7 @@
 import {type APIRequestContext} from '@playwright/test'
 import {expect, test} from './fixtures/session'
 import {signUp} from './fixtures/auth'
-import {GUILD, OPERATOR} from './fixtures/admin'
+import {GUILD, OPERATOR, operatorPage} from './fixtures/admin'
 import {uniqueEmail} from './fixtures/unique'
 
 /**
@@ -182,5 +182,53 @@ test.describe('The updaters page', () => {
         await row.getByRole('button', {name: 'Really reissue'}).click()
 
         await expect(row.getByText(token!)).toHaveCount(0)
+    })
+})
+
+test.describe('More than ten updaters', () => {
+    test('an account at its cap asks for more, an admin approves, and it can add another', async ({page, signedIn, signedUp}) => {
+        const operator = await signedIn(OPERATOR)
+        const {api} = await signedUp('updater-cap')
+        const id = await entitle(operator, api)
+        for (let i = 0; i < 10; i++) {
+            expect((await api.post('/api/account/update-tokens', {data: {productId: id, name: `server ${i}`}})).status()).toBe(201)
+        }
+        const refused = await api.post('/api/account/update-tokens', {data: {productId: id, name: 'eleven'}})
+        expect(refused.status()).toBe(409)
+        expect(await refused.text()).toBe('LIMIT_REACHED')
+
+        const asked = await api.post('/api/account/update-tokens/requests', {data: {productId: id, amount: 2, reason: 'a network'}})
+        expect(asked.status()).toBe(201)
+        const {account} = await asked.json()
+        expect((await api.post('/api/account/update-tokens/requests', {data: {productId: id, amount: 1, reason: 'again'}})).status()).toBe(409)
+
+        await operatorPage(page)
+        await page.goto(`/admin/g/${GUILD}/updaters`)
+        const request = page.getByRole('region', {name: 'Requests for more'}).getByRole('listitem', {name: account})
+        await expect(request.getByText('a network')).toBeVisible()
+        await request.getByRole('button', {name: 'Approve'}).click()
+        await expect(request).toHaveCount(0)
+        const raised = page.getByRole('region', {name: 'Raised allowances'}).getByRole('listitem', {name: account})
+        await expect(raised.getByText('10 in use')).toBeVisible()
+
+        expect((await api.post('/api/account/update-tokens', {data: {productId: id, name: 'eleven'}})).status()).toBe(201)
+        const overview = await (await api.get('/api/account/update-tokens')).json()
+        expect(overview.products[0]).toMatchObject({used: 11, allowed: 12, pending: false})
+    })
+
+    test('the request form appears on the page once every updater is in use', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const account = await signUp(page, 'updater-form')
+        const api = await signedIn(account)
+        const id = await entitle(operator, api)
+        for (let i = 0; i < 10; i++) await api.post('/api/account/update-tokens', {data: {productId: id, name: `server ${i}`}})
+        await page.goto('/account/updaters')
+
+        const product = page.getByRole('region', {name: 'E2E Premium'})
+        await expect(product.getByRole('button', {name: 'Add updater'})).toHaveCount(0)
+        await product.getByLabel('What for').fill('a network')
+        await product.getByRole('button', {name: 'Request'}).click()
+
+        await expect(product.getByText('Request pending')).toBeVisible()
     })
 })

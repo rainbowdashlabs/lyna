@@ -237,6 +237,14 @@
             "none": "No channel shows the time.",
             "remove": "Stop",
             "needsBot": "The bot renames these channels, and none is connected, so no new one can be set up."
+          },
+          "updaters": {
+            "updaters": "Updaters",
+            "intro": "Every account may run ten updaters per product. Accounts that need more ask here; approving adds what they asked for.",
+            "requests": "Requests for more",
+            "noRequests": "Nobody is waiting for more updaters.",
+            "raised": "Raised allowances",
+            "noneRaised": "Every account is on the default of ten."
           }
         }
       },
@@ -332,7 +340,8 @@
       "guildAdmin": "guild admin",
       "downloadTypes": "Download types",
       "timeChannels": "Time channels",
-      "yourAccount": "Your account"
+      "yourAccount": "Your account",
+      "updaters": "Updaters"
     }
   },
   "ui": {
@@ -885,6 +894,14 @@
       "linkLasts": "downloadUrl serves the build for five minutes, as often as needed to get it whole.",
       "chooseBuild": "Send a JSON body with downloadType and version to choose a build. Without one you get the newest build you may have.",
       "lostToken": "If the updater lost its token, reissue it here and give it the new one."
+    },
+    "updaterRequestRow": {
+      "approve": "Approve",
+      "decline": "Decline"
+    },
+    "raisedAllowanceRow": {
+      "inUse": "{used} in use",
+      "extra": "Extra"
     }
   },
   "preview": {

@@ -138,6 +138,7 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
         assertTrue(service.decide(GUILD, request.id(), true, 5L).ok());
 
         assertEquals(12, service.allowed(account, premium));
+        assertEquals(2, service.raised(GUILD).getFirst().granted());
         assertTrue(service.create(account, premium, "one more").ok());
         assertEquals(
                 Refusal.NOT_FOUND, service.decide(GUILD, request.id(), true, 5L).refusal());
@@ -241,6 +242,20 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
         assertTrue(service.revoke(account, token.id()));
         assertFalse(service.revoke(account, token.id()));
         assertEquals(Refusal.UNKNOWN, service.resolve(reissued.token()).refusal());
+    }
+
+    @Test
+    @DisplayName("Lowering an allowance revokes nothing, and stops new tokens")
+    void lower() {
+        service.setGranted(GUILD, account, premium, 1);
+        for (int i = 0; i < 11; i++) created("server " + i);
+
+        assertTrue(service.setGranted(GUILD, account, premium, 0));
+
+        assertEquals(11, service.tokens(account).size());
+        assertEquals(
+                Refusal.LIMIT_REACHED,
+                service.create(account, premium, "one more").refusal());
     }
 
     @Test
