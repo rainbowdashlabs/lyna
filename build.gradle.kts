@@ -13,9 +13,8 @@ group = "de.chojo"
 version = "2.0.0"
 
 repositories {
-    mavenCentral()
-    maven("https://eldonexus.de/repository/maven-public")
     maven("https://eldonexus.de/repository/maven-proxies")
+    maven("https://eldonexus.de/repository/maven-public")
 }
 
 dependencies {

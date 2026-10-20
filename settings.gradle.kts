@@ -1,5 +1,12 @@
 rootProject.name = "lyna"
 
+pluginManagement {
+    repositories {
+        maven("https://eldonexus.de/repository/maven-proxies")
+        gradlePluginPortal()
+    }
+}
+
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
