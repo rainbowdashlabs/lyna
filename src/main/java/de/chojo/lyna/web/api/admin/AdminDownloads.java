@@ -16,6 +16,7 @@ import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.gateway.Gateway;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
+import net.dv8tion.jda.api.entities.Role;
 
 import java.util.List;
 import java.util.Optional;
@@ -175,7 +176,7 @@ public class AdminDownloads {
                 .map(access -> new RoleAccessView(
                         Long.toString(access.roleId()),
                         guild.map(g -> g.getRoleById(access.roleId()))
-                                .map(role -> role.getName())
+                                .map(Role::getName)
                                 .orElse(null),
                         access.releaseType()))
                 .toList());

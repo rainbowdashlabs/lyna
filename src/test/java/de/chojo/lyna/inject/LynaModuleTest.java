@@ -300,8 +300,7 @@ class LynaModuleTest {
     void commandsAreCollected() {
         Injector injector = injector();
 
-        Set<SlashProvider<Slash>> commands =
-                injector.getInstance(Key.get(new TypeLiteral<Set<SlashProvider<Slash>>>() {}));
+        Set<SlashProvider<Slash>> commands = injector.getInstance(Key.get(new TypeLiteral<>() {}));
 
         assertEquals(12, commands.size());
         assertEquals(

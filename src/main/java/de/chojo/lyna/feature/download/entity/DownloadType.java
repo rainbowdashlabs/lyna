@@ -16,8 +16,8 @@ import java.util.function.Function;
 public class DownloadType {
     private static final DownloadTypeRepository REPOSITORY = new DownloadTypeRepository();
 
-    LicenseGuild guild;
-    int id;
+    final LicenseGuild guild;
+    final int id;
     String name;
     String description;
     ReleaseType releaseType;

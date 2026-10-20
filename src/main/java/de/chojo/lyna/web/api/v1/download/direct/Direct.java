@@ -58,26 +58,26 @@ public class Direct {
     }
 
     public void init() {
-        path("direct", () -> {
-            get("{product}/{type}/{version}", ctx -> {
-                int productId = Integer.parseInt(ctx.pathParam("product"));
-                requireAccess(ctx, productId);
-                Product product =
-                        products.byId(productId).orElseThrow(() -> new NotFoundResponse("Invalid product id"));
-                var downloads = product.downloads()
-                        .byType(Integer.parseInt(ctx.pathParam("type")))
-                        .orElseThrow(() -> new NotFoundResponse("Invalid download type"));
-                AssetXO asset = downloads
-                        .assetByVersion(ctx.pathParam("version"))
-                        .orElseThrow(() -> new NotFoundResponse("Unknown version"));
-                String filename = DownloadFilename.of(downloads, asset);
+        path(
+                "direct",
+                () -> get("{product}/{type}/{version}", ctx -> {
+                    int productId = Integer.parseInt(ctx.pathParam("product"));
+                    requireAccess(ctx, productId);
+                    Product product =
+                            products.byId(productId).orElseThrow(() -> new NotFoundResponse("Invalid product id"));
+                    var downloads = product.downloads()
+                            .byType(Integer.parseInt(ctx.pathParam("type")))
+                            .orElseThrow(() -> new NotFoundResponse("Invalid download type"));
+                    AssetXO asset = downloads
+                            .assetByVersion(ctx.pathParam("version"))
+                            .orElseThrow(() -> new NotFoundResponse("Unknown version"));
+                    String filename = DownloadFilename.of(downloads, asset);
 
-                ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
-                        .header("X-Content-Type-Options", "nosniff")
-                        .contentType(ContentType.APPLICATION_OCTET_STREAM)
-                        .status(HttpStatus.OK)
-                        .result(asset.downloadStream().complete());
-            });
-        });
+                    ctx.header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename))
+                            .header("X-Content-Type-Options", "nosniff")
+                            .contentType(ContentType.APPLICATION_OCTET_STREAM)
+                            .status(HttpStatus.OK)
+                            .result(asset.downloadStream().complete());
+                }));
     }
 }

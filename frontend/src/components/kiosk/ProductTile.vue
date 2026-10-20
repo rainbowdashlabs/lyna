@@ -5,13 +5,12 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {computed} from 'vue'
-import {callToAction, type KioskProduct} from '~/api/kiosk'
+import type {KioskProduct} from '~/api/kiosk'
 import {formatDate} from '~/util/format'
 
 const {t} = useI18n()
 
-const props = defineProps<{
+defineProps<{
     product: KioskProduct
     /** Whether anybody is signed in, which decides whether to offer the linking hint. */
     signedIn: boolean
@@ -20,8 +19,6 @@ const props = defineProps<{
 defineEmits<{
     download: [product: KioskProduct]
 }>()
-
-const action = computed(() => callToAction(props.product))
 </script>
 
 <template>
@@ -31,8 +28,8 @@ const action = computed(() => callToAction(props.product))
     <header class="flex items-start gap-3">
       <ProductIcon :icon-url="product.iconUrl" :name="product.name"/>
       <div class="min-w-0 flex-1">
-        <NuxtLink :to="`/products/${product.id}`" class="block truncate hover:underline">
-          <SectionHeader class="truncate">{{ product.name }}</SectionHeader>
+        <NuxtLink :to="`/products/${product.id}`" class="block break-words hover:underline">
+          <SectionHeader class="break-words">{{ product.name }}</SectionHeader>
         </NuxtLink>
         <NeutralBadge v-if="product.free">{{ t('ui.productTile.free') }}</NeutralBadge>
         <SecondaryBadge v-else-if="product.entitled">{{ t('ui.productTile.owned') }}</SecondaryBadge>
@@ -44,36 +41,6 @@ const action = computed(() => callToAction(props.product))
       {{ t('ui.productTile.latest', {version: product.latestVersion, date: formatDate(product.updatedAt)}) }}
     </MutedText>
 
-    <footer class="mt-4 flex items-center justify-end gap-2">
-      <a
-          v-if="product.url"
-          :href="product.url"
-          :title="`Open the project page for ${product.name}`"
-          class="inline-flex items-center justify-center rounded-theme p-2 text-(--text-muted) transition-colors hover:text-(--text)"
-          rel="noopener noreferrer"
-          target="_blank"
-      >
-        <font-awesome-icon :icon="['fab', 'github']"/>
-      </a>
-      <PrimaryButton v-if="action === 'download'" @click="$emit('download', product)">
-        <font-awesome-icon :icon="['fas', 'download']" class="mr-1"/>
-        {{ t('common.download') }}
-      </PrimaryButton>
-      <a
-          v-else-if="action === 'buy'"
-          :href="product.purchaseUrl!"
-          class="rounded-theme inline-flex items-center border border-(--border) px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:border-secondary hover:bg-secondary/12"
-          rel="noopener noreferrer"
-          target="_blank"
-      >
-        <font-awesome-icon :icon="['fas', 'cart-shopping']" class="mr-1"/>
-        {{ t('ui.productTile.buyOnKoFi') }}
-      </a>
-      <MutedText v-else size="sm">{{ t('ui.productTile.notForSaleHere') }}</MutedText>
-    </footer>
-    <MutedText v-if="action === 'buy' && signedIn" class="mt-2 block text-right" size="xs">
-      {{ t('ui.productTile.alreadyBoughtIt') }}
-      <NuxtLink class="text-primary hover:underline" to="/account/security">{{ t('ui.productTile.linkYourAccount') }}</NuxtLink>
-    </MutedText>
+    <ProductCallToAction :product="product" :signed-in="signedIn" class="mt-4" @download="$emit('download', product)"/>
   </article>
 </template>

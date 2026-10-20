@@ -12,6 +12,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository.ReleaseWebhook;
@@ -28,6 +29,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
@@ -62,6 +64,7 @@ public class GithubWebhookService {
 
     private final ReleaseWebhookRepository webhooks;
     private final ProductLookup products;
+    private final ProductLinksRepository productLinks;
     private final Gateway gateway;
     private final Api api;
     private final ObjectMapper json = new ObjectMapper();
@@ -94,9 +97,15 @@ public class GithubWebhookService {
     record Repository(@JsonProperty("full_name") String fullName) {}
 
     @Inject
-    public GithubWebhookService(ReleaseWebhookRepository webhooks, ProductLookup products, Gateway gateway, Api api) {
+    public GithubWebhookService(
+            ReleaseWebhookRepository webhooks,
+            ProductLookup products,
+            ProductLinksRepository productLinks,
+            Gateway gateway,
+            Api api) {
         this.webhooks = webhooks;
         this.products = products;
+        this.productLinks = productLinks;
         this.gateway = gateway;
         this.api = api;
     }
@@ -205,11 +214,20 @@ public class GithubWebhookService {
                                 .formatted(
                                         product.get().name(), payload.release().tag()),
                         embed(product.get(), payload),
-                        List.of(ActionRow.of(Button.link(
-                                "%s/products/%d"
-                                        .formatted(api.url(), product.get().id()),
-                                "Download on Lyna"))),
+                        List.of(ActionRow.of(buttons(product.get()))),
                         error -> log.warn("Could not announce a release of product {}", webhook.productId(), error));
+    }
+
+    /**
+     * The way to the product page, where the release is downloaded, and to the product's wiki when it
+     * has one.
+     */
+    private List<Button> buttons(Product product) {
+        List<Button> buttons = new ArrayList<>();
+        buttons.add(Button.link("%s/products/%d".formatted(api.url(), product.id()), "Download on Lyna"));
+        String wiki = productLinks.get(product.id()).wikiUrl();
+        if (wiki != null) buttons.add(Button.link(wiki, "Wiki"));
+        return buttons;
     }
 
     MessageEmbed embed(Product product, Payload payload) {

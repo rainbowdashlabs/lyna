@@ -85,14 +85,12 @@ public class Bot {
         InteractionHub.builder(shardManager)
                 .testMode("true".equals(System.getProperty("bot.testmode", "false")))
                 .cleanGuildCommands("true".equals(System.getProperty("bot.cleancommand", "false")))
-                .withCommandErrorHandler((context, throwable) -> {
-                    log.error(
-                            LogNotify.NOTIFY_ADMIN,
-                            "Command execution of {} failed\n{}",
-                            context.interaction().meta().name(),
-                            context.args(),
-                            throwable);
-                })
+                .withCommandErrorHandler((context, throwable) -> log.error(
+                        LogNotify.NOTIFY_ADMIN,
+                        "Command execution of {} failed\n{}",
+                        context.interaction().meta().name(),
+                        context.args(),
+                        throwable))
                 .withGuildCommandMapper(cmd -> Collections.singletonList(
                         configuration.main().baseSettings().botGuild()))
                 .withDefaultMenuService()

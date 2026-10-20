@@ -262,8 +262,7 @@ public class LynaModule extends AbstractModule {
      */
     @Override
     protected void configure() {
-        Multibinder<SlashProvider<Slash>> commands =
-                Multibinder.newSetBinder(binder(), new TypeLiteral<SlashProvider<Slash>>() {});
+        Multibinder<SlashProvider<Slash>> commands = Multibinder.newSetBinder(binder(), new TypeLiteral<>() {});
         commands.addBinding().to(de.chojo.lyna.commands.products.Products.class);
         commands.addBinding().to(de.chojo.lyna.commands.license.License.class);
         commands.addBinding().to(Register.class);

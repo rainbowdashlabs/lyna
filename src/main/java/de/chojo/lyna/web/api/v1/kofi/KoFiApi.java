@@ -59,29 +59,29 @@ public class KoFiApi {
     }
 
     public void init() {
-        path("kofi", () -> {
-            post(ctx -> {
-                var results = Urls.splitQuery(ctx.body());
-                var json = results.get("data");
-                var post = mapper.readValue(json, KofiPost.class);
-                var presented = post.verificationToken();
-                if (presented == null || !presented.toString().equals(kofiSettings.verificationToken())) {
-                    ctx.status(HttpStatus.FORBIDDEN);
-                    return;
-                }
-                log.info("Received new purchase from kofi: {}", json);
-                if (post.type() == DataType.SHOP_ORDER) {
-                    for (ShopItem shopItem : post.shopItems()) {
-                        kofi.logTransaction(post, json, shopItem);
-                        Optional<Product> optProduct = kofi.byCode(shopItem.directLinkCode());
-                        if (optProduct.isEmpty()) continue;
-                        purchases.issue(optProduct.get(), post.email(), post.from(), LicenseSource.KOFI);
+        path(
+                "kofi",
+                () -> post(ctx -> {
+                    var results = Urls.splitQuery(ctx.body());
+                    var json = results.get("data");
+                    var post = mapper.readValue(json, KofiPost.class);
+                    var presented = post.verificationToken();
+                    if (presented == null || !presented.toString().equals(kofiSettings.verificationToken())) {
+                        ctx.status(HttpStatus.FORBIDDEN);
+                        return;
                     }
-                } else {
-                    kofi.logTransaction(post, json, null);
-                }
-                ctx.status(HttpStatus.OK);
-            });
-        });
+                    log.info("Received new purchase from kofi: {}", json);
+                    if (post.type() == DataType.SHOP_ORDER) {
+                        for (ShopItem shopItem : post.shopItems()) {
+                            kofi.logTransaction(post, json, shopItem);
+                            Optional<Product> optProduct = kofi.byCode(shopItem.directLinkCode());
+                            if (optProduct.isEmpty()) continue;
+                            purchases.issue(optProduct.get(), post.email(), post.from(), LicenseSource.KOFI);
+                        }
+                    } else {
+                        kofi.logTransaction(post, json, null);
+                    }
+                    ctx.status(HttpStatus.OK);
+                }));
     }
 }

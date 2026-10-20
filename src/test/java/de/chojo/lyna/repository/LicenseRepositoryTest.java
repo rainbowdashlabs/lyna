@@ -98,7 +98,7 @@ class LicenseRepositoryTest extends RepositoryTestBase {
         assertEquals(List.of(SHAREE), licenseRepository.shareeDiscordIds(licenseId));
         List<Sharee> named = licenseRepository.sharees(licenseId);
         assertEquals(1, named.size());
-        assertEquals(SHAREE, named.get(0).discordId());
+        assertEquals(SHAREE, named.getFirst().discordId());
 
         licenseRepository.clearSharees(licenseId);
         assertTrue(licenseRepository.shareeDiscordIds(licenseId).isEmpty());
@@ -114,8 +114,8 @@ class LicenseRepositoryTest extends RepositoryTestBase {
         assertTrue(licenseRepository.shareeDiscordIds(licenseId).isEmpty(), "Discord knows nothing of them");
         List<Sharee> named = licenseRepository.sharees(licenseId);
         assertEquals(1, named.size());
-        assertEquals(null, named.get(0).discordId());
-        assertTrue(named.get(0).name().startsWith("ada#"), "named by their own name and digits");
+        assertEquals(null, named.getFirst().discordId());
+        assertTrue(named.getFirst().name().startsWith("ada#"), "named by their own name and digits");
     }
 
     @Test

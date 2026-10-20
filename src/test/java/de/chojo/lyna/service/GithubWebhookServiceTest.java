@@ -7,6 +7,7 @@ package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
@@ -55,6 +56,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
             """;
 
     private final ReleaseWebhookRepository webhooks = new ReleaseWebhookRepository();
+    private final ProductLinksRepository productLinks = new ProductLinksRepository();
     private final Gateway gateway = mock(Gateway.class);
     private final GuildMessageChannel channel = mock(GuildMessageChannel.class);
     private final MessageCreateAction send = mock(MessageCreateAction.class);
@@ -89,7 +91,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         when(send.setAllowedMentions(any())).thenReturn(send);
         Api api = mock(Api.class);
         when(api.url()).thenReturn("https://lyna.example");
-        service = new GithubWebhookService(webhooks, products, gateway, api);
+        service = new GithubWebhookService(webhooks, products, productLinks, gateway, api);
     }
 
     private MessageEmbed announce(String body) throws Exception {
@@ -111,7 +113,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         assertEquals("Fixes", embed.getDescription());
         assertEquals("Spooky", embed.getAuthor().getName());
         assertEquals("x/y", embed.getFooter().getText());
-        assertEquals("Stable", embed.getFields().get(0).getValue());
+        assertEquals("Stable", embed.getFields().getFirst().getValue());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<java.util.Collection<net.dv8tion.jda.api.components.actionrow.ActionRow>> rows =
                 ArgumentCaptor.forClass(java.util.Collection.class);
@@ -139,7 +141,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         assertEquals(MessageEmbed.DESCRIPTION_MAX_LENGTH, embed.getDescription().length());
         assertNull(embed.getAuthor());
         assertNull(embed.getFooter());
-        assertEquals("Pre-release", embed.getFields().get(0).getValue());
+        assertEquals("Pre-release", embed.getFields().getFirst().getValue());
     }
 
     @Test
@@ -276,8 +278,8 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
     private static String commits(int count) {
         return java.util.stream.IntStream.range(0, count)
                 .mapToObj(i -> """
-                        {"id": "abcdef%d000000", "message": "Commit %d\\n\\nbody", "url": "https://github.com/x/y/commit/%d",
-                         "author": {"name": "Ada"}}""".formatted(i, i, i))
+                                                 {"id": "abcdef%d000000", "message": "Commit %d\\n\\nbody", "url": "https://github.com/x/y/commit/%d",
+                                                  "author": {"name": "Ada"}}""".formatted(i, i, i))
                 .collect(java.util.stream.Collectors.joining(","));
     }
 
@@ -493,5 +495,25 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         assertEquals("abcd…", de.chojo.lyna.feature.releasepost.service.GithubEmbeds.cut("abcdefgh", 5));
         assertEquals("", de.chojo.lyna.feature.releasepost.service.GithubEmbeds.firstLine(null));
         assertEquals("Subject", de.chojo.lyna.feature.releasepost.service.GithubEmbeds.firstLine("Subject \nbody"));
+    }
+
+    @Test
+    @DisplayName("A product with a wiki gets a button to it beside the download, one without does not")
+    @SuppressWarnings("unchecked")
+    void wikiButton() throws Exception {
+        productLinks.set(
+                productId, new de.chojo.lyna.feature.product.entity.ProductLinks("https://example.invalid/wiki", null));
+
+        announce(RELEASE.formatted("released"));
+
+        ArgumentCaptor<java.util.Collection<net.dv8tion.jda.api.components.actionrow.ActionRow>> rows =
+                ArgumentCaptor.forClass(java.util.Collection.class);
+        verify(send).addComponents(rows.capture());
+        var buttons = rows.getValue().iterator().next().getComponents();
+        assertEquals(2, buttons.size());
+        assertEquals("Wiki", ((net.dv8tion.jda.api.components.buttons.Button) buttons.get(1)).getLabel());
+        assertEquals(
+                "https://example.invalid/wiki",
+                ((net.dv8tion.jda.api.components.buttons.Button) buttons.get(1)).getUrl());
     }
 }

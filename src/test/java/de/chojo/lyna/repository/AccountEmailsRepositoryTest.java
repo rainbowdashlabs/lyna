@@ -6,6 +6,7 @@
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.feature.account.entity.Account;
+import de.chojo.lyna.feature.account.entity.AccountEmail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -140,7 +141,9 @@ class AccountEmailsRepositoryTest extends RepositoryTestBase {
 
         assertEquals(
                 1,
-                accountEmails.of(account.id()).stream().filter(e -> e.primary()).count());
+                accountEmails.of(account.id()).stream()
+                        .filter(AccountEmail::primary)
+                        .count());
     }
 
     @Test
