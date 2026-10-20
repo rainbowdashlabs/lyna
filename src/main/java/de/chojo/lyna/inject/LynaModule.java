@@ -49,6 +49,7 @@ import de.chojo.lyna.core.Threading;
 import de.chojo.lyna.demo.DemoService;
 import de.chojo.lyna.feature.account.repository.AccountEmailRepository;
 import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
+import de.chojo.lyna.feature.account.repository.AccountRoleRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.repository.AccountSessionRepository;
 import de.chojo.lyna.feature.account.repository.DiscordTokenRepository;
@@ -344,6 +345,7 @@ public class LynaModule extends AbstractModule {
         bind(ProductIconService.class).in(Singleton.class);
         bind(AccountEmailRepository.class).in(Singleton.class);
         bind(AccountLicenseRepository.class).in(Singleton.class);
+        bind(AccountRoleRepository.class).in(Singleton.class);
         bind(LicenseInviteRepository.class).in(Singleton.class);
         bind(AccountSessionRepository.class).in(Singleton.class);
         bind(DiscordTokenRepository.class).in(Singleton.class);
