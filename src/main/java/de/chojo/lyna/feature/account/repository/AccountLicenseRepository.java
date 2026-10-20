@@ -209,9 +209,8 @@ public class AccountLicenseRepository {
     /**
      * The release types an account may download of one product.
      *
-     * <p>Read from the licenses that account holds, which is the half of the bot's rule a query can
-     * answer. The other half - access granted by a Discord role - needs the gateway to know which
-     * roles somebody wears, and is added by {@code DownloadAccessService}.
+     * <p>Read from the licenses that account holds. Access granted by a role is added by
+     * {@code DownloadAccessService}.
      *
      * @param accountId the account asking
      * @param productId the product

@@ -92,17 +92,6 @@ public class ProductRepository {
     }
 
     /**
-     * @return the guilds in which some Discord role opens a product
-     */
-    public List<Long> guildsWithRoleAccess() {
-        return query("""
-                SELECT DISTINCT p.guild_id
-                FROM role_access a
-                    JOIN product p ON p.id = a.product_id
-                ORDER BY p.guild_id""").single().map(row -> row.getLong("guild_id")).all();
-    }
-
-    /**
      * @return the products any of these Discord roles opens
      */
     public Set<Integer> productsByRoles(List<Long> roleIds) {

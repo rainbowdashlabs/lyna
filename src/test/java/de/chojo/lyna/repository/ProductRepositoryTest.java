@@ -124,15 +124,13 @@ class ProductRepositoryTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("Roles name the products they open, and the guilds holding those products")
-    void rolesNameTheirProductsAndGuilds() throws SQLException {
-        assertTrue(productRepository.guildsWithRoleAccess().isEmpty());
+    @DisplayName("Roles name the products they open")
+    void rolesNameTheirProducts() throws SQLException {
         execute("INSERT INTO %s.role_access (role_id, product_id, release_type) VALUES (42, %d, 'DEV')"
                 .formatted(schemaName, productId));
         execute("INSERT INTO %s.role_access (role_id, product_id, release_type) VALUES (42, %d, 'STABLE')"
                 .formatted(schemaName, productId));
 
-        assertEquals(List.of(GUILD), productRepository.guildsWithRoleAccess());
         assertEquals(Set.of(productId), productRepository.productsByRoles(List.of(42L, 99L)));
         assertTrue(productRepository.productsByRoles(List.of(99L)).isEmpty());
         assertTrue(productRepository.productsByRoles(List.of()).isEmpty());
