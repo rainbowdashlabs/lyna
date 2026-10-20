@@ -19,6 +19,7 @@ import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.web.api.auth.Auth;
+import de.chojo.lyna.web.api.v1.download.direct.Direct;
 import de.chojo.lyna.web.api.v1.download.proxy.AssetDownload;
 import de.chojo.lyna.web.api.v1.download.proxy.Proxy;
 import de.chojo.nexus.entities.AssetXO;
@@ -46,7 +47,8 @@ import static io.javalin.apibuilder.ApiBuilder.post;
  * about - which is the same shortcut the slash command takes.
  *
  * <p>A client that would rather not walk a wizard can call the same four in sequence; the last one
- * mints the one-time address the browser is sent to, which is the address the bot hands out too.
+ * mints the one-time address the browser is sent to, which is the address the bot hands out too. A free
+ * product has nothing to guard, so it gets its lasting public address instead.
  */
 public class Wizard {
     /** Enough history to find a known-good build, not the whole archive. */
@@ -58,6 +60,7 @@ public class Wizard {
             Set.of(ReleaseType.STABLE.name(), ReleaseType.DEV.name(), ReleaseType.SNAPSHOT.name());
 
     private final Proxy proxy;
+    private final Direct direct;
     private final ProductLookup products;
     private final KioskProductRepository kiosk;
     private final Auth auth;
@@ -68,6 +71,7 @@ public class Wizard {
     @Inject
     public Wizard(
             Proxy proxy,
+            Direct direct,
             ProductLookup products,
             KioskProductRepository kiosk,
             Auth auth,
@@ -76,6 +80,7 @@ public class Wizard {
             ProductVersionService versions) {
         this.versions = versions;
         this.proxy = proxy;
+        this.direct = direct;
         this.products = products;
         this.kiosk = kiosk;
         this.auth = auth;
@@ -135,6 +140,14 @@ public class Wizard {
             throw new ForbiddenResponse("You may not download that release type");
         }
         AssetXO asset = download.assetByVersion(version).orElseThrow(() -> new NotFoundResponse("Unknown version"));
+        String filename = DownloadFilename.of(download, asset);
+
+        if (product.free()) {
+            String url =
+                    direct.link(product.id(), downloadTypeId, asset.maven2().version());
+            ctx.status(HttpStatus.CREATED).json(new IssuedDownload(url, filename, (long) asset.fileSize(), null));
+            return;
+        }
 
         var session = auth.currentSession(ctx);
         Integer accountId = session.map(JwtService.Verified::accountId).orElse(null);
@@ -146,14 +159,7 @@ public class Wizard {
         AssetDownload assetDownload = new AssetDownload(
                         asset.id(), () -> download.downloaded(asset.maven2().version()), actor)
                 .withDownloadContext(
-                        product.id(),
-                        download.id(),
-                        asset.maven2().version(),
-                        product.free() ? "free" : "license",
-                        accountId,
-                        discordId,
-                        null);
-        String filename = DownloadFilename.of(download, asset);
+                        product.id(), download.id(), asset.maven2().version(), "license", accountId, discordId, null);
         String url = proxy.registerAsset(assetDownload.withFilename(filename));
         ctx.status(HttpStatus.CREATED)
                 .json(new IssuedDownload(
@@ -228,8 +234,8 @@ public class Wizard {
     public record DownloadTypeView(int id, String name, String description) {}
 
     /**
-     * @param url       the one-time address the browser is sent to
-     * @param expiresAt when the address stops working if nobody uses it
+     * @param url       the address the browser is sent to: one-time, or public for a free product
+     * @param expiresAt when the address stops working if nobody uses it, and null for a public one
      */
     public record IssuedDownload(String url, String filename, Long sizeBytes, Instant expiresAt) {}
 }
