@@ -22,6 +22,9 @@ import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -30,12 +33,24 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * Serves a build from Nexus to whoever holds a token for it, signed with who it was issued to.
+ *
+ * <p>A token from {@link #registerAsset} is spent by its first use. One from {@link #registerReusable}
+ * works until it expires, for an updater that has to be able to retry a download that broke off.
+ */
 public class Proxy {
+    /** How long a reusable link lasts. */
+    public static final Duration REUSABLE_LIFETIME = Duration.ofMinutes(5);
+
     private static final Logger log = getLogger(Proxy.class);
+    private static final SecureRandom RANDOM = new SecureRandom();
     private final NexusRest nexus;
     private final Api apiSettings;
     private final Cache<String, AssetDownload> tokens =
             CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
+    private final Cache<String, AssetDownload> reusable =
+            CacheBuilder.newBuilder().expireAfterWrite(REUSABLE_LIFETIME).build();
 
     @Language("HTML")
     private final String shareHtml = """
@@ -87,13 +102,14 @@ public class Proxy {
                         return;
                     }
                     AssetDownload download = tokens.getIfPresent(token);
+                    if (download != null) tokens.invalidate(token);
+                    else download = reusable.getIfPresent(token);
                     if (download == null) {
                         ctx.status(HttpStatus.BAD_REQUEST);
                         ctx.result("Invalid token.");
                         return;
                     }
 
-                    tokens.invalidate(token);
                     String agent = ctx.header("User-Agent");
                     if (agent != null && agent.toLowerCase(Locale.ROOT).contains("discordbot")) {
                         ctx.status(HttpStatus.OK)
@@ -163,11 +179,22 @@ public class Proxy {
     }
 
     public String registerAsset(AssetDownload assetDownload) {
-        var hashCode = Hashing.sha512()
-                .hashString(System.nanoTime() + assetDownload.assetId() + System.nanoTime(), StandardCharsets.UTF_8)
-                .toString();
-        tokens.put(hashCode, assetDownload);
-        return "%s/api/v1/download/proxy?token=%s".formatted(apiSettings.url(), hashCode);
+        return register(tokens, assetDownload);
+    }
+
+    /**
+     * @return a link that serves the build as often as asked for {@link #REUSABLE_LIFETIME}
+     */
+    public String registerReusable(AssetDownload assetDownload) {
+        return register(reusable, assetDownload);
+    }
+
+    private String register(Cache<String, AssetDownload> cache, AssetDownload assetDownload) {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        String token = HexFormat.of().formatHex(bytes);
+        cache.put(token, assetDownload);
+        return "%s/api/v1/download/proxy?token=%s".formatted(apiSettings.url(), token);
     }
 
     private static String ipHash(String ip) {

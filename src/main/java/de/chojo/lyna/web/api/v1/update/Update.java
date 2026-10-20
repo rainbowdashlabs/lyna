@@ -30,16 +30,19 @@ public class Update {
     private final ProductLookup products;
     private final ButlerApi butler;
     private final Direct direct;
+    private final UpdateTokenExchange exchange;
 
     @Inject
-    public Update(ProductLookup products, ButlerApi butler, Direct direct) {
+    public Update(ProductLookup products, ButlerApi butler, Direct direct, UpdateTokenExchange exchange) {
         this.products = products;
         this.butler = butler;
         this.direct = direct;
+        this.exchange = exchange;
     }
 
     public void init() {
         path("update", () -> {
+            exchange.init();
             // ?id=<>&version=<>
             get("check", ctx -> {
                 Optional<ButlerCheckRequest> fromButler = ButlerCheckRequest.malformed(ctx.queryParamMap());

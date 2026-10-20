@@ -308,6 +308,7 @@ public class LynaModule extends AbstractModule {
         bind(Download.class).in(Singleton.class);
         bind(Direct.class).in(Singleton.class);
         bind(Update.class).in(Singleton.class);
+        bind(de.chojo.lyna.web.api.v1.update.UpdateTokenExchange.class).in(Singleton.class);
         bind(KoFiApi.class).in(Singleton.class);
         bind(Releases.class).in(Singleton.class);
         bind(Wizard.class).in(Singleton.class);
