@@ -252,6 +252,19 @@ public class AccountRepository {
     }
 
     /**
+     * @return every linked Discord id with the account it belongs to
+     */
+    public Map<Long, Integer> discordAccounts() {
+        var result = new HashMap<Long, Integer>();
+        query("SELECT external_id, account_id FROM account_identity WHERE provider = ?")
+                .single(call().bind(AccountIdentity.DISCORD))
+                .map(row -> Map.entry(Long.parseLong(row.getString("external_id")), row.getInt("account_id")))
+                .all()
+                .forEach(entry -> result.put(entry.getKey(), entry.getValue()));
+        return result;
+    }
+
+    /**
      * @param provider    which service the ids come from
      * @param externalIds the ids to name
      * @return the handles that are known, by id; an id nobody has linked is simply absent
