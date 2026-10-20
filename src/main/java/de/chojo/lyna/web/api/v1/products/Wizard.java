@@ -155,7 +155,9 @@ public class Wizard {
         Long discordId = session.flatMap(verified -> accounts.findLinkByAccountId(verified.accountId()))
                 .map(AccountIdentity::externalIdAsLong)
                 .orElse(null);
-        String actor = discordId == null ? "anonymous(%s)".formatted(ctx.ip()) : Long.toString(discordId);
+        String actor = discordId != null
+                ? Long.toString(discordId)
+                : accountId != null ? "account(%d)".formatted(accountId) : "anonymous";
 
         AssetDownload assetDownload = new AssetDownload(
                         asset.id(), () -> download.downloaded(asset.maven2().version()), actor)
