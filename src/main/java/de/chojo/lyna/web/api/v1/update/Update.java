@@ -12,6 +12,7 @@ import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.util.Version;
+import de.chojo.lyna.web.api.v1.download.direct.Direct;
 import de.chojo.lyna.web.legacy.ButlerApi;
 import de.chojo.nexus.entities.AssetXO;
 import io.javalin.http.HttpStatus;
@@ -28,11 +29,13 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 public class Update {
     private final ProductLookup products;
     private final ButlerApi butler;
+    private final Direct direct;
 
     @Inject
-    public Update(ProductLookup products, ButlerApi butler) {
+    public Update(ProductLookup products, ButlerApi butler, Direct direct) {
         this.products = products;
         this.butler = butler;
+        this.direct = direct;
     }
 
     public void init() {
@@ -91,7 +94,7 @@ public class Update {
                     response = new UpdateResponse(false, versionString, unix);
                 }
 
-                ctx.status(HttpStatus.OK).json(response);
+                ctx.status(HttpStatus.OK).json(withDownload(product, response, artifact));
             });
         });
     }
@@ -206,5 +209,37 @@ public class Update {
         return assetXO.lastModified().toEpochSecond();
     }
 
-    public record UpdateResponse(boolean update, String latest, long published) {}
+    /**
+     * Adds the public address of the build an update points at, for a free product. The build is found
+     * the way the check found it: by the release type its version names and the artifact asked about.
+     */
+    private UpdateResponse withDownload(Product product, UpdateResponse response, @Nullable String artifact) {
+        if (!product.free() || !response.update()) return response;
+        try {
+            ReleaseType type = Version.parse(response.latest()).type();
+            return getDownload(product, type, artifact)
+                    .map(download -> response.withDownload(
+                            direct.link(product.id(), download.type().id(), response.latest())))
+                    .orElse(response);
+        } catch (RuntimeException e) {
+            return response;
+        }
+    }
+
+    /**
+     * @param download where the build can be fetched without signing in, for a free product; null otherwise
+     */
+    public record UpdateResponse(
+            boolean update,
+            String latest,
+            long published,
+            @Nullable String download) {
+        public UpdateResponse(boolean update, String latest, long published) {
+            this(update, latest, published, null);
+        }
+
+        public UpdateResponse withDownload(String download) {
+            return new UpdateResponse(update, latest, published, download);
+        }
+    }
 }

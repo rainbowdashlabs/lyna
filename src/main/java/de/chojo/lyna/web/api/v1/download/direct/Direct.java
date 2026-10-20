@@ -40,9 +40,12 @@ import static org.slf4j.LoggerFactory.getLogger;
  * A lasting address for one build, checked against the caller on every request rather than spent once.
  *
  * <p>A free product needs no check, which makes this the public link the wizard hands out for one.
+ * {@value #LATEST} in place of a version names the newest build of the download, so an updater can
+ * fetch the current one without asking which it is.
  */
 public class Direct {
     private static final Logger log = getLogger(Direct.class);
+    public static final String LATEST = "latest";
     private final ProductLookup products;
     private final Auth auth;
     private final AccountRepository accounts;
@@ -104,8 +107,10 @@ public class Direct {
                     var downloads = product.downloads()
                             .byType(Integer.parseInt(ctx.pathParam("type")))
                             .orElseThrow(() -> new NotFoundResponse("Invalid download type"));
-                    AssetXO asset = downloads
-                            .assetByVersion(ctx.pathParam("version"))
+                    String version = ctx.pathParam("version");
+                    AssetXO asset = (LATEST.equals(version)
+                                    ? downloads.latestAssets().stream().findFirst()
+                                    : downloads.assetByVersion(version))
                             .orElseThrow(() -> new NotFoundResponse("Unknown version"));
                     String filename = DownloadFilename.of(downloads, asset);
                     record(ctx, product, downloads, asset.maven2().version());
