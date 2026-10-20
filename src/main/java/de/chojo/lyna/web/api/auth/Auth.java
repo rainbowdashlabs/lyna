@@ -19,6 +19,7 @@ import de.chojo.lyna.feature.account.repository.EmailVerificationTokenRepository
 import de.chojo.lyna.feature.account.repository.PasswordResetTokenRepository;
 import de.chojo.lyna.feature.account.service.AccountEmailService;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
+import de.chojo.lyna.feature.account.service.AccountRoleSync;
 import de.chojo.lyna.feature.account.service.AccountService;
 import de.chojo.lyna.feature.account.service.DiscordConnectionService;
 import de.chojo.lyna.feature.account.service.SessionService;
@@ -56,6 +57,7 @@ public class Auth {
     private final OAuth oauthConfig;
     private final DiscordConnectionService discordConnections;
     private final MailingService mailingService;
+    private final AccountRoleSync roleSync;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Inject
@@ -71,7 +73,9 @@ public class Auth {
             DiscordOAuthClient oauthClient,
             OAuth oauthConfig,
             DiscordConnectionService discordConnections,
-            MailingService mailingService) {
+            MailingService mailingService,
+            AccountRoleSync roleSync) {
+        this.roleSync = roleSync;
         this.configuration = configuration;
         this.accountLinkService = accountLinkService;
         this.accountService = accountService;
@@ -238,6 +242,7 @@ public class Auth {
         }
         Account account = opt.get();
         accountService.touchLastLogin(account.id());
+        roleSync.syncAccount(account.id());
         Long discordId = accountLinkService
                 .discordIdentity(account.id())
                 .map(AccountIdentity::externalIdAsLong)
@@ -375,6 +380,7 @@ public class Auth {
         }
         discordConnections.remember(account.id(), discordUser);
         discordConnections.store(account.id(), grant);
+        roleSync.syncAccount(account.id());
         if (existing.isEmpty()) {
             SessionCookie.write(ctx, sessions.open(account.id(), ctx.header("User-Agent")));
         }
