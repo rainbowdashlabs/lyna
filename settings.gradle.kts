@@ -15,10 +15,10 @@ dependencyResolutionManagement {
             version("log4j", "2.26.1")
 
             library("guice", "com.google.inject:guice:7.0.0")
-            library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.3.0")
+            library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.3.1")
 
-            library("ocular", "dev.chojo:ocular:2.2.1")
-            version("jackson", "3.2.3")
+            library("ocular", "dev.chojo:ocular:2.3.0")
+            version("jackson", "3.2.4")
             library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
             bundle("config", listOf("ocular", "jackson-yaml"))
 
@@ -27,7 +27,7 @@ dependencyResolutionManagement {
             library("imageio-webp", "com.twelvemonkeys.imageio:imageio-webp:3.15.3")
             bundle("images", listOf("thumbnailator", "imageio-webp"))
             library("bcrypt", "at.favre.lib:bcrypt:0.10.2")
-            library("java-jwt", "com.auth0:java-jwt:4.6.1")
+            library("java-jwt", "com.auth0:java-jwt:4.6.2")
 
             library("slf4j-api", "org.slf4j:slf4j-api:2.0.20")
             library("log4j-core", "org.apache.logging.log4j", "log4j-core").versionRef("log4j")

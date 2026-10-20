@@ -115,7 +115,7 @@ services:
         echo "TLS fixture made"
 
   nexus_e2e:
-    image: python:3.14-alpine
+    image: python:3.15-alpine
     networks:
       lyna:
         aliases:
