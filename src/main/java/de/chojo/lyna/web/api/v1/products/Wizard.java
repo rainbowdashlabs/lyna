@@ -8,11 +8,11 @@ package de.chojo.lyna.web.api.v1.products;
 import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
-import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.download.service.DownloadFilename;
 import de.chojo.lyna.feature.download.service.ProductVersionService;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
@@ -62,7 +62,7 @@ public class Wizard {
     private final KioskProductRepository kiosk;
     private final Auth auth;
     private final AccountRepository accounts;
-    private final AccountLicenseRepository licenses;
+    private final DownloadAccessService licenses;
     private final ProductVersionService versions;
 
     @Inject
@@ -72,7 +72,7 @@ public class Wizard {
             KioskProductRepository kiosk,
             Auth auth,
             AccountRepository accounts,
-            AccountLicenseRepository licenses,
+            DownloadAccessService licenses,
             ProductVersionService versions) {
         this.versions = versions;
         this.proxy = proxy;
@@ -174,7 +174,7 @@ public class Wizard {
     /**
      * The release types the caller may have of this product.
      *
-     * <p>Free means all of them, for anybody. Otherwise it is what the caller's licenses carry, and
+     * <p>Free means all of them, for anybody. Otherwise it is what the caller's licenses and roles open, and
      * an empty answer is a refusal - told apart from "not signed in" so the storefront can offer a
      * sign-in to one and a purchase to the other.
      */

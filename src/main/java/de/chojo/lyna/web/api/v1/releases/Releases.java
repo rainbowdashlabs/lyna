@@ -7,10 +7,10 @@ package de.chojo.lyna.web.api.v1.releases;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.inject.Inject;
-import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.DownloadType;
+import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.web.api.auth.Auth;
@@ -30,7 +30,7 @@ public class Releases {
     private final de.chojo.lyna.feature.product.repository.ProductLookup products;
     private final Auth auth;
     private final AccountRepository accounts;
-    private final AccountLicenseRepository licenses;
+    private final DownloadAccessService licenses;
     private final KioskProductRepository kiosk;
 
     @Inject
@@ -38,7 +38,7 @@ public class Releases {
             de.chojo.lyna.feature.product.repository.ProductLookup products,
             Auth auth,
             AccountRepository accounts,
-            AccountLicenseRepository licenses,
+            DownloadAccessService licenses,
             KioskProductRepository kiosk) {
         this.products = products;
         this.auth = auth;
@@ -51,7 +51,7 @@ public class Releases {
      * Refuses a product this caller may not have.
      *
      * <p>A free product is everybody's. A premium one belongs to whoever holds a license covering
-     * it, which is the same rule the bot applies; the two answers are told apart so the storefront
+     * it or wears a role opening it, which is the same rule the bot applies; the two answers are told apart so the storefront
      * can offer a sign-in to one and a purchase to the other.
      */
     private void requireAccess(Context ctx, int productId) {

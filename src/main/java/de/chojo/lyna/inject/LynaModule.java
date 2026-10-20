@@ -71,6 +71,7 @@ import de.chojo.lyna.feature.debug.service.UploadThrottle;
 import de.chojo.lyna.feature.demo.repository.DemoArtifactRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.download.repository.DownloadRepository;
+import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.roles.JdaRoleSync;
 import de.chojo.lyna.feature.guild.roles.RoleSync;
@@ -325,6 +326,7 @@ public class LynaModule extends AbstractModule {
         bind(LicenseService.class).in(Singleton.class);
         bind(ProductRepository.class).in(Singleton.class);
         bind(ProductRoleService.class).in(Singleton.class);
+        bind(DownloadAccessService.class).in(Singleton.class);
         bind(DownloadRepository.class).in(Singleton.class);
         bind(PurchaseService.class).in(Singleton.class);
         bind(IconStorage.class).in(Singleton.class);

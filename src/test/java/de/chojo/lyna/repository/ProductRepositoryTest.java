@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -120,6 +121,21 @@ class ProductRepositoryTest extends RepositoryTestBase {
                 productRepository.accessByRoles(other, List.of(42L)).isEmpty(),
                 "the role opens the product it was granted on, not every product");
         assertTrue(productRepository.accessByRoles(productId, List.of(99L)).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Roles name the products they open, and the guilds holding those products")
+    void rolesNameTheirProductsAndGuilds() throws SQLException {
+        assertTrue(productRepository.guildsWithRoleAccess().isEmpty());
+        execute("INSERT INTO %s.role_access (role_id, product_id, release_type) VALUES (42, %d, 'DEV')"
+                .formatted(schemaName, productId));
+        execute("INSERT INTO %s.role_access (role_id, product_id, release_type) VALUES (42, %d, 'STABLE')"
+                .formatted(schemaName, productId));
+
+        assertEquals(List.of(GUILD), productRepository.guildsWithRoleAccess());
+        assertEquals(Set.of(productId), productRepository.productsByRoles(List.of(42L, 99L)));
+        assertTrue(productRepository.productsByRoles(List.of(99L)).isEmpty());
+        assertTrue(productRepository.productsByRoles(List.of()).isEmpty());
     }
 
     @Test
