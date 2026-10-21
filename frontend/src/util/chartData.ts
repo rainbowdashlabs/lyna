@@ -3,13 +3,17 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
+/** The chart types the viewer draws; the backend leaves charts of other types out of a report. */
+export const CHART_TYPES = ['line', 'area', 'bar', 'stacked-bar', 'scatter', 'pie', 'donut', 'heatmap', 'gauge'] as const
+
+export type ChartType = typeof CHART_TYPES[number]
 
 /**
  * How a plugin describes a chart. Only {@link type} and {@link data} are required; data is loosely
  * typed and read by {@link normalizeChart} according to the type.
  */
 export interface ChartSpec {
-    type: string
+    type: ChartType
     data: unknown
     unit?: string
     x?: ChartAxis
@@ -60,9 +64,6 @@ export type NormalizedChart =
     | {kind: 'matrix', cells: [number | string, number | string, ChartValue][]}
     | {kind: 'gauge', needles: ChartNeedle[]}
     | {kind: 'raw'}
-
-/** The chart types the viewer draws; any other type is shown as its data. */
-export const CHART_TYPES = ['line', 'area', 'bar', 'stacked-bar', 'scatter', 'pie', 'donut', 'heatmap', 'gauge'] as const
 
 const RAW: NormalizedChart = {kind: 'raw'}
 

@@ -292,19 +292,24 @@ class DebugReportServiceTest extends RepositoryTestBase {
     void unknownKindsAreSkipped() {
         var keys = stored(REPORT_V2.replace("\"CONFIG\"", "\"BLOB\""));
 
-        List<DebugReport.Section> sections = service.read(keys.hash()).orElseThrow().sections();
+        List<DebugReport.Section> sections =
+                service.read(keys.hash()).orElseThrow().sections();
 
-        assertEquals(List.of("latest.log", "META", "Skipped sections"), sections.stream().map(DebugReport.Section::name).toList());
-        assertEquals(List.of(new DebugReport.Entry("BLOB", "1 section(s)")), sections.get(2).display().entries());
+        assertEquals(
+                List.of("latest.log", "META", "Skipped sections"),
+                sections.stream().map(DebugReport.Section::name).toList());
+        assertEquals(
+                List.of(new DebugReport.Entry("BLOB", "1 section(s)")),
+                sections.get(2).display().entries());
     }
 
     private static final String CHART = """
-            {"type": "radar", "unit": "ms", "data": {"render": [1, "2.5", null], "budget": [[0, 25], {"x": 1, "y": 25}]},
+            {"type": "line", "unit": "ms", "data": {"render": [1, "2.5", null], "budget": [[0, 25], {"x": 1, "y": 25}]},
              "custom": {"anything": true}}
             """;
 
     @Test
-    @DisplayName("A chart is kept as it was sent, whatever its type and data look like")
+    @DisplayName("A chart is kept as it was sent, whatever its data look like")
     void chartIsKept() throws Exception {
         var keys = stored("""
                 {"v": 2, "plugin": {"name": "x"}, "sections": [
@@ -313,25 +318,59 @@ class DebugReportServiceTest extends RepositoryTestBase {
                 ]}
                 """.formatted(CHART, CHART));
 
-        List<DebugReport.Section> sections = service.read(keys.hash()).orElseThrow().sections();
+        List<DebugReport.Section> sections =
+                service.read(keys.hash()).orElseThrow().sections();
 
         assertEquals(DebugEntryKind.CHART, sections.get(0).kind());
-        assertEquals(new ObjectMapper().readTree(CHART), sections.get(0).display().chart());
+        assertEquals(
+                new ObjectMapper().readTree(CHART), sections.get(0).display().chart());
         assertEquals(null, sections.get(1).display().chart());
+    }
+
+    @Test
+    @DisplayName("A chart of a type the viewer does not draw is left out and named in a metadata section")
+    void unknownChartTypesAreSkipped() {
+        var keys = stored("""
+                {"v": 2, "plugin": {"name": "x"}, "sections": [
+                  {"kind": "CHART", "name": "Spider", "chart": {"type": "radar", "data": {"speed": 3}}},
+                  {"kind": "CHART", "name": "Line", "chart": {"type": "line", "data": [1, 2]}}
+                ]}
+                """);
+
+        List<DebugReport.Section> sections =
+                service.read(keys.hash()).orElseThrow().sections();
+
+        assertEquals(
+                List.of("Line", "Skipped sections"),
+                sections.stream().map(DebugReport.Section::name).toList());
+        assertEquals(
+                List.of(new DebugReport.Entry("CHART radar", "1 section(s)")),
+                sections.get(1).display().entries());
     }
 
     @Test
     @DisplayName("A chart that breaks a limit is refused with a reason")
     void chartRefusals() {
         String one = "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [{\"kind\": \"CHART\", \"chart\": %s}]}";
-        assertReason("needs a chart object", "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [{\"kind\": \"CHART\"}]}");
+        assertReason(
+                "needs a chart object",
+                "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [{\"kind\": \"CHART\"}]}");
         assertReason("needs a type", one.formatted("{\"data\": [1]}"));
-        assertReason("needs a type", one.formatted("{\"type\": \"%s\", \"data\": [1]}".formatted("t".repeat(DebugReportService.MAX_CHART_TYPE + 1))));
+        assertReason(
+                "needs a type",
+                one.formatted("{\"type\": \"%s\", \"data\": [1]}"
+                        .formatted("t".repeat(DebugReportService.MAX_CHART_TYPE + 1))));
         assertReason("needs data", one.formatted("{\"type\": \"line\"}"));
         assertReason("nested deeper", one.formatted("{\"type\": \"line\", \"data\": [[[[[[1]]]]]]}"));
         String values = "1,".repeat(DebugReportService.MAX_CHART_VALUES + 1);
-        assertReason("more than 20000 values", one.formatted("{\"type\": \"line\", \"data\": [%s]}".formatted(values.substring(0, values.length() - 1))));
+        assertReason(
+                "more than 20000 values",
+                one.formatted(
+                        "{\"type\": \"line\", \"data\": [%s]}".formatted(values.substring(0, values.length() - 1))));
         String label = "\"%s\",".formatted("l".repeat(1000)).repeat(70);
-        assertReason("larger than", one.formatted("{\"type\": \"line\", \"data\": [%s]}".formatted(label.substring(0, label.length() - 1))));
+        assertReason(
+                "larger than",
+                one.formatted(
+                        "{\"type\": \"line\", \"data\": [%s]}".formatted(label.substring(0, label.length() - 1))));
     }
 }

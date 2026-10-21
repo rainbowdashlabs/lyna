@@ -124,20 +124,18 @@ public class DebugReportRepository {
     }
 
     private static List<Entry> entries(String json) {
-        if (json == null) return null;
-        try {
-            return List.of(JSON.readValue(json, Entry[].class));
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Stored entries are not a JSON array of entries", e);
-        }
+        return json == null ? null : List.of(JSON.convertValue(tree(json), Entry[].class));
     }
 
     private static JsonNode chart(String json) {
-        if (json == null) return null;
+        return json == null ? null : tree(json);
+    }
+
+    private static JsonNode tree(String json) {
         try {
             return JSON.readTree(json);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("A stored chart is not JSON", e);
+            throw new IllegalStateException("A stored display hint is not JSON", e);
         }
     }
 

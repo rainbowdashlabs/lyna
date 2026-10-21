@@ -15,6 +15,7 @@ import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.elements.DebugReports;
+import de.chojo.lyna.feature.debug.entity.ChartType;
 import de.chojo.lyna.feature.debug.entity.DebugEntryKind;
 import de.chojo.lyna.feature.debug.entity.DebugReport;
 import de.chojo.lyna.feature.debug.entity.DebugReport.Display;
@@ -47,8 +48,9 @@ import java.util.TreeMap;
  * stored as it is. Sections of a kind this service does not know are left out, and a metadata section says which; a
  * plugin built for a newer viewer thus never loses its whole report.
  *
- * <p>A chart is taken with whatever type and data it brings; only its size is limited. The viewer decides how to draw
- * it and shows the data as it is when it cannot.
+ * <p>A chart is taken with whatever data it brings; only its size is limited. Its type must be one the viewer draws
+ * ({@link ChartType}), a chart of another type is left out like a section of an unknown kind. The viewer shows the data
+ * as it is when it cannot draw it.
  *
  * <p>PostgreSQL text cannot hold a NUL character, and logs sometimes do, so those are dropped.
  */
@@ -149,13 +151,24 @@ public class DebugReportService {
             var section = uploaded.get(position);
             if (section == null) return new Submitted.Refused("Section %d is empty.".formatted(position));
             if (section.kind() == null || section.kind().isBlank()) {
-                return new Submitted.Refused("Section %d has no kind; known are %s."
-                        .formatted(position, List.of(DebugEntryKind.values())));
+                return new Submitted.Refused(
+                        "Section %d has no kind; known are %s.".formatted(position, List.of(DebugEntryKind.values())));
             }
             Optional<DebugEntryKind> kind = kind(section.kind());
             if (kind.isEmpty()) {
                 skipped.merge(section.kind(), 1, Integer::sum);
                 continue;
+            }
+            if (kind.get() == DebugEntryKind.CHART) {
+                Optional<String> problem = chartProblem(section.chart());
+                if (problem.isPresent()) {
+                    return new Submitted.Refused("Section %d %s".formatted(position, problem.get()));
+                }
+                String type = section.chart().get("type").asText();
+                if (ChartType.of(type).isEmpty()) {
+                    skipped.merge("CHART " + type, 1, Integer::sum);
+                    continue;
+                }
             }
             String name = name(section.name(), kind.get().name());
             if (name.length() > MAX_NAME) {
@@ -215,19 +228,21 @@ public class DebugReportService {
         if (tooLong(section.firstSeen()) || tooLong(section.lastSeen())) {
             return Optional.of("has a time longer than %d characters.".formatted(MAX_TIME));
         }
-        if (kind == DebugEntryKind.CHART) return chartProblem(section.chart());
         return Optional.empty();
     }
 
     /**
-     * Checks a chart's limits. Its shape is not checked: the viewer interprets whatever data it gets.
+     * Checks a chart's limits. The shape of its data is not checked: the viewer interprets whatever it gets.
      */
     private Optional<String> chartProblem(JsonNode chart) {
         if (chart == null || !chart.isObject()) {
             return Optional.of("is a chart and needs a chart object.");
         }
         JsonNode type = chart.get("type");
-        if (type == null || !type.isTextual() || type.asText().isBlank() || type.asText().length() > MAX_CHART_TYPE) {
+        if (type == null
+                || !type.isTextual()
+                || type.asText().isBlank()
+                || type.asText().length() > MAX_CHART_TYPE) {
             return Optional.of("is a chart and needs a type of at most %d characters.".formatted(MAX_CHART_TYPE));
         }
         if (!chart.has("data") || chart.get("data").isNull()) {

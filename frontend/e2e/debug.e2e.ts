@@ -116,7 +116,7 @@ test.describe('Debug reports in the second format', () => {
         await expect(page.getByText('zombie.json', {exact: true})).toBeVisible()
     })
 
-    test('charts: drawn in their own tab, data that cannot be drawn shown as sent, unknown kinds named', async ({page, request}) => {
+    test('charts: drawn in their own tab, data that cannot be drawn shown as sent, unknown kinds and chart types named', async ({page, request}) => {
         const charted = {
             ...report('Charted', '1.0.0'),
             sections: [
@@ -139,13 +139,13 @@ test.describe('Debug reports in the second format', () => {
         await page.goto(`/debug/${receipt.readKey}`)
         await expect(page.getByText('charts drawn')).toBeVisible()
         await expect(page.getByText('TIMELINE', {exact: true})).toBeVisible()
+        await expect(page.getByText('CHART radar', {exact: true})).toBeVisible()
 
         await page.getByRole('tab', {name: /Charts/}).click()
         await expect(page.locator('x-vue-echarts')).toHaveCount(9)
         await expect(page.locator('x-vue-echarts canvas').first()).toBeVisible()
-        await expect(page.getByText('cannot draw a radar chart', {exact: false})).toBeVisible()
         await expect(page.getByText('cannot draw a line chart', {exact: false})).toBeVisible()
-        await expect(page.getByText('"speed": 3', {exact: false})).toBeVisible()
+        await expect(page.getByText('"render": "fast"', {exact: false})).toBeVisible()
     })
 
     test('a report without charts has no charts tab', async ({page, request}) => {
