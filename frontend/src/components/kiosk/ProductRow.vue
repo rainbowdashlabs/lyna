@@ -16,6 +16,8 @@ defineProps<{
     product: KioskProduct
     /** Whether anybody is signed in, which decides whether to offer the linking hint. */
     signedIn: boolean
+    /** The product this one is an add-on of, or null when it stands on its own. */
+    parentName?: string | null
 }>()
 
 defineEmits<{
@@ -26,7 +28,7 @@ const {t} = useI18n()
 </script>
 
 <template>
-  <li class="flex flex-col gap-3 p-4 sm:flex-row sm:items-start">
+  <li :class="product.parentId != null ? 'py-4 pr-4 pl-12' : 'p-4'" class="flex flex-col gap-3 sm:flex-row sm:items-start">
     <ProductIcon :icon-url="product.iconUrl" :name="product.name"/>
     <div class="min-w-0 flex-1 space-y-1">
       <div class="flex flex-wrap items-center gap-2">
@@ -36,7 +38,9 @@ const {t} = useI18n()
         <NeutralBadge v-if="product.free">{{ t('ui.productTile.free') }}</NeutralBadge>
         <SecondaryBadge v-else-if="product.entitled">{{ t('ui.productTile.owned') }}</SecondaryBadge>
         <NeutralBadge v-else>{{ t('ui.productTile.premium') }}</NeutralBadge>
+        <NeutralBadge v-if="product.parentId != null">{{ t('common.addon.addon') }}</NeutralBadge>
       </div>
+      <MutedText v-if="parentName" size="xs" tag="p">{{ t('common.addon.requires', {name: parentName}) }}</MutedText>
       <MutedText v-if="product.summary" size="sm" tag="p">{{ product.summary }}</MutedText>
       <MutedText v-if="product.latestVersion" class="font-data" size="xs" tag="p">
         {{ t('ui.productTile.latest', {version: product.latestVersion, date: formatDate(product.updatedAt)}) }}

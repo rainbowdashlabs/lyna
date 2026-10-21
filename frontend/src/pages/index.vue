@@ -112,7 +112,7 @@ function clearFilters() {
             <SecondaryButton compact @click="clearFilters">{{ t('page.home.clearFilters') }}</SecondaryButton>
           </EmptyState>
         </template>
-        <ProductCatalogue :products="shown" :signed-in="signedIn" :view="view" @download="wizardProduct = $event"/>
+        <ProductCatalogue :catalogue="products" :products="shown" :signed-in="signedIn" :view="view" @download="wizardProduct = $event"/>
       </AsyncSection>
     </section>
 

@@ -21,6 +21,7 @@ defineProps<{ product: KioskProductDetail }>()
         <NeutralBadge v-if="product.free">{{ t('ui.productTile.free') }}</NeutralBadge>
         <SecondaryBadge v-else-if="product.entitled">{{ t('ui.productTile.owned') }}</SecondaryBadge>
         <NeutralBadge v-else>{{ t('ui.productTile.premium') }}</NeutralBadge>
+        <NeutralBadge v-if="product.parent">{{ t('common.addon.addon') }}</NeutralBadge>
         <a
             v-if="product.url"
             :href="product.url"

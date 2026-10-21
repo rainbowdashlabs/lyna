@@ -18,6 +18,7 @@ import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.kiosk.service.DescriptionAbstract;
 import de.chojo.lyna.feature.kiosk.service.ProductPageService;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
+import de.chojo.lyna.feature.product.service.ProductFamilyService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -95,16 +96,6 @@ public class Products {
     }
 
     /**
-     * Where a tile fetches the icon from.
-     *
-     * <p>An uploaded icon is served by this instance; otherwise whatever address an operator
-     * configured, which may be nothing at all.
-     */
-    private static String iconAddress(KioskProduct product, boolean uploaded) {
-        return uploaded ? "/api/v1/products/%d/icon".formatted(product.id()) : product.iconUrl();
-    }
-
-    /**
      * One product, with what it says about itself.
      *
      * <p>The description is here rather than in the catalogue because it is markdown and a grid of
@@ -118,13 +109,20 @@ public class Products {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        kiosk.byId(productId)
+        List<KioskProduct> catalogue = kiosk.all();
+        catalogue.stream()
+                .filter(product -> product.id() == productId)
+                .findFirst()
                 .ifPresentOrElse(
-                        product -> ctx.json(KioskDetail.of(
-                                product,
-                                entitlements(ctx).contains(product.id()),
-                                icons.of(product.id()).isPresent(),
-                                pages.page(product))),
+                        product -> {
+                            Set<Integer> entitled = entitlements(ctx);
+                            ctx.json(KioskDetail.of(
+                                    product,
+                                    entitled,
+                                    icons.withIcon(),
+                                    pages.page(product),
+                                    ProductFamilyService.family(product, catalogue)));
+                        },
                         () -> ctx.status(HttpStatus.NOT_FOUND));
     }
 
@@ -205,6 +203,7 @@ public class Products {
      * @param updatedAt     when it was published, or null when there is none
      * @param summary       the first lines of its description as plain text, for the list view; null
      *                      when it has none
+     * @param parentId      the product this one is an add-on of, or null
      */
     private record KioskEntry(
             int id,
@@ -217,7 +216,8 @@ public class Products {
             boolean entitled,
             String latestVersion,
             @JsonFormat(shape = JsonFormat.Shape.STRING) Instant updatedAt,
-            String summary) {
+            String summary,
+            Integer parentId) {
         static KioskEntry of(
                 KioskProduct product,
                 boolean entitled,
@@ -228,13 +228,14 @@ public class Products {
                     Long.toString(product.guildId()),
                     product.name(),
                     product.url(),
-                    iconAddress(product, uploaded),
+                    RelatedProduct.iconAddress(product, uploaded),
                     product.free(),
                     product.purchaseUrl(),
                     entitled,
                     latest.map(ProductVersionService.VersionView::version).orElse(null),
                     latest.map(ProductVersionService.VersionView::publishedAt).orElse(null),
-                    DescriptionAbstract.of(product.description()));
+                    DescriptionAbstract.of(product.description()),
+                    product.parentId());
         }
     }
 
@@ -249,6 +250,9 @@ public class Products {
      * @param readmeUrl   the README's page on GitHub, when the page shows it
      * @param trial       whether somebody without a license may download it once to try it
      * @param wikiUrl     the product's documentation, or null when it has none
+     * @param parent      the product this one is an add-on of, or null
+     * @param addons      the add-ons of this product
+     * @param similar     the other add-ons of this product's parent
      */
     private record KioskDetail(
             int id,
@@ -263,22 +267,33 @@ public class Products {
             ProductPageService.Source pageSource,
             String readmeUrl,
             boolean trial,
-            String wikiUrl) {
-        static KioskDetail of(KioskProduct product, boolean entitled, boolean uploaded, ProductPageService.Page page) {
+            String wikiUrl,
+            RelatedProduct parent,
+            List<RelatedProduct> addons,
+            List<RelatedProduct> similar) {
+        static KioskDetail of(
+                KioskProduct product,
+                Set<Integer> entitled,
+                Set<Integer> uploaded,
+                ProductPageService.Page page,
+                ProductFamilyService.Family family) {
             return new KioskDetail(
                     product.id(),
                     Long.toString(product.guildId()),
                     product.name(),
                     product.url(),
-                    iconAddress(product, uploaded),
+                    RelatedProduct.iconAddress(product, uploaded.contains(product.id())),
                     product.free(),
                     product.purchaseUrl(),
-                    entitled,
+                    entitled.contains(product.id()),
                     page.markdown(),
                     page.source(),
                     page.readmeUrl(),
                     product.trial(),
-                    product.wikiUrl());
+                    product.wikiUrl(),
+                    family.parent() == null ? null : RelatedProduct.of(family.parent(), uploaded, entitled),
+                    RelatedProduct.of(family.addons(), uploaded, entitled),
+                    RelatedProduct.of(family.similar(), uploaded, entitled));
         }
     }
 }

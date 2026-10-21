@@ -83,6 +83,7 @@ onMounted(load)
             </MutedText>
             <ProductDetailActions :product="product" :signed-in="signedIn" @download="openWizard()"/>
             <ProductTrial v-if="product.trial && !product.free && !product.entitled" :product="product" :signed-in="signedIn"/>
+            <ProductFamily :product="product"/>
           </div>
           <ProductVersions
               :product="product"

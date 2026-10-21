@@ -21,6 +21,17 @@ export interface KioskProduct {
     updatedAt: string | null
     /** The first lines of its description as plain text, or null when it has none. */
     summary: string | null
+    /** The product this one is an add-on of, or null when it stands on its own. */
+    parentId: number | null
+}
+
+/** A product named on another one's page, with whether this visitor has it already. */
+export interface RelatedProduct {
+    id: number
+    name: string
+    iconUrl: string | null
+    free: boolean
+    entitled: boolean
 }
 
 /**
@@ -40,6 +51,12 @@ export interface KioskProductDetail extends KioskProduct {
     trial: boolean
     /** The product's documentation, or null when it has none. */
     wikiUrl: string | null
+    /** The product this one is an add-on of, or null. */
+    parent: RelatedProduct | null
+    /** This product's add-ons. */
+    addons: RelatedProduct[]
+    /** The other add-ons of this product's parent. */
+    similar: RelatedProduct[]
 }
 
 /**
