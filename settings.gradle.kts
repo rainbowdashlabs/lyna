@@ -24,7 +24,7 @@ dependencyResolutionManagement {
             library("guice", "com.google.inject:guice:7.0.0")
             library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.3.1")
 
-            library("ocular", "dev.chojo:ocular:2.3.0")
+            library("ocular", "dev.chojo:ocular:2.3.1")
             version("jackson", "3.2.4")
             library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
             bundle("config", listOf("ocular", "jackson-yaml"))
