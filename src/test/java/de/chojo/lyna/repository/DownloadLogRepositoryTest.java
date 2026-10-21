@@ -199,5 +199,25 @@ class DownloadLogRepositoryTest extends RepositoryTestBase {
         List<DownloadLogRepository.ProductOption> options = downloadLog.productsForAccount(account.id());
         assertEquals(1, options.size());
         assertEquals("Chatty", options.getFirst().name());
+        assertNull(options.getFirst().parentId());
+        assertNull(options.getFirst().parentName());
+    }
+
+    @Test
+    @DisplayName("An add-on's filter option names the product it belongs to")
+    void productOptionsNameTheParent() throws SQLException {
+        int parentId;
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
+            parentId = insert(statement, """
+                    INSERT INTO product (guild_id, name, role) VALUES (%d, 'Base', 1) RETURNING id
+                    """.formatted(GUILD_ID));
+            statement.execute("UPDATE product SET parent_id = %d WHERE id = %d".formatted(parentId, productId));
+        }
+        downloadLog.record(account.id(), null, null, productId, downloadId, "1.0.0", "free", null, null);
+
+        var option = downloadLog.productsForAccount(account.id()).getFirst();
+        assertEquals(parentId, option.parentId());
+        assertEquals("Base", option.parentName());
     }
 }

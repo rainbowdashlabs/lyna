@@ -8,6 +8,7 @@ import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {listLicenses, type LicenseList, type LicenseView} from '~/api/account'
 import {usePageTitle} from '~/composables/usePageTitle'
+import {productFamilies} from '~/util/productFamilies'
 
 const {t} = useI18n()
 usePageTitle(t('layout.account.licenses'))
@@ -44,6 +45,7 @@ function matching(licenses: LicenseView[]): LicenseView[] {
 }
 
 const shown = computed(() => matching(tab.value === 'owned' ? data.value?.owned ?? [] : data.value?.shared ?? []))
+const families = computed(() => productFamilies(shown.value, license => license.productId, license => license.parentId))
 const anyLicenses = computed(() => (data.value?.owned.length ?? 0) + (data.value?.shared.length ?? 0) > 0)
 </script>
 
@@ -58,7 +60,17 @@ const anyLicenses = computed(() => (data.value?.owned.length ?? 0) + (data.value
         <TabBar v-model="tab" :tabs="tabs" class="mb-4"/>
         <SearchInput v-if="anyLicenses" v-model="search" class="mb-4" :placeholder="t('page.account.licenses.searchByProduct')"/>
         <div v-if="shown.length" class="space-y-2">
-          <LicenseRow v-for="license in shown" :key="license.id" :license="license"/>
+          <template v-for="family in families" :key="family.productId">
+            <LicenseRow v-for="license in family.heads" :key="license.id" :license="license"/>
+            <NuxtLink
+                v-if="!family.heads.length && family.addons[0]"
+                :to="`/products/${family.productId}`"
+                class="block px-3 text-sm text-(--text-muted) hover:text-(--text)"
+            >
+              {{ family.addons[0].parentName }}
+            </NuxtLink>
+            <LicenseRow v-for="license in family.addons" :key="license.id" :license="license" addon/>
+          </template>
         </div>
         <EmptyHint v-else-if="search">{{ t('page.account.licenses.noLicenseMatchesThatName') }}</EmptyHint>
         <EmptyHint v-else-if="tab === 'owned'">

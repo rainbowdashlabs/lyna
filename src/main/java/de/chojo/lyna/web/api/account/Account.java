@@ -27,10 +27,13 @@ import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.web.api.auth.Auth;
 import de.chojo.lyna.web.api.auth.SessionCookie;
+import de.chojo.lyna.web.api.v1.products.ProductFamilyViews;
+import de.chojo.lyna.web.api.v1.products.RelatedProduct;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import org.slf4j.Logger;
@@ -73,6 +76,7 @@ public class Account {
     private final PasswordHasher passwordHasher;
     private final JwtService jwtService;
     private final DiscordConnectionService discordConnections;
+    private final ProductFamilyViews families;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Inject
@@ -93,8 +97,10 @@ public class Account {
             PasswordHasher passwordHasher,
             JwtService jwtService,
             DiscordConnectionService discordConnections,
-            AccountRoleSync roleSync) {
+            AccountRoleSync roleSync,
+            ProductFamilyViews families) {
         this.roleSync = roleSync;
+        this.families = families;
         this.auth = auth;
         this.accountService = accountService;
         this.usernameService = usernameService;
@@ -483,9 +489,14 @@ public class Account {
         var session = require(ctx);
         if (session.isEmpty()) return;
         int accountId = session.get().accountId();
+        Map<Integer, KioskProduct> catalogue = families.catalogue();
         ctx.json(new LicenseList(
-                licenses.owned(accountId).stream().map(Account::toView).toList(),
-                licenses.shared(accountId).stream().map(Account::toView).toList()));
+                licenses.owned(accountId).stream()
+                        .map(license -> toView(license, catalogue))
+                        .toList(),
+                licenses.shared(accountId).stream()
+                        .map(license -> toView(license, catalogue))
+                        .toList()));
     }
 
     /**
@@ -530,7 +541,7 @@ public class Account {
         }
         List<ShareeView> sharees = license.get().role() == AccountLicense.Role.OWNER ? shareesOf(licenseId) : List.of();
         ctx.json(new LicenseDetail(
-                toView(license.get()),
+                toView(license.get(), families.catalogue()),
                 licenses.keyForHolder(licenseId, session.get().accountId()).orElse(null),
                 sharees,
                 downloadLog.recentForLicense(
@@ -538,7 +549,8 @@ public class Account {
                         license.get().role() == AccountLicense.Role.OWNER
                                 ? null
                                 : session.get().accountId(),
-                        10)));
+                        10),
+                families.addons(license.get().productId(), session.get().accountId())));
     }
 
     /**
@@ -713,7 +725,13 @@ public class Account {
         }
     }
 
-    private static LicenseView toView(AccountLicense license) {
+    /**
+     * @param catalogue every product by id, to name the one the licence's product is an add-on of
+     */
+    private static LicenseView toView(AccountLicense license, Map<Integer, KioskProduct> catalogue) {
+        KioskProduct product = catalogue.get(license.productId());
+        Integer parentId = product == null ? null : product.parentId();
+        KioskProduct parent = parentId == null ? null : catalogue.get(parentId);
         return new LicenseView(
                 license.id(),
                 Long.toString(license.guildId()),
@@ -725,7 +743,9 @@ public class Account {
                 license.role().name().toLowerCase(),
                 Integer.toString(license.ownerAccountId()),
                 license.shareesUsed(),
-                license.shareesCap());
+                license.shareesCap(),
+                parentId,
+                parent == null ? null : parent.name());
     }
 
     /**
@@ -764,6 +784,10 @@ public class Account {
 
     public record Confirm(String confirmEmail) {}
 
+    /**
+     * @param parentId   the product this licence's product is an add-on of, or null
+     * @param parentName that product's name, or null
+     */
     public record LicenseView(
             int id,
             String guildId,
@@ -775,12 +799,21 @@ public class Account {
             String role,
             String ownerAccountId,
             int shareesUsed,
-            int shareesCap) {}
+            int shareesCap,
+            Integer parentId,
+            String parentName) {}
 
     public record LicenseList(List<LicenseView> owned, List<LicenseView> shared) {}
 
+    /**
+     * @param addons the add-ons of the licence's product, each saying whether this account has it
+     */
     public record LicenseDetail(
-            LicenseView license, String key, List<ShareeView> sharees, List<DownloadLogEntry> recentDownloads) {}
+            LicenseView license,
+            String key,
+            List<ShareeView> sharees,
+            List<DownloadLogEntry> recentDownloads,
+            List<RelatedProduct> addons) {}
 
     public record DownloadPage(
             List<DownloadLogEntry> rows,
