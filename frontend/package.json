@@ -34,10 +34,12 @@
     "@tailwindcss/vite": "^4.2.4",
     "axios": "^1.16.0",
     "dompurify": "^3.4.15",
+    "echarts": "^6.1.0",
     "marked": "^18.0.13",
     "nuxt": "^4.4.8",
     "tailwindcss": "^4.2.4",
     "vue": "^3.5.32",
+    "vue-echarts": "^8.3.2",
     "vue-i18n": "^11.4.2",
     "vue-router": "^5.0.6"
   },

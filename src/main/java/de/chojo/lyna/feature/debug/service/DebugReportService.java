@@ -30,8 +30,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * Takes debug reports from plugins and hands them to whoever holds the link.
@@ -42,7 +44,11 @@ import java.util.Optional;
  *
  * <p>Two formats are taken. The first is UpdateButler's, still sent by deployed plugins; the second hands over the
  * sections themselves, so the client decides what a report holds. Redacting is the client's job: what arrives is
- * stored as it is.
+ * stored as it is. Sections of a kind this service does not know are left out, and a metadata section says which; a
+ * plugin built for a newer viewer thus never loses its whole report.
+ *
+ * <p>A chart is taken with whatever type and data it brings; only its size is limited. The viewer decides how to draw
+ * it and shows the data as it is when it cannot.
  *
  * <p>PostgreSQL text cannot hold a NUL character, and logs sometimes do, so those are dropped.
  */
@@ -54,6 +60,10 @@ public class DebugReportService {
     public static final int MAX_NAME = 200;
     public static final int MAX_ENTRIES = 200;
     public static final int MAX_TIME = 32;
+    public static final int MAX_CHART_TYPE = 32;
+    public static final int MAX_CHART_BYTES = 64 * 1024;
+    public static final int MAX_CHART_DEPTH = 5;
+    public static final int MAX_CHART_VALUES = 20_000;
 
     private final DebugReportRepository reports;
     private final DebugReports settings;
@@ -134,13 +144,18 @@ public class DebugReportService {
                     "A report holds at most %d sections, this one has %d.".formatted(MAX_SECTIONS, uploaded.size()));
         }
         List<NewSection> sections = new ArrayList<>();
+        Map<String, Integer> skipped = new TreeMap<>();
         for (int position = 0; position < uploaded.size(); position++) {
             var section = uploaded.get(position);
             if (section == null) return new Submitted.Refused("Section %d is empty.".formatted(position));
+            if (section.kind() == null || section.kind().isBlank()) {
+                return new Submitted.Refused("Section %d has no kind; known are %s."
+                        .formatted(position, List.of(DebugEntryKind.values())));
+            }
             Optional<DebugEntryKind> kind = kind(section.kind());
             if (kind.isEmpty()) {
-                return new Submitted.Refused("Section %d has the unknown kind %s; known are %s."
-                        .formatted(position, section.kind(), List.of(DebugEntryKind.values())));
+                skipped.merge(section.kind(), 1, Integer::sum);
+                continue;
             }
             String name = name(section.name(), kind.get().name());
             if (name.length() > MAX_NAME) {
@@ -153,13 +168,28 @@ public class DebugReportService {
             }
             sections.add(new NewSection(kind.get(), name, content(section.content()), display(kind.get(), section)));
         }
+        if (!skipped.isEmpty()) sections.add(skippedNote(skipped));
         return store(submission.plugin(), submission.server(), sections, 2);
+    }
+
+    /**
+     * A metadata section naming the kinds that were left out and how many sections each had.
+     */
+    private static NewSection skippedNote(Map<String, Integer> skipped) {
+        var entries = skipped.entrySet().stream()
+                .map(entry -> new DebugReport.Entry(entry.getKey(), "%d section(s)".formatted(entry.getValue())))
+                .toList();
+        return new NewSection(
+                DebugEntryKind.META,
+                "Skipped sections",
+                "This viewer does not know these kinds of sections, so they are not shown.",
+                new Display(null, null, entries, null, null, null, null));
     }
 
     /**
      * @return what is wrong with how the section asks to be shown, as the end of a sentence naming it
      */
-    private static Optional<String> displayProblem(DebugEntryKind kind, DebugSubmissionV2.Section section) {
+    private Optional<String> displayProblem(DebugEntryKind kind, DebugSubmissionV2.Section section) {
         if (section.format() != null && !Display.FORMATS.contains(section.format())) {
             return Optional.of("has the unknown format %s; known are %s.".formatted(section.format(), Display.FORMATS));
         }
@@ -185,12 +215,61 @@ public class DebugReportService {
         if (tooLong(section.firstSeen()) || tooLong(section.lastSeen())) {
             return Optional.of("has a time longer than %d characters.".formatted(MAX_TIME));
         }
+        if (kind == DebugEntryKind.CHART) return chartProblem(section.chart());
         return Optional.empty();
     }
 
     /**
+     * Checks a chart's limits. Its shape is not checked: the viewer interprets whatever data it gets.
+     */
+    private Optional<String> chartProblem(JsonNode chart) {
+        if (chart == null || !chart.isObject()) {
+            return Optional.of("is a chart and needs a chart object.");
+        }
+        JsonNode type = chart.get("type");
+        if (type == null || !type.isTextual() || type.asText().isBlank() || type.asText().length() > MAX_CHART_TYPE) {
+            return Optional.of("is a chart and needs a type of at most %d characters.".formatted(MAX_CHART_TYPE));
+        }
+        if (!chart.has("data") || chart.get("data").isNull()) {
+            return Optional.of("is a chart and needs data.");
+        }
+        if (bytes(chart) > MAX_CHART_BYTES) {
+            return Optional.of("has a chart larger than %d bytes.".formatted(MAX_CHART_BYTES));
+        }
+        if (depth(chart) > MAX_CHART_DEPTH) {
+            return Optional.of("has a chart nested deeper than %d levels.".formatted(MAX_CHART_DEPTH));
+        }
+        if (values(chart) > MAX_CHART_VALUES) {
+            return Optional.of("has a chart with more than %d values.".formatted(MAX_CHART_VALUES));
+        }
+        return Optional.empty();
+    }
+
+    private int bytes(JsonNode node) {
+        try {
+            return json.writeValueAsBytes(node).length;
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("A parsed chart could not be written back as JSON", e);
+        }
+    }
+
+    private static int depth(JsonNode node) {
+        if (!node.isContainerNode()) return 0;
+        int deepest = 0;
+        for (JsonNode child : node) deepest = Math.max(deepest, depth(child));
+        return deepest + 1;
+    }
+
+    private static int values(JsonNode node) {
+        if (!node.isContainerNode()) return 1;
+        int count = 0;
+        for (JsonNode child : node) count += values(child);
+        return count;
+    }
+
+    /**
      * Keeps of the display hints what fits the kind: a level on a check, entries on metadata, counts and times on
-     * exceptions.
+     * exceptions, the chart on a chart.
      */
     private static Display display(DebugEntryKind kind, DebugSubmissionV2.Section section) {
         boolean exception = kind == DebugEntryKind.INTERNAL_EXCEPTION || kind == DebugEntryKind.EXTERNAL_EXCEPTION;
@@ -205,7 +284,8 @@ public class DebugReportService {
                 entries,
                 exception ? section.count() : null,
                 exception ? section.firstSeen() : null,
-                exception ? section.lastSeen() : null);
+                exception ? section.lastSeen() : null,
+                kind == DebugEntryKind.CHART ? section.chart() : null);
     }
 
     private static boolean tooLong(String time) {
@@ -241,6 +321,7 @@ public class DebugReportService {
         if (display.occurrences() != null) node.put("occurrences", display.occurrences());
         if (display.firstSeen() != null) node.put("firstSeen", display.firstSeen());
         if (display.lastSeen() != null) node.put("lastSeen", display.lastSeen());
+        if (display.chart() != null) node.set("chart", display.chart());
         return node;
     }
 

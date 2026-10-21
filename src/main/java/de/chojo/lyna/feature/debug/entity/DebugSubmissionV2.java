@@ -37,5 +37,6 @@ public record DebugSubmissionV2(int v, JsonNode plugin, JsonNode server, List<Se
             List<DebugReport.Entry> entries,
             Integer count,
             String firstSeen,
-            String lastSeen) {}
+            String lastSeen,
+            JsonNode chart) {}
 }

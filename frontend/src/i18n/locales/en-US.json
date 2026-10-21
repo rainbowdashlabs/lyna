@@ -615,6 +615,7 @@
     },
     "debugSectionTabs": {
       "overview": "Overview",
+      "charts": "Charts",
       "logs": "Logs",
       "exceptions": "Exceptions",
       "configs": "Configs",
@@ -656,7 +657,11 @@
       "errors": "errors in the log",
       "warnings": "warnings in the log",
       "exceptions": "exceptions collected",
-      "plugins": "plugins installed"
+      "plugins": "plugins installed",
+      "charts": "charts drawn"
+    },
+    "debugChart": {
+      "raw": "This viewer cannot draw a {type} chart from this data, so it is shown as sent."
     },
     "releaseWebhookPanel": {
       "title": "Release announcements",

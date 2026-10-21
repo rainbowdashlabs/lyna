@@ -36,5 +36,10 @@ public enum DebugEntryKind {
     /**
      * The outcome of a health check the plugin ran, with its level.
      */
-    CHECK
+    CHECK,
+    /**
+     * A chart the plugin drew from its own data. Its type and data are taken as they come; the viewer decides how to
+     * draw them.
+     */
+    CHART
 }
