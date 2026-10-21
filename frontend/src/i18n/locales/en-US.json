@@ -295,7 +295,11 @@
         "noSuchProduct": "There is no such product.",
         "couldNotLoad": "Could not load this product.",
         "notAvailableHere": "This one is not offered here.",
-        "fromReadme": "From the project's README on GitHub"
+        "fromReadme": "From the project's README on GitHub",
+        "tabs": {
+          "overview": "Overview",
+          "releases": "Release notes"
+        }
       }
     },
     "debug": {
@@ -917,6 +921,13 @@
     "raisedAllowanceRow": {
       "inUse": "{used} in use",
       "extra": "Extra"
+    },
+    "productReleaseNotes": {
+      "couldNotLoad": "The release notes could not be loaded.",
+      "noneYet": "Nothing has been released on GitHub yet.",
+      "prerelease": "Pre-release",
+      "noNotes": "This release came without notes.",
+      "onGithub": "On GitHub"
     }
   },
   "preview": {

@@ -20,6 +20,7 @@ import de.chojo.lyna.feature.kiosk.service.ProductPageService;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.product.service.ProductFamilyService;
 import de.chojo.lyna.feature.releasenotes.entity.GithubRelease;
+import de.chojo.lyna.feature.releasenotes.entity.GithubRepository;
 import de.chojo.lyna.feature.releasenotes.service.ReleaseNotesService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
@@ -281,6 +282,7 @@ public class Products {
      * @param parent      the product this one is an add-on of, or null
      * @param addons      the add-ons of this product
      * @param similar     the other add-ons of this product's parent
+     * @param releaseNotes whether the product names a GitHub repository, whose releases its page can show
      */
     private record KioskDetail(
             int id,
@@ -298,7 +300,8 @@ public class Products {
             String wikiUrl,
             RelatedProduct parent,
             List<RelatedProduct> addons,
-            List<RelatedProduct> similar) {
+            List<RelatedProduct> similar,
+            boolean releaseNotes) {
         static KioskDetail of(
                 KioskProduct product,
                 Set<Integer> entitled,
@@ -321,7 +324,8 @@ public class Products {
                     product.wikiUrl(),
                     family.parent() == null ? null : RelatedProduct.of(family.parent(), uploaded, entitled),
                     RelatedProduct.of(family.addons(), uploaded, entitled),
-                    RelatedProduct.of(family.similar(), uploaded, entitled));
+                    RelatedProduct.of(family.similar(), uploaded, entitled),
+                    GithubRepository.of(product.url()).isPresent());
         }
     }
 
