@@ -19,6 +19,8 @@ import de.chojo.lyna.feature.kiosk.service.DescriptionAbstract;
 import de.chojo.lyna.feature.kiosk.service.ProductPageService;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.product.service.ProductFamilyService;
+import de.chojo.lyna.feature.releasenotes.entity.GithubRelease;
+import de.chojo.lyna.feature.releasenotes.service.ReleaseNotesService;
 import de.chojo.lyna.web.api.auth.Auth;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
@@ -49,6 +51,7 @@ public class Products {
     private final ProductPageService pages;
     private final ProductLookup productLookup;
     private final ProductVersionService versions;
+    private final ReleaseNotesService releaseNotes;
 
     @Inject
     public Products(
@@ -60,7 +63,9 @@ public class Products {
             ProductIconService productIcons,
             ProductPageService pages,
             ProductLookup productLookup,
-            ProductVersionService versions) {
+            ProductVersionService versions,
+            ReleaseNotesService releaseNotes) {
+        this.releaseNotes = releaseNotes;
         this.pages = pages;
         this.productLookup = productLookup;
         this.versions = versions;
@@ -78,6 +83,7 @@ public class Products {
             path("{productId}", () -> {
                 get(this::detail);
                 get("icon", this::icon);
+                get("release-notes", this::releaseNotes);
             });
         });
     }
@@ -123,6 +129,28 @@ public class Products {
                                     pages.page(product),
                                     ProductFamilyService.family(product, catalogue)));
                         },
+                        () -> ctx.status(HttpStatus.NOT_FOUND));
+    }
+
+    /**
+     * The release notes of the GitHub repository a product names, newest first.
+     *
+     * <p>Public, as the page they are shown on is. A product that names no GitHub repository has none,
+     * which is an empty list rather than an error.
+     */
+    private void releaseNotes(Context ctx) {
+        int productId;
+        try {
+            productId = Integer.parseInt(ctx.pathParam("productId"));
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.NOT_FOUND);
+            return;
+        }
+        kiosk.byId(productId)
+                .ifPresentOrElse(
+                        product -> ctx.json(releaseNotes.releases(product.url()).stream()
+                                .map(ReleaseNote::of)
+                                .toList()),
                         () -> ctx.status(HttpStatus.NOT_FOUND));
     }
 
@@ -294,6 +322,29 @@ public class Products {
                     family.parent() == null ? null : RelatedProduct.of(family.parent(), uploaded, entitled),
                     RelatedProduct.of(family.addons(), uploaded, entitled),
                     RelatedProduct.of(family.similar(), uploaded, entitled));
+        }
+    }
+
+    /**
+     * @param name a title, or null when the release goes by its tag
+     * @param body markdown, rendered where it is shown; null when the release has no notes
+     * @param url  the release on GitHub
+     */
+    private record ReleaseNote(
+            String tag,
+            String name,
+            String body,
+            String url,
+            boolean prerelease,
+            @JsonFormat(shape = JsonFormat.Shape.STRING) Instant publishedAt) {
+        static ReleaseNote of(GithubRelease release) {
+            return new ReleaseNote(
+                    release.tag(),
+                    release.name(),
+                    release.body(),
+                    release.url(),
+                    release.prerelease(),
+                    release.publishedAt());
         }
     }
 }
