@@ -15,7 +15,14 @@
     "authors": "Authors",
     "dependsOn": "Depends on",
     "admin": "Admin",
-    "siteName": "Lyna"
+    "siteName": "Lyna",
+    "addon": {
+      "addon": "Add-on",
+      "addons": "Add-ons",
+      "belongsTo": "Belongs to",
+      "requires": "Requires {name}",
+      "similar": "Similar"
+    }
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -568,7 +575,10 @@
       "wikiUrl": "Wiki URL",
       "wikiHint": "Shown on the product page and linked from its purchase mail.",
       "reviewUrl": "Review URL",
-      "reviewHint": "Where the purchase mail asks a buyer to leave a review."
+      "reviewHint": "Where the purchase mail asks a buyer to leave a review.",
+      "standsOnItsOwn": "Nothing, it stands on its own",
+      "belongsToHint": "Makes this an add-on of that product. Shown on its page and in every list; it does not change who may download it.",
+      "hasAddonsHint": "This product has add-ons, so it cannot be an add-on itself."
     },
     "productVersions": {
       "versions": "Versions",

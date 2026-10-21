@@ -32,10 +32,10 @@ public class ProductFamilyService {
     }
 
     /**
-     * What came of asking for a product's parent to change.
+     * Whether a product's parent may change, and why not when it may not.
      */
     public enum ParentChange {
-        DONE,
+        OK,
         NO_SUCH_PRODUCT,
         SELF,
         NO_SUCH_PARENT,
@@ -53,25 +53,37 @@ public class ProductFamilyService {
     public record Family(KioskProduct parent, List<KioskProduct> addons, List<KioskProduct> similar) {}
 
     /**
-     * Makes a product an add-on of another, or a product of its own again.
+     * Asks whether a product may become an add-on of another, or a product of its own again,
+     * without changing anything.
      *
-     * @param parentId the product it becomes an add-on of, or null to make it stand on its own
-     * @return {@link ParentChange#DONE} when it was changed; otherwise why it was not
+     * @param parentId the product it would become an add-on of, or null to make it stand on its own
+     * @return {@link ParentChange#OK} when it may; otherwise why it may not
      */
-    public ParentChange parent(int productId, Integer parentId) {
+    public ParentChange check(int productId, Integer parentId) {
         var product = repository.standing(productId);
         if (product.isEmpty()) return ParentChange.NO_SUCH_PRODUCT;
-        if (parentId != null) {
-            if (parentId == productId) return ParentChange.SELF;
-            var parent = repository.standing(parentId);
-            if (parent.isEmpty() || parent.get().guildId() != product.get().guildId()) {
-                return ParentChange.NO_SUCH_PARENT;
-            }
-            if (parent.get().parentId() != null) return ParentChange.PARENT_IS_ADDON;
-            if (product.get().addons() > 0) return ParentChange.HAS_ADDONS;
+        if (parentId == null) return ParentChange.OK;
+        if (parentId == productId) return ParentChange.SELF;
+        var parent = repository.standing(parentId);
+        if (parent.isEmpty() || parent.get().guildId() != product.get().guildId()) {
+            return ParentChange.NO_SUCH_PARENT;
         }
-        repository.parent(productId, parentId);
-        return ParentChange.DONE;
+        if (parent.get().parentId() != null) return ParentChange.PARENT_IS_ADDON;
+        if (product.get().addons() > 0) return ParentChange.HAS_ADDONS;
+        return ParentChange.OK;
+    }
+
+    /**
+     * Makes a product an add-on of another, or a product of its own again, when {@link #check}
+     * allows it.
+     *
+     * @param parentId the product it becomes an add-on of, or null to make it stand on its own
+     * @return {@link ParentChange#OK} when it was changed; otherwise why it was not
+     */
+    public ParentChange parent(int productId, Integer parentId) {
+        ParentChange verdict = check(productId, parentId);
+        if (verdict == ParentChange.OK) repository.parent(productId, parentId);
+        return verdict;
     }
 
     /**

@@ -61,10 +61,10 @@ class ProductFamilyServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("A product becomes an add-on and stands on its own again")
     void setAndClear() {
-        assertEquals(ParentChange.DONE, service.parent(first, base));
+        assertEquals(ParentChange.OK, service.parent(first, base));
         assertEquals(Map.of(first, base), service.parents());
 
-        assertEquals(ParentChange.DONE, service.parent(first, null));
+        assertEquals(ParentChange.OK, service.parent(first, null));
         assertTrue(service.parents().isEmpty());
     }
 
@@ -79,13 +79,22 @@ class ProductFamilyServiceTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("Checking a change answers as the change would and changes nothing")
+    void checkChangesNothing() {
+        assertEquals(ParentChange.OK, service.check(first, base));
+        assertEquals(ParentChange.OK, service.check(first, null));
+        assertEquals(ParentChange.NO_SUCH_PRODUCT, service.check(-1, null));
+        assertTrue(service.parents().isEmpty());
+    }
+
+    @Test
     @DisplayName("A family is one level: an add-on has no add-ons and a parent is no add-on")
     void oneLevel() {
-        assertEquals(ParentChange.DONE, service.parent(first, base));
+        assertEquals(ParentChange.OK, service.parent(first, base));
 
         assertEquals(ParentChange.PARENT_IS_ADDON, service.parent(second, first));
         assertEquals(ParentChange.HAS_ADDONS, service.parent(base, second));
-        assertEquals(ParentChange.DONE, service.parent(base, null), "a parent may always stand on its own");
+        assertEquals(ParentChange.OK, service.parent(base, null), "a parent may always stand on its own");
         assertEquals(Map.of(first, base), service.parents());
     }
 

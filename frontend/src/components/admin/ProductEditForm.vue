@@ -5,8 +5,8 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {ref} from 'vue'
-import {type ProductSummary, updateGuildProduct} from '~/api/admin'
+import {computed, onMounted, ref} from 'vue'
+import {listGuildProducts, type ProductSummary, updateGuildProduct} from '~/api/admin'
 
 const {t} = useI18n()
 
@@ -21,8 +21,23 @@ const trial = ref(props.product.trial)
 const butlerId = ref(props.product.butlerId?.toString() ?? '')
 const wikiUrl = ref(props.product.wikiUrl ?? '')
 const reviewUrl = ref(props.product.reviewUrl ?? '')
+const parentId = ref<number | null>(props.product.parentId ?? null)
+const guildProducts = ref<ProductSummary[]>([])
 // An uploaded icon is served from this instance; that path is not an address to type back.
 const iconUrl = ref(props.product.iconUrl?.startsWith('/api/') ? '' : props.product.iconUrl ?? '')
+
+/** A family is one level deep: an add-on has no add-ons, and a product that has some is no add-on. */
+const parentCandidates = computed(() => guildProducts.value.filter(candidate =>
+    candidate.id !== props.product.id && candidate.parentId == null))
+const hasAddons = computed(() => guildProducts.value.some(candidate => candidate.parentId === props.product.id))
+
+onMounted(async () => {
+  try {
+    guildProducts.value = await listGuildProducts(props.guildId)
+  } catch {
+    guildProducts.value = []
+  }
+})
 
 const busy = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -49,6 +64,7 @@ async function save() {
       butlerId: butlerId.value.trim() ? Number(butlerId.value.trim()) : null,
       wikiUrl: wikiUrl.value.trim() || null,
       reviewUrl: reviewUrl.value.trim() || null,
+      parentId: parentId.value,
     })
     saved.value = true
     emit('saved')
@@ -70,6 +86,15 @@ async function save() {
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.roleId')">
       <RolePicker v-model="roleId" :guild-id="guildId"/>
+    </LabelledField>
+    <LabelledField :label="t('common.addon.belongsTo')">
+      <SelectInput v-model="parentId" :disabled="hasAddons" data-testid="product-parent">
+        <option :value="null">{{ t('ui.productEditForm.standsOnItsOwn') }}</option>
+        <option v-for="candidate in parentCandidates" :key="candidate.id" :value="candidate.id">{{ candidate.name }}</option>
+      </SelectInput>
+      <MutedText size="xs" tag="p">
+        {{ hasAddons ? t('ui.productEditForm.hasAddonsHint') : t('ui.productEditForm.belongsToHint') }}
+      </MutedText>
     </LabelledField>
     <LabelledField :label="t('ui.productEditForm.projectUrl')">
       <TextInput v-model="url" type="url"/>

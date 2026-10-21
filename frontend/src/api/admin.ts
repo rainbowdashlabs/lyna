@@ -31,6 +31,8 @@ export interface ProductSummary {
     wikiUrl?: string | null
     /** Where the purchase mail asks a buyer to leave a review. */
     reviewUrl?: string | null
+    /** The product this one is an add-on of. */
+    parentId?: number | null
 }
 
 export interface CreateProductPayload {
@@ -106,6 +108,8 @@ export interface ProductEditPayload {
     butlerId: number | null
     wikiUrl: string | null
     reviewUrl: string | null
+    /** The product this one becomes an add-on of, or null to make it stand on its own. */
+    parentId: number | null
 }
 
 /** Everything about a product except its icon, saved in one go. */
