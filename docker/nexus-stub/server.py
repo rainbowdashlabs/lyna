@@ -146,6 +146,36 @@ class Handler(BaseHTTPRequestHandler):
             "html_url": f"https://github.com/{owner}/{repository}/blob/main/README.md",
         })
 
+    def _releases(self, owner, repository):
+        """GitHub's releases endpoint, for the same repository: a release, a pre-release with
+        markdown notes, and a draft Lyna must leave out. Answers a matching If-None-Match with 304,
+        the way GitHub spares a client that already has the list."""
+        if (owner, repository) != ("e2e-owner", "e2e-plugin"):
+            self._json({"message": "Not Found"}, status=404)
+            return
+        etag = '"e2e-releases-1"'
+        if self.headers.get("If-None-Match") == etag:
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            self.end_headers()
+            return
+        base = f"https://github.com/{owner}/{repository}/releases/tag"
+        body = json.dumps([
+            {"id": 3, "tag_name": "v2.0.0-beta", "name": "Spooky beta", "draft": False, "prerelease": True,
+             "body": "Adds **ghosts**.\n\n- haunts\n- spooks", "html_url": f"{base}/v2.0.0-beta",
+             "published_at": "2026-10-02T10:00:00Z"},
+            {"id": 2, "tag_name": "v1.0.0", "name": None, "draft": False, "prerelease": False,
+             "body": "", "html_url": f"{base}/v1.0.0", "published_at": "2026-09-01T10:00:00Z"},
+            {"id": 9, "tag_name": "v3.0.0", "name": "Unfinished draft", "draft": True, "prerelease": False,
+             "body": "Not yet", "html_url": f"{base}/v3.0.0", "published_at": None},
+        ]).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("ETag", etag)
+        self.end_headers()
+        self.wfile.write(body)
+
     def _discord_token(self):
         """Discord's token endpoint: a code of ``user-<id>`` or a refresh token minted here is traded
         for a grant; anything else is refused the way Discord refuses it."""
@@ -194,6 +224,11 @@ class Handler(BaseHTTPRequestHandler):
         readme_match = re.fullmatch(r"/repos/([^/]+)/([^/]+)/readme", url.path)
         if readme_match:
             self._readme(readme_match.group(1), readme_match.group(2))
+            return
+
+        releases_match = re.fullmatch(r"/repos/([^/]+)/([^/]+)/releases", url.path)
+        if releases_match:
+            self._releases(releases_match.group(1), releases_match.group(2))
             return
 
         asset_match = re.fullmatch(r"/service/rest/v1/assets/([^/]+)", url.path)
