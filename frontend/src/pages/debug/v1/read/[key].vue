@@ -26,7 +26,7 @@ const route = useRoute()
 const readKey = String(route.params.key)
 useDebugPreview(readKey)
 
-const {report, contents, loading, notFound, error, load, content, loadAll, logs, exceptions, configs, metas, checks} = useDebugReport(readKey)
+const {report, contents, loading, notFound, error, load, content, loadAll, logs, exceptions, configs, metas, checks, charts} = useDebugReport(readKey)
 const {query, pattern, invalid, counts} = useDebugSearch(report, contents)
 
 const tab = ref<DebugTab>('overview')
@@ -87,9 +87,10 @@ onMounted(async () => {
           <template v-if="report">
             <DebugReportHeader :read-key="readKey" :report="report"/>
             <DebugSearchBar v-model="query" :invalid="invalid" :searching="searching" class="sticky top-0 z-10 bg-(--bg) py-2"/>
-            <DebugSectionTabs v-model="tab" :counts="counts"/>
+            <DebugSectionTabs v-model="tab" :counts="counts" :has-charts="charts.length > 0"/>
             <DebugReportBody
                 v-model="tab"
+                :charts="charts"
                 :checks="checks"
                 :configs="configs"
                 :contents="contents"

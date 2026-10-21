@@ -6,6 +6,7 @@
 package de.chojo.lyna.feature.debug.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Singleton;
 import de.chojo.lyna.feature.debug.entity.DebugEntryKind;
@@ -44,7 +45,7 @@ public class DebugReportRepository {
      * Stores a report.
      *
      * @param sections the sections as a JSON array of {@code {kind, name, content}} and the optional
-     *                 {@code format, level, entries, occurrences, firstSeen, lastSeen}, in the order they are shown
+     *                 {@code format, level, entries, occurrences, firstSeen, lastSeen, chart}, in the order they are shown
      */
     public void create(
             String readKey,
@@ -60,10 +61,10 @@ public class DebugReportRepository {
                     VALUES (?, ?, ?, ?, ?::JSONB, ?::JSONB)
                     RETURNING id
                 ), sections AS (
-                    INSERT INTO debug_report_entry (report_id, position, kind, name, content, format, level, occurrences, first_seen, last_seen, entries)
+                    INSERT INTO debug_report_entry (report_id, position, kind, name, content, format, level, occurrences, first_seen, last_seen, entries, chart)
                     SELECT report.id, section.position - 1, section.value ->> 'kind', section.value ->> 'name', section.value ->> 'content',
                            section.value ->> 'format', section.value ->> 'level', (section.value ->> 'occurrences')::INTEGER,
-                           section.value ->> 'firstSeen', section.value ->> 'lastSeen', section.value -> 'entries'
+                           section.value ->> 'firstSeen', section.value ->> 'lastSeen', section.value -> 'entries', section.value -> 'chart'
                     FROM report, jsonb_array_elements(?::JSONB) WITH ORDINALITY AS section(value, position)
                     RETURNING report_id
                 )
@@ -101,7 +102,7 @@ public class DebugReportRepository {
         return query("""
                 SELECT position, kind, name, char_length(content) AS length,
                        cardinality(string_to_array(content, E'\\n')) AS lines,
-                       format, level, occurrences, first_seen, last_seen, entries::TEXT AS entries
+                       format, level, occurrences, first_seen, last_seen, entries::TEXT AS entries, chart::TEXT AS chart
                 FROM debug_report_entry WHERE report_id = ? ORDER BY position
                 """)
                 .single(call().bind(reportId))
@@ -117,16 +118,24 @@ public class DebugReportRepository {
                                 entries(row.getString("entries")),
                                 (Integer) row.getObject("occurrences"),
                                 row.getString("first_seen"),
-                                row.getString("last_seen"))))
+                                row.getString("last_seen"),
+                                chart(row.getString("chart")))))
                 .all();
     }
 
     private static List<Entry> entries(String json) {
-        if (json == null) return null;
+        return json == null ? null : List.of(JSON.convertValue(tree(json), Entry[].class));
+    }
+
+    private static JsonNode chart(String json) {
+        return json == null ? null : tree(json);
+    }
+
+    private static JsonNode tree(String json) {
         try {
-            return List.of(JSON.readValue(json, Entry[].class));
+            return JSON.readTree(json);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Stored entries are not a JSON array of entries", e);
+            throw new IllegalStateException("A stored display hint is not JSON", e);
         }
     }
 

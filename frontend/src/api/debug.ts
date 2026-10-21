@@ -4,12 +4,13 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import client from './client'
+import type {ChartSpec} from '~/util/chartData'
 import type {SectionFormat} from '~/util/debugLog'
 
 /** The parts of a report the viewer shows, each behind a tab. */
-export type DebugTab = 'overview' | 'logs' | 'exceptions' | 'configs' | 'plugins'
+export type DebugTab = 'overview' | 'charts' | 'logs' | 'exceptions' | 'configs' | 'plugins'
 
-export type SectionKind = 'META' | 'LOG' | 'PLUGIN_LOG' | 'INTERNAL_EXCEPTION' | 'EXTERNAL_EXCEPTION' | 'CONFIG' | 'CHECK'
+export type SectionKind = 'META' | 'LOG' | 'PLUGIN_LOG' | 'INTERNAL_EXCEPTION' | 'EXTERNAL_EXCEPTION' | 'CONFIG' | 'CHECK' | 'CHART'
 
 /** The outcome of a health check the plugin ran. */
 export type CheckLevel = 'OK' | 'WARN' | 'ERROR'
@@ -36,6 +37,8 @@ export interface DebugSection {
     occurrences?: number | null
     firstSeen?: string | null
     lastSeen?: string | null
+    /** Set on a chart: its type, its data as the plugin sent it, and drawing hints. */
+    chart?: ChartSpec | null
 }
 
 export interface PluginMeta {

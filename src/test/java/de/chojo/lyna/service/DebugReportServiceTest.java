@@ -5,6 +5,7 @@
  */
 package de.chojo.lyna.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.feature.debug.entity.DebugEntryKind;
 import de.chojo.lyna.feature.debug.entity.DebugReport;
@@ -214,7 +215,7 @@ class DebugReportServiceTest extends RepositoryTestBase {
         assertReason("names no plugin", "{\"v\": 2}");
         assertReason("has no name", "{\"v\": 2, \"plugin\": {\"version\": \"1\"}}");
         assertReason("shape of format 2", "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": 5}");
-        assertReason("unknown kind BLOB", REPORT_V2.replace("\"CONFIG\"", "\"BLOB\""));
+        assertReason("has no kind", "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [{\"name\": \"x\"}]}");
         assertReason("Section 0 is empty", "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [null]}");
         assertReason("longer than 200", REPORT_V2.replace("mobs.yml", "m".repeat(201)));
         String many = "{\"kind\": \"META\", \"content\": \"x\"},".repeat(DebugReportService.MAX_SECTIONS + 1);
@@ -252,16 +253,16 @@ class DebugReportServiceTest extends RepositoryTestBase {
                 service.read(keys.hash()).orElseThrow().sections();
 
         assertEquals(
-                new DebugReport.Display(null, "OK", null, null, null, null),
+                new DebugReport.Display(null, "OK", null, null, null, null, null),
                 sections.get(0).display());
         assertEquals(
                 List.of(new DebugReport.Entry("WorldGuard", "7.0.9"), new DebugReport.Entry("Vault", "")),
                 sections.get(1).display().entries());
         assertEquals(
-                new DebugReport.Display(null, null, null, 3, "12:00:01", "12:30:00"),
+                new DebugReport.Display(null, null, null, 3, "12:00:01", "12:30:00", null),
                 sections.get(2).display());
         assertEquals(
-                new DebugReport.Display("yaml", null, null, null, null, null),
+                new DebugReport.Display("yaml", null, null, null, null, null, null),
                 sections.get(3).display());
         assertEquals(DebugEntryKind.CHECK, sections.get(0).kind());
     }
@@ -284,5 +285,92 @@ class DebugReportServiceTest extends RepositoryTestBase {
                 "more than 200 entries",
                 one.formatted("{\"kind\": \"META\", \"entries\": [%s]}"
                         .formatted(entries.substring(0, entries.length() - 1))));
+    }
+
+    @Test
+    @DisplayName("Sections of an unknown kind are left out and named in a metadata section")
+    void unknownKindsAreSkipped() {
+        var keys = stored(REPORT_V2.replace("\"CONFIG\"", "\"BLOB\""));
+
+        List<DebugReport.Section> sections =
+                service.read(keys.hash()).orElseThrow().sections();
+
+        assertEquals(
+                List.of("latest.log", "META", "Skipped sections"),
+                sections.stream().map(DebugReport.Section::name).toList());
+        assertEquals(
+                List.of(new DebugReport.Entry("BLOB", "1 section(s)")),
+                sections.get(2).display().entries());
+    }
+
+    private static final String CHART = """
+            {"type": "line", "unit": "ms", "data": {"render": [1, "2.5", null], "budget": [[0, 25], {"x": 1, "y": 25}]},
+             "custom": {"anything": true}}
+            """;
+
+    @Test
+    @DisplayName("A chart is kept as it was sent, whatever its data look like")
+    void chartIsKept() throws Exception {
+        var keys = stored("""
+                {"v": 2, "plugin": {"name": "x"}, "sections": [
+                  {"kind": "CHART", "name": "Render time", "chart": %s},
+                  {"kind": "META", "name": "Hooks", "chart": %s}
+                ]}
+                """.formatted(CHART, CHART));
+
+        List<DebugReport.Section> sections =
+                service.read(keys.hash()).orElseThrow().sections();
+
+        assertEquals(DebugEntryKind.CHART, sections.get(0).kind());
+        assertEquals(
+                new ObjectMapper().readTree(CHART), sections.get(0).display().chart());
+        assertEquals(null, sections.get(1).display().chart());
+    }
+
+    @Test
+    @DisplayName("A chart of a type the viewer does not draw is left out and named in a metadata section")
+    void unknownChartTypesAreSkipped() {
+        var keys = stored("""
+                {"v": 2, "plugin": {"name": "x"}, "sections": [
+                  {"kind": "CHART", "name": "Spider", "chart": {"type": "radar", "data": {"speed": 3}}},
+                  {"kind": "CHART", "name": "Line", "chart": {"type": "line", "data": [1, 2]}}
+                ]}
+                """);
+
+        List<DebugReport.Section> sections =
+                service.read(keys.hash()).orElseThrow().sections();
+
+        assertEquals(
+                List.of("Line", "Skipped sections"),
+                sections.stream().map(DebugReport.Section::name).toList());
+        assertEquals(
+                List.of(new DebugReport.Entry("CHART radar", "1 section(s)")),
+                sections.get(1).display().entries());
+    }
+
+    @Test
+    @DisplayName("A chart that breaks a limit is refused with a reason")
+    void chartRefusals() {
+        String one = "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [{\"kind\": \"CHART\", \"chart\": %s}]}";
+        assertReason(
+                "needs a chart object",
+                "{\"v\": 2, \"plugin\": {\"name\": \"x\"}, \"sections\": [{\"kind\": \"CHART\"}]}");
+        assertReason("needs a type", one.formatted("{\"data\": [1]}"));
+        assertReason(
+                "needs a type",
+                one.formatted("{\"type\": \"%s\", \"data\": [1]}"
+                        .formatted("t".repeat(DebugReportService.MAX_CHART_TYPE + 1))));
+        assertReason("needs data", one.formatted("{\"type\": \"line\"}"));
+        assertReason("nested deeper", one.formatted("{\"type\": \"line\", \"data\": [[[[[[1]]]]]]}"));
+        String values = "1,".repeat(DebugReportService.MAX_CHART_VALUES + 1);
+        assertReason(
+                "more than 20000 values",
+                one.formatted(
+                        "{\"type\": \"line\", \"data\": [%s]}".formatted(values.substring(0, values.length() - 1))));
+        String label = "\"%s\",".formatted("l".repeat(1000)).repeat(70);
+        assertReason(
+                "larger than",
+                one.formatted(
+                        "{\"type\": \"line\", \"data\": [%s]}".formatted(label.substring(0, label.length() - 1))));
     }
 }

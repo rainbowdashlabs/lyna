@@ -19,6 +19,7 @@ defineProps<{
     configs: DebugSection[]
     metas: DebugSection[]
     checks: DebugSection[]
+    charts: DebugSection[]
     target: LineTarget | null
 }>()
 
@@ -33,6 +34,7 @@ const tab = defineModel<DebugTab>({required: true})
 <template>
   <DebugOverview
       v-if="tab === 'overview'"
+      :charts="charts.length"
       :checks="checks"
       :contents="contents"
       :exceptions="exceptions.length"
@@ -41,6 +43,7 @@ const tab = defineModel<DebugTab>({required: true})
       :report="report"
       @show="next => tab = next"
   />
+  <DebugChartList v-else-if="tab === 'charts'" :charts="charts"/>
   <DebugLogPanel v-else-if="tab === 'logs'" :contents="contents" :logs="logs" :pattern="pattern" :target="target" @open="position => $emit('open', position)"/>
   <DebugExceptionList v-else-if="tab === 'exceptions'" :contents="contents" :exceptions="exceptions" :pattern="pattern" @locate="title => $emit('locate', title)"/>
   <DebugConfigList v-else-if="tab === 'configs'" :configs="configs" :contents="contents" :pattern="pattern"/>

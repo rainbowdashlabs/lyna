@@ -19,11 +19,12 @@ const props = defineProps<{
     metas: DebugSection[]
     checks: DebugSection[]
     exceptions: number
+    charts: number
     contents: Map<number, string>
 }>()
 
 defineEmits<{
-    show: [tab: 'logs' | 'exceptions' | 'plugins']
+    show: [tab: 'logs' | 'exceptions' | 'plugins' | 'charts']
 }>()
 
 const {t} = useI18n()
@@ -55,6 +56,7 @@ const meta = computed(() => {
   <div class="space-y-8">
     <DebugCheckList v-if="checks.length" :checks="checks" :contents="contents"/>
     <DebugOverviewCounts
+        :charts="charts"
         :errors="problems?.errors ?? null"
         :exceptions="exceptions"
         :plugins="report.serverMeta.plugins?.length ?? 0"

@@ -53,6 +53,7 @@ export function useDebugReport(readKey: string) {
     const configs = computed(() => ofKind('CONFIG'))
     const metas = computed(() => ofKind('META'))
     const checks = computed(() => ofKind('CHECK'))
+    const charts = computed(() => ofKind('CHART'))
 
-    return {report, contents, loading, notFound, error, load, content, loadAll, logs, exceptions, configs, metas, checks}
+    return {report, contents, loading, notFound, error, load, content, loadAll, logs, exceptions, configs, metas, checks, charts}
 }

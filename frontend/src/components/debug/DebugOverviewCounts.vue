@@ -15,10 +15,12 @@ defineProps<{
     warnings: number | null
     exceptions: number
     plugins: number
+    /** Shown only when the report holds charts. */
+    charts: number
 }>()
 
 defineEmits<{
-    show: [tab: 'logs' | 'exceptions' | 'plugins']
+    show: [tab: 'logs' | 'exceptions' | 'plugins' | 'charts']
 }>()
 
 const {t} = useI18n()
@@ -30,5 +32,6 @@ const {t} = useI18n()
     <ChoiceButton :detail="t('ui.debugOverviewCounts.warnings')" :title="warnings === null ? '…' : String(warnings)" @click="$emit('show', 'logs')"/>
     <ChoiceButton :detail="t('ui.debugOverviewCounts.exceptions')" :title="String(exceptions)" @click="$emit('show', 'exceptions')"/>
     <ChoiceButton :detail="t('ui.debugOverviewCounts.plugins')" :title="String(plugins)" @click="$emit('show', 'plugins')"/>
+    <ChoiceButton v-if="charts > 0" :detail="t('ui.debugOverviewCounts.charts')" :title="String(charts)" @click="$emit('show', 'charts')"/>
   </div>
 </template>

@@ -68,13 +68,13 @@ test.describe('Debug reports in the second format', () => {
     })
 
     test('a report that breaks a rule is refused with the reason', async ({request}) => {
-        const broken = {...report('Broken', '1.0.0'), sections: [{kind: 'BLOB', content: 'x'}]}
+        const broken = {...report('Broken', '1.0.0'), sections: [{name: 'kindless', content: 'x'}]}
         const response = await request.post('/api/v1/debug/submit', {data: broken})
 
         expect(response.status()).toBe(422)
         const problem = await response.json()
         expect(problem.error).toBe('invalid')
-        expect(problem.message).toContain('unknown kind BLOB')
+        expect(problem.message).toContain('has no kind')
     })
 
     test('a gzipped body that unpacks past the limit is refused', async ({request}) => {
@@ -114,5 +114,45 @@ test.describe('Debug reports in the second format', () => {
         await page.getByRole('tab', {name: /Config/}).click()
         await expect(page.getByText('mobs/', {exact: true})).toBeVisible()
         await expect(page.getByText('zombie.json', {exact: true})).toBeVisible()
+    })
+
+    test('charts: drawn in their own tab, data that cannot be drawn shown as sent, unknown kinds and chart types named', async ({page, request}) => {
+        const charted = {
+            ...report('Charted', '1.0.0'),
+            sections: [
+                {kind: 'CHART', name: 'Render time', chart: {type: 'line', unit: 'ms', marks: [{y: 25, label: 'budget'}], data: {render: [1, '2.5', null, 4]}}},
+                {kind: 'CHART', name: 'Load', chart: {type: 'area', data: [[0, 1], {x: 1, y: 3}]}},
+                {kind: 'CHART', name: 'Storage', chart: {type: 'bar', data: {yaml: 12, mysql: 3}}},
+                {kind: 'CHART', name: 'Sets', chart: {type: 'stacked-bar', data: {a: [1, 2], b: [3, 4]}}},
+                {kind: 'CHART', name: 'Points', chart: {type: 'scatter', data: [[1, 2], [3, 4]]}},
+                {kind: 'CHART', name: 'Share', chart: {type: 'pie', data: [{name: 'a', value: 2}, {name: 'b', value: 5}]}},
+                {kind: 'CHART', name: 'Ring', chart: {type: 'donut', data: {a: 1, b: 1}}},
+                {kind: 'CHART', name: 'Heat', chart: {type: 'heatmap', data: [[1, 2], [3, 4]]}},
+                {kind: 'CHART', name: 'Usage', chart: {type: 'gauge', unit: '%', data: {value: 42, max: 100}}},
+                {kind: 'CHART', name: 'Spider', chart: {type: 'radar', data: {speed: 3}}},
+                {kind: 'CHART', name: 'Broken line', chart: {type: 'line', data: {render: 'fast'}}},
+                {kind: 'TIMELINE', name: 'From the future', content: 'x'},
+            ],
+        }
+        const receipt = await (await request.post('/api/v1/debug/submit', {data: charted})).json()
+
+        await page.goto(`/debug/${receipt.readKey}`)
+        await expect(page.getByText('charts drawn')).toBeVisible()
+        await expect(page.getByText('TIMELINE', {exact: true})).toBeVisible()
+        await expect(page.getByText('CHART radar', {exact: true})).toBeVisible()
+
+        await page.getByRole('tab', {name: /Charts/}).click()
+        await expect(page.locator('x-vue-echarts')).toHaveCount(9)
+        await expect(page.locator('x-vue-echarts canvas').first()).toBeVisible()
+        await expect(page.getByText('cannot draw a line chart', {exact: false})).toBeVisible()
+        await expect(page.getByText('"render": "fast"', {exact: false})).toBeVisible()
+    })
+
+    test('a report without charts has no charts tab', async ({page, request}) => {
+        const receipt = await (await request.post('/api/v1/debug/submit', {data: report('Plain', '1.0.0')})).json()
+
+        await page.goto(`/debug/${receipt.readKey}`)
+        await expect(page.getByRole('tab', {name: /Logs/})).toBeVisible()
+        await expect(page.getByRole('tab', {name: /Charts/})).toHaveCount(0)
     })
 })
