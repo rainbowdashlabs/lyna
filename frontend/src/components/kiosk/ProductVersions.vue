@@ -8,8 +8,11 @@ import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
 import {type KioskProduct, listReleaseTypes, listVersions, type ReleaseTypeEntry, type VersionEntry} from '~/api/kiosk'
 import {formatDate} from '~/util/format'
+import {minecraftVersions, supports} from '~/util/minecraft'
+import {useVersionRange} from '~/composables/useVersionRange'
 
 const {t} = useI18n()
+const range = useVersionRange()
 
 const props = defineProps<{ product: KioskProduct }>()
 const emit = defineEmits<{ download: [releaseType: ReleaseTypeEntry, version: VersionEntry] }>()
@@ -25,6 +28,12 @@ const versions = ref<VersionEntry[]>([])
 const limit = ref(PAGE)
 const loading = ref(true)
 const failed = ref(false)
+
+const minecraft = ref<string | null>(null)
+const minecraftOptions = computed(() => minecraftVersions(versions.value))
+const shown = computed(() => versions.value.filter(version => supports(version.manifest, minecraft.value)))
+/** The newest build that says what it needs, for the summary under the list. */
+const described = computed(() => shown.value.find(version => version.manifest))
 
 /** A full page back means there may be more; a short one means that was all of them. */
 const mayHaveMore = computed(() => versions.value.length === limit.value && limit.value < MOST)
@@ -70,15 +79,21 @@ onMounted(async () => {
       </SelectionToggleButton>
     </div>
 
+    <MinecraftFilter v-if="minecraftOptions.length" v-model="minecraft" :versions="minecraftOptions"/>
+
     <MutedText v-if="failed" tag="p">{{ t('ui.productVersions.couldNotLoad') }}</MutedText>
     <MutedText v-else-if="!loading && versions.length === 0" tag="p">{{ t('ui.productVersions.noneYet') }}</MutedText>
+    <MutedText v-else-if="!loading && shown.length === 0" tag="p">{{ t('ui.productVersions.noneForMinecraft') }}</MutedText>
 
     <div v-else>
-      <GutterRow v-for="(version, index) in versions" :key="version.version" :marker="index + 1">
+      <GutterRow v-for="(version, index) in shown" :key="version.version" :marker="index + 1">
         <div class="flex items-baseline justify-between gap-3">
           <span class="font-data truncate text-sm">{{ version.version }}</span>
           <span class="font-data text-xs whitespace-nowrap text-(--text-muted)">{{ formatDate(version.publishedAt) }}</span>
         </div>
+        <MutedText v-if="range(version.manifest?.minecraftMin, version.manifest?.minecraftMax)" class="font-data" size="xs" tag="div">
+          {{ t('common.manifest.minecraft', {range: range(version.manifest?.minecraftMin, version.manifest?.minecraftMax)}) }}
+        </MutedText>
         <template #trailing>
           <DownloadButton v-if="selected?.downloadable" @click="emit('download', selected, version)"/>
         </template>
@@ -88,6 +103,8 @@ onMounted(async () => {
         {{ t('ui.productVersions.showMore') }}
       </LinkButton>
     </div>
+
+    <ManifestSummary v-if="described?.manifest" :manifest="described.manifest" :version="described.version"/>
 
     <EmptyHint v-if="selected && !selected.downloadable && versions.length > 0">
       {{ t('ui.productVersions.licenseToDownload') }}

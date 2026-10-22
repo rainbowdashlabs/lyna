@@ -93,6 +93,37 @@ export interface VersionEntry {
     version: string
     publishedAt: string
     downloadTypeIds: number[]
+    /** What the build says it needs, or null when it was published without a manifest. */
+    manifest?: VersionManifest | null
+}
+
+/** Where a dependency is found. Shortcut links carry the project id on their site. */
+export interface ManifestLink {
+    type: 'modrinth' | 'spigot' | 'hangar' | 'url'
+    id: string | null
+    url: string
+}
+
+export interface ManifestDependency {
+    name: string
+    required: boolean
+    /** Lowest and highest version it works with, both inclusive; null when unbounded. */
+    min: string | null
+    max: string | null
+    links: ManifestLink[]
+    /** The product of the same guild this dependency is, or null. */
+    productId: number | null
+}
+
+/** A build's manifest: which Minecraft versions, platforms, Java and plugins it needs. */
+export interface VersionManifest {
+    platforms: string[]
+    /** Oldest and newest supported Minecraft version, both inclusive; null when unbounded. */
+    minecraftMin: string | null
+    minecraftMax: string | null
+    java: number | null
+    dependencies: ManifestDependency[]
+    extra: Record<string, string>
 }
 
 export interface DownloadTypeEntry {

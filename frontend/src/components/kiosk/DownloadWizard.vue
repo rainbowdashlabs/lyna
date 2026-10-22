@@ -18,8 +18,11 @@ import {
     type VersionEntry,
 } from '~/api/kiosk'
 import {formatDateTime, formatSize} from '~/util/format'
+import {minecraftVersions, supports} from '~/util/minecraft'
+import {useVersionRange} from '~/composables/useVersionRange'
 
 const {t} = useI18n()
+const range = useVersionRange()
 
 const props = defineProps<{
     product: KioskProduct | null
@@ -43,6 +46,16 @@ const issued = ref<IssuedDownload | null>(null)
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
 const needsLogin = ref(false)
+const minecraft = ref<string | null>(null)
+const minecraftOptions = computed(() => minecraftVersions(versions.value))
+const compatibleVersions = computed(() => versions.value.filter(entry => supports(entry.manifest, minecraft.value)))
+
+/** When a version came out, and which Minecraft versions it says it runs on. */
+function versionDetail(entry: VersionEntry): string {
+  const published = t('ui.downloadWizard.published', {date: formatDateTime(entry.publishedAt)})
+  const minecraftRange = range(entry.manifest?.minecraftMin, entry.manifest?.minecraftMax)
+  return minecraftRange ? `${published} · ${t('common.manifest.minecraft', {range: minecraftRange})}` : published
+}
 
 /**
  * The trail across the top. A step nobody has a choice about is left out of it rather than shown
@@ -192,16 +205,16 @@ function back() {
           <EmptyHint v-if="!releaseTypes.length">{{ t('ui.downloadWizard.nothingIsPublishedForYouTo') }}</EmptyHint>
         </ul>
 
-        <ul v-else-if="step === 'version'" class="space-y-2">
-          <li v-for="entry in versions" :key="entry.version">
-            <ChoiceButton
-                :detail="`Published ${formatDateTime(entry.publishedAt)}`"
-                :title="entry.version"
-                @click="pickVersion(entry)"
-            />
-          </li>
+        <div v-else-if="step === 'version'" class="space-y-3">
+          <MinecraftFilter v-if="minecraftOptions.length" v-model="minecraft" :versions="minecraftOptions"/>
+          <ul class="space-y-2">
+            <li v-for="entry in compatibleVersions" :key="entry.version">
+              <ChoiceButton :detail="versionDetail(entry)" :title="entry.version" @click="pickVersion(entry)"/>
+            </li>
+          </ul>
           <EmptyHint v-if="!versions.length">{{ t('ui.downloadWizard.noVersionHasBeenPublishedFor') }}</EmptyHint>
-        </ul>
+          <EmptyHint v-else-if="!compatibleVersions.length">{{ t('ui.productVersions.noneForMinecraft') }}</EmptyHint>
+        </div>
 
         <ul v-else-if="step === 'downloadType'" class="space-y-2">
           <li v-for="entry in downloadTypes" :key="entry.id">
