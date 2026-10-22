@@ -62,7 +62,7 @@ test.describe('Manifests', () => {
         const premium = await productId(request, 'E2E Premium')
         const versions = await openProduct(page, await productId(request, 'E2E Freebie'))
 
-        await expect(versions.getByText('Minecraft 1.21 and newer')).toBeVisible()
+        await expect(versions.getByText('Minecraft 1.21 and newer'), 'on the version and in what it needs').toHaveCount(2)
         const summary = versions.getByTestId('manifest-summary')
         await expect(summary.getByText('What 1.1.0 needs')).toBeVisible()
         await expect(summary.getByRole('link', {name: 'E2E Premium'})).toHaveAttribute('href', `/products/${premium}`)
