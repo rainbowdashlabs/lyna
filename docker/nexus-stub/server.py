@@ -93,6 +93,64 @@ for version, published in VERSIONS:
     }
 
 
+MANIFEST_BODIES = {
+    "1.1.0": {
+        "schema": 1,
+        "name": "E2E Plugin",
+        "version": "1.1.0",
+        "platforms": ["paper", "folia"],
+        "minecraft": {"min": "1.21"},
+        "java": 21,
+        "dependencies": [
+            {"name": "E2E Premium", "required": True, "min": "1.0.0", "links": []},
+            {"name": "PlaceholderAPI", "required": False, "links": [
+                {"type": "modrinth", "id": "placeholderapi", "url": "https://evil.example/phish"},
+                {"type": "url", "url": "javascript:alert(1)"},
+            ]},
+        ],
+    },
+    "1.0.0": {
+        "schema": 1,
+        "name": "E2E Plugin",
+        "version": "1.0.0",
+        "platforms": ["paper"],
+        "minecraft": {"min": "1.20", "max": "1.20.6"},
+        "dependencies": [],
+    },
+}
+"""What each version says it needs, published beside its jar with the classifier ``manifest``: the
+newer one needs a newer Minecraft, which is what the update check and the filters are tried on."""
+
+MANIFESTS = {}
+for version, published in VERSIONS:
+    asset_id = f"manifest-{version}"
+    payload = json.dumps(MANIFEST_BODIES[version]).encode()
+    path = f"{GROUP_ID.replace('.', '/')}/{ARTIFACT_ID}/{version}/{ARTIFACT_ID}-{version}-manifest.json"
+    MANIFESTS[asset_id] = {
+        "downloadUrl": f"https://{HOST_NAME}/repository/{REPOSITORY}/{path}",
+        "path": path,
+        "id": asset_id,
+        "repository": REPOSITORY,
+        "format": "maven2",
+        "contentType": "application/json",
+        "lastModified": published,
+        "lastDownloaded": None,
+        "checksum": {"sha1": f"{version.replace('.', ''):0>40}", "md5": "0" * 32},
+        "uploader": "e2e",
+        "uploaderIp": "127.0.0.1",
+        "fileSize": len(payload),
+        "maven2": {
+            "extension": "json",
+            "groupId": GROUP_ID,
+            "classifier": "manifest",
+            "artifactId": ARTIFACT_ID,
+            "version": version,
+            "baseVersion": version,
+        },
+        "_bytes": payload,
+    }
+
+
 def without_bytes(asset):
     return {key: value for key, value in asset.items() if key != "_bytes"}
 
@@ -214,8 +272,12 @@ class Handler(BaseHTTPRequestHandler):
 
         if url.path == "/service/rest/v1/search/assets":
             wanted = query.get("maven.baseVersion", [None])[0]
-            items = [without_bytes(asset) for asset in ASSETS.values()
-                     if wanted is None or asset["maven2"]["version"] == wanted]
+            extension = query.get("maven.extension", [None])[0]
+            classifier = query.get("maven.classifier", [None])[0]
+            items = [without_bytes(asset) for asset in [*ASSETS.values(), *MANIFESTS.values()]
+                     if (wanted is None or asset["maven2"]["version"] == wanted)
+                     and (extension is None or asset["maven2"]["extension"] == extension)
+                     and (classifier is None or asset["maven2"]["classifier"] == classifier)]
             # The client sorts by version descending; answering in that order keeps it honest.
             items.sort(key=lambda item: item["maven2"]["version"], reverse=True)
             self._json({"items": items, "continuationToken": None})
@@ -233,11 +295,20 @@ class Handler(BaseHTTPRequestHandler):
 
         asset_match = re.fullmatch(r"/service/rest/v1/assets/([^/]+)", url.path)
         if asset_match:
-            asset = ASSETS.get(asset_match.group(1))
+            asset = ASSETS.get(asset_match.group(1)) or MANIFESTS.get(asset_match.group(1))
             if asset is None:
                 self._json({"message": "no such asset"}, status=404)
                 return
             self._json(without_bytes(asset))
+            return
+
+        manifest_match = re.fullmatch(r"/repository/[^/]+/.*/[^/]+-([^/]+)-manifest\.json", url.path)
+        if manifest_match:
+            asset = MANIFESTS.get(f"manifest-{manifest_match.group(1)}")
+            if asset is None:
+                self._json({"message": "no such version"}, status=404)
+                return
+            self._json(json.loads(asset["_bytes"]))
             return
 
         download_match = re.fullmatch(r"/repository/[^/]+/.*/([^/]+)-([^/]+)\.jar", url.path)
