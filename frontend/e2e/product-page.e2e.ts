@@ -275,7 +275,7 @@ test.describe('The versions a product page lists', () => {
     test('shows a visitor what a premium product has released, without offering it', async ({page, request}) => {
         const versions = await openProduct(page, request, 'E2E Premium')
 
-        await expect(versions.getByText('1.1.0')).toBeVisible()
+        await expect(versions.getByText('1.1.0', {exact: true})).toBeVisible()
         await expect(versions.getByRole('button', {name: 'Download'})).toHaveCount(0)
         await expect(versions.getByText('Downloading these needs a license for this plugin.')).toBeVisible()
     })

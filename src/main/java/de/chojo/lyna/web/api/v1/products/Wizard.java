@@ -104,7 +104,7 @@ public class Wizard {
     }
 
     private void versions(Context ctx) {
-        ctx.json(versions.versions(resolve(productId(ctx)), releaseType(ctx), limit(ctx)));
+        ctx.json(versions.describedVersions(resolve(productId(ctx)), releaseType(ctx), limit(ctx)));
     }
 
     private void downloadTypes(Context ctx) {

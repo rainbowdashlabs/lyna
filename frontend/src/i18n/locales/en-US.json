@@ -22,6 +22,17 @@
       "belongsTo": "Belongs to",
       "requires": "Requires {name}",
       "similar": "Similar"
+    },
+    "manifest": {
+      "range": {
+        "between": "{min} – {max}",
+        "from": "{min} and newer",
+        "upTo": "up to {max}"
+      },
+      "minecraft": "Minecraft {range}",
+      "java": "Java {version}",
+      "required": "required",
+      "optional": "optional"
     }
   },
   "kiosk": {
@@ -448,7 +459,8 @@
       "thisIsAOneTimeLink": "This is a one-time link. Do not distribute.",
       "signInToDownloadThisProduct": "Sign in to download this product.",
       "youDoNotHoldALicense": "You do not hold a license for this product.",
-      "downloadsAreUnavailableTheDiscordBot": "Downloads are unavailable: the Discord bot is not connected."
+      "downloadsAreUnavailableTheDiscordBot": "Downloads are unavailable: the Discord bot is not connected.",
+      "published": "Published {date}"
     },
     "kioskFilters": {
       "searchPlugins": "Search plugins…",
@@ -594,7 +606,8 @@
       "couldNotLoad": "The versions could not be loaded.",
       "noneYet": "Nothing has been released yet.",
       "showMore": "Show more",
-      "licenseToDownload": "Downloading these needs a license for this plugin."
+      "licenseToDownload": "Downloading these needs a license for this plugin.",
+      "noneForMinecraft": "No version says it runs on that Minecraft version."
     },
     "supportDiscordBand": {
       "support": "Support",
@@ -928,6 +941,13 @@
       "prerelease": "Pre-release",
       "noNotes": "This release came without notes.",
       "onGithub": "On GitHub"
+    },
+    "minecraftFilter": {
+      "label": "Minecraft version",
+      "any": "Any Minecraft version"
+    },
+    "manifestSummary": {
+      "needs": "What {version} needs"
     }
   },
   "preview": {

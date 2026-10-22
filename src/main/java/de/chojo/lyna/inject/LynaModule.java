@@ -91,6 +91,8 @@ import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import de.chojo.lyna.feature.license.service.LicenseService;
 import de.chojo.lyna.feature.license.service.LicenseSharingService;
 import de.chojo.lyna.feature.mail.repository.MailingLookup;
+import de.chojo.lyna.feature.manifest.repository.VersionManifestRepository;
+import de.chojo.lyna.feature.manifest.service.VersionManifestService;
 import de.chojo.lyna.feature.product.repository.ProductFamilyRepository;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
@@ -371,6 +373,8 @@ public class LynaModule extends AbstractModule {
         bind(TimeChannelRepository.class).in(Singleton.class);
         bind(TimeChannelSchedule.class).in(Singleton.class);
         bind(ReleaseWebhookRepository.class).in(Singleton.class);
+        bind(VersionManifestRepository.class).in(Singleton.class);
+        bind(VersionManifestService.class).in(Singleton.class);
         bind(GithubReleaseRepository.class).in(Singleton.class);
         bind(GithubReleaseClient.class).in(Singleton.class);
         bind(ReleaseNotesService.class).in(Singleton.class);
