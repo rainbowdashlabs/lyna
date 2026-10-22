@@ -5,17 +5,22 @@
  */
 package de.chojo.lyna.feature.download.service;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.manifest.entity.ManifestView;
+import de.chojo.lyna.feature.manifest.service.VersionManifestService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.nexus.entities.AssetXO;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,6 +35,12 @@ import java.util.stream.Collectors;
  */
 @Singleton
 public class ProductVersionService {
+    private final VersionManifestService manifests;
+
+    @Inject
+    public ProductVersionService(VersionManifestService manifests) {
+        this.manifests = manifests;
+    }
 
     /**
      * @param id           the release type, as {@link ReleaseType} names it
@@ -40,8 +51,18 @@ public class ProductVersionService {
 
     /**
      * @param downloadTypeIds the download types this version is offered in
+     * @param manifest        what the version says it needs, or null when it was published without a
+     *                        manifest or the caller did not ask for it
      */
-    public record VersionView(String version, Instant publishedAt, List<Integer> downloadTypeIds) {}
+    public record VersionView(
+            String version,
+            Instant publishedAt,
+            List<Integer> downloadTypeIds,
+            @Nullable ManifestView manifest) {
+        VersionView withManifest(@Nullable ManifestView manifest) {
+            return new VersionView(version, publishedAt, downloadTypeIds, manifest);
+        }
+    }
 
     /**
      * The release types the product has builds of, stable first.
@@ -67,7 +88,7 @@ public class ProductVersionService {
             for (AssetXO asset : download.latestAssets()) {
                 VersionView existing = byVersion.computeIfAbsent(
                         asset.maven2().version(),
-                        version -> new VersionView(version, asset.lastModified().toInstant(), new ArrayList<>()));
+                        version -> new VersionView(version, asset.lastModified().toInstant(), new ArrayList<>(), null));
                 if (!existing.downloadTypeIds().contains(download.type().id())) {
                     existing.downloadTypeIds().add(download.type().id());
                 }
@@ -76,6 +97,27 @@ public class ProductVersionService {
         return byVersion.values().stream()
                 .sorted(Comparator.comparing(VersionView::publishedAt).reversed())
                 .limit(limit)
+                .toList();
+    }
+
+    /**
+     * The versions of one release type as {@link #versions} lists them, each with its manifest.
+     *
+     * <p>Kept apart from {@link #versions} because the storefront asks that for every tile and needs no
+     * manifest, and reading them is a Nexus search of its own per artifact.
+     */
+    public List<VersionView> describedVersions(Product product, ReleaseType releaseType, int limit) {
+        Map<String, Integer> productByName = product.products().all().stream()
+                .collect(Collectors.toMap(
+                        other -> other.name().toLowerCase(Locale.ROOT), Product::id, (first, second) -> first));
+        List<Download> downloads = product.downloads().byReleaseType(releaseType);
+        return versions(product, releaseType, limit).stream()
+                .map(view -> view.withManifest(downloads.stream()
+                        .flatMap(download -> manifests.manifest(download.coordinates(), view.version()).stream())
+                        .findFirst()
+                        .map(manifest ->
+                                ManifestView.of(manifest, name -> productByName.get(name.toLowerCase(Locale.ROOT))))
+                        .orElse(null)))
                 .toList();
     }
 

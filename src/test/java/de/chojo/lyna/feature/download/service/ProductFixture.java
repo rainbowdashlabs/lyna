@@ -10,6 +10,7 @@ import de.chojo.lyna.feature.download.entity.DownloadType;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.download.repository.Downloads;
 import de.chojo.lyna.feature.product.entity.Product;
+import de.chojo.lyna.feature.product.repository.Products;
 import de.chojo.nexus.entities.AssetXO;
 import de.chojo.nexus.entities.MavenMeta;
 
@@ -27,12 +28,15 @@ import static org.mockito.Mockito.when;
  */
 final class ProductFixture {
     final Product product = mock(Product.class);
+    final Products siblings = mock(Products.class);
     private final Downloads downloads = mock(Downloads.class);
     private final List<Download> all = new ArrayList<>();
 
     ProductFixture(String name) {
         when(product.name()).thenReturn(name);
         when(product.downloads()).thenReturn(downloads);
+        when(product.products()).thenReturn(siblings);
+        when(siblings.all()).thenReturn(List.of(product));
         when(downloads.downloads()).thenReturn(all);
         for (ReleaseType releaseType : ReleaseType.values()) {
             when(downloads.byReleaseType(releaseType)).thenAnswer(invocation -> all.stream()
@@ -63,6 +67,8 @@ final class ProductFixture {
         when(download.product()).thenReturn(product);
         when(download.type()).thenReturn(type);
         when(download.latestAssets()).thenReturn(assets);
+        when(download.coordinates())
+                .thenReturn(new NexusAssetCache.Coordinates("releases", "de.chojo", "artifact-" + typeId, null));
         all.add(download);
         return download;
     }
