@@ -6,10 +6,13 @@
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.configuration.elements.Api;
+import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.entity.ProductLinks;
 import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
+import de.chojo.lyna.feature.releasenotes.entity.GithubRelease;
+import de.chojo.lyna.feature.releasenotes.service.ReleaseNotesService;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.service.GithubEmbeds;
 import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
@@ -32,6 +35,7 @@ import org.mockito.Mockito;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HexFormat;
 import java.util.List;
@@ -52,6 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,6 +71,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
 
     private final ReleaseWebhookRepository webhooks = new ReleaseWebhookRepository();
     private final ProductLinksRepository productLinks = new ProductLinksRepository();
+    private final ReleaseNotesService releaseNotes = mock(ReleaseNotesService.class);
     private final Gateway gateway = mock(Gateway.class);
     private final GuildMessageChannel channel = mock(GuildMessageChannel.class);
     private final MessageCreateAction send = mock(MessageCreateAction.class);
@@ -80,7 +86,7 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement();
                 var rows = statement.executeQuery(
-                        "INSERT INTO product (guild_id, name, role, free) VALUES (1, 'BloodNight', 1, TRUE) RETURNING id")) {
+                        "INSERT INTO product (guild_id, name, url, role, free) VALUES (1, 'BloodNight', 'https://github.com/x/y', 1, TRUE) RETURNING id")) {
             rows.next();
             productId = rows.getInt(1);
         }
@@ -100,7 +106,8 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
         when(send.setAllowedMentions(any())).thenReturn(send);
         Api api = mock(Api.class);
         when(api.url()).thenReturn("https://lyna.example");
-        service = new GithubWebhookService(webhooks, products, productLinks, gateway, api);
+        service = new GithubWebhookService(
+                webhooks, products, productLinks, gateway, api, new KioskProductRepository(), releaseNotes);
     }
 
     private MessageEmbed announce(String body) throws Exception {
@@ -206,6 +213,51 @@ class GithubWebhookServiceTest extends RepositoryTestBase {
             String body = RELEASE.formatted(action);
             assertEquals(Outcome.IGNORED, deliver(webhook.token(), "release", sign(webhook.secret(), body), body));
         }
+    }
+
+    @Test
+    @DisplayName("Every release event reaches the release notes, edits and deletions included")
+    void releasesReachTheNotes() throws Exception {
+        var webhook = service.issue(productId);
+        String body = """
+                {"action": "edited", "release": {"id": 17, "tag_name": "v1", "name": "One", "body": "Fixes",
+                 "html_url": "https://github.com/x/y/releases/tag/v1", "prerelease": true, "draft": false,
+                 "published_at": "2026-10-01T10:00:00Z"},
+                 "repository": {"full_name": "x/y"}}
+                """;
+
+        assertEquals(Outcome.IGNORED, deliver(webhook.token(), "release", sign(webhook.secret(), body), body));
+
+        verify(releaseNotes)
+                .received(
+                        "https://github.com/x/y",
+                        "x/y",
+                        "edited",
+                        17,
+                        false,
+                        new GithubRelease(
+                                17,
+                                "v1",
+                                "One",
+                                "Fixes",
+                                "https://github.com/x/y/releases/tag/v1",
+                                true,
+                                Instant.parse("2026-10-01T10:00:00Z")));
+    }
+
+    @Test
+    @DisplayName("A release without a usable date reaches the notes as nothing to keep")
+    void undatedReleaseKeepsNothing() throws Exception {
+        var webhook = service.issue(productId);
+        for (String date : new String[] {"null", "\"soon\""}) {
+            String body = """
+                    {"action": "deleted", "release": {"id": 18, "tag_name": "v2", "name": " ", "body": "",
+                     "html_url": "https://github.com/x/y/releases/tag/v2", "draft": true, "published_at": %s}}
+                    """.formatted(date);
+            deliver(webhook.token(), "release", sign(webhook.secret(), body), body);
+        }
+
+        verify(releaseNotes, times(2)).received("https://github.com/x/y", null, "deleted", 18, true, null);
     }
 
     @Test

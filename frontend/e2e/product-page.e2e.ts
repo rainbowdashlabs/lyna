@@ -31,8 +31,8 @@ test.describe('A product page', () => {
             .getByRole('link', {name: 'E2E Freebie', exact: true}).click()
 
         await expect(page.getByRole('heading', {name: 'What it does'})).toBeVisible()
-        await expect(page.locator('.prose-description strong')).toHaveText('freebie')
-        await expect(page.locator('.prose-description li')).toHaveCount(2)
+        await expect(page.locator('.prose-markdown strong')).toHaveText('freebie')
+        await expect(page.locator('.prose-markdown li')).toHaveCount(2)
         await expect(page.getByText('# What it does')).toHaveCount(0)
     })
 
@@ -40,9 +40,9 @@ test.describe('A product page', () => {
         await page.goto('/')
         await page.getByRole('article').filter({hasText: 'E2E Freebie'})
             .getByRole('link', {name: 'E2E Freebie', exact: true}).click()
-        await expect(page.locator('.prose-description')).toBeVisible()
+        await expect(page.locator('.prose-markdown')).toBeVisible()
 
-        const attribute = await page.locator('.prose-description img').first()
+        const attribute = await page.locator('.prose-markdown img').first()
             .getAttribute('onerror')
             .catch(() => null)
         expect(attribute).toBeNull()
