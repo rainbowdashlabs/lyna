@@ -8,10 +8,16 @@ package de.chojo.lyna.feature.manifest.service;
 import de.chojo.lyna.feature.download.service.NexusAssetCache;
 import de.chojo.lyna.feature.manifest.repository.VersionManifestRepository;
 import de.chojo.lyna.repository.RepositoryTestBase;
+import de.chojo.nexus.NexusRest;
+import de.chojo.nexus.entities.AssetXO;
+import de.chojo.nexus.entities.PageAssetXO;
+import de.chojo.nexus.requests.v1.search.assets.SearchRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -21,6 +27,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Manifests read lazily from Nexus: once per sha1, and from what is stored when Nexus cannot answer.
@@ -109,6 +118,33 @@ class VersionManifestServiceTest extends RepositoryTestBase {
 
         assertEquals(List.of("1.2.0"), List.copyOf(service.manifests(JAR).keySet()));
         assertEquals(1, repository.all(ManifestArtifact.of(JAR)).size());
+    }
+
+    @Test
+    @DisplayName("Nexus is asked for the json files with the manifest classifier, and each is downloaded by its asset")
+    void searchesNexus() {
+        NexusRest nexus = mock(NexusRest.class, Answers.RETURNS_DEEP_STUBS);
+        SearchRequest search = mock(SearchRequest.class, Answers.RETURNS_SELF);
+        PageAssetXO page = mock(PageAssetXO.class);
+        AssetXO asset = mock(AssetXO.class, Answers.RETURNS_DEEP_STUBS);
+        when(asset.maven2().version()).thenReturn("1.0.0");
+        when(asset.checksum().sha1()).thenReturn("abc");
+        when(asset.download().complete())
+                .thenReturn("{\"schema\": 1, \"minecraft\": {\"min\": \"1.20\"}}".getBytes(StandardCharsets.UTF_8));
+        when(page.items()).thenReturn(List.of(asset));
+        when(search.complete()).thenReturn(page);
+        when(nexus.v1().search().assets().search()).thenReturn(search);
+
+        var manifest = new VersionManifestService(repository, nexus).manifest(SHADED, "1.0.0");
+
+        assertEquals("1.20", manifest.orElseThrow().minecraftMin());
+        verify(search).repository("releases");
+        verify(search).mavenGroupId("de.chojo");
+        verify(search).mavenArtifactId("bloodnight");
+        verify(search).mavenExtension("json");
+        verify(search).mavenClassifier("manifest");
+        assertEquals(
+                "abc", repository.all(ManifestArtifact.of(JAR)).get("1.0.0").sha1());
     }
 
     @Test
