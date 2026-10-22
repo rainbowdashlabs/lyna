@@ -6,13 +6,14 @@
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
-import {useRoute} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {getProduct, type KioskProductDetail, type ReleaseTypeEntry, type VersionEntry} from '~/api/kiosk'
 import {useSession} from '~/composables/useSession'
 import {useProductPreview} from '~/composables/useProductPreview'
 
 const {t} = useI18n()
 const route = useRoute()
+const router = useRouter()
 const {account, hydrate} = useSession()
 useProductPreview(Number(route.params.id))
 
@@ -28,6 +29,16 @@ function openWizard(start: {releaseType: ReleaseTypeEntry, version: VersionEntry
 }
 
 const signedIn = computed(() => account.value !== null)
+
+/** Kept in the address, so a link can open the release notes and reloading stays on them. */
+const tab = computed<string>({
+  get: () => route.query.tab === 'releases' && product.value?.releaseNotes ? 'releases' : 'overview',
+  set: next => router.replace({query: {...route.query, tab: next === 'overview' ? undefined : next}}),
+})
+const tabs = computed(() => [
+  {key: 'overview', label: t('page.products.id.tabs.overview')},
+  {key: 'releases', label: t('page.products.id.tabs.releases')},
+])
 
 /**
  * Resolves who is looking before drawing the product, the same way the storefront does: the badge
@@ -74,15 +85,18 @@ onMounted(load)
 
     <section class="mx-auto max-w-5xl px-4 py-6">
       <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
-        <div v-if="product" class="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem]">
+        <template v-if="product">
+        <ProductDetailHeader :product="product" class="mb-6"/>
+        <TabBar v-if="product.releaseNotes" v-model="tab" :tabs="tabs" class="mb-6"/>
+        <div v-if="tab === 'overview'" class="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem]">
           <div class="space-y-6">
-            <ProductDetailHeader :product="product"/>
             <ProductDescription :markdown="product.description"/>
             <MutedText v-if="product.pageSource === 'README' && product.readmeUrl" size="xs" tag="p">
               <a :href="product.readmeUrl" class="hover:text-primary" rel="noopener" target="_blank">{{ t('page.products.id.fromReadme') }}</a>
             </MutedText>
             <ProductDetailActions :product="product" :signed-in="signedIn" @download="openWizard()"/>
             <ProductTrial v-if="product.trial && !product.free && !product.entitled" :product="product" :signed-in="signedIn"/>
+            <ProductFamily :product="product"/>
           </div>
           <ProductVersions
               :product="product"
@@ -90,6 +104,8 @@ onMounted(load)
               @download="(releaseType, version) => openWizard({releaseType, version})"
           />
         </div>
+        <ProductReleaseNotes v-else :product-id="product.id"/>
+        </template>
       </AsyncSection>
     </section>
 

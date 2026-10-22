@@ -11,9 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.chojo.lyna.configuration.elements.Api;
+import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
+import de.chojo.lyna.feature.releasenotes.entity.GithubRelease;
+import de.chojo.lyna.feature.releasenotes.service.ReleaseNotesService;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository.ReleaseWebhook;
 import de.chojo.lyna.gateway.Gateway;
@@ -29,6 +32,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -51,8 +55,9 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * <p>GitHub signs every delivery with the webhook's secret, and nothing unsigned is acted on: the
  * address alone is not enough to make the bot post in somebody's channel. Only published releases and
- * pre-releases are announced; drafts, edits and deletions are acknowledged and dropped, as is any
- * activity the product switched off.
+ * pre-releases are announced; drafts, edits and deletions are not, and neither is any activity the
+ * product switched off. Every release event, announced or not, also updates the release notes the
+ * product's page shows.
  */
 @Singleton
 public class GithubWebhookService {
@@ -67,6 +72,8 @@ public class GithubWebhookService {
     private final ProductLinksRepository productLinks;
     private final Gateway gateway;
     private final Api api;
+    private final KioskProductRepository kiosk;
+    private final ReleaseNotesService releaseNotes;
     private final ObjectMapper json = new ObjectMapper();
 
     public enum Outcome {
@@ -87,11 +94,33 @@ public class GithubWebhookService {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Release(
+            long id,
             @JsonProperty("tag_name") String tag,
             String name,
             String body,
             @JsonProperty("html_url") String url,
-            boolean prerelease) {}
+            boolean prerelease,
+            boolean draft,
+            @JsonProperty("published_at") String publishedAt) {
+        /**
+         * @return the release as its notes are kept, or null when GitHub gave it no publication date
+         */
+        GithubRelease kept() {
+            if (publishedAt == null || url == null || tag == null) return null;
+            try {
+                return new GithubRelease(
+                        id,
+                        tag,
+                        name == null || name.isBlank() ? null : name,
+                        body == null || body.isBlank() ? null : body,
+                        url,
+                        prerelease,
+                        Instant.parse(publishedAt));
+            } catch (DateTimeParseException e) {
+                return null;
+            }
+        }
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Repository(@JsonProperty("full_name") String fullName) {}
@@ -102,7 +131,11 @@ public class GithubWebhookService {
             ProductLookup products,
             ProductLinksRepository productLinks,
             Gateway gateway,
-            Api api) {
+            Api api,
+            KioskProductRepository kiosk,
+            ReleaseNotesService releaseNotes) {
+        this.kiosk = kiosk;
+        this.releaseNotes = releaseNotes;
         this.webhooks = webhooks;
         this.products = products;
         this.productLinks = productLinks;
@@ -157,11 +190,29 @@ public class GithubWebhookService {
 
     private Outcome release(ReleaseWebhook webhook, byte[] body) {
         Optional<Payload> payload = read(body, Payload.class);
-        if (payload.isEmpty()
-                || payload.get().release() == null
-                || !ANNOUNCED.contains(payload.get().action())) return Outcome.IGNORED;
+        if (payload.isEmpty() || payload.get().release() == null) return Outcome.IGNORED;
+        keepNotes(webhook, payload.get());
+        if (!ANNOUNCED.contains(payload.get().action())) return Outcome.IGNORED;
         announce(webhook, payload.get());
         return Outcome.ANNOUNCED;
+    }
+
+    /**
+     * Hands every release event to the product's release notes, edits and deletions included, which
+     * are not announced but do change what the product page shows.
+     */
+    private void keepNotes(ReleaseWebhook webhook, Payload payload) {
+        Release release = payload.release();
+        kiosk.byId(webhook.productId())
+                .ifPresent(product -> releaseNotes.received(
+                        product.url(),
+                        payload.repository() == null
+                                ? null
+                                : payload.repository().fullName(),
+                        payload.action(),
+                        release.id(),
+                        release.draft(),
+                        release.kept()));
     }
 
     /**

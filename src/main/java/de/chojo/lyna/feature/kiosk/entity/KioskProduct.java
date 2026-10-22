@@ -19,6 +19,7 @@ package de.chojo.lyna.feature.kiosk.entity;
  * @param trial       whether somebody without a license may download it once to try it
  * @param pageReadme  whether its page shows the project's GitHub README instead of the description
  * @param wikiUrl     its documentation, or null when it has none
+ * @param parentId    the product it is an add-on of, or null when it stands on its own
  */
 public record KioskProduct(
         int id,
@@ -31,4 +32,5 @@ public record KioskProduct(
         String description,
         boolean trial,
         boolean pageReadme,
-        String wikiUrl) {}
+        String wikiUrl,
+        Integer parentId) {}

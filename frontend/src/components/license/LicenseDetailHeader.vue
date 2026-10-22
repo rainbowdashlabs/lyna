@@ -28,6 +28,7 @@ defineEmits<{
     <div class="min-w-0 flex-1">
       <PageHeader>{{ license.productName }}</PageHeader>
       <div class="mt-1 flex flex-wrap items-center gap-1.5">
+        <NeutralBadge v-if="license.parentId != null">{{ t('common.addon.addon') }}</NeutralBadge>
         <SecondaryBadge v-for="type in license.releaseTypes" :key="type">{{ type }}</SecondaryBadge>
         <MutedText>Issued to {{ license.userIdentifier }}</MutedText>
       </div>

@@ -11,11 +11,14 @@ const {t} = useI18n()
 
 defineProps<{
     license: LicenseView
+    /** Whether the row sits beneath the product its product is an add-on of. */
+    addon?: boolean
 }>()
 </script>
 
 <template>
   <NuxtLink
+      :class="addon ? 'ml-8' : ''"
       :to="`/account/licenses/${license.id}`"
       class="flex items-center gap-3 rounded-theme border border-border-light p-3 transition-colors hover:border-primary dark:border-border-dark"
   >
@@ -23,6 +26,7 @@ defineProps<{
     <div class="min-w-0 flex-1">
       <div class="truncate font-medium">{{ license.productName }}</div>
       <div class="flex flex-wrap items-center gap-1.5">
+        <NeutralBadge v-if="license.parentId != null">{{ t('common.addon.addon') }}</NeutralBadge>
         <SecondaryBadge v-for="type in license.releaseTypes" :key="type">{{ type }}</SecondaryBadge>
         <MutedText v-if="license.role === 'owner'">
           {{ license.shareesUsed }} / {{ license.shareesCap }} sharees

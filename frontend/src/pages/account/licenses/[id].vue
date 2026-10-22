@@ -87,6 +87,7 @@ async function copyKey() {
           @copy="copyKey"
           @toggle="keyShown = !keyShown"
       />
+      <LicenseFamily :addons="data.addons" :license="data.license"/>
       <LicenseUsage :rows="data.recentDownloads"/>
       <LicenseSharees
           v-if="isOwner"

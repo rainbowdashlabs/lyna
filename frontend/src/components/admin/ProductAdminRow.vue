@@ -12,19 +12,21 @@ import type {ProductSummary} from '~/api/admin'
  */
 const {t} = useI18n()
 
-defineProps<{ guildId: string, product: ProductSummary }>()
+defineProps<{ guildId: string, product: ProductSummary, addon?: boolean }>()
 </script>
 
 <template>
   <li>
     <NuxtLink
         :to="`/admin/g/${guildId}/products/${product.id}`"
+        :class="addon ? 'pl-10' : ''"
         class="flex items-center gap-2 p-3 text-sm hover:bg-primary/10"
     >
       <ProductIcon :icon-url="product.iconUrl" :name="product.name" size="sm"/>
       <span class="font-medium">{{ product.name }}</span>
       <NeutralBadge v-if="product.free">{{ t('page.admin.g.guildId.products.free') }}</NeutralBadge>
       <NeutralBadge v-else>{{ t('page.admin.g.guildId.products.premium') }}</NeutralBadge>
+      <NeutralBadge v-if="addon">{{ t('common.addon.addon') }}</NeutralBadge>
       <MutedText class="font-data ml-auto" tag="span">#{{ product.id }}</MutedText>
     </NuxtLink>
   </li>

@@ -4,6 +4,7 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import client from './client'
+import type {RelatedProduct} from './kiosk'
 
 export interface LoginPayload {
     email: string
@@ -100,6 +101,9 @@ export async function deleteAccount(confirmEmail: string): Promise<void> {
 export interface ProductOption {
     id: number
     name: string
+    /** The product this one is an add-on of, or null. */
+    parentId: number | null
+    parentName: string | null
 }
 
 export interface DownloadPage {
@@ -149,6 +153,9 @@ export interface LicenseView {
     ownerDiscordId: string
     shareesUsed: number
     shareesCap: number
+    /** The product this licence's product is an add-on of, or null. */
+    parentId: number | null
+    parentName: string | null
 }
 
 export interface LicenseList {
@@ -170,6 +177,8 @@ export interface LicenseDetail {
     key: string | null
     sharees: ShareeView[]
     recentDownloads: DownloadRow[]
+    /** The add-ons of the licence's product, each saying whether this account has it. */
+    addons: RelatedProduct[]
 }
 
 export async function listLicenses(): Promise<LicenseList> {

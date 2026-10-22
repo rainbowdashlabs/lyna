@@ -21,6 +21,17 @@ export interface KioskProduct {
     updatedAt: string | null
     /** The first lines of its description as plain text, or null when it has none. */
     summary: string | null
+    /** The product this one is an add-on of, or null when it stands on its own. */
+    parentId: number | null
+}
+
+/** A product named on another one's page, with whether this visitor has it already. */
+export interface RelatedProduct {
+    id: number
+    name: string
+    iconUrl: string | null
+    free: boolean
+    entitled: boolean
 }
 
 /**
@@ -40,6 +51,27 @@ export interface KioskProductDetail extends KioskProduct {
     trial: boolean
     /** The product's documentation, or null when it has none. */
     wikiUrl: string | null
+    /** The product this one is an add-on of, or null. */
+    parent: RelatedProduct | null
+    /** This product's add-ons. */
+    addons: RelatedProduct[]
+    /** The other add-ons of this product's parent. */
+    similar: RelatedProduct[]
+    /** Whether the product names a GitHub repository, whose releases its page can show. */
+    releaseNotes: boolean
+}
+
+/** A release of the product's GitHub repository. */
+export interface ReleaseNote {
+    tag: string
+    /** A title, or null when the release goes by its tag. */
+    name: string | null
+    /** Markdown, or null when the release has no notes. */
+    body: string | null
+    /** The release on GitHub. */
+    url: string
+    prerelease: boolean
+    publishedAt: string
 }
 
 /**
@@ -103,6 +135,12 @@ export async function getInstanceInfo(): Promise<InstanceInfo> {
 
 export async function getProduct(productId: number): Promise<KioskProductDetail> {
     const {data} = await client.get<KioskProductDetail>(`/api/v1/products/${productId}`)
+    return data
+}
+
+/** The product's releases on GitHub, newest first. */
+export async function listReleaseNotes(productId: number): Promise<ReleaseNote[]> {
+    const {data} = await client.get<ReleaseNote[]>(`/api/v1/products/${productId}/release-notes`)
     return data
 }
 

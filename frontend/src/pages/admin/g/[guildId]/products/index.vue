@@ -5,12 +5,13 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {onMounted, ref, watch} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {createGuildProduct, listGuildProducts, type ProductSummary} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
 import {usePageTitle} from '~/composables/usePageTitle'
+import {productFamilies} from '~/util/productFamilies'
 
 const {t} = useI18n()
 usePageTitle(t('layout.admin.products'))
@@ -21,6 +22,7 @@ const route = useRoute()
 const guildId = ref(String(route.params.guildId))
 
 const products = ref<ProductSummary[]>([])
+const families = computed(() => productFamilies(products.value, product => product.id, product => product.parentId))
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 
@@ -135,13 +137,10 @@ async function submitCreate() {
       {{ errorMessage }}
     </div>
     <ul v-else-if="products.length" class="divide-y divide-border-light dark:divide-border-dark rounded-theme border border-border-light dark:border-border-dark">
-      <ProductAdminRow
-          v-for="p in products"
-          :key="p.id"
-          :guild-id="guildId"
-          :product="p"
-          @changed="load"
-      />
+      <template v-for="family in families" :key="family.productId">
+        <ProductAdminRow v-for="p in family.heads" :key="p.id" :guild-id="guildId" :product="p" @changed="load"/>
+        <ProductAdminRow v-for="p in family.addons" :key="p.id" :guild-id="guildId" :product="p" addon @changed="load"/>
+      </template>
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
       {{ t('page.admin.g.guildId.products.noProductsYet') }}

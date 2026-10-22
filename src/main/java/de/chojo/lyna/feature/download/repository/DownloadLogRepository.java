@@ -161,14 +161,19 @@ public class DownloadLogRepository {
      */
     public List<ProductOption> productsForAccount(int accountId) {
         return query("""
-                SELECT DISTINCT dl.product_id, p.name AS product_name
+                SELECT DISTINCT dl.product_id, p.name AS product_name, p.parent_id, parent.name AS parent_name
                 FROM download_log dl
                 LEFT JOIN product p ON p.id = dl.product_id
+                LEFT JOIN product parent ON parent.id = p.parent_id
                 WHERE dl.account_id = ?
                 ORDER BY product_name
                 """)
                 .single(call().bind(accountId))
-                .map(row -> new ProductOption(row.getInt("product_id"), row.getString("product_name")))
+                .map(row -> new ProductOption(
+                        row.getInt("product_id"),
+                        row.getString("product_name"),
+                        (Integer) row.getObject("parent_id"),
+                        row.getString("parent_name")))
                 .all();
     }
 
@@ -188,7 +193,11 @@ public class DownloadLogRepository {
                 .bind(to == null ? null : Timestamp.from(to));
     }
 
-    public record ProductOption(int id, String name) {}
+    /**
+     * @param parentId   the product this one is an add-on of, or null
+     * @param parentName that product's name, or null
+     */
+    public record ProductOption(int id, String name, Integer parentId, String parentName) {}
 
     private static DownloadLogEntry readEntry(Row row) throws SQLException {
         return new DownloadLogEntry(

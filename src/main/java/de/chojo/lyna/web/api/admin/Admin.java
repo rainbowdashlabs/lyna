@@ -30,6 +30,7 @@ import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.entity.ProductLinks;
 import de.chojo.lyna.feature.product.repository.ProductLinksRepository;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
+import de.chojo.lyna.feature.product.service.ProductFamilyService;
 import de.chojo.lyna.feature.purchase.repository.KoFiProductRepository;
 import de.chojo.lyna.feature.releasepost.repository.ReleaseWebhookRepository;
 import de.chojo.lyna.feature.releasepost.service.ChannelTarget;
@@ -84,6 +85,7 @@ public class Admin {
     private final GithubWebhookService releasePosts;
     private final ProductRepository productRepository;
     private final ProductLinksRepository productLinks;
+    private final ProductFamilyService productFamily;
     private final GuildAdminGuard guard;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
@@ -110,9 +112,11 @@ public class Admin {
             GithubWebhookService releasePosts,
             ProductRepository productRepository,
             ProductLinksRepository productLinks,
+            ProductFamilyService productFamily,
             GuildAdminGuard guard) {
         this.productRepository = productRepository;
         this.productLinks = productLinks;
+        this.productFamily = productFamily;
         this.guard = guard;
         this.productIcons = productIcons;
         this.butlerApplications = butlerApplications;
@@ -203,7 +207,8 @@ public class Admin {
                 butlerIds.get(p.id()),
                 kioskById.containsKey(p.id()) && kioskById.get(p.id()).pageReadme(),
                 links.wikiUrl(),
-                links.reviewUrl());
+                links.reviewUrl(),
+                kioskById.containsKey(p.id()) ? kioskById.get(p.id()).parentId() : null);
     }
 
     /**
@@ -299,6 +304,11 @@ public class Admin {
             ctx.status(HttpStatus.CONFLICT).result("Another product already carries that UpdateButler id");
             return;
         }
+        String parentRefusal = parentRefusal(productFamily.check(product.id(), body.parentId()));
+        if (parentRefusal != null) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(parentRefusal);
+            return;
+        }
         product.name(body.name().strip());
         product.url(
                 body.url() == null || body.url().isBlank() ? null : body.url().strip());
@@ -315,7 +325,21 @@ public class Admin {
             butlerApplications.assign(product.id(), body.butlerId());
         }
         productLinks.set(product.id(), links);
+        productFamily.parent(product.id(), body.parentId());
         ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * @return what to tell an operator whose choice of parent was refused, or null when it was not
+     */
+    private static String parentRefusal(ProductFamilyService.ParentChange verdict) {
+        return switch (verdict) {
+            case OK, NO_SUCH_PRODUCT -> null;
+            case SELF -> "A product cannot be an add-on of itself";
+            case NO_SUCH_PARENT -> "That product does not exist in this guild";
+            case PARENT_IS_ADDON -> "That product is an add-on itself, and an add-on has no add-ons";
+            case HAS_ADDONS -> "This product has add-ons, so it cannot be an add-on itself";
+        };
     }
 
     private static String blankToNull(String value) {
@@ -595,6 +619,7 @@ public class Admin {
                         null,
                         false,
                         null,
+                        null,
                         null));
     }
 
@@ -774,6 +799,7 @@ public class Admin {
                         null,
                         null,
                         false,
+                        null,
                         null,
                         null))
                 .toList();
@@ -1023,8 +1049,9 @@ public class Admin {
     public record AdminGuild(String id, String name, String iconUrl, String role) {}
 
     /**
-     * @param roleId as text, because a Discord id is larger than a JavaScript number holds exactly -
-     *               sent as one it comes back rounded, and the edit form would write the wrong role
+     * @param roleId   as text, because a Discord id is larger than a JavaScript number holds exactly -
+     *                 sent as one it comes back rounded, and the edit form would write the wrong role
+     * @param parentId the product this one is an add-on of, or null
      */
     public record ProductSummary(
             int id,
@@ -1038,7 +1065,8 @@ public class Admin {
             Integer butlerId,
             boolean pageReadme,
             String wikiUrl,
-            String reviewUrl) {}
+            String reviewUrl,
+            Integer parentId) {}
 
     public record ProductDescription(String description) {}
 
@@ -1079,7 +1107,8 @@ public class Admin {
     public record ReleaseChannel(String channelId) {}
 
     /**
-     * @param roleId the Discord role, as text because a role id does not fit a JavaScript number
+     * @param roleId   the Discord role, as text because a role id does not fit a JavaScript number
+     * @param parentId the product this one becomes an add-on of, or null to make it stand on its own
      */
     public record ProductEdit(
             String name,
@@ -1091,7 +1120,8 @@ public class Admin {
             String iconUrl,
             Integer butlerId,
             String wikiUrl,
-            String reviewUrl) {}
+            String reviewUrl,
+            Integer parentId) {}
 
     /**
      * @param configured whether the id holds the instance by configuration, and so cannot be
