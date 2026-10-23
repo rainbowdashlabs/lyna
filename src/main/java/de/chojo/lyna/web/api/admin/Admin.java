@@ -779,7 +779,10 @@ public class Admin {
             ctx.status(HttpStatus.NOT_FOUND).result("Unknown product");
             return;
         }
-        kofi.create(product.get(), body.linkCode());
+        if (!kofi.create(product.get(), body.linkCode())) {
+            ctx.status(HttpStatus.CONFLICT).result("This Ko-fi code belongs to another guild");
+            return;
+        }
         ctx.status(HttpStatus.NO_CONTENT);
     }
 

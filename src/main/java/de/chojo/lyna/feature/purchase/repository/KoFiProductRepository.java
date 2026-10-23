@@ -26,11 +26,25 @@ public class KoFiProductRepository {
         this.products = products;
     }
 
-    public void create(Product product, String linkCode) {
-        query("""
+    /**
+     * Links a Ko-fi code to a product, or moves it to that product from another one of the same
+     * guild.
+     *
+     * <p>Codes are unique across the instance, so a code another guild already links is refused
+     * rather than moved. Moving it would hand that guild's sales to whoever typed its code.
+     *
+     * @return whether the code now points at the product
+     */
+    public boolean create(Product product, String linkCode) {
+        return query("""
                 INSERT INTO kofi_products(link_code, product_id) VALUES (?,?)
-                ON CONFLICT(link_code) DO UPDATE SET product_id = excluded.product_id;
-                """).single(call().bind(linkCode).bind(product.id())).insert();
+                ON CONFLICT(link_code) DO UPDATE SET product_id = excluded.product_id
+                WHERE (SELECT guild_id FROM product WHERE id = kofi_products.product_id)
+                    = (SELECT guild_id FROM product WHERE id = excluded.product_id);
+                """)
+                .single(call().bind(linkCode).bind(product.id()))
+                .insert()
+                .changed();
     }
 
     public List<Mapping> listForGuild(long guildId) {

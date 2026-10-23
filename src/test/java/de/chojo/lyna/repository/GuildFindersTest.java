@@ -342,6 +342,26 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A Ko-fi code moves between products of one guild, never into another guild")
+    void kofiCodesStayInTheirGuild() {
+        var kofi = new KoFiProductRepository(new ProductLookup(guilds));
+        Product sibling = guild.products()
+                .create("Gadget", role(51L), "https://example.invalid/gadget", false, false)
+                .orElseThrow();
+        Product foreign = otherGuild
+                .products()
+                .create("Thief", role(52L), "https://example.invalid/thief", false, false)
+                .orElseThrow();
+
+        assertTrue(kofi.create(product, "shared"));
+        assertTrue(kofi.create(sibling, "shared"), "a guild may move its own code");
+        assertEquals(sibling.id(), kofi.byCode("shared").orElseThrow().id());
+
+        assertFalse(kofi.create(foreign, "shared"), "another guild cannot take it");
+        assertEquals(sibling.id(), kofi.byCode("shared").orElseThrow().id());
+    }
+
+    @Test
     @DisplayName("A member's own licences and shares are told apart")
     void licenceUserSeesBothSides() {
         License owned =

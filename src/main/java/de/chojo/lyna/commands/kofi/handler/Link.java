@@ -40,7 +40,12 @@ public class Link implements SlashHandler {
             event.reply("Invalid product").setEphemeral(true).queue();
             return;
         }
-        koFiProducts.create(product.get(), event.getOption("link", OptionMapping::getAsString));
+        if (!koFiProducts.create(product.get(), event.getOption("link", OptionMapping::getAsString))) {
+            event.reply("This Ko-fi code belongs to another server.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
         event.reply("Linked").setEphemeral(true).queue();
     }
 

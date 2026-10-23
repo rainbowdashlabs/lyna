@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -85,15 +86,19 @@ public class Direct {
     }
 
     /**
-     * Refuses a product this caller may not have, by the same rule the storefront shows.
+     * Refuses a build this caller may not have, by the same rule the download wizard applies: a free
+     * product is open to anybody, anything else needs a license or role that opens the release type
+     * of this download, not merely some release type of the product.
      */
-    private void requireAccess(Context ctx, int productId) {
+    private void requireAccess(Context ctx, int productId, Download download) {
         if (kiosk.isFree(productId)) return;
         var session = auth.currentSession(ctx);
         if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
-        boolean entitled =
-                licenses.entitledProductIds(session.get().accountId()).contains(productId);
-        if (!entitled) throw new ForbiddenResponse("You do not hold a license for this product");
+        Set<String> types = licenses.releaseTypes(session.get().accountId(), productId);
+        if (types.isEmpty()) throw new ForbiddenResponse("You do not hold a license for this product");
+        if (!types.contains(download.type().releaseType().name())) {
+            throw new ForbiddenResponse("You may not download that release type");
+        }
     }
 
     public void init() {
@@ -101,12 +106,12 @@ public class Direct {
                 "direct",
                 () -> get("{product}/{type}/{version}", ctx -> {
                     int productId = Integer.parseInt(ctx.pathParam("product"));
-                    requireAccess(ctx, productId);
                     Product product =
                             products.byId(productId).orElseThrow(() -> new NotFoundResponse("Invalid product id"));
                     var downloads = product.downloads()
                             .byType(Integer.parseInt(ctx.pathParam("type")))
                             .orElseThrow(() -> new NotFoundResponse("Invalid download type"));
+                    requireAccess(ctx, productId, downloads);
                     String version = ctx.pathParam("version");
                     AssetXO asset = (LATEST.equals(version)
                                     ? downloads.latestAssets().stream().findFirst()
