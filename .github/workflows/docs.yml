@@ -1,0 +1,16 @@
+name: docs
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - 'docs/**'
+
+jobs:
+  docs:
+    uses: rainbowdashlabs/docs-hub/.github/workflows/space.yml@v1
+    with:
+      hub-repository: rainbowdashlabs/docs
+      rebuild: false
