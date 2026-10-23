@@ -815,6 +815,7 @@ public class Admin {
         if (resolved == null) return;
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
+                .filter(Product::trial)
                 .map(p -> new ProductSummary(
                         p.id(),
                         p.name(),
