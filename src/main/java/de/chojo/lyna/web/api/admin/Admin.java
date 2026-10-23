@@ -20,6 +20,7 @@ import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.instance.service.AppearancePolicy;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.license.entity.License;
@@ -78,6 +79,7 @@ public class Admin {
     private final AccountRepository accounts;
     private final Guilds guilds;
     private final InstanceSettingsRepository instanceSettings;
+    private final AppearancePolicy appearancePolicy;
     private final KoFiProductRepository kofi;
     private final KioskProductRepository kioskProducts;
     private final ButlerApplicationRepository butlerApplications;
@@ -99,6 +101,7 @@ public class Admin {
             AccountRepository accounts,
             Guilds guilds,
             InstanceSettingsRepository instanceSettings,
+            AppearancePolicy appearancePolicy,
             KoFiProductRepository kofi,
             KioskProductRepository kioskProducts,
             InstanceOperatorRepository operators,
@@ -131,6 +134,7 @@ public class Admin {
         this.accounts = accounts;
         this.guilds = guilds;
         this.instanceSettings = instanceSettings;
+        this.appearancePolicy = appearancePolicy;
         this.kofi = kofi;
         this.kioskProducts = kioskProducts;
         this.operators = operators;
@@ -845,7 +849,12 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
             return;
         }
-        instanceSettings.update(body);
+        try {
+            instanceSettings.update(appearancePolicy.validated(body));
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(e.getMessage());
+            return;
+        }
         ctx.status(HttpStatus.NO_CONTENT);
     }
 

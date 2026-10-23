@@ -84,6 +84,7 @@ import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.icon.storage.IconStorage;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.instance.service.AppearancePolicy;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.feature.license.repository.LicenseLookup;
@@ -396,6 +397,7 @@ public class LynaModule extends AbstractModule {
         bind(DownloadLogRepository.class).in(Singleton.class);
         bind(DemoArtifactRepository.class).in(Singleton.class);
         bind(InstanceSettingsRepository.class).in(Singleton.class);
+        bind(AppearancePolicy.class).in(Singleton.class);
         bind(InstanceOperatorRepository.class).in(Singleton.class);
         bind(PasswordResetTokenRepository.class).in(Singleton.class);
         bind(EmailVerificationTokenRepository.class).in(Singleton.class);

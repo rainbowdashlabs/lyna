@@ -27,6 +27,7 @@ import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
+import de.chojo.lyna.feature.instance.service.AppearancePolicy;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.license.repository.LicenseInviteRepository;
 import de.chojo.lyna.mail.MailingService;
@@ -67,6 +68,7 @@ public class Account {
     private final AccountEmailRepository accountEmails;
     private final LicenseInviteRepository invites;
     private final InstanceSettingsRepository instanceSettings;
+    private final AppearancePolicy appearancePolicy;
     private final MailingService mailingService;
     private final EmailVerificationTokenRepository emailTokens;
     private final Conf configuration;
@@ -89,6 +91,7 @@ public class Account {
             AccountEmailRepository accountEmails,
             LicenseInviteRepository invites,
             InstanceSettingsRepository instanceSettings,
+            AppearancePolicy appearancePolicy,
             MailingService mailingService,
             EmailVerificationTokenRepository emailTokens,
             Conf configuration,
@@ -109,6 +112,7 @@ public class Account {
         this.accountEmails = accountEmails;
         this.invites = invites;
         this.instanceSettings = instanceSettings;
+        this.appearancePolicy = appearancePolicy;
         this.mailingService = mailingService;
         this.emailTokens = emailTokens;
         this.configuration = configuration;
@@ -471,7 +475,7 @@ public class Account {
 
         String theme = acc.get().theme();
         if (policy.allowUserTheme() && body.theme() != null) {
-            if (!policy.enabledThemes().isEmpty() && !policy.enabledThemes().contains(body.theme())) {
+            if (!body.theme().isBlank() && !appearancePolicy.offers(policy, body.theme())) {
                 ctx.status(HttpStatus.BAD_REQUEST).result("That theme is not available here");
                 return;
             }

@@ -23,6 +23,16 @@ const backendUrl = process.env.NUXT_BACKEND_URL || 'http://localhost:8890'
 const baseUrl = process.env.E2E_BASE_URL || 'http://localhost:3011'
 const webPort = new URL(baseUrl).port || '3000'
 
+/**
+ * Stories that change the instance's own settings, which every other story reads. They run after
+ * every other project, in one browser and one at a time, so no story sees a setting halfway through
+ * being changed by another.
+ */
+const INSTANCE_STORIES = /.*\.instance\.e2e\.ts/
+
+/** What the browser projects leave to a project of its own. */
+const BROWSER_IGNORES = [/.*\.ssr\.e2e\.ts/, INSTANCE_STORIES]
+
 export default defineConfig({
     testDir: './e2e',
     outputDir: './e2e/results',
@@ -47,13 +57,20 @@ export default defineConfig({
     },
 
     projects: [
-        {name: 'chromium', testIgnore: /.*\.ssr\.e2e\.ts/, use: {...devices['Desktop Chrome']}},
-        {name: 'firefox', testIgnore: /.*\.ssr\.e2e\.ts/, use: {...devices['Desktop Firefox']}},
-        {name: 'mobile', testIgnore: /.*\.ssr\.e2e\.ts/, use: {...devices['iPhone 14']}},
+        {name: 'chromium', testIgnore: BROWSER_IGNORES, use: {...devices['Desktop Chrome']}},
+        {name: 'firefox', testIgnore: BROWSER_IGNORES, use: {...devices['Desktop Firefox']}},
+        {name: 'mobile', testIgnore: BROWSER_IGNORES, use: {...devices['iPhone 14']}},
         {
             name: 'ssr-no-js',
             testMatch: /.*\.ssr\.e2e\.ts/,
             use: {...devices['Desktop Chrome'], javaScriptEnabled: false},
+        },
+        {
+            name: 'instance',
+            testMatch: INSTANCE_STORIES,
+            dependencies: ['chromium', 'firefox', 'mobile', 'ssr-no-js'],
+            fullyParallel: false,
+            use: {...devices['Desktop Chrome']},
         },
     ],
 

@@ -3,54 +3,55 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {contrastTextColor, ensureContrast} from '../../src/theme/contrast'
-import {type ModeColors, THEMES, type ThemeColors} from '../../src/theme/themes'
+import {
+    type CustomThemeColors,
+    defaultTheme,
+    modeVariables,
+    offeredThemes,
+    pageVariables,
+    parseCustomColors,
+    type ThemePolicy,
+    themeColors,
+} from '../../src/theme/policy'
 
 /**
  * Puts the operator's theme into the first response, before the browser paints anything.
  *
  * <p>Without this the page arrives in the fallback palette and swaps to the real one once the app
- * has hydrated and asked for it, which the reader sees as a flash. The inline script settles light
- * or dark from what this browser last chose, and the style block carries the colours themselves, so
- * the first paint is already right.
+ * has hydrated and asked for it, which the reader sees as a flash. The style block carries the
+ * operator's default with their custom colours over it, and every other theme the operator offers
+ * under a `data-theme` attribute. The inline script settles light or dark from what this browser last
+ * chose, and sets that attribute to the theme this browser chose where the operator still offers it,
+ * so the first paint is already the one the app will settle on.
  */
-const THEME_SCRIPT = `<script>try{var m=localStorage.getItem('dark_mode');if(m==='light'){document.documentElement.classList.add('light')}else if(m==='dark'){document.documentElement.classList.add('dark')}else{document.documentElement.classList.add(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}}catch(e){}</script>`
+function themeScript(offered: string[]): string {
+    return `<script>try{var d=document.documentElement,m=localStorage.getItem('dark_mode');`
+        + `if(m==='light'){d.classList.add('light')}else if(m==='dark'){d.classList.add('dark')}`
+        + `else{d.classList.add(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}`
+        + `var t=localStorage.getItem('theme_name');if(t&&${JSON.stringify(offered)}.indexOf(t)>=0){d.dataset.theme=t}`
+        + `}catch(e){}</script>`
+}
 
 const CACHE_TTL_MS = 60_000
 
 interface ResolvedTheme {
-    theme: string
-    customColors: ThemeColors | null
+    policy: ThemePolicy
+    customColors: CustomThemeColors | null
 }
 
 let cached: {data: ResolvedTheme; expires: number} | null = null
 
 /**
- * The operator's defaults, kept for a minute so a page view does not cost a backend round trip.
- * A backend that does not answer leaves the last known value in place, and the catalogue default when
- * there is none.
+ * The operator's policy, kept for a minute so a page view does not cost a backend round trip.
+ * A backend that does not answer leaves the last known value in place, and nothing when there is none.
  */
 async function resolveTheme(backendUrl: string, now: number): Promise<ResolvedTheme | null> {
     if (cached && cached.expires > now) return cached.data
     try {
         const response = await fetch(`${backendUrl}/api/theme/public`, {signal: AbortSignal.timeout(2000)})
         if (!response.ok) return cached?.data ?? null
-        const payload = await response.json() as {
-            defaultTheme: string
-            customThemeColors: string | null
-        }
-        let customColors: ThemeColors | null = null
-        if (payload.customThemeColors) {
-            try {
-                customColors = JSON.parse(payload.customThemeColors) as ThemeColors
-            } catch {
-                customColors = null
-            }
-        }
-        const resolved: ResolvedTheme = {
-            theme: payload.defaultTheme,
-            customColors,
-        }
+        const policy = await response.json() as ThemePolicy
+        const resolved: ResolvedTheme = {policy, customColors: parseCustomColors(policy.customThemeColors)}
         cached = {data: resolved, expires: now + CACHE_TTL_MS}
         return resolved
     } catch {
@@ -58,54 +59,30 @@ async function resolveTheme(backendUrl: string, now: number): Promise<ResolvedTh
     }
 }
 
-function resolveColors(theme: string, customColors: ThemeColors | null): ThemeColors {
-    if (theme === 'custom' && customColors) return customColors
-    return THEMES[theme]?.colors ?? THEMES.transistor!.colors
+function declarations(variables: Record<string, string>): string {
+    return Object.entries(variables).map(([name, value]) => `${name}:${value}`).join(';')
 }
 
-function buildModeBlock(mode: ModeColors, pageBg: string): string {
-    return [
-        `--color-primary:${mode.primary}`,
-        `--color-primary-accent:${mode.primaryAccent}`,
-        `--color-secondary:${mode.secondary}`,
-        `--color-secondary-accent:${mode.secondaryAccent}`,
-        `--color-info:${mode.info}`,
-        `--color-info-accent:${mode.infoAccent}`,
-        `--color-success:${mode.success}`,
-        `--color-error:${mode.error}`,
-        `--color-primary-text:${contrastTextColor(mode.primary)}`,
-        `--color-primary-accent-text:${contrastTextColor(mode.primaryAccent)}`,
-        `--color-secondary-text:${contrastTextColor(mode.secondary)}`,
-        `--color-secondary-accent-text:${contrastTextColor(mode.secondaryAccent)}`,
-        `--color-info-text:${contrastTextColor(mode.info)}`,
-        `--color-info-accent-text:${contrastTextColor(mode.infoAccent)}`,
-        `--color-success-text:${contrastTextColor(mode.success)}`,
-        `--color-error-text:${contrastTextColor(mode.error)}`,
-        `--color-primary-badge:${ensureContrast(mode.primaryAccent, pageBg)}`,
-        `--color-secondary-badge:${ensureContrast(mode.secondaryAccent, pageBg)}`,
-        `--color-info-badge:${ensureContrast(mode.infoAccent, pageBg)}`,
-        `--color-success-badge:${ensureContrast(mode.success, pageBg)}`,
-        `--color-error-badge:${ensureContrast(mode.error, pageBg)}`,
-    ].join(';')
+function themeRules(theme: string, customColors: CustomThemeColors | null, scope: string): string {
+    const colors = themeColors(theme, customColors)
+    return `${scope || ':root'}{${declarations(pageVariables(colors))}}`
+        + `${scope}.light{${declarations(modeVariables(colors.light, colors.bgLight))}}`
+        + `${scope}.dark{${declarations(modeVariables(colors.dark, colors.bgDark))}}`
 }
 
-function buildStyle(theme: ResolvedTheme): string {
-    const colors = resolveColors(theme.theme, theme.customColors)
-    const rootBlock = [
-        `--color-bg-light:${colors.bgLight}`,
-        `--color-bg-light-accent:${colors.bgLightAccent}`,
-        `--color-bg-dark:${colors.bgDark}`,
-        `--color-bg-dark-accent:${colors.bgDarkAccent}`,
-    ].join(';')
-    return `<style data-ssr-theme>:root{${rootBlock}}.light{${buildModeBlock(colors.light, colors.bgLight)}}`
-        + `.dark{${buildModeBlock(colors.dark, colors.bgDark)}}</style>`
+function buildStyle({policy, customColors}: ResolvedTheme): string {
+    const fallback = defaultTheme(policy)
+    const alternatives = offeredThemes(policy)
+        .filter(theme => theme !== fallback)
+        .map(theme => themeRules(theme, customColors, `html[data-theme="${theme}"]`))
+    return `<style data-ssr-theme>${themeRules(fallback, customColors, '')}${alternatives.join('')}</style>`
 }
 
 export default defineNitroPlugin(nitroApp => {
     nitroApp.hooks.hook('render:html', async html => {
-        html.head.unshift(THEME_SCRIPT)
         const {backendUrl} = useRuntimeConfig()
         const theme = await resolveTheme(backendUrl, Date.now())
+        html.head.unshift(themeScript(theme ? offeredThemes(theme.policy) : []))
         if (theme) html.head.push(buildStyle(theme))
     })
 })

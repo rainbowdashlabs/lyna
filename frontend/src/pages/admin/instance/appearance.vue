@@ -19,13 +19,16 @@ const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 const saveMessage = ref<string | null>(null)
 const saving = ref(false)
+const saveOk = ref(false)
 
 onMounted(async () => {
   try {
     data.value = await getInstanceAppearance()
   } catch (e) {
     const error = e as {response?: {status?: number}}
-    errorMessage.value = error.response?.status === 404 ? 'Operator access required.' : 'Failed to load appearance settings.'
+    errorMessage.value = error.response?.status === 404
+        ? t('page.admin.instance.appearance.operatorAccessRequired')
+        : t('page.admin.instance.appearance.couldNotLoad')
   } finally {
     loading.value = false
   }
@@ -37,10 +40,14 @@ async function save() {
   saveMessage.value = null
   try {
     await updateInstanceAppearance(data.value)
-    saveMessage.value = 'Saved.'
+    saveOk.value = true
+    saveMessage.value = t('page.admin.instance.appearance.saved')
   } catch (e) {
     const error = e as {response?: {data?: string}}
-    saveMessage.value = typeof error.response?.data === 'string' ? error.response.data : 'Save failed.'
+    saveOk.value = false
+    saveMessage.value = typeof error.response?.data === 'string' && error.response.data
+        ? error.response.data
+        : t('page.admin.instance.appearance.saveFailed')
   } finally {
     saving.value = false
   }
@@ -57,6 +64,7 @@ async function save() {
           v-if="data"
           v-model="data"
           :save-message="saveMessage"
+          :save-ok="saveOk"
           :saving="saving"
           @save="save"
       />

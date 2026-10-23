@@ -4,56 +4,65 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import {readonly, ref} from 'vue'
+import {DarkMode, type DarkModeValue, type ThemeColors} from '@/theme/themes'
 import {
-    DarkMode,
-    THEMES,
-    type DarkModeValue,
-    type ThemeColors,
-} from '@/theme/themes'
-import {contrastTextColor} from '@/theme/contrast'
+    type CustomThemeColors,
+    effectiveTheme,
+    FALLBACK_THEME,
+    modeVariables,
+    pageVariables,
+    parseCustomColors,
+    type ThemePolicy,
+    themeColors,
+} from '@/theme/policy'
 
-const activeTheme = ref<string>('transistor')
+const THEME_KEY = 'theme_name'
+const DARK_MODE_KEY = 'dark_mode'
+
+const activeTheme = ref<string>(FALLBACK_THEME)
 const darkMode = ref<DarkModeValue>('system')
+const policy = ref<ThemePolicy | null>(null)
+const chosen = ref<string | null>(null)
+let customColors: CustomThemeColors | null = null
+let settled = false
 
 function isDarkActive(): boolean {
     if (typeof document === 'undefined') return false
     return document.documentElement.classList.contains('dark')
 }
 
+function setProperties(variables: Record<string, string>) {
+    const root = document.documentElement.style
+    for (const [name, value] of Object.entries(variables)) root.setProperty(name, value)
+}
+
+function currentColors(): ThemeColors {
+    return themeColors(activeTheme.value, customColors)
+}
+
 function applyTheme(themeKey: string) {
     if (typeof document === 'undefined') return
-    const colors = (THEMES[themeKey]?.colors ?? THEMES.transistor?.colors!)
-    const root = document.documentElement.style
-    root.setProperty('--color-bg-light', colors.bgLight)
-    root.setProperty('--color-bg-light-accent', colors.bgLightAccent)
-    root.setProperty('--color-bg-dark', colors.bgDark)
-    root.setProperty('--color-bg-dark-accent', colors.bgDarkAccent)
-    applyModeColors(colors)
+    activeTheme.value = themeKey
+    document.documentElement.dataset.theme = themeKey
+    setProperties(pageVariables(currentColors()))
+    applyModeColors()
 }
 
-function applyModeColors(themeColors?: ThemeColors) {
-    if (typeof document === 'undefined') return
-    const colors = themeColors ?? THEMES[activeTheme.value]?.colors ?? THEMES.transistor?.colors!
-    const mode = isDarkActive() ? colors.dark : colors.light
-    const root = document.documentElement.style
-    root.setProperty('--color-primary', mode.primary)
-    root.setProperty('--color-primary-accent', mode.primaryAccent)
-    root.setProperty('--color-secondary', mode.secondary)
-    root.setProperty('--color-secondary-accent', mode.secondaryAccent)
-    root.setProperty('--color-info', mode.info)
-    root.setProperty('--color-info-accent', mode.infoAccent)
-    root.setProperty('--color-success', mode.success)
-    root.setProperty('--color-error', mode.error)
-    root.setProperty('--color-primary-text', contrastTextColor(mode.primary))
-    root.setProperty('--color-primary-accent-text', contrastTextColor(mode.primaryAccent))
-    root.setProperty('--color-secondary-text', contrastTextColor(mode.secondary))
-    root.setProperty('--color-secondary-accent-text', contrastTextColor(mode.secondaryAccent))
-    root.setProperty('--color-info-text', contrastTextColor(mode.info))
-    root.setProperty('--color-info-accent-text', contrastTextColor(mode.infoAccent))
-    root.setProperty('--color-success-text', contrastTextColor(mode.success))
-    root.setProperty('--color-error-text', contrastTextColor(mode.error))
+function applyModeColors() {
+    if (typeof document === 'undefined' || !settled) return
+    const colors = currentColors()
+    const dark = isDarkActive()
+    setProperties(modeVariables(dark ? colors.dark : colors.light, dark ? colors.bgDark : colors.bgLight))
 }
 
+/**
+ * Shows what this person should see now: their choice where the operator offers it, the operator's
+ * default otherwise, with the operator's custom colours over either.
+ */
+function settle() {
+    settled = true
+    applyTheme(effectiveTheme(policy.value, chosen.value))
+}
 
 function applyDarkMode(mode: DarkModeValue) {
     if (typeof document === 'undefined') return
@@ -70,36 +79,63 @@ function applyDarkMode(mode: DarkModeValue) {
     applyModeColors()
 }
 
+/**
+ * Reads what this browser chose last time. The theme itself waits for {@link applyPolicy}: until the
+ * operator's policy is known the page keeps the colours the server rendered it with, which already
+ * follow that policy, rather than flashing a choice the operator may not allow.
+ */
 function initFromLocalStorage() {
     if (typeof localStorage === 'undefined') return
-    const savedTheme = localStorage.getItem('theme_name')
-    const savedDarkMode = localStorage.getItem('dark_mode') as DarkModeValue | null
-    if (savedTheme && THEMES[savedTheme]) activeTheme.value = savedTheme
+    chosen.value = localStorage.getItem(THEME_KEY)
+    const savedDarkMode = localStorage.getItem(DARK_MODE_KEY) as DarkModeValue | null
     if (savedDarkMode) darkMode.value = savedDarkMode
-    applyTheme(activeTheme.value)
     applyDarkMode(darkMode.value)
 }
 
-function setTheme(themeKey: string) {
-    if (!THEMES[themeKey]) return
-    activeTheme.value = themeKey
-    applyTheme(themeKey)
-    if (typeof localStorage !== 'undefined') localStorage.setItem('theme_name', themeKey)
+/**
+ * Takes the operator's policy and shows the theme it leads to.
+ *
+ * @param next the policy, or nothing when the backend could not say; the stored choice and the
+ *             fallback theme are then all there is to go on
+ */
+function applyPolicy(next: ThemePolicy | null) {
+    policy.value = next
+    customColors = parseCustomColors(next?.customThemeColors)
+    settle()
 }
 
+/**
+ * Takes the theme a signed-in account stored, so it follows the account from browser to browser. An
+ * account that never chose one is shown the operator's default, whatever this browser chose before.
+ */
+function adoptAccountChoice(theme: string | null) {
+    chosen.value = theme
+    if (typeof localStorage !== 'undefined') {
+        if (theme) localStorage.setItem(THEME_KEY, theme)
+        else localStorage.removeItem(THEME_KEY)
+    }
+    if (settled) settle()
+}
+
+function setTheme(themeKey: string) {
+    adoptAccountChoice(themeKey)
+}
 
 function setDarkMode(mode: DarkModeValue) {
     darkMode.value = mode
     applyDarkMode(mode)
-    if (typeof localStorage !== 'undefined') localStorage.setItem('dark_mode', mode)
+    if (typeof localStorage !== 'undefined') localStorage.setItem(DARK_MODE_KEY, mode)
 }
 
 export function useTheme() {
     return {
         activeTheme: readonly(activeTheme),
         darkMode: readonly(darkMode),
+        policy: readonly(policy),
         applyTheme,
         applyDarkMode,
+        applyPolicy,
+        adoptAccountChoice,
         initFromLocalStorage,
         setTheme,
         setDarkMode,

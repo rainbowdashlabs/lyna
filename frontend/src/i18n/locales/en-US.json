@@ -95,7 +95,10 @@
     "account": {
       "appearance": {
         "appearance": "Appearance",
-        "yourOperatorHasFixedTheTheme": "Your operator has fixed the theme and the corner style for everyone.",
+        "yourOperatorHasFixedTheTheme": "Your operator has set one theme for everyone. Dark mode is still yours to choose.",
+        "saved": "Saved.",
+        "couldNotSave": "Could not save your choice.",
+        "couldNotLoad": "Could not load the appearance settings.",
         "theme": "Theme",
         "darkMode": "Dark mode",
         "followTheSystem": "Follow the system",
@@ -269,7 +272,11 @@
       "resolvingAdminContext": "Resolving admin context…",
       "instance": {
         "appearance": {
-          "appearance": "Appearance"
+          "appearance": "Appearance",
+          "saved": "Saved.",
+          "saveFailed": "Save failed.",
+          "operatorAccessRequired": "Operator access required.",
+          "couldNotLoad": "Failed to load appearance settings."
         },
         "operators": {
           "operators": "Operators",
@@ -418,9 +425,11 @@
     "instanceAppearanceForm": {
       "allowUserTheme": "Allow user theme",
       "defaultTheme": "Default theme",
-      "emptyMeansEveryThemeIsAvailable": "Empty means every theme is available.",
+      "emptyMeansEveryThemeIsAvailable": "Empty means every theme is available. Known themes: {themes}.",
       "enabledThemesCommaSeparated": "Enabled themes (comma-separated)",
-      "customThemeColorsJson": "Custom theme colors (JSON)"
+      "customThemeColorsJson": "Custom theme colors (JSON)",
+      "customThemeColorsHelp": "Laid over whichever theme is shown. Page tokens at the top ({pageTokens}), mode tokens under \"light\" and \"dark\" ({modeTokens}). Every value is a hex color.",
+      "allowUserThemeHelp": "Off shows everybody the default theme."
     },
     "operatorList": {
       "discordId": "Discord id",
