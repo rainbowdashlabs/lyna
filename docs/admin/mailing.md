@@ -13,7 +13,7 @@ Lyna needs a working mail setup to send anything. See [Setting up mail](../setup
 - **A product's mail** belongs to one product. It either sends the guild default or has its own blocks.
 - **Discord and links** are shared by every purchase mail of the guild.
 
-A product needs a mail, even an empty one that sends the default, before it can be sold. Lyna finds the product for a payment receipt by the mail's name, and a [Ko-fi](./kofi.md) sale issues no license for a product without a mail.
+Give every product you sell a mail, even an empty one that sends the default. Lyna finds the product for a payment receipt by the mail's name, so a receipt for a product without a mail issues no license. A [Ko-fi](./kofi.md) sale still issues the license for a product without a mail, but the buyer gets no mail with their key.
 
 ## The overview
 

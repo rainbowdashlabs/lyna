@@ -19,22 +19,18 @@ A product offers a trial when **Trial available** is ticked on its **General** t
 
 The **Active limits** box shows two values:
 
-- **Per server cooldown**: how long someone must have been a member of your Discord server.
-- **Per account cooldown**: how old their account must be.
+- **Minimum time on the server:** how long someone must have been a member of your Discord server.
+- **Minimum account age:** how old their account must be.
 
-Despite the names, these are not waiting times between trials. They are minimum ages. Which one counts depends on the person:
+These are not waiting times between trials. Which one counts depends on the person:
 
 - **If the bot sees their linked Discord account in your server**, both apply: they must have been in the server for the server time, and their Discord account must be at least the account time old.
 - **Otherwise**, Lyna checks their Lyna account instead. It must be at least the account time old, and it needs a proved email address that is not from a throwaway mail provider.
 
 Someone who does not meet a limit yet is told how long they still have to wait.
 
-You change both values on the [Settings](./settings.md) page, as **Trial server time (minutes)** and **Trial account time (minutes)**.
+You change both values on the [Settings](./settings.md) page, as **Trial: minimum time on the server (minutes)** and **Trial: minimum account age (minutes)**.
 
 ## Products
 
-Below the limits, the page lists products with their name and id.
-
-:::warning
-This list shows every product of the guild, not only the ones that offer a trial. Check **Trial available** on each product to see which do.
-:::
+Below the limits, the page lists the products that offer a trial, with their name and id. Products without **Trial available** are not listed. If no product offers a trial, you see **No products.**

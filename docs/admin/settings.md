@@ -9,17 +9,13 @@ The **Settings** tab holds a few guild-wide values: how far a license can be sha
 
 ### License sharee cap
 
-How many people one license of this guild can be shared with. Pending invites count towards the cap, too. The value also fills in the `{{ shares }}` placeholder in [purchase mails](./mailing.md#placeholders).
+How many people one license of this guild can be shared with. Pending invites count towards the cap, too. Set it to `0` for no limit. That holds on the website and for the bot's share command alike. The value also fills in the `{{ shares }}` placeholder in [purchase mails](./mailing.md#placeholders).
 
-:::warning
-A cap of `0` means two different things. On the website, `0` means no limit. With the bot's share command, `0` means nobody can be added. Set a number above `0` if you want both to agree.
-:::
-
-### Trial server time (minutes)
+### Trial: minimum time on the server (minutes)
 
 How long somebody must have been a member of your Discord server before they can start a [trial](./trial.md).
 
-### Trial account time (minutes)
+### Trial: minimum account age (minutes)
 
 How old somebody's account must be before they can start a trial. Lyna checks the Discord account when the person is a member of your server. Otherwise it checks their Lyna account.
 

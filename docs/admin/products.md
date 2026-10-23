@@ -24,7 +24,7 @@ Click a row to open that product's editor.
    - **Trial available**: people can take a trial of it. See [Trial](./trial.md).
 3. Click **Create**.
 
-Name and role are required. When a bot is connected, the role must exist in the guild.
+Name and role are required. When a bot is connected, the role must exist in the guild. If the guild already has a product with that name, Lyna refuses it with **Product already exists**.
 
 A new product has no downloads yet. Add them on its **Downloads** tab.
 
@@ -38,13 +38,14 @@ The **General** tab holds the icon, the main settings, the Ko-fi shop items and 
 
 ### Icon
 
-Pick an image file to upload it as the product's icon. Lyna accepts PNG, JPEG and WebP up to 4 MB and resizes it to the sizes the pages use. Other formats, such as GIF, are refused.
+A product's icon comes from one of two places:
 
-**Remove icon** takes an uploaded icon away again.
+- **An uploaded file.** Pick an image file to upload it. Lyna accepts PNG, JPEG and WebP up to 4 MB and resizes it to the sizes the pages use. Other formats, such as GIF, are refused.
+- **An address.** Enter the address of an image in the **Icon address** field under the main settings, and click **Save**. See [Main settings](#main-settings).
 
-:::warning
-The admin area does not show an icon you uploaded, so the preview and **Remove icon** may be missing even when the storefront shows the icon. The **Icon address** field is not saved either.
-:::
+When a product has both, the uploaded icon is shown. The preview next to the upload shows the icon the product has now, and the product list shows it too.
+
+**Remove icon** takes the icon away, the uploaded file and the address alike. The product then shows no icon until you add one again.
 
 ### Main settings
 
@@ -54,6 +55,7 @@ These fields are saved together when you click **Save**. If one of them is refus
 - **Role**: the Discord role that goes with the product.
 - **Belongs to**: makes this product an add-on of another product. Choose **Nothing, it stands on its own** to undo that. An add-on is shown with its product on its page and in every list. It does not change who may download it.
 - **Project URL**: the project's home page, or its GitHub repository.
+- **Icon address**: the address of an image to use as the icon. Leave it empty for none. See [Icon](#icon).
 - **Wiki URL**: shown on the product page and linked from the purchase mail.
 - **Review URL**: where the purchase mail asks a buyer to leave a review.
 - **UpdateButler id**: only for plugins built against the old UpdateButler. Leave it empty if the product never had one. See [Updaters](./updaters.md).
@@ -62,7 +64,10 @@ These fields are saved together when you click **Save**. If one of them is refus
 
 Some rules the server checks when you save:
 
+- The name is not used by another product of the guild. Case does not matter. A taken name is refused with **Product already exists**.
+- When a bot is connected, the role must exist in the guild.
 - The wiki and review addresses must start with `http://` or `https://`.
+- A new icon address must start with `http://` or `https://`, and Lyna checks that it answers with an image. An address that is already saved is not checked again.
 - An UpdateButler id is a positive number, and only one product can carry each id.
 - Add-ons are one level deep. A product that has add-ons cannot become an add-on, so **Belongs to** is locked for it. You also cannot pick an add-on as the parent.
 
@@ -70,10 +75,10 @@ Some rules the server checks when you save:
 
 Here you link Ko-fi shop items to the product. Enter the item's **Link code**, the part after `ko-fi.com/s/`, and click **Add**. A Ko-fi order for that item issues a license for this product. **Remove** unlinks a code.
 
-A product can have several codes. The storefront's buy button points at the first one in alphabetical order. See [Ko-fi](./kofi.md) for the whole Ko-fi setup.
+A code another guild already uses is refused. A product can have several codes. The storefront's buy button points at the first one in alphabetical order. See [Ko-fi](./kofi.md) for the whole Ko-fi setup.
 
 :::note
-A Ko-fi order only issues a license when the product has a mailing. See [Mailing](#mailing).
+A Ko-fi order issues a license even when the product has no mailing. The buyer then gets no mail. See [Mailing](#mailing).
 :::
 
 ### Deleting a product
@@ -136,7 +141,7 @@ See [how access is decided](./download-types.md#who-may-download-what) for how r
 
 ## Mailing
 
-A mailing is the mail a buyer gets with their license key. Ko-fi orders and payment receipts only issue a license for a product that has one.
+A mailing is the mail a buyer gets with their license key. Payment receipts only issue a license for a product that has one, because Lyna finds the product by the mailing's name. A Ko-fi order issues the license without one, but sends no mail.
 
 If the product has none, enter **Product name as the mail says it** and click **Create mailing**. A product has at most one mailing. Once it exists, follow **Write it on the mailing page** to write the mail itself. See [Mailing](./mailing.md).
 

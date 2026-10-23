@@ -28,4 +28,4 @@ Lyna refuses the setup when the zone is unknown, when the name has no `{time}` i
 
 Each channel shows what its name says right now, followed by the channel's current name and its zone. If you have none yet, you see **No channel shows the time.**
 
-Click **Stop** to remove a channel. It happens at once, without asking. The bot stops renaming the channel, and the channel keeps the name it has at that moment.
+Click **Stop** to remove a channel. Lyna asks first: click **Confirm** to stop it, or **Cancel** to keep it. The bot stops renaming the channel, and the channel keeps the name it has at that moment.

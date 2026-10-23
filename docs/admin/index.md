@@ -24,10 +24,11 @@ An operator is named by Discord user id in one of two places:
 
 ## Getting there
 
-Open `/admin` on your Lyna site. You also find an **Admin** link on the storefront and in your account area, but only once your account can administer something.
+Open `/admin` on your Lyna site. You also find an **Admin** link on the storefront and in your account area, but only once your account can administer something. An operator always sees it, even when there is no guild to administer.
 
-What happens next depends on how many guilds you administer:
+Lyna asks the backend what you may administer, at `GET /api/admin/access`. The answer says whether you are an operator and which guilds you administer. What happens next depends on that:
 
+- **No guild, but you are an operator.** Lyna takes you to the instance area. This happens on an instance with no bot, no guild in `baseSettings.botGuild` and no products yet. See [Instance settings](./instance.md).
 - **None.** You see **No admin access** and a short reason. Either your account has no Discord linked yet, or your Discord account cannot administer any guild here.
 - **One.** Lyna takes you straight to that guild's **Products** tab.
 - **More than one.** You see **Select a guild**. Each guild is listed with your role there, `operator` or `guild admin`. Click one to open it.
@@ -36,7 +37,7 @@ With a bot connected, an operator sees every guild the bot is in. Without a bot,
 
 ## Switching guilds
 
-Below the tab strip, the **Administering** dropdown shows the guild you are working on. Pick another guild there to switch. Lyna keeps you on the same tab. Guilds you reach as an operator are marked `(operator)`.
+Below the tab strip, the **Administering** dropdown shows the guild you are working on. Pick another guild there to switch. Lyna keeps you on the same tab. If you pick a guild from the instance area, you land on its **Products** tab. Guilds you reach as an operator are marked `(operator)`.
 
 ## The tabs
 
@@ -53,7 +54,7 @@ Each guild has these tabs:
 - **Time channels**: channels whose name shows the time. See [Time channels](./time-channels.md).
 - **Settings**: share cap, trial limits and the admin role. See [Settings](./settings.md).
 
-On the right of the tab strip you find **Your account** and **Storefront**. Operators also see **Instance area →**, which opens the [instance settings](./instance.md).
+On the right of the tab strip you find **Your account** and **Storefront**. Operators always see **Instance area →** as well, which opens the [instance settings](./instance.md).
 
 ## The status bar
 

@@ -7,7 +7,7 @@ The instance area holds what belongs to your whole Lyna installation rather than
 
 ## Getting there
 
-Click **Instance area →** on the right of the tab strip. Operators see that link in every guild. The instance area has three tabs: **System**, **Appearance** and **Operators**.
+Click **Instance area →** on the right of the tab strip. Operators always see that link. An operator with no guild to administer lands in the instance area straight from `/admin`. The instance area has three tabs: **System**, **Appearance** and **Operators**.
 
 If you are not an operator, these pages show **Operator access required.**
 
@@ -23,13 +23,37 @@ Nothing here can be changed.
 
 ## Appearance
 
-**Appearance** sets which colour themes people can use on your site.
+**Appearance** sets which colour themes people see on your site.
 
-- **Default theme**: the theme an account's **Appearance** page starts on when its owner never picked one.
-- **Enabled themes (comma-separated)**: the themes people may pick on their account. Use the theme ids, such as `lyna, midnight`. Lyna ships `transistor`, `lyna`, `midnight` and `forest`. Empty means every theme is available.
-- **Allow user theme**: when ticked, people can pick a theme on their account. When it is off, their account says **Your operator has fixed the theme and the corner style for everyone.** They can still choose between light and dark mode.
+Lyna ships four themes. Their ids are `transistor`, `lyna`, `midnight` and `forest`.
 
-Click **Save** to store your changes.
+- **Default theme**: the theme everyone sees who has not picked one. That covers visitors who are not signed in, and accounts whose owner never picked a theme. It also covers someone whose pick is no longer allowed.
+- **Enabled themes (comma-separated)**: the themes people may pick on their account. Use the theme ids, such as `lyna, midnight`. Empty means every theme is available. Lyna refuses an id it does not know, and names the known ones. When you list themes here, the default theme has to be one of them.
+- **Allow user theme**: when ticked, people can pick a theme on their account. When it is off, everybody sees the default theme. The form says **Off shows everybody the default theme.** An account's **Appearance** page then says **Your operator has set one theme for everyone. Dark mode is still yours to choose.**
+- **Custom theme colors (JSON)**: your own colours, laid over whichever theme is shown. Leave it empty to use the themes as they are.
+
+Click **Save** to store your changes. You see **Saved.**, or the reason Lyna refused them.
+
+The site keeps these settings for about a minute, so a change can take that long to show everywhere.
+
+### Custom theme colors
+
+Write a JSON object. Every value is a hex colour, in the form `#rgb` or `#rrggbb`. You only list the colours you want to change.
+
+- **Page tokens** go at the top level: `bgLight`, `bgLightAccent`, `bgDark` and `bgDarkAccent`. They apply in both light and dark mode.
+- **Mode tokens** go under `light` or `dark`: `primary`, `primaryAccent`, `secondary`, `secondaryAccent`, `info`, `infoAccent`, `success` and `error`.
+
+For example:
+
+```json
+{
+  "bgDark": "#101418",
+  "light": {"primary": "#e92063"},
+  "dark": {"primary": "#ff5c8a", "secondary": "#4ab"}
+}
+```
+
+Lyna refuses anything else when you save: text that is not JSON, a key it does not know, or a value that is not a hex colour. The message names the key that is wrong.
 
 ## Operators
 

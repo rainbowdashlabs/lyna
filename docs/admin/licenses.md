@@ -9,17 +9,14 @@ Open it from **Licenses** in the admin tab strip.
 
 ## The license list
 
-Each row shows the product, then the license id, its identifier, its holder and how many people it is shared with. For example: `#42 · buyer@example.com · owner 123456789012345678 · 1 sharees`.
+Each row shows the product, then the license id, its identifier, its holder and how many people it is shared with. For example: `#42 · buyer@example.com · owner alex (123456789012345678) · 1 sharees`.
 
 - The **identifier** says who the license was issued for. Usually it is the buyer's email address or an order id.
-- The **owner** is the Discord id of the account that holds the license. A license nobody has redeemed yet shows **unclaimed**.
+- The **owner** is the account that holds the license. Lyna names it by its username. If it has none, it uses one of the account's email addresses, and otherwise `account` and its number, such as `account 17`. When the account has linked Discord, its Discord id follows in brackets.
+- A license nobody holds yet shows **unclaimed**. A license held by an account without Discord is not unclaimed. It shows its holder like any other.
 - The **sharees** count includes people it is shared with and invites nobody has answered yet.
 
-Use the search box to filter the list by product, identifier, id or owner.
-
-:::warning
-Owner ids in this list can be wrong in their last digits, because the page reads them as plain numbers. Searching by owner id may then find nothing. A license held by an account without a linked Discord account also shows as **unclaimed**.
-:::
+Use the search box to filter the list by product, identifier, id or owner. You can search for the owner by name or by Discord id.
 
 ## Issuing a license
 
@@ -35,8 +32,10 @@ A product can only have one license per identifier. Issuing a second one for the
 
 If you untick every release type, the license reaches nothing until you change it.
 
+If the identifier is an email address that an account has already proved, Lyna gives the license to that account right away. Only a proved address counts. An address someone merely added to their account does not. If nobody has proved the address yet, the license stays unclaimed, and the account that proves the address later picks it up.
+
 :::note
-Issuing here sends no mail and does not give the license to anyone's account right away. If the identifier is an email address, an account that proves that address later picks the license up. To mail the key and hand it straight to an account that already proved the address, use **Send a license by mail** on the product's [Mailing tab](./products.md#mailing) instead.
+Issuing here sends no mail. To mail the key as well, use **Send a license by mail** on the product's [Mailing tab](./products.md#mailing) instead.
 :::
 
 ## Changing what a license reaches

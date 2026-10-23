@@ -17,18 +17,18 @@ Lyna looks the person up by the Discord account linked to their Lyna account. So
 
 ## What you see
 
-The top of the result shows the **Discord id:** and **Member name:** of the person. Below that are two lists:
+The top of the result shows the **Discord id:** and **Member name:** of the person. The id is exactly the one you looked up. For the member name, Lyna asks Discord when the bot has not cached the member. If the person is not in your server, or no bot is connected, the result says they are not in this guild.
+
+Below that are two lists:
 
 - **Owned**: the licenses this person holds. Each shows the product, the license id, its identifier and how many sharees it has.
-- **Shared with**: licenses someone else holds and shares with this person. Each shows the product, the license id and the holder's Discord id.
+- **Shared with**: licenses someone else holds and shares with this person. Each shows the product, the license id and the holder, such as `owner alex`. The holder is named the same way as on the [Licenses](./licenses.md#the-license-list) page.
 
 Each heading shows how many licenses it lists. A list with nothing in it says **None.**
 
-Only licenses for products of the guild you are administering are shown.
+If the person holds nothing and nothing is shared with them, you see **No registration found.** instead.
 
-:::warning
-The member name can show as not in this guild even when the person is a member, because Lyna only checks members the bot has cached. The ids in the result can also be off in their last digits. Trust the id you typed.
-:::
+Only licenses for products of the guild you are administering are shown.
 
 ## What to do next
 
