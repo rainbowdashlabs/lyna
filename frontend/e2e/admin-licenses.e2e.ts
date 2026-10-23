@@ -62,6 +62,27 @@ test.describe('Managing licenses', () => {
         await deleteProduct(operator, id, name)
     })
 
+    test('a license issued on the page goes to whoever proved its address, and to nobody who merely claimed it', async ({signedIn, signedUp}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Handed')
+        const id = await createProduct(operator, name)
+        const unproved = await signedUp('unproved')
+
+        const handed = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
+            data: {productId: id, identifier: OPERATOR.email},
+        })).json()
+        const kept = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
+            data: {productId: id, identifier: unproved.email},
+        })).json()
+
+        expect(handed.holder).not.toBeNull()
+        expect(kept.holder).toBeNull()
+        const held = await (await operator.get('/api/account/licenses')).json()
+        expect(JSON.stringify(held)).toContain(name)
+        expect(JSON.stringify(await (await unproved.api.get('/api/account/licenses')).json())).not.toContain(name)
+        await deleteProduct(operator, id, name)
+    })
+
     test('Discord ids are sent as text, so they arrive exactly', async ({signedIn}) => {
         const operator = await signedIn(OPERATOR)
         const discordId = '1234567890123456789'

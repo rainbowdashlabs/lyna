@@ -12,6 +12,7 @@ import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.guild.Guilds;
@@ -90,6 +91,7 @@ public class Admin {
     private final ProductLinksRepository productLinks;
     private final ProductFamilyService productFamily;
     private final GuildAdminGuard guard;
+    private final PurchaseCollectionService purchaseCollection;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -117,11 +119,13 @@ public class Admin {
             ProductRepository productRepository,
             ProductLinksRepository productLinks,
             ProductFamilyService productFamily,
+            PurchaseCollectionService purchaseCollection,
             GuildAdminGuard guard) {
         this.productRepository = productRepository;
         this.productLinks = productLinks;
         this.productFamily = productFamily;
         this.guard = guard;
+        this.purchaseCollection = purchaseCollection;
         this.productIcons = productIcons;
         this.butlerApplications = butlerApplications;
         this.releaseWebhooks = releaseWebhooks;
@@ -668,6 +672,10 @@ public class Admin {
                 licenseSharing.shareCount(license));
     }
 
+    /**
+     * Issues a licence by hand, and gives it to whoever already proved the address it names, as every
+     * other way of issuing one does. An identifier that is no proved address hands it to nobody.
+     */
     private void createLicense(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
@@ -696,6 +704,7 @@ public class Admin {
         }
         var l = license.get();
         licenseService.grantInitialAccess(l, body.releaseTypes());
+        purchaseCollection.handOver(l.id(), l.userIdentifier());
         Optional<Holder> holder = licenseService.holder(l);
         ctx.status(HttpStatus.CREATED)
                 .json(new LicenseDetail(
