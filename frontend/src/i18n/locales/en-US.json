@@ -885,7 +885,11 @@
       "none": "None",
       "unknownRole": "A role this guild no longer has",
       "unknownChannel": "A channel this guild no longer shows",
-      "forum": "{name} (new forum post each time)",
+      "forum": "new post each time",
+      "search": "Search channels",
+      "noMatch": "No channel matches",
+      "expand": "Expand",
+      "collapse": "Collapse",
       "roleId": "Role id",
       "channelId": "Channel id",
       "noBot": "No bot is connected, so there are no names to choose from. Enter the id."
