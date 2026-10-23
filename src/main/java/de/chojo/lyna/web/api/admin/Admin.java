@@ -294,10 +294,12 @@ public class Admin {
     }
 
     /**
-     * Changes everything about a product that is not its icon.
+     * Changes everything about a product that is not its uploaded icon.
      *
      * <p>One endpoint rather than one per field: a form that saves a name and then fails on the role
-     * has already changed half of what somebody asked for.
+     * has already changed half of what somebody asked for. So everything is checked first - with a
+     * bot connected that includes the role existing in the guild, as when the product was created -
+     * and only then written.
      */
     private void updateProduct(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
@@ -327,6 +329,20 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not a role id");
             return;
         }
+        if (gateway.connected()
+                && discordGuild(resolved.guild().guildId())
+                        .map(guild -> guild.getRoleById(roleId))
+                        .isEmpty()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
+            return;
+        }
+        String name = body.name().strip();
+        boolean nameTaken = resolved.guild().products().all().stream()
+                .anyMatch(other -> other.id() != product.id() && other.name().equalsIgnoreCase(name));
+        if (nameTaken) {
+            ctx.status(HttpStatus.CONFLICT).result("Product already exists");
+            return;
+        }
         ProductLinks links = new ProductLinks(blankToNull(body.wikiUrl()), blankToNull(body.reviewUrl()));
         if ((links.wikiUrl() != null && !isWeb(links.wikiUrl()))
                 || (links.reviewUrl() != null && !isWeb(links.reviewUrl()))) {
@@ -352,7 +368,7 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result(iconRefusal.get());
             return;
         }
-        product.name(body.name().strip());
+        product.name(name);
         product.url(
                 body.url() == null || body.url().isBlank() ? null : body.url().strip());
         product.role(roleId);
