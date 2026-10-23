@@ -13,19 +13,24 @@ import {usePageTitle} from '~/composables/usePageTitle'
 
 /**
  * Where the admin area starts: straight on to the one guild somebody administers, a choice among
- * several, or - for somebody who administers nothing - why not and what to do about it, rather than a
- * silent return to the account area.
+ * several, the instance area for an operator with no guild to administer, or - for somebody who
+ * administers nothing - why not and what to do about it, rather than a silent return to the account
+ * area.
  */
 const {t} = useI18n()
 usePageTitle(t('common.admin'))
 
 const router = useRouter()
-const {guilds, load} = useAdminGuilds()
+const {guilds, operator, load} = useAdminGuilds()
 const {account} = useSession()
 const refused = ref(false)
 
 onMounted(async () => {
   await load(true)
+  if (guilds.value.length === 0 && operator.value) {
+    await router.replace('/admin/instance/system')
+    return
+  }
   if (guilds.value.length === 0) {
     refused.value = true
     return

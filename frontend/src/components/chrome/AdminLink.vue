@@ -15,9 +15,9 @@ import {useSession} from '~/composables/useSession'
  */
 const {t} = useI18n()
 const {account} = useSession()
-const {guilds, load} = useAdminGuilds()
+const {canAdminister, load} = useAdminGuilds()
 
-const shown = computed(() => account.value !== null && guilds.value.length > 0)
+const shown = computed(() => account.value !== null && canAdminister.value)
 
 watch(account, current => {
   if (current) load().catch(() => undefined)

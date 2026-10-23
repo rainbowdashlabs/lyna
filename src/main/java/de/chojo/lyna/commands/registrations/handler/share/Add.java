@@ -70,8 +70,8 @@ public class Add implements SlashHandler {
             return;
         }
 
-        if (licenseSharing.shareCount(license.get())
-                >= guild.settings().license().shares()) {
+        if (licenseSharing.shareCapReached(
+                license.get(), guild.settings().license().shares())) {
             event.reply("You have reached the share limit.").setEphemeral(true).queue();
             return;
         }

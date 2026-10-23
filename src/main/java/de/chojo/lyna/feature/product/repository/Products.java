@@ -27,8 +27,12 @@ public class Products {
         this.nexus = nexus;
     }
 
+    /**
+     * @return the product, or nothing when the guild already has one by that name, in any case
+     */
     public Optional<Product> create(String name, Role role, @Nullable String url, boolean free, boolean trial) {
-        return query("INSERT INTO product(guild_id, name, url, role, free, trial) VALUES (?,?,?,?,?,?) RETURNING id")
+        return query(
+                        "INSERT INTO product(guild_id, name, url, role, free, trial) VALUES (?,?,?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
                 .single(call().bind(licenseGuild.guildId())
                         .bind(name)
                         .bind(url)
@@ -43,9 +47,12 @@ public class Products {
     /**
      * Creates a product naming its role by id alone, for an instance with no gateway to look the role
      * up through.
+     *
+     * @return the product, or nothing when the guild already has one by that name, in any case
      */
     public Optional<Product> create(String name, long roleId, @Nullable String url, boolean free, boolean trial) {
-        return query("INSERT INTO product(guild_id, name, url, role, free, trial) VALUES (?,?,?,?,?,?) RETURNING id")
+        return query(
+                        "INSERT INTO product(guild_id, name, url, role, free, trial) VALUES (?,?,?,?,?,?) ON CONFLICT DO NOTHING RETURNING id")
                 .single(call().bind(licenseGuild.guildId())
                         .bind(name)
                         .bind(url)

@@ -12,6 +12,7 @@ import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.service.AccountLinkService;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.guild.roles.RoleSync;
+import de.chojo.lyna.feature.license.entity.Holder;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.repository.LicenseRepository;
 import de.chojo.lyna.feature.product.service.ProductRoleService;
@@ -60,6 +61,13 @@ public class LicenseService {
         long owner = licenses.ownerDiscordId(license.id()).orElse(0L);
         license.cachedOwner(owner);
         return owner;
+    }
+
+    /**
+     * @return whoever holds it, Discord or not, or nothing when nobody does
+     */
+    public Optional<Holder> holder(License license) {
+        return licenses.holder(license.id());
     }
 
     public boolean isClaimed(License license) {

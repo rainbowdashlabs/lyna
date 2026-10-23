@@ -63,6 +63,17 @@ public class LicenseSharingService {
         return licenses.shareCount(license.id());
     }
 
+    /**
+     * Whether the licence may be shared with nobody else.
+     *
+     * <p>A cap of 0 means no limit, as the website reads it, not that nobody may be added.
+     *
+     * @param cap the guild's share cap
+     */
+    public boolean shareCapReached(License license, int cap) {
+        return cap > 0 && shareCount(license) >= cap;
+    }
+
     public boolean addSharee(License license, Member member) {
         productRoles.assign(license.product(), member);
         log.info(

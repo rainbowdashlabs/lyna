@@ -21,7 +21,10 @@ export interface ProductSummary {
     roleId: string
     free: boolean
     trial: boolean
+    /** Where the icon is shown from: the uploaded one when there is one, else the hosted address. */
     iconUrl: string | null
+    /** The hosted address an operator configured, which is what the edit form edits. */
+    iconAddress?: string | null
     description: string | null
     /** The id deployed plugins ask UpdateButler for this product by. */
     butlerId?: number | null
@@ -48,7 +51,10 @@ export interface LicenseSummary {
     productId: number
     productName: string
     identifier: string
-    owner: number
+    /** The holder's Discord id, as text because it is larger than a number holds exactly; null without one. */
+    owner: string | null
+    /** What to call whoever holds it, Discord or not; null when nobody does. */
+    holder: string | null
     shareeCount: number
 }
 
@@ -58,19 +64,26 @@ export interface LicenseDetail {
     productName: string
     identifier: string
     key: string
-    owner: number
+    owner: string | null
+    holder: string | null
     sharees: string[]
 }
 
 export interface RegistrationInfo {
-    discordId: number
+    discordId: string
     memberName: string | null
     ownedLicenses: LicenseSummary[]
     sharedLicenses: LicenseSummary[]
 }
 
-export async function listAdminGuilds(): Promise<AdminGuild[]> {
-    const {data} = await client.get<AdminGuild[]>('/api/admin/guilds')
+/** What the caller may administer, operator status said outright rather than read off the guilds. */
+export interface AdminAccess {
+    operator: boolean
+    guilds: AdminGuild[]
+}
+
+export async function getAdminAccess(): Promise<AdminAccess> {
+    const {data} = await client.get<AdminAccess>('/api/admin/access')
     return data
 }
 

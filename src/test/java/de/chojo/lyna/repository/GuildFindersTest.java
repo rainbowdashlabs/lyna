@@ -124,6 +124,18 @@ class GuildFindersTest extends RepositoryTestBase {
     }
 
     @Test
+    @DisplayName("A name a guild already uses, in any case, makes no second product")
+    void takenNameMakesNothing() {
+        guild.products().create("Gadget", 60L, null, true, true).orElseThrow();
+        int before = guild.products().all().size();
+
+        assertTrue(guild.products().create("gadget", 61L, null, false, false).isEmpty());
+        assertTrue(
+                guild.products().create("GADGET", role(62L), null, false, false).isEmpty());
+        assertEquals(before, guild.products().all().size());
+    }
+
+    @Test
     @DisplayName("Autocompletion offers the products by what was typed, free apart from paid, trials apart")
     void completion() {
         guild.products().create("Gadget", 60L, null, true, false).orElseThrow();

@@ -12,10 +12,12 @@ import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
+import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
+import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
@@ -23,6 +25,7 @@ import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.instance.service.AppearancePolicy;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.license.entity.Holder;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.feature.license.service.LicenseService;
@@ -38,6 +41,7 @@ import de.chojo.lyna.feature.releasepost.service.ChannelTarget;
 import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
+import de.chojo.lyna.web.api.v1.products.RelatedProduct;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import net.dv8tion.jda.api.entities.Guild;
@@ -69,6 +73,7 @@ public class Admin {
 
     private final OAuth oauthConfig;
     private final ProductIconService productIcons;
+    private final ProductIconRepository uploadedIcons;
 
     private final LicenseService licenseService;
     private final LicenseSharingService licenseSharing;
@@ -89,6 +94,7 @@ public class Admin {
     private final ProductLinksRepository productLinks;
     private final ProductFamilyService productFamily;
     private final GuildAdminGuard guard;
+    private final PurchaseCollectionService purchaseCollection;
     private final InstanceOperatorRepository operators;
     private final IconUrls iconUrls = new IconUrls();
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -110,18 +116,22 @@ public class Admin {
             LicenseSharingService licenseSharing,
             OAuth oauthConfig,
             ProductIconService productIcons,
+            ProductIconRepository uploadedIcons,
             ButlerApplicationRepository butlerApplications,
             ReleaseWebhookRepository releaseWebhooks,
             GithubWebhookService releasePosts,
             ProductRepository productRepository,
             ProductLinksRepository productLinks,
             ProductFamilyService productFamily,
+            PurchaseCollectionService purchaseCollection,
             GuildAdminGuard guard) {
         this.productRepository = productRepository;
         this.productLinks = productLinks;
         this.productFamily = productFamily;
         this.guard = guard;
+        this.purchaseCollection = purchaseCollection;
         this.productIcons = productIcons;
+        this.uploadedIcons = uploadedIcons;
         this.butlerApplications = butlerApplications;
         this.releaseWebhooks = releaseWebhooks;
         this.releasePosts = releasePosts;
@@ -143,6 +153,7 @@ public class Admin {
     public void init() {
         path("admin", () -> {
             get("guilds", this::listAdminGuilds);
+            get("access", this::adminAccess);
             path("g/{guildId}", () -> {
                 get("products", this::listProducts);
                 post("products", this::createProduct);
@@ -188,17 +199,44 @@ public class Admin {
         ctx.json(adminGuilds(discordId, operator));
     }
 
+    /**
+     * What the caller may administer: the guilds, and whether the instance itself.
+     *
+     * <p>Operator status is said outright rather than left to be read off the guilds. An instance
+     * running no bot, configuring no guild and holding no products has no guild to list, and its
+     * operator would otherwise be told there was nothing to administer - including the instance area,
+     * which is where that is put right.
+     */
+    private void adminAccess(Context ctx) {
+        Optional<JwtService.Verified> session = auth.currentSession(ctx);
+        if (session.isEmpty()) {
+            ctx.status(HttpStatus.UNAUTHORIZED);
+            return;
+        }
+        Long discordId = resolveDiscordId(session.get());
+        boolean operator = isOperator(discordId);
+        ctx.json(new AdminAccess(operator, adminGuilds(discordId, operator)));
+    }
+
     private void listProducts(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
         var kioskById = kioskProducts.all().stream().collect(Collectors.toMap(KioskProduct::id, product -> product));
         Map<Integer, Integer> butlerIds = butlerApplications.butlerIdsByProduct();
+        Set<Integer> uploaded = uploadedIcons.withIcon();
         List<Product> products = resolved.guild().products().all();
-        ctx.json(products.stream().map(p -> summary(p, kioskById, butlerIds)).toList());
+        ctx.json(products.stream()
+                .map(p -> summary(p, kioskById, butlerIds, uploaded))
+                .toList());
     }
 
-    private ProductSummary summary(Product p, Map<Integer, KioskProduct> kioskById, Map<Integer, Integer> butlerIds) {
+    /**
+     * @param uploaded the products with an uploaded icon, which is shown in preference to an address
+     */
+    private ProductSummary summary(
+            Product p, Map<Integer, KioskProduct> kioskById, Map<Integer, Integer> butlerIds, Set<Integer> uploaded) {
         ProductLinks links = productLinks.get(p.id());
+        KioskProduct kiosk = kioskById.get(p.id());
         return new ProductSummary(
                 p.id(),
                 p.name(),
@@ -206,7 +244,8 @@ public class Admin {
                 Long.toString(p.role()),
                 p.free(),
                 p.trial(),
-                kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
+                kiosk == null ? null : RelatedProduct.iconAddress(kiosk, uploaded.contains(p.id())),
+                kiosk == null ? null : kiosk.iconUrl(),
                 kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null,
                 butlerIds.get(p.id()),
                 kioskById.containsKey(p.id()) && kioskById.get(p.id()).pageReadme(),
@@ -215,12 +254,6 @@ public class Admin {
                 kioskById.containsKey(p.id()) ? kioskById.get(p.id()).parentId() : null);
     }
 
-    /**
-     * Points a product's tile at a hosted image, or takes the image away when the address is blank.
-     *
-     * <p>The address is checked before it is stored: an operator who mistypes it should be told so
-     * here rather than by a storefront tile that has quietly lost its icon.
-     */
     /**
      * Writes what a product says about itself on its own page.
      *
@@ -261,10 +294,12 @@ public class Admin {
     }
 
     /**
-     * Changes everything about a product that is not its icon.
+     * Changes everything about a product that is not its uploaded icon.
      *
      * <p>One endpoint rather than one per field: a form that saves a name and then fails on the role
-     * has already changed half of what somebody asked for.
+     * has already changed half of what somebody asked for. So everything is checked first - with a
+     * bot connected that includes the role existing in the guild, as when the product was created -
+     * and only then written.
      */
     private void updateProduct(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
@@ -294,6 +329,20 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("That is not a role id");
             return;
         }
+        if (gateway.connected()
+                && discordGuild(resolved.guild().guildId())
+                        .map(guild -> guild.getRoleById(roleId))
+                        .isEmpty()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("Unknown role");
+            return;
+        }
+        String name = body.name().strip();
+        boolean nameTaken = resolved.guild().products().all().stream()
+                .anyMatch(other -> other.id() != product.id() && other.name().equalsIgnoreCase(name));
+        if (nameTaken) {
+            ctx.status(HttpStatus.CONFLICT).result("Product already exists");
+            return;
+        }
         ProductLinks links = new ProductLinks(blankToNull(body.wikiUrl()), blankToNull(body.reviewUrl()));
         if ((links.wikiUrl() != null && !isWeb(links.wikiUrl()))
                 || (links.reviewUrl() != null && !isWeb(links.reviewUrl()))) {
@@ -313,7 +362,13 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result(parentRefusal);
             return;
         }
-        product.name(body.name().strip());
+        String iconUrl = blankToNull(body.iconUrl());
+        Optional<String> iconRefusal = iconRefusal(product.id(), iconUrl);
+        if (iconRefusal.isPresent()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(iconRefusal.get());
+            return;
+        }
+        product.name(name);
         product.url(
                 body.url() == null || body.url().isBlank() ? null : body.url().strip());
         product.role(roleId);
@@ -330,7 +385,27 @@ public class Admin {
         }
         productLinks.set(product.id(), links);
         productFamily.parent(product.id(), body.parentId());
+        kioskProducts.iconUrl(product.id(), iconUrl);
         ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Whether a product's tile may be pointed at a hosted image. No address takes the image away.
+     *
+     * <p>A new address is checked before it is stored: an operator who mistypes it should be told so
+     * here rather than by a storefront tile that has quietly lost its icon. The address already stored
+     * is not asked again, so saving the rest of a product does not depend on its icon host answering.
+     *
+     * @return what is wrong with the address, or nothing when it may be stored
+     */
+    private Optional<String> iconRefusal(int productId, String iconUrl) {
+        if (iconUrl == null) return Optional.empty();
+        boolean unchanged = kioskProducts
+                .byId(productId)
+                .map(KioskProduct::iconUrl)
+                .filter(iconUrl::equals)
+                .isPresent();
+        return unchanged ? Optional.empty() : iconUrls.reject(iconUrl);
     }
 
     /**
@@ -543,12 +618,17 @@ public class Admin {
         }
     }
 
+    /**
+     * Takes a product's icon away, whichever kind it has: the uploaded image and the hosted address
+     * alike, so the tile is left on its monogram rather than falling back from one to the other.
+     */
     private void deleteProductIcon(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
         var product = productFromPath(ctx, resolved);
         if (product == null) return;
         productIcons.remove(product.id());
+        kioskProducts.iconUrl(product.id(), null);
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -621,6 +701,7 @@ public class Admin {
                         null,
                         null,
                         null,
+                        null,
                         false,
                         null,
                         null,
@@ -630,19 +711,27 @@ public class Admin {
     private void listLicenses(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
-        List<LicenseSummary> out = new ArrayList<>();
-        for (License l : resolved.guild().licenses().all()) {
-            out.add(new LicenseSummary(
-                    l.id(),
-                    l.product().id(),
-                    l.product().name(),
-                    l.userIdentifier(),
-                    licenseService.owner(l),
-                    licenseSharing.shareCount(l)));
-        }
-        ctx.json(out);
+        ctx.json(resolved.guild().licenses().all().stream()
+                .map(this::licenseSummary)
+                .toList());
     }
 
+    private LicenseSummary licenseSummary(License license) {
+        Optional<Holder> holder = licenseService.holder(license);
+        return new LicenseSummary(
+                license.id(),
+                license.product().id(),
+                license.product().name(),
+                license.userIdentifier(),
+                holder.map(Holder::discordId).map(String::valueOf).orElse(null),
+                holder.map(Holder::name).orElse(null),
+                licenseSharing.shareCount(license));
+    }
+
+    /**
+     * Issues a licence by hand, and gives it to whoever already proved the address it names, as every
+     * other way of issuing one does. An identifier that is no proved address hands it to nobody.
+     */
     private void createLicense(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
@@ -671,6 +760,8 @@ public class Admin {
         }
         var l = license.get();
         licenseService.grantInitialAccess(l, body.releaseTypes());
+        purchaseCollection.handOver(l.id(), l.userIdentifier());
+        Optional<Holder> holder = licenseService.holder(l);
         ctx.status(HttpStatus.CREATED)
                 .json(new LicenseDetail(
                         l.id(),
@@ -678,10 +769,16 @@ public class Admin {
                         l.product().name(),
                         l.userIdentifier(),
                         l.key(),
-                        licenseService.owner(l),
+                        holder.map(Holder::discordId).map(String::valueOf).orElse(null),
+                        holder.map(Holder::name).orElse(null),
                         licenseSharing.sharees(l).stream().map(Sharee::name).toList()));
     }
 
+    /**
+     * What somebody holds and is shared in this guild, by Discord id. An id nobody registered answers
+     * with two empty lists rather than 404. The member's name is asked of Discord when it is not
+     * cached, and is null without a gateway or when they are not in the guild.
+     */
     private void registrationInfo(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
@@ -692,28 +789,16 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid discord id");
             return;
         }
-        Member member = discordGuild(resolved.guild().guildId())
-                .map(g -> g.getMemberById(discordId))
+        String memberName = gateway.member(resolved.guild().guildId(), discordId)
+                .map(Member::getEffectiveName)
                 .orElse(null);
         var owned = resolved.guild().licenses().byOwner(discordId).stream()
-                .map(l -> new LicenseSummary(
-                        l.id(),
-                        l.product().id(),
-                        l.product().name(),
-                        l.userIdentifier(),
-                        licenseService.owner(l),
-                        licenseSharing.shareCount(l)))
+                .map(this::licenseSummary)
                 .toList();
         var shared = resolved.guild().licenses().bySharee(discordId).stream()
-                .map(l -> new LicenseSummary(
-                        l.id(),
-                        l.product().id(),
-                        l.product().name(),
-                        l.userIdentifier(),
-                        licenseService.owner(l),
-                        licenseSharing.shareCount(l)))
+                .map(this::licenseSummary)
                 .toList();
-        ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null, owned, shared));
+        ctx.json(new RegistrationInfo(Long.toString(discordId), memberName, owned, shared));
     }
 
     private void getSettings(Context ctx) {
@@ -795,6 +880,7 @@ public class Admin {
         if (resolved == null) return;
         var s = resolved.guild().settings().trial();
         var products = resolved.guild().products().all().stream()
+                .filter(Product::trial)
                 .map(p -> new ProductSummary(
                         p.id(),
                         p.name(),
@@ -802,6 +888,7 @@ public class Admin {
                         Long.toString(p.role()),
                         p.free(),
                         p.trial(),
+                        null,
                         null,
                         null,
                         null,
@@ -1061,9 +1148,18 @@ public class Admin {
     public record AdminGuild(String id, String name, String iconUrl, String role) {}
 
     /**
-     * @param roleId   as text, because a Discord id is larger than a JavaScript number holds exactly -
-     *                 sent as one it comes back rounded, and the edit form would write the wrong role
-     * @param parentId the product this one is an add-on of, or null
+     * @param operator whether the caller administers the whole instance
+     * @param guilds   the guilds the caller may administer
+     */
+    public record AdminAccess(boolean operator, List<AdminGuild> guilds) {}
+
+    /**
+     * @param roleId      as text, because a Discord id is larger than a JavaScript number holds exactly -
+     *                    sent as one it comes back rounded, and the edit form would write the wrong role
+     * @param iconUrl     where the icon is shown from: the uploaded one when there is one, else the
+     *                    hosted address, else nothing
+     * @param iconAddress the hosted address an operator configured, which is what the edit form edits
+     * @param parentId    the product this one is an add-on of, or null
      */
     public record ProductSummary(
             int id,
@@ -1073,6 +1169,7 @@ public class Admin {
             boolean free,
             boolean trial,
             String iconUrl,
+            String iconAddress,
             String description,
             Integer butlerId,
             boolean pageReadme,
@@ -1146,13 +1243,24 @@ public class Admin {
     public record CreateProduct(String name, String url, Long roleId, boolean free, boolean trial) {}
 
     /**
+     * @param owner       the holder's Discord id, as text because it is larger than a JavaScript number
+     *                    holds exactly, or null when nobody holds it or the holder never linked Discord
+     * @param holder      what to call whoever holds it, Discord or not, or null when nobody does
      * @param shareeCount everybody holding a place on the licence, including invites nobody has
      *                    answered and sharees who have no Discord id
      */
     public record LicenseSummary(
-            int id, int productId, String productName, String identifier, long owner, int shareeCount) {}
+            int id,
+            int productId,
+            String productName,
+            String identifier,
+            String owner,
+            String holder,
+            int shareeCount) {}
 
     /**
+     * @param owner   the holder's Discord id as text, or null, as in {@link LicenseSummary}
+     * @param holder  what to call whoever holds it, or null when nobody does
      * @param sharees everybody holding a place on the licence, including invites nobody has answered
      *                and sharees who have no Discord id
      */
@@ -1162,7 +1270,8 @@ public class Admin {
             String productName,
             String identifier,
             String key,
-            long owner,
+            String owner,
+            String holder,
             List<String> sharees) {}
 
     /**
@@ -1170,8 +1279,11 @@ public class Admin {
      */
     public record CreateLicense(Integer productId, String identifier, List<ReleaseType> releaseTypes) {}
 
+    /**
+     * @param discordId as text, because a Discord id is larger than a JavaScript number holds exactly
+     */
     public record RegistrationInfo(
-            long discordId,
+            String discordId,
             String memberName,
             List<LicenseSummary> ownedLicenses,
             List<LicenseSummary> sharedLicenses) {}

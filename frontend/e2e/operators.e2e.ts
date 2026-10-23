@@ -44,6 +44,14 @@ test.describe('The operator endpoints', () => {
         const guilds = await api.get('/api/admin/guilds')
         expect(await guilds.json()).toEqual([])
     })
+
+    test('say whether the caller is an operator', async ({signedIn, signedUp}) => {
+        const operator = await signedIn({email: 'entitled@example.invalid', password: PASSWORD})
+        const {api} = await signedUp('access')
+
+        expect((await (await operator.get('/api/admin/access')).json()).operator).toBe(true)
+        expect(await (await api.get('/api/admin/access')).json()).toEqual({operator: false, guilds: []})
+    })
 })
 
 test.describe('The operators page', () => {

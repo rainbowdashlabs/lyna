@@ -17,7 +17,7 @@ const {t} = useI18n()
 
 const route = useRoute()
 const router = useRouter()
-const {guilds, load} = useAdminGuilds()
+const {guilds, operator: isOperator, load} = useAdminGuilds()
 
 const system = ref<SystemInfo | null>(null)
 
@@ -33,7 +33,6 @@ const currentGuildId = computed(() => {
 })
 
 const currentGuild = computed(() => guilds.value.find(g => g.id === currentGuildId.value) ?? null)
-const isOperator = computed(() => guilds.value.some(g => g.role === 'operator'))
 const inInstance = computed(() => route.path.startsWith('/admin/instance'))
 
 const sections = computed<Tab[]>(() => {
@@ -74,12 +73,16 @@ const status = computed<StatusItem[]>(() => {
   ]
 })
 
+/**
+ * Opens the same page for another guild, or its products when the current page belongs to no guild -
+ * the instance area, say, which has no guild-scoped counterpart.
+ */
 function switchGuild(event: Event) {
   const target = event.target as HTMLSelectElement
   const id = target.value
   if (!id) return
-  const tail = route.path.replace(/^\/admin\/g\/[^/]+/, '')
-  router.push(`/admin/g/${id}${tail || '/products'}`)
+  const guildPage = /^\/admin\/g\/[^/]+(\/.*)?$/.exec(route.path)
+  router.push(`/admin/g/${id}${guildPage?.[1] || '/products'}`)
 }
 </script>
 

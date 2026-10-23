@@ -7,6 +7,7 @@ package de.chojo.lyna.feature.purchase.service;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.license.entity.License;
@@ -19,8 +20,11 @@ import de.chojo.lyna.mail.Mail;
 import de.chojo.lyna.mail.MailCreator;
 import de.chojo.lyna.mail.MailingService;
 import de.chojo.lyna.mail.PurchaseRecipient;
+import org.slf4j.Logger;
 
 import java.util.Optional;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Somebody buys a product and ends up holding a licence for it.
@@ -34,6 +38,8 @@ import java.util.Optional;
  */
 @Singleton
 public class PurchaseService {
+    private static final Logger log = getLogger(PurchaseService.class);
+
     private final LicenseService licenses;
     private final PurchaseCollectionService collection;
     private final MailingService mailing;
@@ -54,19 +60,32 @@ public class PurchaseService {
     /**
      * Issues a licence for a purchase and tells the buyer.
      *
+     * <p>A product with no mail set still issues the licence, and still hands it to whoever proved the
+     * address: the sale was made, and somebody who paid holds what they paid for. Only the mail is
+     * skipped, and an operator is told so, since the buyer otherwise hears nothing.
+     *
      * @param product the product bought
      * @param address the address it was paid from, which is what the licence is issued against
      * @param name    who bought it, as they gave it
      * @param source  where the purchase came from
-     * @return the licence, or nothing when the product has no mail to send or already has a licence
-     *         for that address
+     * @return the licence, or nothing when the product already has a licence for that address
      */
     public Optional<License> issue(Product product, String address, String name, LicenseSource source) {
-        Optional<Mailing> mailTemplate = product.mailings().get();
-        if (mailTemplate.isEmpty()) return Optional.empty();
         Optional<License> license = product.createLicense(address, source);
         if (license.isEmpty()) return Optional.empty();
         licenses.grantAccess(license.get(), ReleaseType.STABLE);
+        Optional<Mailing> mailTemplate = product.mailings().get();
+        if (mailTemplate.isEmpty()) {
+            collection.handOver(license.get().id(), address);
+            log.warn(
+                    LogNotify.NOTIFY_ADMIN,
+                    "No mail is set for product {} ({}), so the license {} issued for a {} purchase was not mailed",
+                    product.name(),
+                    product.id(),
+                    license.get().id(),
+                    source);
+            return license;
+        }
         announce(mailTemplate.get(), license.get(), name, address);
         return license;
     }

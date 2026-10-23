@@ -6,6 +6,7 @@
 package de.chojo.lyna.repository;
 
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.license.entity.Holder;
 import de.chojo.lyna.feature.license.entity.Sharee;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -103,6 +105,47 @@ class LicenseRepositoryTest extends RepositoryTestBase {
 
         licenseRepository.clearSharees(licenseId);
         assertTrue(licenseRepository.shareeDiscordIds(licenseId).isEmpty());
+    }
+
+    @Test
+    @DisplayName("A holder is named with their Discord id when they linked one")
+    void holderWithDiscord() {
+        licenseRepository.claim(ownerAccount, licenseId);
+
+        Holder holder = licenseRepository.holder(licenseId).orElseThrow();
+
+        assertEquals(ownerAccount, holder.accountId());
+        assertEquals(OWNER, holder.discordId());
+        assertEquals("account " + ownerAccount, holder.name(), "with neither a name nor an address");
+    }
+
+    @Test
+    @DisplayName("A holder who never linked Discord is still a holder, named by their address")
+    void holderWithoutDiscord() {
+        var webOnly = accountService.register("web@example.invalid", "hash");
+        licenseRepository.claim(webOnly.id(), licenseId);
+
+        Holder holder = licenseRepository.holder(licenseId).orElseThrow();
+
+        assertNull(holder.discordId());
+        assertEquals("web@example.invalid", holder.name());
+        assertTrue(licenseRepository.ownerDiscordId(licenseId).isEmpty(), "Discord knows nothing of them");
+    }
+
+    @Test
+    @DisplayName("A holder with a username is named by it")
+    void holderByUsername() {
+        var named = accountService.register("named@example.invalid", "hash");
+        usernameService.setUsername(named.id(), "ada");
+        licenseRepository.claim(named.id(), licenseId);
+
+        assertTrue(licenseRepository.holder(licenseId).orElseThrow().name().startsWith("ada#"));
+    }
+
+    @Test
+    @DisplayName("A licence nobody holds has no holder")
+    void unheldHasNoHolder() {
+        assertTrue(licenseRepository.holder(licenseId).isEmpty());
     }
 
     @Test

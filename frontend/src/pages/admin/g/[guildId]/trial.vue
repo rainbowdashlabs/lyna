@@ -59,10 +59,10 @@ function fmtMinutes(min: number): string {
           {{ t('page.admin.g.guildId.trial.activeLimits') }}
         </div>
         <div class="mt-1">
-          <span class="opacity-70">{{ t('page.admin.g.guildId.trial.perServerCooldown') }}</span> {{ fmtMinutes(info.serverMinutes) }}
+          <span class="opacity-70">{{ t('page.admin.g.guildId.trial.minServerMembership') }}</span> {{ fmtMinutes(info.serverMinutes) }}
         </div>
         <div>
-          <span class="opacity-70">{{ t('page.admin.g.guildId.trial.perAccountCooldown') }}</span> {{ fmtMinutes(info.accountMinutes) }}
+          <span class="opacity-70">{{ t('page.admin.g.guildId.trial.minAccountAge') }}</span> {{ fmtMinutes(info.accountMinutes) }}
         </div>
         <p class="mt-2 opacity-60">
           {{ t('page.admin.g.guildId.trial.editTheseLimitsUnder') }}

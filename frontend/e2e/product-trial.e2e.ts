@@ -68,3 +68,30 @@ test.describe('A product\'s trial', () => {
         await deleteProduct(operator, id, name)
     })
 })
+
+test.describe('The trial admin page', () => {
+    test('lists the products that offer a trial and no others', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const trialled = uniqueName('Trial listed')
+        const plain = uniqueName('Trial unlisted')
+        const trialledId = await createProduct(operator, trialled, false, {trial: true})
+        const plainId = await createProduct(operator, plain)
+        await operatorPage(page)
+
+        await page.goto(`/admin/g/${GUILD}/trial`)
+
+        await expect(page.getByRole('listitem').filter({hasText: trialled})).toHaveCount(1)
+        await expect(page.getByRole('listitem').filter({hasText: plain})).toHaveCount(0)
+        await deleteProduct(operator, trialledId, trialled)
+        await deleteProduct(operator, plainId, plain)
+    })
+
+    test('names its limits as the minimum ages they are', async ({page}) => {
+        await operatorPage(page)
+
+        await page.goto(`/admin/g/${GUILD}/trial`)
+
+        await expect(page.getByText('Minimum time on the server:')).toBeVisible()
+        await expect(page.getByText('Minimum account age:')).toBeVisible()
+    })
+})

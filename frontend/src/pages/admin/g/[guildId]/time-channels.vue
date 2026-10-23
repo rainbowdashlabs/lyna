@@ -10,6 +10,7 @@ import {useRoute} from 'vue-router'
 import {listChannels} from '~/api/adminDiscord'
 import {listTimeChannels, removeTimeChannel, type TimeChannel} from '~/api/adminTimeChannels'
 import {usePageTitle} from '~/composables/usePageTitle'
+import ConfirmButton from '~/components/button/ConfirmButton.vue'
 
 /**
  * Channels whose name shows the time somewhere, renamed every quarter of an hour - what
@@ -25,6 +26,7 @@ const channels = ref<TimeChannel[]>([])
 const botConnected = ref(true)
 const loading = ref(true)
 const error = ref('')
+const confirming = ref<string | null>(null)
 
 async function load() {
   try {
@@ -38,7 +40,9 @@ async function load() {
   }
 }
 
+/** Stops a channel once that has been confirmed; it keeps the name it was last given. */
 async function remove(channelId: string) {
+  confirming.value = null
   await removeTimeChannel(guildId, channelId)
   await load()
 }
@@ -58,7 +62,11 @@ onMounted(load)
             <div class="font-data">{{ channel.shows }}</div>
             <MutedText class="font-data" tag="div">{{ channel.channelName ?? channel.channelId }} · {{ channel.zone }}</MutedText>
           </div>
-          <ErrorButton compact @click="remove(channel.channelId)">{{ t('page.admin.g.guildId.timeChannels.remove') }}</ErrorButton>
+          <div v-if="confirming === channel.channelId" class="flex items-center gap-2">
+            <ConfirmButton @click="remove(channel.channelId)"/>
+            <SecondaryButton compact @click="confirming = null">{{ t('common.cancel') }}</SecondaryButton>
+          </div>
+          <ErrorButton v-else compact @click="confirming = channel.channelId">{{ t('page.admin.g.guildId.timeChannels.remove') }}</ErrorButton>
         </li>
       </ul>
       <Alert v-if="!botConnected" class="mt-4" variant="info">{{ t('page.admin.g.guildId.timeChannels.needsBot') }}</Alert>

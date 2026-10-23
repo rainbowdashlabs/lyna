@@ -151,17 +151,27 @@ class PurchaseServiceTest extends RepositoryTestBase {
     }
 
     @Test
-    @DisplayName("A product with no mail to send issues nothing, because the key would reach nobody")
-    void withoutAMailTemplateNothingIsIssued() throws SQLException {
+    @DisplayName("A product with no mail to send still issues the licence and hands it over, mailing nothing")
+    void withoutAMailTemplateTheLicenceIsStillIssued() throws SQLException {
         try (var connection = dataSource.getConnection();
                 Statement statement = connection.createStatement()) {
             statement.execute("DELETE FROM %s.mail_products".formatted(schemaName));
         }
         Product bare = product.products().byId(product.id()).orElseThrow();
+        var account = accountService.register(BUYER, "hash");
+        accountEmailService.confirm(account.id(), BUYER);
 
-        assertTrue(
-                purchases.issue(bare, BUYER, "Ada Lovelace", LicenseSource.KOFI).isEmpty());
-        assertTrue(sent.isEmpty());
+        Optional<License> license = purchases.issue(bare, BUYER, "Ada Lovelace", LicenseSource.KOFI);
+
+        assertTrue(license.isPresent(), "the sale issues a licence");
+        assertFalse(licenseService.access(license.get()).isEmpty(), "the stable release is granted");
+        assertEquals(
+                List.of(license.get().id()),
+                accountLicenses.owned(account.id()).stream()
+                        .map(AccountLicense::id)
+                        .toList(),
+                "and whoever proved the address holds it");
+        assertTrue(sent.isEmpty(), "no mail is sent");
     }
 
     @Test

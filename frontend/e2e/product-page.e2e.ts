@@ -5,7 +5,7 @@
  */
 import {type APIRequestContext, type Page} from '@playwright/test'
 import {expect, test} from './fixtures/session'
-import {OPERATOR, operatorPage} from './fixtures/admin'
+import {createProduct, deleteProduct, GUILD, OPERATOR, operatorPage, uniqueName} from './fixtures/admin'
 
 /**
  * The page a product has of its own.
@@ -186,6 +186,49 @@ test.describe('A product an operator administers', () => {
         expect((await operator.delete(`/api/admin/g/4242/products/${product.id}/icon`)).status())
             .toBe(204)
         expect((await request.get(`/api/v1/products/${product.id}/icon`)).status()).toBe(404)
+    })
+
+    async function adminSummary(operator: APIRequestContext, id: number) {
+        const products = await (await operator.get(`/api/admin/g/${GUILD}/products`)).json()
+        return products.find((p: { id: number }) => p.id === id)
+    }
+
+    test('the admin product list shows an uploaded icon, which removing takes away', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Iconic')
+        const id = await createProduct(operator, name)
+        await operator.post(`/api/admin/g/${GUILD}/products/${id}/icon`, {
+            multipart: {icon: {name: 'icon.png', mimeType: 'image/png', buffer: PNG}},
+        })
+
+        expect((await adminSummary(operator, id)).iconUrl).toBe(`/api/v1/products/${id}/icon`)
+        await operatorPage(page)
+        await page.goto(`/admin/g/${GUILD}/products/${id}`)
+        await page.getByRole('button', {name: 'Remove icon'}).click()
+
+        await expect(page.getByRole('button', {name: 'Remove icon'})).toHaveCount(0)
+        expect((await adminSummary(operator, id)).iconUrl).toBeNull()
+        await deleteProduct(operator, id, name)
+    })
+
+    /** The address is the Nexus stub's, which answers as an image host. */
+    test('an icon address is checked, saved, and shown', async ({signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Pointing')
+        const id = await createProduct(operator, name)
+        const edit = {name, url: null, roleId: '99', free: false, trial: false, butlerId: null, wikiUrl: null, reviewUrl: null, parentId: null}
+
+        const refused = await operator.put(`/api/admin/g/${GUILD}/products/${id}`, {data: {...edit, iconUrl: 'ftp://example.invalid/icon.png'}})
+        expect(refused.status()).toBe(400)
+
+        const address = 'https://nexus-e2e/icon.png'
+        const saved = await operator.put(`/api/admin/g/${GUILD}/products/${id}`, {data: {...edit, iconUrl: address}})
+        expect(saved.status(), await saved.text()).toBe(204)
+        const summary = await adminSummary(operator, id)
+        expect(summary.iconUrl).toBe(address)
+        expect(summary.iconAddress).toBe(address)
+
+        await deleteProduct(operator, id, name)
     })
 
     test('a file that is not an image is refused', async ({request, signedIn}) => {

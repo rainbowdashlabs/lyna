@@ -5,7 +5,7 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {ref, watch} from 'vue'
+import {computed, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {lookupRegistration, type RegistrationInfo} from '~/api/admin'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
@@ -23,6 +23,11 @@ const result = ref<RegistrationInfo | null>(null)
 const errorMessage = ref<string | null>(null)
 const busy = ref(false)
 
+/** The backend answers an id nobody registered with two empty lists, never with a 404. */
+const nothingFound = computed(() => result.value !== null
+    && result.value.ownedLicenses.length === 0
+    && result.value.sharedLicenses.length === 0)
+
 watch(() => route.params.guildId, (next) => {
   guildId.value = String(next)
   result.value = null
@@ -32,12 +37,12 @@ async function submit() {
   if (!discordIdInput.value.trim()) return
   busy.value = true
   errorMessage.value = null
+  result.value = null
   try {
     result.value = await lookupRegistration(guildId.value, discordIdInput.value.trim())
   } catch (e) {
-    const error = e as {response?: {data?: string, status?: number}}
-    if (error.response?.status === 404) errorMessage.value = t('page.admin.g.guildId.registrations.noRegistrationFound')
-    else errorMessage.value = typeof error.response?.data === 'string' ? error.response.data : 'Lookup failed.'
+    const error = e as {response?: {data?: string}}
+    errorMessage.value = typeof error.response?.data === 'string' ? error.response.data : t('page.admin.g.guildId.registrations.lookupFailed')
   } finally {
     busy.value = false
   }
@@ -55,14 +60,17 @@ async function submit() {
     <form class="mb-4 flex gap-2" @submit.prevent="submit">
       <TextInput v-model="discordIdInput" class="flex-1" inputmode="numeric" :placeholder="t('page.admin.g.guildId.registrations.discordUserId')"/>
       <PrimaryButton :disabled="busy" @click="submit">
-        {{ busy ? 'Looking up…' : 'Look up' }}
+        {{ busy ? t('page.admin.g.guildId.registrations.lookingUp') : t('page.admin.g.guildId.registrations.lookUp') }}
       </PrimaryButton>
     </form>
     <div v-if="errorMessage" class="text-sm text-error">
       {{ errorMessage }}
     </div>
+    <div v-if="nothingFound" class="text-sm opacity-70">
+      {{ t('page.admin.g.guildId.registrations.noRegistrationFound') }}
+    </div>
     <div
-        v-if="result"
+        v-else-if="result"
         class="space-y-4 rounded-theme border border-border-light dark:border-border-dark p-4 text-sm"
     >
       <div>
@@ -70,17 +78,17 @@ async function submit() {
           <span class="opacity-70">{{ t('page.admin.g.guildId.registrations.discordId') }}</span> {{ result.discordId }}
         </div>
         <div>
-          <span class="opacity-70">{{ t('page.admin.g.guildId.registrations.memberName') }}</span> {{ result.memberName ?? '— not in this guild —' }}
+          <span class="opacity-70">{{ t('page.admin.g.guildId.registrations.memberName') }}</span> {{ result.memberName ?? t('page.admin.g.guildId.registrations.notInThisGuild') }}
         </div>
       </div>
       <section>
         <CardHeader>
-          Owned ({{ result.ownedLicenses.length }})
+          {{ t('page.admin.g.guildId.registrations.owned', {count: result.ownedLicenses.length}) }}
         </CardHeader>
         <ul v-if="result.ownedLicenses.length" class="divide-y divide-border-light dark:divide-border-dark">
           <li v-for="l in result.ownedLicenses" :key="l.id" class="py-1">
             <span class="font-medium">{{ l.productName }}</span>
-            <span class="ml-2 opacity-60">id {{ l.id }} · {{ l.identifier }} · {{ l.shareeCount }} sharees</span>
+            <span class="ml-2 opacity-60">id {{ l.id }} · {{ l.identifier }} · {{ t('ui.adminLicenseRow.sharees', {count: l.shareeCount}) }}</span>
           </li>
         </ul>
         <div v-else class="opacity-60">
@@ -89,12 +97,12 @@ async function submit() {
       </section>
       <section>
         <CardHeader>
-          Shared with ({{ result.sharedLicenses.length }})
+          {{ t('page.admin.g.guildId.registrations.sharedWith', {count: result.sharedLicenses.length}) }}
         </CardHeader>
         <ul v-if="result.sharedLicenses.length" class="divide-y divide-border-light dark:divide-border-dark">
           <li v-for="l in result.sharedLicenses" :key="l.id" class="py-1">
             <span class="font-medium">{{ l.productName }}</span>
-            <span class="ml-2 opacity-60">id {{ l.id }} · owner {{ l.owner }}</span>
+            <span class="ml-2 opacity-60">id {{ l.id }} · {{ l.holder ? t('ui.adminLicenseRow.owner', {owner: l.holder}) : t('ui.adminLicenseRow.unclaimed') }}</span>
           </li>
         </ul>
         <div v-else class="opacity-60">

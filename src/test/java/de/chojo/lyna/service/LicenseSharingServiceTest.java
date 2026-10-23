@@ -5,16 +5,21 @@
  */
 package de.chojo.lyna.service;
 
+import de.chojo.lyna.configuration.TestConf;
 import de.chojo.lyna.feature.account.entity.Account;
 import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.entity.AccountLicense;
 import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
+import de.chojo.lyna.feature.guild.Guilds;
+import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.repository.RepositoryTestBase;
+import de.chojo.nexus.NexusRest;
 import de.chojo.sadu.queries.api.call.Call;
 import de.chojo.sadu.queries.api.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -158,6 +163,21 @@ class LicenseSharingServiceTest extends RepositoryTestBase {
         assertEquals(2, license.shareesUsed());
         assertEquals(2, license.shareesCap());
         assertTrue(license.shareesUsed() >= license.shareesCap());
+    }
+
+    @Test
+    @DisplayName("A cap of 0 is no limit, and any other cap is reached when the sharees fill it")
+    void capOfZeroIsNoLimit() {
+        accountLicenses.addSharee(licenseId, sharee.id());
+        License license = new Guilds(Mockito.mock(NexusRest.class), TestConf.defaults(), accountLinks)
+                .guild(GUILD)
+                .licenses()
+                .byId(licenseId)
+                .orElseThrow();
+
+        assertFalse(licenseSharing.shareCapReached(license, 0), "0 is no limit");
+        assertFalse(licenseSharing.shareCapReached(license, 2), "a place is left");
+        assertTrue(licenseSharing.shareCapReached(license, 1), "the one place is taken");
     }
 
     @Test

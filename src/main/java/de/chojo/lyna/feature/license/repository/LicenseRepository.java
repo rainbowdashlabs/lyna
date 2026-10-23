@@ -7,6 +7,7 @@ package de.chojo.lyna.feature.license.repository;
 
 import com.google.inject.Singleton;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
+import de.chojo.lyna.feature.license.entity.Holder;
 import de.chojo.lyna.feature.license.entity.Sharee;
 
 import java.util.List;
@@ -37,6 +38,54 @@ public class LicenseRepository {
                 """)
                 .single(call().bind(licenseId))
                 .map(row -> row.getLong("user_id"))
+                .first();
+    }
+
+    /**
+     * Whoever holds the licence, named.
+     *
+     * <p>Unlike {@link #ownerDiscordId}, this finds a holder who never linked Discord, so a report
+     * does not call a licence unclaimed that somebody holds through the web.
+     *
+     * <p>Named by their username, else by an address - the one the account is written to first - else
+     * by the account's number.
+     *
+     * @return the holder, or nothing when nobody holds it
+     */
+    public Optional<Holder> holder(int licenseId) {
+        return query("""
+                SELECT u.account_id,
+                       a.username,
+                       a.discriminator,
+                       i.external_id AS discord_id,
+                       (SELECT e.email
+                        FROM account_email e
+                        WHERE e.account_id = u.account_id
+                        ORDER BY e.is_primary DESC, e.verified_at IS NULL, e.added_at
+                        LIMIT 1) AS email
+                FROM user_license u
+                    JOIN account a ON a.id = u.account_id
+                    LEFT JOIN account_identity i
+                        ON i.account_id = u.account_id AND i.provider = 'discord'
+                WHERE u.license_id = ?
+                """)
+                .single(call().bind(licenseId))
+                .map(row -> {
+                    int accountId = row.getInt("account_id");
+                    String discordId = row.getString("discord_id");
+                    String username = row.getString("username");
+                    String discriminator = row.getString("discriminator");
+                    String email = row.getString("email");
+                    String name;
+                    if (username != null && !username.isBlank()) {
+                        name = discriminator == null ? username : username + "#" + discriminator;
+                    } else if (email != null) {
+                        name = email;
+                    } else {
+                        name = "account " + accountId;
+                    }
+                    return new Holder(accountId, discordId == null ? null : Long.parseLong(discordId), name);
+                })
                 .first();
     }
 
