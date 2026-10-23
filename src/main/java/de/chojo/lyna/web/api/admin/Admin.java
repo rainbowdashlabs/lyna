@@ -718,6 +718,11 @@ public class Admin {
                         licenseSharing.sharees(l).stream().map(Sharee::name).toList()));
     }
 
+    /**
+     * What somebody holds and is shared in this guild, by Discord id. An id nobody registered answers
+     * with two empty lists rather than 404. The member's name is asked of Discord when it is not
+     * cached, and is null without a gateway or when they are not in the guild.
+     */
     private void registrationInfo(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
@@ -728,8 +733,8 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result("Invalid discord id");
             return;
         }
-        Member member = discordGuild(resolved.guild().guildId())
-                .map(g -> g.getMemberById(discordId))
+        String memberName = gateway.member(resolved.guild().guildId(), discordId)
+                .map(Member::getEffectiveName)
                 .orElse(null);
         var owned = resolved.guild().licenses().byOwner(discordId).stream()
                 .map(this::licenseSummary)
@@ -737,8 +742,7 @@ public class Admin {
         var shared = resolved.guild().licenses().bySharee(discordId).stream()
                 .map(this::licenseSummary)
                 .toList();
-        ctx.json(new RegistrationInfo(
-                Long.toString(discordId), member != null ? member.getEffectiveName() : null, owned, shared));
+        ctx.json(new RegistrationInfo(Long.toString(discordId), memberName, owned, shared));
     }
 
     private void getSettings(Context ctx) {

@@ -228,7 +228,13 @@
             "memberName": "Member name:",
             "none": "None.",
             "discordUserId": "Discord user id",
-            "noRegistrationFound": "No registration found."
+            "noRegistrationFound": "No registration found.",
+            "lookupFailed": "Lookup failed.",
+            "lookingUp": "Looking up…",
+            "lookUp": "Look up",
+            "notInThisGuild": "— not in this guild —",
+            "owned": "Owned ({count})",
+            "sharedWith": "Shared with ({count})"
           },
           "settings": {
             "settings": "Settings",

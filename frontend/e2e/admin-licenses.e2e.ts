@@ -92,6 +92,16 @@ test.describe('Managing licenses', () => {
         expect(registration.discordId).toBe(discordId)
     })
 
+    test('looking up somebody who registered nothing says so', async ({page}) => {
+        await operatorPage(page)
+        await page.goto(`/admin/g/${GUILD}/registrations`)
+
+        await page.getByPlaceholder('Discord user id').fill('1234567890123456789')
+        await page.getByRole('button', {name: 'Look up'}).click()
+
+        await expect(page.getByText('No registration found.')).toBeVisible()
+    })
+
     test('a license issued without naming release types reaches stable builds', async ({signedIn}) => {
         const operator = await signedIn(OPERATOR)
         const name = uniqueName('Defaulted')
