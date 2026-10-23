@@ -4,13 +4,20 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 <script lang="ts" setup>
-import {onMounted} from 'vue'
+import {onMounted, watch} from 'vue'
 import {useTheme} from '~/composables/useTheme'
+import {useSession} from '~/composables/useSession'
+import {publicTheme} from '~/api/theme'
 
-const {initFromLocalStorage} = useTheme()
+const {initFromLocalStorage, applyPolicy, adoptAccountChoice} = useTheme()
+const {account} = useSession()
 
-onMounted(() => {
+onMounted(async () => {
   initFromLocalStorage()
+  applyPolicy(await publicTheme().catch(() => null))
+  watch(() => account.value, signedIn => {
+    if (signedIn) adoptAccountChoice(signedIn.theme)
+  }, {immediate: true})
 })
 </script>
 

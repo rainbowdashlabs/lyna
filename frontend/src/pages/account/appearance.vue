@@ -10,6 +10,7 @@ import {overview} from '~/api/account'
 import {publicTheme, type PublicTheme, saveAppearance} from '~/api/theme'
 import {useTheme} from '~/composables/useTheme'
 import {DarkMode, type DarkModeValue} from '~/theme/themes'
+import {effectiveTheme, offeredThemes} from '~/theme/policy'
 import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
@@ -17,27 +18,28 @@ usePageTitle(t('layout.account.appearance'))
 
 definePageMeta({layout: 'account'})
 
-const {activeTheme, darkMode, setTheme, setDarkMode} = useTheme()
+const {darkMode, setTheme, setDarkMode} = useTheme()
 
 const policy = ref<PublicTheme | null>(null)
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 const saveMessage = ref<string | null>(null)
+const saveOk = ref(false)
 
-const theme = ref('lyna')
+const theme = ref('')
 const mode = ref<DarkModeValue>(DarkMode.SYSTEM)
 
 const themeLocked = computed(() => !!policy.value && !policy.value.allowUserTheme)
-const nothingToChoose = computed(() => themeLocked.value)
+const offered = computed(() => offeredThemes(policy.value))
 
 onMounted(async () => {
   try {
     const [settings, account] = await Promise.all([publicTheme(), overview()])
     policy.value = settings
-    theme.value = account.account.theme ?? settings.defaultTheme
+    theme.value = effectiveTheme(settings, account.account.theme)
     mode.value = (account.account.darkMode ?? darkMode.value) as DarkModeValue
   } catch (e) {
-    errorMessage.value = (e as Error).message ?? 'Failed to load appearance settings'
+    errorMessage.value = (e as Error).message || t('page.account.appearance.couldNotLoad')
   } finally {
     loading.value = false
   }
@@ -52,10 +54,12 @@ async function save() {
   if (!themeLocked.value) setTheme(theme.value)
   setDarkMode(mode.value)
   try {
-    await saveAppearance({theme: theme.value, darkMode: mode.value})
-    saveMessage.value = 'Saved.'
+    await saveAppearance(themeLocked.value ? {darkMode: mode.value} : {theme: theme.value, darkMode: mode.value})
+    saveOk.value = true
+    saveMessage.value = t('page.account.appearance.saved')
   } catch {
-    saveMessage.value = 'Could not save your choice.'
+    saveOk.value = false
+    saveMessage.value = t('page.account.appearance.couldNotSave')
   }
 }
 </script>
@@ -67,13 +71,13 @@ async function save() {
     </PageHeader>
     <AsyncSection :error="errorMessage ?? undefined" :loading="loading">
       <div v-if="policy" class="space-y-6">
-        <EmptyHint v-if="nothingToChoose">
+        <EmptyHint v-if="themeLocked">
           {{ t('page.account.appearance.yourOperatorHasFixedTheTheme') }}
         </EmptyHint>
 
         <section v-if="!themeLocked">
           <CardHeader>{{ t('page.account.appearance.theme') }}</CardHeader>
-          <ThemeSelector v-model="theme" :enabled="policy.enabledThemes"/>
+          <ThemeSelector v-model="theme" :enabled="offered"/>
         </section>
 
         <section>
@@ -88,7 +92,7 @@ async function save() {
 
         <div class="flex items-center gap-3">
           <PrimaryButton @click="save">{{ t('common.save') }}</PrimaryButton>
-          <MutedText v-if="saveMessage" :class="saveMessage === 'Saved.' ? 'text-success' : 'text-error'" size="sm">
+          <MutedText v-if="saveMessage" :class="saveOk ? 'text-success' : 'text-error'" size="sm">
             {{ saveMessage }}
           </MutedText>
         </div>

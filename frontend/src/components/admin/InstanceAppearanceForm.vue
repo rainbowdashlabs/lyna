@@ -8,6 +8,7 @@ import {useI18n} from 'vue-i18n'
 import type {InstanceAppearance} from '~/api/admin'
 import {computed} from 'vue'
 import {THEMES} from '~/theme/themes'
+import {MODE_TOKENS, PAGE_TOKENS} from '~/theme/policy'
 
 const {t} = useI18n()
 
@@ -16,6 +17,8 @@ const data = defineModel<InstanceAppearance>({required: true})
 defineProps<{
     saving: boolean
     saveMessage: string | null
+    /** Whether the last save went through, which decides how its message is coloured. */
+    saveOk: boolean
 }>()
 
 const emit = defineEmits<{
@@ -45,16 +48,23 @@ const enabledThemes = computed({
           <option v-for="(theme, key) in THEMES" :key="key" :value="key">{{ theme.label }}</option>
         </SelectInput>
       </LabelledField>
-      <LabelledField :help="t('ui.instanceAppearanceForm.emptyMeansEveryThemeIsAvailable')" :label="t('ui.instanceAppearanceForm.enabledThemesCommaSeparated')">
+      <LabelledField
+          :help="t('ui.instanceAppearanceForm.emptyMeansEveryThemeIsAvailable', {themes: Object.keys(THEMES).join(', ')})"
+          :label="t('ui.instanceAppearanceForm.enabledThemesCommaSeparated')"
+      >
         <TextInput v-model="enabledThemes"/>
       </LabelledField>
-      <div class="grid grid-cols-1 gap-2 text-sm">
+      <div class="grid grid-cols-1 gap-1 text-sm">
         <FieldLabel inline><CheckboxInput v-model="data.allowUserTheme"/> {{ t('ui.instanceAppearanceForm.allowUserTheme') }}</FieldLabel>
+        <MutedText size="sm" tag="span">{{ t('ui.instanceAppearanceForm.allowUserThemeHelp') }}</MutedText>
       </div>
-      <LabelledField :label="t('ui.instanceAppearanceForm.customThemeColorsJson')">
+      <LabelledField
+          :help="t('ui.instanceAppearanceForm.customThemeColorsHelp', {pageTokens: PAGE_TOKENS.join(', '), modeTokens: MODE_TOKENS.join(', ')})"
+          :label="t('ui.instanceAppearanceForm.customThemeColorsJson')"
+      >
         <TextAreaInput v-model="customThemeColors" :rows="6" class="font-mono text-xs"/>
       </LabelledField>
-      <MutedText v-if="saveMessage" :class="saveMessage === 'Saved.' ? 'text-success' : 'text-error'" size="sm" tag="p">
+      <MutedText v-if="saveMessage" :class="saveOk ? 'text-success' : 'text-error'" size="sm" tag="p">
         {{ saveMessage }}
       </MutedText>
       <SaveButton :action="() => emit('save')" :disabled="saving"/>

@@ -4,13 +4,9 @@
  *     Copyright (C) RainbowDashLabs and Contributor
  */
 import client from './client'
+import type {ThemePolicy} from '~/theme/policy'
 
-export interface PublicTheme {
-    defaultTheme: string
-    allowUserTheme: boolean
-    enabledThemes: string[]
-    customThemeColors: string | null
-}
+export type PublicTheme = ThemePolicy
 
 export interface AppearanceChoice {
     theme: string | null
