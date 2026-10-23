@@ -143,6 +143,7 @@ public class Admin {
     public void init() {
         path("admin", () -> {
             get("guilds", this::listAdminGuilds);
+            get("access", this::adminAccess);
             path("g/{guildId}", () -> {
                 get("products", this::listProducts);
                 post("products", this::createProduct);
@@ -186,6 +187,25 @@ public class Admin {
         Long discordId = resolveDiscordId(session.get());
         boolean operator = isOperator(discordId);
         ctx.json(adminGuilds(discordId, operator));
+    }
+
+    /**
+     * What the caller may administer: the guilds, and whether the instance itself.
+     *
+     * <p>Operator status is said outright rather than left to be read off the guilds. An instance
+     * running no bot, configuring no guild and holding no products has no guild to list, and its
+     * operator would otherwise be told there was nothing to administer - including the instance area,
+     * which is where that is put right.
+     */
+    private void adminAccess(Context ctx) {
+        Optional<JwtService.Verified> session = auth.currentSession(ctx);
+        if (session.isEmpty()) {
+            ctx.status(HttpStatus.UNAUTHORIZED);
+            return;
+        }
+        Long discordId = resolveDiscordId(session.get());
+        boolean operator = isOperator(discordId);
+        ctx.json(new AdminAccess(operator, adminGuilds(discordId, operator)));
     }
 
     private void listProducts(Context ctx) {
@@ -1059,6 +1079,12 @@ public class Admin {
     }
 
     public record AdminGuild(String id, String name, String iconUrl, String role) {}
+
+    /**
+     * @param operator whether the caller administers the whole instance
+     * @param guilds   the guilds the caller may administer
+     */
+    public record AdminAccess(boolean operator, List<AdminGuild> guilds) {}
 
     /**
      * @param roleId   as text, because a Discord id is larger than a JavaScript number holds exactly -

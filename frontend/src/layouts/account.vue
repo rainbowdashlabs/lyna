@@ -18,7 +18,7 @@ const {t} = useI18n()
 
 const router = useRouter()
 const {clear, account} = useSession()
-const {guilds, load} = useAdminGuilds()
+const {canAdminister, load} = useAdminGuilds()
 
 onMounted(() => load().catch(() => undefined))
 
@@ -40,7 +40,7 @@ const tabs = computed<Tab[]>(() => [
   {to: '/account/updaters', label: t('layout.account.updaters')},
   {to: '/account/security', label: t('layout.account.security')},
   {to: '/account/appearance', label: t('layout.account.appearance')},
-  ...(guilds.value.length > 0 ? [{to: '/admin', label: t('common.admin')}] : []),
+  ...(canAdminister.value ? [{to: '/admin', label: t('common.admin')}] : []),
 ])
 
 const who = computed(() => account.value?.username

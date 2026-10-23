@@ -17,7 +17,7 @@ const {t} = useI18n()
 
 const route = useRoute()
 const router = useRouter()
-const {guilds, load} = useAdminGuilds()
+const {guilds, operator: isOperator, load} = useAdminGuilds()
 
 const system = ref<SystemInfo | null>(null)
 
@@ -33,7 +33,6 @@ const currentGuildId = computed(() => {
 })
 
 const currentGuild = computed(() => guilds.value.find(g => g.id === currentGuildId.value) ?? null)
-const isOperator = computed(() => guilds.value.some(g => g.role === 'operator'))
 const inInstance = computed(() => route.path.startsWith('/admin/instance'))
 
 const sections = computed<Tab[]>(() => {

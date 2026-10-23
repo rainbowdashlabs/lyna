@@ -69,8 +69,14 @@ export interface RegistrationInfo {
     sharedLicenses: LicenseSummary[]
 }
 
-export async function listAdminGuilds(): Promise<AdminGuild[]> {
-    const {data} = await client.get<AdminGuild[]>('/api/admin/guilds')
+/** What the caller may administer, operator status said outright rather than read off the guilds. */
+export interface AdminAccess {
+    operator: boolean
+    guilds: AdminGuild[]
+}
+
+export async function getAdminAccess(): Promise<AdminAccess> {
+    const {data} = await client.get<AdminAccess>('/api/admin/access')
     return data
 }
 
