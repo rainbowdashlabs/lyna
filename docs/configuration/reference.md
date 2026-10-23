@@ -29,18 +29,9 @@ database:
 api:
   hostname: "lyna.example.com"
   url: "https://lyna.example.com"
-  host: "0.0.0.0"
-  port: 8888
-  allowedOrigins: []
-  iconHosts: []
-  staticUi: false
 links:
   frontend: "https://lyna.example.com"
   invite: "https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot&permissions=2415921152"
-  website: ""
-  tos: ""
-  support: ""
-  faq: ""
 auth:
   jwtSecret: ""
   sessionDays: 30
@@ -93,10 +84,10 @@ The HTTP server the web app talks to. Environment prefix `API`.
 
 | Key | Default | Environment | What it does |
 |---|---|---|---|
-| `hostname` | none | `API_HOSTNAME` | Your public host name, without `https://`. It goes into the Content-Security-Policy header. **Required**: while it is empty, every request fails. |
-| `url` | none | `API_URL` | Your public address, with `https://` and without a trailing slash. Download links, webhook addresses and the "Download on Lyna" button are built from it. **Required.** |
-| `host` | none | `API_HOST` | Address to listen on. Use `0.0.0.0` in a container. |
-| `port` | `0` | `API_PORT` | Port to listen on. **Required**: `0` picks a random port. The frontend image expects `8888`. |
+| `hostname` | `""` | `API_HOSTNAME` | Your public host name, without `https://`. It goes into the Content-Security-Policy header. **Required**: Lyna doesn't start without it. |
+| `url` | `""` | `API_URL` | Your public address, with `https://` and without a trailing slash. Download links, webhook addresses and the "Download on Lyna" button are built from it. **Required**: Lyna doesn't start without it. |
+| `host` | `"0.0.0.0"` | `API_HOST` | Address to listen on. |
+| `port` | `8888` | `API_PORT` | Port to listen on. The frontend expects `8888` unless you change `NUXT_BACKEND_URL`. |
 | `allowedOrigins` | `[]` | `API_ALLOWEDORIGINS` | Browser origins allowed to call the API from another address. Not needed when the frontend serves the API under its own address, as it does by default. |
 | `iconHosts` | `[]` | `API_ICONHOSTS` | Extra hosts that pages may load images from. |
 | `staticUi` | `false` | `API_STATICUI` | Serves a UI bundled into the backend. Leave it off; the frontend image is the UI. |
@@ -108,9 +99,9 @@ Addresses Lyna puts into mails and pages. Environment prefix `LINKS`.
 | Key | Default | Environment | What it does |
 |---|---|---|---|
 | `frontend` | `"http://localhost:3000"` | `LINKS_FRONTEND` | Your public address. Links in mails (verify an address, reset a password, purchases) point here. **Required.** |
-| `invite` | an invite for another bot | `LINKS_INVITE` | The invite link `/info` shows. **Change it** to your own bot's invite. |
-| `website` | `""` | `LINKS_WEBSITE` | Your website. The web app shows it when set. |
-| `tos`, `support`, `faq` | `""` | `LINKS_TOS`, `LINKS_SUPPORT`, `LINKS_FAQ` | Not used at the moment. |
+| `invite` | `""` | `LINKS_INVITE` | Your bot's invite link. `/info` shows it when set. |
+| `website` | `""` | `LINKS_WEBSITE` | Your website. The web app and `/info` show it when set. |
+| `support`, `tos`, `faq` | `""` | `LINKS_SUPPORT`, `LINKS_TOS`, `LINKS_FAQ` | Your support server, terms and FAQ. `/info` shows each one that is set. |
 
 ## auth
 
@@ -144,8 +135,8 @@ The Sonatype Nexus downloads come from. Environment prefix `NEXUS`.
 | Key | Default | Environment | What it does |
 |---|---|---|---|
 | `host` | `"eldonexus.de"` | `NEXUS_HOST` | Host name of your Nexus, without `https://`. Lyna reaches it over HTTPS. |
-| `username` | `"admin"` | `NEXUS_USERNAME` | A Nexus user that can read the repositories you serve. |
-| `password` | `"passy"` | `NEXUS_PASSWORD` | That user's password. |
+| `username` | `""` | `NEXUS_USERNAME` | A Nexus user that can read the repositories you serve. |
+| `password` | `""` | `NEXUS_PASSWORD` | That user's password. |
 
 See [Nexus](../setup/nexus.md).
 
@@ -155,12 +146,13 @@ Reading payment receipts from a mailbox and sending mail. Environment prefix `MA
 
 | Key | Default | Environment | What it does |
 |---|---|---|---|
-| `enabled` | `true` | `MAIL_ENABLED` | Whether Lyna connects to a mail server at all. **Turn it off** if you don't set up mail, or every start logs a connection error. |
+| `enabled` | `false` | `MAIL_ENABLED` | Whether Lyna connects to a mail server at all. |
 | `user` | `""` | `MAIL_USER` | Mailbox login, used for IMAP and SMTP. |
 | `password` | `""` | `MAIL_PASSWORD` | Mailbox password. |
-| `imap.host`, `imap.port`, `imap.ssl` | `""`, `665`, `false` | file only | The IMAP server receipts are read from. Set the port: `665` is not an IMAP port. |
-| `smtp.host`, `smtp.port`, `smtp.ssl` | `""`, `665`, `false` | file only | The SMTP server mail is sent through. Set the port: `665` is not an SMTP port. |
-| `properties` | `{}` | file only | Extra Jakarta Mail properties, such as `mail.smtp.auth: "true"`. They win over the ones above. |
+| `imap.host`, `imap.port`, `imap.ssl` | `""`, `993`, `true` | file only | The IMAP server receipts are read from. |
+| `smtp.host`, `smtp.port`, `smtp.ssl` | `""`, `465`, `true` | file only | The SMTP server mail is sent through. |
+| `properties` | `{}` | file only | Extra Jakarta Mail properties, such as `mail.smtp.starttls.enable: "true"`. They win over the ones above. |
+| `paypalSenders` | `["service@paypal.de", "service@paypal.com"]` | `MAIL_PAYPALSENDERS` | Addresses PayPal sends receipts from. Add the one of your PayPal account's country if it is missing. |
 | `pollSeconds` | `300` | `MAIL_POLLSECONDS` | Seconds between two checks of the mailbox. |
 | `originMail` | `[]` | `MAIL_ORIGINMAIL` | Addresses trusted to forward receipts to the mailbox. Empty trusts no forwarder. |
 | `skipVerify` | `false` | `MAIL_SKIPVERIFY` | Accepts receipts from any sender. Only for testing: anybody could fake a receipt. |

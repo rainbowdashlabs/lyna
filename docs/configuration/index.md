@@ -15,15 +15,16 @@ Lyna looks for a directory called `config` in its working directory. In the Dock
 |---|---|
 | `config.yaml` | All settings. See the [reference](./reference.md). |
 | `token.key` | The key stored Discord tokens are encrypted with. Made on first start. See [secrets](./secrets.md#the-token-key). |
-| `log4j2.xml` | The logging setup. You provide it. See [logging](./logging.md). |
+| `log4j2.xml` | The logging setup. Written on first start if missing. See [logging](./logging.md). |
 
 Mount the whole directory, not single files. Lyna writes into it.
 
 ## The first start
 
-When `config.yaml` is missing, Lyna writes one with every setting at its default and starts with
-that. Most defaults are not enough to run on: stop Lyna, fill in the file, and start it again. The
-[reference](./reference.md) marks the settings you have to set.
+When `config.yaml` is missing, Lyna writes one with every setting at its default. It then stops
+and names the settings it can't run without: your public address, `api.hostname` and `api.url`.
+Fill in the file and start it again. The [reference](./reference.md) marks every setting you have
+to set.
 
 That first write is the only time Lyna writes the whole file. It never saves your settings back
 later, so values that came from the environment never end up on disk.

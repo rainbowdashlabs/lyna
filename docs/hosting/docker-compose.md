@@ -55,8 +55,6 @@ services:
       DB_HOST: postgres
       DB_DATABASE: lyna
       DB_USER: lyna
-      API_HOST: 0.0.0.0
-      API_PORT: 8888
     volumes:
       - ./config:/app/config
       - ./data:/app/data
@@ -111,19 +109,18 @@ baseSettings:
   botOwner:
     - 123456789012345678
   botGuild: 234567890123456789
-mailing:
-  enabled: false
 ```
 
 `botOwner` is your own Discord user id. It makes you an operator. Every other setting can stay at its
 default for now; the [reference](../configuration/reference.md) has all of them. If you have no bot
 yet, set `botEnabled: false` under `baseSettings` and leave out `BOT_TOKEN`.
 
-Copy the [logging file](../configuration/logging.md#a-starting-file) to `config/log4j2.xml` too.
+On the first start Lyna also writes a [logging setup](../configuration/logging.md) to
+`config/log4j2.xml`.
 
 :::tip
-You can also start once without a `config.yaml`. Lyna writes one with every setting at its default
-and keeps running, but it won't work properly until you fill it in and restart.
+You can also start once without a `config.yaml`. Lyna writes one with every setting at its default,
+then stops and tells you which settings to fill in.
 :::
 
 ## 5. Start it

@@ -39,7 +39,7 @@ permissions below. Open the link and pick your server.
 In **Server Settings > Roles**, drag the bot's role above every role it should hand out. Discord
 doesn't let a bot give a role that sits above its own.
 
-Put the same invite into `links.invite`, so `/info` shows your bot's invite and not another one.
+Put the same invite into `links.invite`, so `/info` shows it.
 
 ### Without a bot
 

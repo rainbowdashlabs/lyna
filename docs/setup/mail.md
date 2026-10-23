@@ -6,12 +6,7 @@ sidebar_position: 4
 With a mailbox, Lyna reads PayPal receipts and turns them into licenses, and it sends mail: the
 license to a buyer, address checks and password resets.
 
-Mail is optional. Without it, turn it off so Lyna doesn't try to connect:
-
-```yaml
-mailing:
-  enabled: false
-```
+Mail is optional and off until you turn it on with `enabled: true`.
 
 :::note
 Without mail, nobody can confirm an address or reset a password by mail.
@@ -36,15 +31,12 @@ mailing:
     host: "smtp.example.com"
     port: 465
     ssl: true
-  properties:
-    mail.smtp.auth: "true"
   pollSeconds: 300
   senderName: "Lyna"
 ```
 
 - `user` and `password` are used for both IMAP and SMTP. Give the password as `MAIL_PASSWORD`.
-- Set both ports. The default `665` is not a mail port.
-- `mail.smtp.auth: "true"` makes Lyna log in to the SMTP server. Most servers need it.
+- The ports above are the defaults, for servers reached over TLS.
 - `properties` takes any other [Jakarta Mail property](https://jakarta.ee/specifications/mail/),
   for example `mail.smtp.starttls.enable: "true"` for a server on port `587`.
 
@@ -52,8 +44,19 @@ The `imap`, `smtp` and `properties` settings can only be set in the file, not fr
 
 ## 3. Receipts from PayPal
 
-Lyna reads a mail as a receipt when it comes from `service@paypal.de` or from an address in
+Lyna reads a mail as a receipt when it comes from an address in `paypalSenders` or in
 `originMail`. Everything else is ignored.
+
+`paypalSenders` holds `service@paypal.de` and `service@paypal.com`. If your PayPal account sends
+receipts from another address, add it:
+
+```yaml
+mailing:
+  paypalSenders:
+    - service@paypal.de
+    - service@paypal.com
+    - service@paypal.co.uk
+```
 
 If your PayPal receipts go to another mailbox, forward them to Lyna's and name that mailbox in
 `originMail`:

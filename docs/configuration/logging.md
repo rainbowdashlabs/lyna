@@ -3,12 +3,10 @@ title: Logging
 sidebar_position: 4
 ---
 
-Lyna logs with Log4j 2. It reads its logging setup from `config/log4j2.xml`, which you provide.
+Lyna logs with Log4j 2. It reads its logging setup from `config/log4j2.xml`.
 
-:::warning
-Neither the Docker image nor a release brings a `log4j2.xml`. Without one, Log4j only prints
-errors to the console. Put the file below into your config directory before the first start.
-:::
+When the file is missing, Lyna writes the starting file below on its first start and uses it. After
+that the file is yours: Lyna never changes it again.
 
 ## Where the file is read from
 

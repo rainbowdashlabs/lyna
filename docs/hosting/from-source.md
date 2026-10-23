@@ -27,8 +27,8 @@ export JAVA_OPTS="-Dlog4j.configurationFile=config/log4j2.xml"
 ```
 
 `JAVA_OPTS` tells Log4j where your [logging file](../configuration/logging.md) is. Give the secrets
-as environment variables, see [secrets](../configuration/secrets.md). Set `api.port` to `8888` and
-`api.host` to the address the frontend reaches it on.
+as environment variables, see [secrets](../configuration/secrets.md). The backend listens on port
+`8888` on every address; change `api.host` and `api.port` if that doesn't suit you.
 
 ## The frontend
 
