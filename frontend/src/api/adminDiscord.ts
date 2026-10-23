@@ -16,8 +16,10 @@ export interface DiscordChannel {
     id: string
     name: string
     kind: ChannelKind
-    /** The forum a thread is in, by name. */
+    /** The category a channel is in, or the channel a thread is in, by id. */
     parent: string | null
+    /** Whether it can be picked, rather than only holding what can. */
+    selectable: boolean
 }
 
 /** What a picker offers. Without a bot `connected` is false and the list says nothing. */

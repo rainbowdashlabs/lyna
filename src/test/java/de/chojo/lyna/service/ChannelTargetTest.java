@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.managers.channel.concrete.ThreadChannelManager;
@@ -83,21 +84,21 @@ class ChannelTargetTest {
     @Test
     @DisplayName("No channel set is nowhere, and an id nobody has is nowhere either")
     void nowhere() {
-        when(guild.getForumChannels()).thenReturn(List.of());
+        when(guild.getChannels()).thenReturn(List.of());
 
         assertTrue(ChannelTarget.resolve(List.of(guild), 0).isEmpty());
         assertTrue(ChannelTarget.resolve(List.of(guild), 5).isEmpty());
     }
 
     @Test
-    @DisplayName("A text channel, a forum and an archived forum thread are each found by id")
+    @DisplayName("A text channel, a forum and an archived thread are each found by id")
     void resolving() {
         GuildMessageChannel text = mock(GuildMessageChannel.class);
         ForumChannel forum = forumWithArchived(CompletableFuture.completedFuture(List.of(archived(9, false))));
         when(guild.getGuildChannelById(1)).thenReturn(text);
         when(guild.getGuildChannelById(2)).thenReturn(forum);
         when(guild.getGuildChannelById(3)).thenReturn(mock(Category.class));
-        when(guild.getForumChannels()).thenReturn(List.of(forum));
+        when(guild.getChannels()).thenReturn(List.of(text, forum));
 
         assertSame(
                 text,
@@ -114,6 +115,22 @@ class ChannelTargetTest {
     }
 
     @Test
+    @DisplayName("An archived thread of a text channel is found by id too")
+    void archivedTextThread() {
+        TextChannel text = mock(TextChannel.class);
+        ThreadChannel thread = archived(12, false);
+        ThreadChannelPaginationAction pages = mock(ThreadChannelPaginationAction.class);
+        when(text.retrieveArchivedPublicThreadChannels()).thenReturn(pages);
+        when(pages.takeAsync(ChannelTarget.ARCHIVED_THREADS))
+                .thenReturn(CompletableFuture.completedFuture(List.of(thread)));
+        when(guild.getChannels()).thenReturn(List.of(text));
+
+        assertInstanceOf(
+                ChannelTarget.Messages.class,
+                ChannelTarget.resolve(List.of(guild), 12).orElseThrow());
+    }
+
+    @Test
     @DisplayName("A forum that does not answer has no archived threads to offer")
     void archivedThreadsFailQuietly() {
         ForumChannel failing =
@@ -124,6 +141,16 @@ class ChannelTargetTest {
         Thread.currentThread().interrupt();
         assertEquals(List.of(), ChannelTarget.archivedThreads(pending));
         assertTrue(Thread.interrupted(), "the interrupt is kept for whoever asked");
+    }
+
+    @Test
+    @DisplayName("A channel the bot may not look into, or one that answers too late, has no archived threads")
+    void archivedThreadsRefusedOrLate() {
+        TextChannel refusing = mock(TextChannel.class);
+        when(refusing.retrieveArchivedPublicThreadChannels()).thenThrow(new IllegalStateException("missing access"));
+        assertEquals(List.of(), ChannelTarget.archivedThreads(refusing));
+
+        assertEquals(List.of(), ChannelTarget.await(new CompletableFuture<>(), System.nanoTime()));
     }
 
     @Test

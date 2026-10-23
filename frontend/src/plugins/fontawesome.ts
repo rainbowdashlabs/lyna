@@ -14,26 +14,33 @@ import {
     faArrowLeft,
     faArrowRight,
     faBook,
+    faBullhorn,
     faCartShopping,
     faCheck,
-    faCircleCheck,
     faChevronDown,
-    faChevronUp,
     faChevronRight,
+    faChevronUp,
+    faCircleCheck,
     faCircleExclamation,
     faCircleHalfStroke,
     faCircleInfo,
     faCircleNotch,
     faCircleXmark,
+    faComments,
     faDownload,
+    faFolder,
+    faHashtag,
     faMagnifyingGlass,
+    faMessage,
     faMoon,
     faPen,
     faPlus,
     faSpinner,
     faSun,
+    faTowerBroadcast,
     faTrash,
     faTriangleExclamation,
+    faVolumeHigh,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import {faDiscord, faGithub} from '@fortawesome/free-brands-svg-icons'
@@ -71,6 +78,13 @@ library.add(faSun)
 library.add(faTrash)
 library.add(faTriangleExclamation)
 library.add(faXmark)
+library.add(faBullhorn)
+library.add(faComments)
+library.add(faFolder)
+library.add(faHashtag)
+library.add(faMessage)
+library.add(faTowerBroadcast)
+library.add(faVolumeHigh)
 library.add(faGithub, faDiscord)
 
 /**
