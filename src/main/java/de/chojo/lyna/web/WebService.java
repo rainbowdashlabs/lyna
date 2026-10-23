@@ -50,6 +50,7 @@ public class WebService {
      */
     public void init() {
         var apiConfig = configuration.main().api();
+        requireAddress(apiConfig);
         javalin = Javalin.create(config -> {
             if (apiConfig.staticUi()) {
                 config.staticFiles.add(staticFiles -> {
@@ -69,6 +70,22 @@ public class WebService {
         });
 
         javalin.start(apiConfig.host(), apiConfig.port());
+    }
+
+    /**
+     * Refuses to start without the public address. The address goes into the Content-Security-Policy
+     * of every response and into every link Lyna hands out, so a server started without it fails
+     * every request instead of failing once, here, with the setting named.
+     *
+     * @throws IllegalStateException when {@code api.hostname} or {@code api.url} is not set
+     */
+    static void requireAddress(de.chojo.lyna.configuration.elements.Api api) {
+        List<String> missing = new ArrayList<>();
+        if (api.hostname() == null || api.hostname().isBlank()) missing.add("api.hostname (API_HOSTNAME)");
+        if (api.url() == null || api.url().isBlank()) missing.add("api.url (API_URL)");
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException("Set your public address before starting: " + String.join(", ", missing));
+        }
     }
 
     /**

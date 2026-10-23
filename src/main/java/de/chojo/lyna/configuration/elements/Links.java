@@ -17,8 +17,7 @@ public class Links {
     private String tos = "";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private String invite =
-            "https://discord.com/oauth2/authorize?client_id=1065674230362017813&scope=bot&permissions=2415921152";
+    private String invite = "";
 
     @Overwrite(env = @Env, prop = @Prop)
     private String support = "";

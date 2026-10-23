@@ -17,10 +17,10 @@ public class Nexus {
     private String host = "eldonexus.de";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private String username = "admin";
+    private String username = "";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private String password = "passy";
+    private String password = "";
 
     public String host() {
         return host;

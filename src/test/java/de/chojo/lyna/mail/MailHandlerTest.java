@@ -114,4 +114,16 @@ class MailHandlerTest {
     void skipVerifyTakesAnything() throws Exception {
         verify(handle("stranger@example.invalid", null, TRUSTS_ANYONE)).byName(anyString());
     }
+
+    @Test
+    @DisplayName("PayPal's other country addresses are senders by default, and the list can be replaced")
+    void paypalSendersAreASetting() throws Exception {
+        verify(handle("service@paypal.com", null, TRUSTS_NOBODY)).byName(anyString());
+        Mockito.reset(mailings);
+
+        String onlyUk = "mailing:\n  enabled: true\n  paypalSenders:\n    - \"service@paypal.co.uk\"\n";
+        verify(handle("service@paypal.co.uk", null, onlyUk)).byName(anyString());
+        Mockito.reset(mailings);
+        verify(handle(PAYPAL, null, onlyUk), never()).byName(anyString());
+    }
 }

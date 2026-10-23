@@ -6,12 +6,15 @@ name: lyna
 services:
   app:
     image: ghcr.io/rainbowdashlabs/lyna-backend:latest
+    restart: unless-stopped
     networks:
       - lyna
     depends_on:
       - postgres
     volumes:
       - ../config/:/app/config/
+      - ../data/:/app/data/
+      - ../logs/:/app/logs/
     profiles:
       - prod
   app_dev:
@@ -30,6 +33,7 @@ services:
       - 8888:8888
   frontend:
     image: ghcr.io/rainbowdashlabs/lyna-frontend:latest
+    restart: unless-stopped
     networks:
       - lyna
     depends_on:
@@ -38,6 +42,8 @@ services:
       NUXT_BACKEND_URL: http://app:8888
     profiles:
       - prod
+    ports:
+      - 127.0.0.1:3000:3000
   frontend_dev:
     build:
       context: ..
@@ -171,16 +177,17 @@ services:
   postgres:
     networks:
       - lyna
-    image: postgres:latest
+    image: postgres:17
+    restart: unless-stopped
     profiles:
       - dev
       - prod
     expose:
       - 5432
     ports:
-      - 5432:5432
+      - 127.0.0.1:5432:5432
     volumes:
-      - db_data:/var/lib/postgres/data
+      - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "pw"
