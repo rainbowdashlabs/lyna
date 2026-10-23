@@ -17,8 +17,10 @@ const range = useVersionRange()
 const props = defineProps<{ product: KioskProduct }>()
 const emit = defineEmits<{ download: [releaseType: ReleaseTypeEntry, version: VersionEntry] }>()
 
-/** How many versions a page of the list adds. */
+/** How many versions are asked for at a time. */
 const PAGE = 10
+/** How many versions the list shows at first, and how many more each "show more" adds. */
+const STEP = 5
 /** The most the server will list at once. */
 const MOST = 100
 
@@ -26,6 +28,7 @@ const releaseTypes = ref<ReleaseTypeEntry[]>([])
 const selected = ref<ReleaseTypeEntry | null>(null)
 const versions = ref<VersionEntry[]>([])
 const limit = ref(PAGE)
+const visible = ref(STEP)
 const loading = ref(true)
 const failed = ref(false)
 
@@ -37,10 +40,21 @@ const described = computed(() => shown.value.find(version => version.manifest))
 
 /** A full page back means there may be more; a short one means that was all of them. */
 const mayHaveMore = computed(() => versions.value.length === limit.value && limit.value < MOST)
+const listed = computed(() => shown.value.slice(0, visible.value))
+const canShowMore = computed(() => shown.value.length > visible.value || mayHaveMore.value)
 
-async function show(releaseType: ReleaseTypeEntry, count = PAGE) {
+/** Shows the next few, asking the server for more once the ones already loaded run out. */
+async function showMore() {
+  visible.value += STEP
+  if (selected.value && shown.value.length < visible.value && mayHaveMore.value) {
+    await show(selected.value, limit.value + PAGE, visible.value)
+  }
+}
+
+async function show(releaseType: ReleaseTypeEntry, count = PAGE, keep = STEP) {
   selected.value = releaseType
   limit.value = count
+  visible.value = keep
   loading.value = true
   failed.value = false
   try {
@@ -86,7 +100,7 @@ onMounted(async () => {
     <MutedText v-else-if="!loading && shown.length === 0" tag="p">{{ t('ui.productVersions.noneForMinecraft') }}</MutedText>
 
     <div v-else>
-      <GutterRow v-for="(version, index) in shown" :key="version.version" :marker="index + 1">
+      <GutterRow v-for="(version, index) in listed" :key="version.version" :marker="index + 1">
         <div class="flex items-baseline justify-between gap-3">
           <span class="font-data truncate text-sm">{{ version.version }}</span>
           <span class="font-data text-xs whitespace-nowrap text-(--text-muted)">{{ formatDate(version.publishedAt) }}</span>
@@ -99,7 +113,7 @@ onMounted(async () => {
         </template>
       </GutterRow>
       <Spinner v-if="loading" size="sm"/>
-      <LinkButton v-else-if="mayHaveMore" @click="selected && show(selected, limit + PAGE)">
+      <LinkButton v-else-if="canShowMore" @click="showMore">
         {{ t('ui.productVersions.showMore') }}
       </LinkButton>
     </div>
