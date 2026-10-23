@@ -48,7 +48,10 @@ export interface LicenseSummary {
     productId: number
     productName: string
     identifier: string
-    owner: number
+    /** The holder's Discord id, as text because it is larger than a number holds exactly; null without one. */
+    owner: string | null
+    /** What to call whoever holds it, Discord or not; null when nobody does. */
+    holder: string | null
     shareeCount: number
 }
 
@@ -58,12 +61,13 @@ export interface LicenseDetail {
     productName: string
     identifier: string
     key: string
-    owner: number
+    owner: string | null
+    holder: string | null
     sharees: string[]
 }
 
 export interface RegistrationInfo {
-    discordId: number
+    discordId: string
     memberName: string | null
     ownedLicenses: LicenseSummary[]
     sharedLicenses: LicenseSummary[]

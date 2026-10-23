@@ -94,7 +94,7 @@ async function submit() {
         <ul v-if="result.sharedLicenses.length" class="divide-y divide-border-light dark:divide-border-dark">
           <li v-for="l in result.sharedLicenses" :key="l.id" class="py-1">
             <span class="font-medium">{{ l.productName }}</span>
-            <span class="ml-2 opacity-60">id {{ l.id }} · owner {{ l.owner }}</span>
+            <span class="ml-2 opacity-60">id {{ l.id }} · {{ l.holder ? t('ui.adminLicenseRow.owner', {owner: l.holder}) : t('ui.adminLicenseRow.unclaimed') }}</span>
           </li>
         </ul>
         <div v-else class="opacity-60">

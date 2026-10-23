@@ -49,7 +49,7 @@ async function remove() {
       <div class="min-w-0 flex-1">
         <div class="font-medium">{{ license.productName }}</div>
         <MutedText class="font-data" tag="div">
-          #{{ license.id }} · {{ license.identifier }} · {{ license.owner ? t('ui.adminLicenseRow.owner', {owner: license.owner}) : t('ui.adminLicenseRow.unclaimed') }} · {{ t('ui.adminLicenseRow.sharees', {count: license.shareeCount}) }}
+          #{{ license.id }} · {{ license.identifier }} · {{ license.holder ? t('ui.adminLicenseRow.owner', {owner: license.owner ? `${license.holder} (${license.owner})` : license.holder}) : t('ui.adminLicenseRow.unclaimed') }} · {{ t('ui.adminLicenseRow.sharees', {count: license.shareeCount}) }}
         </MutedText>
       </div>
       <SecondaryButton compact @click="toggle">{{ open ? t('ui.adminLicenseRow.close') : t('ui.adminLicenseRow.manage') }}</SecondaryButton>

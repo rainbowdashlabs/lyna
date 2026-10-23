@@ -115,6 +115,7 @@ class LicenseLifecycleServiceTest extends RepositoryTestBase {
         assertTrue(licenseService.isClaimed(license));
 
         assertFalse(licenseService.claim(license(), member(OTHER)), "it is already held");
+        assertEquals(OWNER, licenseService.holder(license).orElseThrow().discordId());
     }
 
     @Test

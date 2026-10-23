@@ -23,6 +23,7 @@ import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.instance.service.AppearancePolicy;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
+import de.chojo.lyna.feature.license.entity.Holder;
 import de.chojo.lyna.feature.license.entity.License;
 import de.chojo.lyna.feature.license.entity.Sharee;
 import de.chojo.lyna.feature.license.service.LicenseService;
@@ -650,17 +651,21 @@ public class Admin {
     private void listLicenses(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
-        List<LicenseSummary> out = new ArrayList<>();
-        for (License l : resolved.guild().licenses().all()) {
-            out.add(new LicenseSummary(
-                    l.id(),
-                    l.product().id(),
-                    l.product().name(),
-                    l.userIdentifier(),
-                    licenseService.owner(l),
-                    licenseSharing.shareCount(l)));
-        }
-        ctx.json(out);
+        ctx.json(resolved.guild().licenses().all().stream()
+                .map(this::licenseSummary)
+                .toList());
+    }
+
+    private LicenseSummary licenseSummary(License license) {
+        Optional<Holder> holder = licenseService.holder(license);
+        return new LicenseSummary(
+                license.id(),
+                license.product().id(),
+                license.product().name(),
+                license.userIdentifier(),
+                holder.map(Holder::discordId).map(String::valueOf).orElse(null),
+                holder.map(Holder::name).orElse(null),
+                licenseSharing.shareCount(license));
     }
 
     private void createLicense(Context ctx) {
@@ -691,6 +696,7 @@ public class Admin {
         }
         var l = license.get();
         licenseService.grantInitialAccess(l, body.releaseTypes());
+        Optional<Holder> holder = licenseService.holder(l);
         ctx.status(HttpStatus.CREATED)
                 .json(new LicenseDetail(
                         l.id(),
@@ -698,7 +704,8 @@ public class Admin {
                         l.product().name(),
                         l.userIdentifier(),
                         l.key(),
-                        licenseService.owner(l),
+                        holder.map(Holder::discordId).map(String::valueOf).orElse(null),
+                        holder.map(Holder::name).orElse(null),
                         licenseSharing.sharees(l).stream().map(Sharee::name).toList()));
     }
 
@@ -716,24 +723,13 @@ public class Admin {
                 .map(g -> g.getMemberById(discordId))
                 .orElse(null);
         var owned = resolved.guild().licenses().byOwner(discordId).stream()
-                .map(l -> new LicenseSummary(
-                        l.id(),
-                        l.product().id(),
-                        l.product().name(),
-                        l.userIdentifier(),
-                        licenseService.owner(l),
-                        licenseSharing.shareCount(l)))
+                .map(this::licenseSummary)
                 .toList();
         var shared = resolved.guild().licenses().bySharee(discordId).stream()
-                .map(l -> new LicenseSummary(
-                        l.id(),
-                        l.product().id(),
-                        l.product().name(),
-                        l.userIdentifier(),
-                        licenseService.owner(l),
-                        licenseSharing.shareCount(l)))
+                .map(this::licenseSummary)
                 .toList();
-        ctx.json(new RegistrationInfo(discordId, member != null ? member.getEffectiveName() : null, owned, shared));
+        ctx.json(new RegistrationInfo(
+                Long.toString(discordId), member != null ? member.getEffectiveName() : null, owned, shared));
     }
 
     private void getSettings(Context ctx) {
@@ -1173,13 +1169,24 @@ public class Admin {
     public record CreateProduct(String name, String url, Long roleId, boolean free, boolean trial) {}
 
     /**
+     * @param owner       the holder's Discord id, as text because it is larger than a JavaScript number
+     *                    holds exactly, or null when nobody holds it or the holder never linked Discord
+     * @param holder      what to call whoever holds it, Discord or not, or null when nobody does
      * @param shareeCount everybody holding a place on the licence, including invites nobody has
      *                    answered and sharees who have no Discord id
      */
     public record LicenseSummary(
-            int id, int productId, String productName, String identifier, long owner, int shareeCount) {}
+            int id,
+            int productId,
+            String productName,
+            String identifier,
+            String owner,
+            String holder,
+            int shareeCount) {}
 
     /**
+     * @param owner   the holder's Discord id as text, or null, as in {@link LicenseSummary}
+     * @param holder  what to call whoever holds it, or null when nobody does
      * @param sharees everybody holding a place on the licence, including invites nobody has answered
      *                and sharees who have no Discord id
      */
@@ -1189,7 +1196,8 @@ public class Admin {
             String productName,
             String identifier,
             String key,
-            long owner,
+            String owner,
+            String holder,
             List<String> sharees) {}
 
     /**
@@ -1197,8 +1205,11 @@ public class Admin {
      */
     public record CreateLicense(Integer productId, String identifier, List<ReleaseType> releaseTypes) {}
 
+    /**
+     * @param discordId as text, because a Discord id is larger than a JavaScript number holds exactly
+     */
     public record RegistrationInfo(
-            long discordId,
+            String discordId,
             String memberName,
             List<LicenseSummary> ownedLicenses,
             List<LicenseSummary> sharedLicenses) {}

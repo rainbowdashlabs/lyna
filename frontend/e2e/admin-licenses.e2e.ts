@@ -39,6 +39,38 @@ test.describe('Managing licenses', () => {
         await deleteProduct(operator, id, name)
     })
 
+    test('a license held by an account without Discord names that account, not "unclaimed"', async ({page, signedIn, signedUp}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Held')
+        const identifier = uniqueName('buyer').replace(' ', '-')
+        const id = await createProduct(operator, name)
+        const issued = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {data: {productId: id, identifier}})).json()
+        const holder = await signedUp('holder')
+        expect((await holder.api.post('/api/account/licenses/redeem', {data: {key: issued.key}})).status()).toBe(201)
+
+        const listed = (await (await operator.get(`/api/admin/g/${GUILD}/licenses`)).json())
+            .find((license: {identifier: string}) => license.identifier === identifier)
+        expect(listed.owner).toBeNull()
+        expect(listed.holder).toBe(holder.email)
+
+        await operatorPage(page)
+        await page.goto(`/admin/g/${GUILD}/licenses`)
+        await page.getByPlaceholder('Search by product, identifier, id or owner').fill(identifier)
+        const row = page.getByRole('listitem', {name: identifier})
+        await expect(row).toContainText(`owner ${holder.email}`)
+        await expect(row).not.toContainText('unclaimed')
+        await deleteProduct(operator, id, name)
+    })
+
+    test('Discord ids are sent as text, so they arrive exactly', async ({signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const discordId = '1234567890123456789'
+
+        const registration = await (await operator.get(`/api/admin/g/${GUILD}/registrations/${discordId}`)).json()
+
+        expect(registration.discordId).toBe(discordId)
+    })
+
     test('a license issued without naming release types reaches stable builds', async ({signedIn}) => {
         const operator = await signedIn(OPERATOR)
         const name = uniqueName('Defaulted')

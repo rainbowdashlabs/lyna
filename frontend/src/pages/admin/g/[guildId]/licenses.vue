@@ -38,7 +38,7 @@ const search = ref('')
 const shown = computed(() => {
   const needle = search.value.trim().toLowerCase()
   if (!needle) return licenses.value
-  return licenses.value.filter(license => `${license.id} ${license.productName} ${license.identifier} ${license.owner}`
+  return licenses.value.filter(license => `${license.id} ${license.productName} ${license.identifier} ${license.owner ?? ''} ${license.holder ?? ''}`
       .toLowerCase().includes(needle))
 })
 
