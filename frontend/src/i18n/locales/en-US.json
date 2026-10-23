@@ -239,16 +239,16 @@
           "settings": {
             "settings": "Settings",
             "licenseShareeCap": "License sharee cap",
-            "trialServerTimeMinutes": "Trial server time (minutes)",
-            "trialAccountTimeMinutes": "Trial account time (minutes)",
+            "trialServerTimeMinutes": "Trial: minimum time on the server (minutes)",
+            "trialAccountTimeMinutes": "Trial: minimum account age (minutes)",
             "membersOfThisRoleAdministerThis": "Members of this role administer this guild here. Leave empty so only Manage Server does.",
             "adminRoleIdOptional": "Admin role (optional)"
           },
           "trial": {
             "trial": "Trial",
             "activeLimits": "Active limits",
-            "perServerCooldown": "Per server cooldown:",
-            "perAccountCooldown": "Per account cooldown:",
+            "minServerMembership": "Minimum time on the server:",
+            "minAccountAge": "Minimum account age:",
             "editTheseLimitsUnder": "Edit these limits under",
             "settings": "Settings",
             "products": "Products",

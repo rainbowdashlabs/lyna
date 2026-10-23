@@ -85,4 +85,13 @@ test.describe('The trial admin page', () => {
         await deleteProduct(operator, trialledId, trialled)
         await deleteProduct(operator, plainId, plain)
     })
+
+    test('names its limits as the minimum ages they are', async ({page}) => {
+        await operatorPage(page)
+
+        await page.goto(`/admin/g/${GUILD}/trial`)
+
+        await expect(page.getByText('Minimum time on the server:')).toBeVisible()
+        await expect(page.getByText('Minimum account age:')).toBeVisible()
+    })
 })
