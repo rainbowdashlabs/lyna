@@ -44,5 +44,6 @@ defineProps<{ product: KioskProductDetail }>()
         </a>
       </div>
     </div>
+    <ProductEditLink :product="product"/>
   </header>
 </template>

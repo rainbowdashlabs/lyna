@@ -5,7 +5,7 @@
  */
 import {type APIRequestContext, type Page} from '@playwright/test'
 import {expect, test} from './fixtures/session'
-import {OPERATOR} from './fixtures/admin'
+import {OPERATOR, operatorPage} from './fixtures/admin'
 
 /**
  * The page a product has of its own.
@@ -279,4 +279,43 @@ test.describe('The versions a product page lists', () => {
         await expect(versions.getByRole('button', {name: 'Download'})).toHaveCount(0)
         await expect(versions.getByText('Downloading these needs a license for this plugin.')).toBeVisible()
     })
+
+    test('offers its editor to whoever administers it, and to nobody else', async ({page, request}) => {
+        const id = await freebieId(request)
+
+        await page.goto(`/products/${id}`)
+        await expect(page.getByRole('heading', {level: 1, name: 'E2E Freebie'})).toBeVisible()
+        await expect(page.getByRole('link', {name: 'Edit'})).toHaveCount(0)
+
+        await operatorPage(page)
+        await page.goto(`/products/${id}`)
+        await page.getByRole('link', {name: 'Edit'}).click()
+        await expect(page).toHaveURL(new RegExp(`/admin/g/\\d+/products/${id}$`))
+    })
+
+    test('lists the newest five versions, and five more each time more are asked for', async ({page, request}) => {
+        const id = await freebieId(request)
+        await page.route(`**/api/v1/products/${id}/release-types/*/versions?limit=*`, route => {
+            const limit = Number(new URL(route.request().url()).searchParams.get('limit'))
+            const versions = Array.from({length: Math.min(limit, 12)}, (_, index) => ({
+                version: `9.${12 - index}.0`, publishedAt: '2026-01-01T00:00:00Z', downloadTypeIds: [], manifest: null,
+            }))
+            return route.fulfill({json: versions})
+        })
+        await page.goto(`/products/${id}`)
+        const versions = page.getByRole('complementary', {name: 'Versions'})
+        const listed = versions.getByText(/^9\.\d+\.0$/)
+
+        await expect(listed).toHaveText(['9.12.0', '9.11.0', '9.10.0', '9.9.0', '9.8.0'])
+        await versions.getByRole('button', {name: 'Show more'}).click()
+        await expect(listed).toHaveCount(10)
+        await versions.getByRole('button', {name: 'Show more'}).click()
+        await expect(listed).toHaveCount(12)
+        await expect(versions.getByRole('button', {name: 'Show more'})).toHaveCount(0)
+    })
 })
+
+async function freebieId(request: APIRequestContext): Promise<number> {
+    const products = await (await request.get('/api/v1/products')).json() as {id: number, name: string}[]
+    return products.find(product => product.name === 'E2E Freebie')!.id
+}
