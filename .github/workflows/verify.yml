@@ -122,7 +122,7 @@ jobs:
         run: npm ci
       - name: Install Playwright browsers
         working-directory: frontend
-        timeout-minutes: 5
+        timeout-minutes: 15
         run: npx playwright install --with-deps chromium
       - name: Download the build
         uses: actions/download-artifact@v8
