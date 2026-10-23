@@ -5,7 +5,7 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {listGuildProducts, type ProductSummary, updateGuildProduct} from '~/api/admin'
 
 const {t} = useI18n()
@@ -23,8 +23,10 @@ const wikiUrl = ref(props.product.wikiUrl ?? '')
 const reviewUrl = ref(props.product.reviewUrl ?? '')
 const parentId = ref<number | null>(props.product.parentId ?? null)
 const guildProducts = ref<ProductSummary[]>([])
-// An uploaded icon is served from this instance; that path is not an address to type back.
-const iconUrl = ref(props.product.iconUrl?.startsWith('/api/') ? '' : props.product.iconUrl ?? '')
+const iconUrl = ref(props.product.iconAddress ?? '')
+watch(() => props.product.iconAddress, next => {
+  iconUrl.value = next ?? ''
+})
 
 /** A family is one level deep: an add-on has no add-ons, and a product that has some is no add-on. */
 const parentCandidates = computed(() => guildProducts.value.filter(candidate =>

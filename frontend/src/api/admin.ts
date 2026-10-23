@@ -21,7 +21,10 @@ export interface ProductSummary {
     roleId: string
     free: boolean
     trial: boolean
+    /** Where the icon is shown from: the uploaded one when there is one, else the hosted address. */
     iconUrl: string | null
+    /** The hosted address an operator configured, which is what the edit form edits. */
+    iconAddress?: string | null
     description: string | null
     /** The id deployed plugins ask UpdateButler for this product by. */
     butlerId?: number | null

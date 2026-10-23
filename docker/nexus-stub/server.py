@@ -257,6 +257,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._json({"message": f"unhandled {self.path}"}, status=404)
 
+    def do_HEAD(self):
+        """An image host, for the product icon address an operator types: the backend asks it with
+        HEAD whether the address serves an image before storing it."""
+        if urlparse(self.path).path == "/icon.png":
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", "0")
+        else:
+            self.send_response(404)
+        self.end_headers()
+
     def do_GET(self):
         url = urlparse(self.path)
         query = parse_qs(url.query)

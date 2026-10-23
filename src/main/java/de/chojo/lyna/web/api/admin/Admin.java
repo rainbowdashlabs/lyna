@@ -17,6 +17,7 @@ import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.guild.Guilds;
 import de.chojo.lyna.feature.guild.LicenseGuild;
+import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceOperatorRepository;
@@ -40,6 +41,7 @@ import de.chojo.lyna.feature.releasepost.service.ChannelTarget;
 import de.chojo.lyna.feature.releasepost.service.GithubWebhookService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.web.api.auth.Auth;
+import de.chojo.lyna.web.api.v1.products.RelatedProduct;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import net.dv8tion.jda.api.entities.Guild;
@@ -71,6 +73,7 @@ public class Admin {
 
     private final OAuth oauthConfig;
     private final ProductIconService productIcons;
+    private final ProductIconRepository uploadedIcons;
 
     private final LicenseService licenseService;
     private final LicenseSharingService licenseSharing;
@@ -113,6 +116,7 @@ public class Admin {
             LicenseSharingService licenseSharing,
             OAuth oauthConfig,
             ProductIconService productIcons,
+            ProductIconRepository uploadedIcons,
             ButlerApplicationRepository butlerApplications,
             ReleaseWebhookRepository releaseWebhooks,
             GithubWebhookService releasePosts,
@@ -127,6 +131,7 @@ public class Admin {
         this.guard = guard;
         this.purchaseCollection = purchaseCollection;
         this.productIcons = productIcons;
+        this.uploadedIcons = uploadedIcons;
         this.butlerApplications = butlerApplications;
         this.releaseWebhooks = releaseWebhooks;
         this.releasePosts = releasePosts;
@@ -218,12 +223,20 @@ public class Admin {
         if (resolved == null) return;
         var kioskById = kioskProducts.all().stream().collect(Collectors.toMap(KioskProduct::id, product -> product));
         Map<Integer, Integer> butlerIds = butlerApplications.butlerIdsByProduct();
+        Set<Integer> uploaded = uploadedIcons.withIcon();
         List<Product> products = resolved.guild().products().all();
-        ctx.json(products.stream().map(p -> summary(p, kioskById, butlerIds)).toList());
+        ctx.json(products.stream()
+                .map(p -> summary(p, kioskById, butlerIds, uploaded))
+                .toList());
     }
 
-    private ProductSummary summary(Product p, Map<Integer, KioskProduct> kioskById, Map<Integer, Integer> butlerIds) {
+    /**
+     * @param uploaded the products with an uploaded icon, which is shown in preference to an address
+     */
+    private ProductSummary summary(
+            Product p, Map<Integer, KioskProduct> kioskById, Map<Integer, Integer> butlerIds, Set<Integer> uploaded) {
         ProductLinks links = productLinks.get(p.id());
+        KioskProduct kiosk = kioskById.get(p.id());
         return new ProductSummary(
                 p.id(),
                 p.name(),
@@ -231,7 +244,8 @@ public class Admin {
                 Long.toString(p.role()),
                 p.free(),
                 p.trial(),
-                kioskById.containsKey(p.id()) ? kioskById.get(p.id()).iconUrl() : null,
+                kiosk == null ? null : RelatedProduct.iconAddress(kiosk, uploaded.contains(p.id())),
+                kiosk == null ? null : kiosk.iconUrl(),
                 kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null,
                 butlerIds.get(p.id()),
                 kioskById.containsKey(p.id()) && kioskById.get(p.id()).pageReadme(),
@@ -240,12 +254,6 @@ public class Admin {
                 kioskById.containsKey(p.id()) ? kioskById.get(p.id()).parentId() : null);
     }
 
-    /**
-     * Points a product's tile at a hosted image, or takes the image away when the address is blank.
-     *
-     * <p>The address is checked before it is stored: an operator who mistypes it should be told so
-     * here rather than by a storefront tile that has quietly lost its icon.
-     */
     /**
      * Writes what a product says about itself on its own page.
      *
@@ -338,6 +346,12 @@ public class Admin {
             ctx.status(HttpStatus.BAD_REQUEST).result(parentRefusal);
             return;
         }
+        String iconUrl = blankToNull(body.iconUrl());
+        Optional<String> iconRefusal = iconRefusal(product.id(), iconUrl);
+        if (iconRefusal.isPresent()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(iconRefusal.get());
+            return;
+        }
         product.name(body.name().strip());
         product.url(
                 body.url() == null || body.url().isBlank() ? null : body.url().strip());
@@ -355,7 +369,27 @@ public class Admin {
         }
         productLinks.set(product.id(), links);
         productFamily.parent(product.id(), body.parentId());
+        kioskProducts.iconUrl(product.id(), iconUrl);
         ctx.status(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Whether a product's tile may be pointed at a hosted image. No address takes the image away.
+     *
+     * <p>A new address is checked before it is stored: an operator who mistypes it should be told so
+     * here rather than by a storefront tile that has quietly lost its icon. The address already stored
+     * is not asked again, so saving the rest of a product does not depend on its icon host answering.
+     *
+     * @return what is wrong with the address, or nothing when it may be stored
+     */
+    private Optional<String> iconRefusal(int productId, String iconUrl) {
+        if (iconUrl == null) return Optional.empty();
+        boolean unchanged = kioskProducts
+                .byId(productId)
+                .map(KioskProduct::iconUrl)
+                .filter(iconUrl::equals)
+                .isPresent();
+        return unchanged ? Optional.empty() : iconUrls.reject(iconUrl);
     }
 
     /**
@@ -568,12 +602,17 @@ public class Admin {
         }
     }
 
+    /**
+     * Takes a product's icon away, whichever kind it has: the uploaded image and the hosted address
+     * alike, so the tile is left on its monogram rather than falling back from one to the other.
+     */
     private void deleteProductIcon(Context ctx) {
         var resolved = requireGuildAdmin(ctx);
         if (resolved == null) return;
         var product = productFromPath(ctx, resolved);
         if (product == null) return;
         productIcons.remove(product.id());
+        kioskProducts.iconUrl(product.id(), null);
         ctx.status(HttpStatus.NO_CONTENT);
     }
 
@@ -643,6 +682,7 @@ public class Admin {
                         Long.toString(p.role()),
                         p.free(),
                         p.trial(),
+                        null,
                         null,
                         null,
                         null,
@@ -832,6 +872,7 @@ public class Admin {
                         Long.toString(p.role()),
                         p.free(),
                         p.trial(),
+                        null,
                         null,
                         null,
                         null,
@@ -1097,9 +1138,12 @@ public class Admin {
     public record AdminAccess(boolean operator, List<AdminGuild> guilds) {}
 
     /**
-     * @param roleId   as text, because a Discord id is larger than a JavaScript number holds exactly -
-     *                 sent as one it comes back rounded, and the edit form would write the wrong role
-     * @param parentId the product this one is an add-on of, or null
+     * @param roleId      as text, because a Discord id is larger than a JavaScript number holds exactly -
+     *                    sent as one it comes back rounded, and the edit form would write the wrong role
+     * @param iconUrl     where the icon is shown from: the uploaded one when there is one, else the
+     *                    hosted address, else nothing
+     * @param iconAddress the hosted address an operator configured, which is what the edit form edits
+     * @param parentId    the product this one is an add-on of, or null
      */
     public record ProductSummary(
             int id,
@@ -1109,6 +1153,7 @@ public class Admin {
             boolean free,
             boolean trial,
             String iconUrl,
+            String iconAddress,
             String description,
             Integer butlerId,
             boolean pageReadme,

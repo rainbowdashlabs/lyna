@@ -27,3 +27,6 @@ It stands in for Discord's API as well, under `/discord/api`: the token endpoint
 access token was minted for. That is enough for a story to finish a Discord sign-in without reaching
 Discord. The e2e configuration points `discord.oauth.apiUrl` here; the page a browser is sent to for
 signing in is still Discord's own, which the stories intercept.
+
+It answers `HEAD /icon.png` as an image too, which is what the backend asks of a product icon address
+before storing it, so a story can save one without reaching the internet.
