@@ -16,16 +16,16 @@ import java.util.List;
 @OverwritePrefix("API")
 public class Api {
     @Overwrite(env = @Env, prop = @Prop)
-    private String hostname;
+    private String hostname = "";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private String url;
+    private String url = "";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private String host;
+    private String host = "0.0.0.0";
 
     @Overwrite(env = @Env, prop = @Prop)
-    private int port;
+    private int port = 8888;
 
     @Overwrite(env = @Env, prop = @Prop)
     private List<String> allowedOrigins = List.of();

@@ -54,8 +54,7 @@ public class MailHandler implements ThrowingConsumer<Message, Exception> {
                 configuration.main().mailing();
         InternetAddress address = (InternetAddress) message.getFrom()[0];
         if (!mailConf.skipVerify()) {
-            // Check if address is from PayPal
-            if (!"service@paypal.de".equals(address.getAddress())
+            if (!mailConf.paypalSenders().contains(address.getAddress())
                     && !mailConf.originMails().contains(address.getAddress())) {
                 log.info("Received mail from unknown sender {}", address.getAddress());
                 return;

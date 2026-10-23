@@ -78,12 +78,14 @@ class MailingServiceTest {
                   password: "%s"
                   pollSeconds: 300
                   enabled: true
-                  properties:
-                    "mail.smtp.host": "127.0.0.1"
-                    "mail.smtp.port": "%d"
-                    "mail.smtp.auth": "true"
-                    "mail.imap.host": "127.0.0.1"
-                    "mail.imap.port": "%d"
+                  smtp:
+                    host: "127.0.0.1"
+                    port: %d
+                    ssl: false
+                  imap:
+                    host: "127.0.0.1"
+                    port: %d
+                    ssl: false
                 """.formatted(
                         USER,
                         PASSWORD,

@@ -11,6 +11,7 @@ import de.chojo.lyna.auth.TokenKey;
 import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.core.Bot;
 import de.chojo.lyna.core.Data;
+import de.chojo.lyna.core.LoggingSetup;
 import de.chojo.lyna.demo.DemoSchedule;
 import de.chojo.lyna.feature.account.service.AccountRoleSchedule;
 import de.chojo.lyna.feature.account.service.DiscordTokenRefresher;
@@ -29,6 +30,7 @@ public class Lyna {
 
     static void main(String[] args) throws SQLException, IOException, InterruptedException {
         System.setProperty("java.awt.headless", "true");
+        LoggingSetup.ensureConfiguration();
         instance = new Lyna();
         instance.init();
     }
