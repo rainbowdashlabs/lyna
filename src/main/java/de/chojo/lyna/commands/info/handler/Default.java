@@ -29,7 +29,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -98,26 +100,33 @@ public class Default implements SlashHandler {
             lastFetch = Instant.now();
         }
 
-        return new LocalizedEmbedBuilder(context.guildLocalizer())
+        var embed = new LocalizedEmbedBuilder(context.guildLocalizer())
                 .setTitle("Information about Lyna")
                 .setThumbnail(event.getJDA().getSelfUser().getEffectiveAvatarUrl())
                 .addField("Contributor", contributors, false)
                 .addField("Source", SOURCE, true)
                 .addField("Version", version, true)
-                .addField("", "**" + getLinks(context) + "**", false)
-                .setColor(Colors.Pastel.BLUE)
-                .build();
+                .setColor(Colors.Pastel.BLUE);
+        String links = getLinks(context);
+        if (!links.isEmpty()) embed.addField("", "**" + links + "**", false);
+        return embed.build();
     }
 
+    /**
+     * The links the operator configured, in a fixed order, leaving out the ones that are not set.
+     */
     private String getLinks(EventContext context) {
-        var links = List.of(
-                getLink("Invite me", configuration.main().links().invite())
-                // getLink("", configuration.main().support()),
-                // getLink("TOS", configuration.main().tos()),
-                // getLink( "Website", configuration.main().website()),
-                // getLink("FAQ", configuration.main().faq())
-                );
-        return String.join(" ᠅ ", links);
+        var links = configuration.main().links();
+        Map<String, String> named = new LinkedHashMap<>();
+        named.put("Invite me", links.invite());
+        named.put("Support", links.support());
+        named.put("Website", links.website());
+        named.put("TOS", links.tos());
+        named.put("FAQ", links.faq());
+        return named.entrySet().stream()
+                .filter(link -> link.getValue() != null && !link.getValue().isBlank())
+                .map(link -> getLink(link.getKey(), link.getValue()))
+                .collect(Collectors.joining(" ᠅ "));
     }
 
     private String getLink(String target, String url) {

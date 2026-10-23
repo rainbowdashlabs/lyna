@@ -12,6 +12,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,6 +34,26 @@ class ConfTest {
 
         assertEquals(5, conf.main().database().poolSize());
         assertTrue(Files.exists(directory.resolve("config.yaml")));
+    }
+
+    @Test
+    @DisplayName("A fresh file listens where the frontend looks, keeps mail off, and names nobody else's bot")
+    void freshDefaultsAreUsable(@TempDir Path directory) {
+        var main = new Conf(directory).main();
+
+        assertEquals("0.0.0.0", main.api().host());
+        assertEquals(8888, main.api().port());
+        assertEquals("", main.api().hostname());
+        assertEquals("", main.api().url());
+        assertFalse(main.mailing().enabled());
+        assertEquals(993, main.mailing().imap().port());
+        assertEquals(465, main.mailing().smtp().port());
+        assertTrue(main.mailing().imap().ssl());
+        assertEquals(
+                List.of("service@paypal.de", "service@paypal.com"),
+                main.mailing().paypalSenders());
+        assertEquals("", main.links().invite());
+        assertEquals("", main.nexus().password());
     }
 
     @Test

@@ -197,26 +197,24 @@ public class MailingService {
             return;
         }
 
-        Optional<Boolean> sendResult = Retry.retryAndReturn(3, () -> sendMessage(mimeMessage), err -> {
-            log.error(LogNotify.NOTIFY_ADMIN, "Could not sent mail", err);
-            sendMail(mail);
-        });
+        Optional<Boolean> sendResult = Retry.retryAndReturn(
+                3, () -> sendMessage(mimeMessage), err -> log.warn("Could not send mail, trying again", err));
 
         if (sendResult.isEmpty()) {
-            log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
+            log.error(LogNotify.NOTIFY_ADMIN, "Could not send mail to {} after three tries", mail.address());
             return;
         }
 
         try (IMAPStore imapStore = createImapStore(session)) {
-            Optional<Boolean> result = Retry.retryAndReturn(3, () -> storeMessage(imapStore, mimeMessage), err -> {
-                log.error(LogNotify.NOTIFY_ADMIN, "Could not store mail");
-                sendMail(mail);
-            });
+            Optional<Boolean> result = Retry.retryAndReturn(
+                    3,
+                    () -> storeMessage(imapStore, mimeMessage),
+                    err -> log.warn("Could not store a sent mail, trying again", err));
 
             if (result.isPresent() && result.get()) {
                 log.debug("Mail stored");
             } else {
-                log.error(LogNotify.NOTIFY_ADMIN, "Retries exceeded. Aborting.");
+                log.error(LogNotify.NOTIFY_ADMIN, "Sent the mail to {} but could not store a copy", mail.address());
             }
         } catch (MessagingException e) {
             log.error("Error occurred while sending a mail", e);

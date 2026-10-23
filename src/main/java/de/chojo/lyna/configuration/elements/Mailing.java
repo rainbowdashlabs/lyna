@@ -19,8 +19,8 @@ import java.util.Properties;
 @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "CanBeFinal"})
 @OverwritePrefix("MAIL")
 public class Mailing {
-    private MailSettings smtp = new MailSettings();
-    private MailSettings imap = new MailSettings();
+    private MailSettings smtp = MailSettings.smtp();
+    private MailSettings imap = MailSettings.imap();
 
     @Overwrite(env = @Env, prop = @Prop)
     private String user = "";
@@ -49,18 +49,25 @@ public class Mailing {
     private int pollSeconds = 300;
 
     @Overwrite(env = @Env, prop = @Prop)
-    private boolean enabled = true;
+    private boolean enabled = false;
+    /**
+     * The senders PayPal writes receipts from. PayPal sends from an address of the account's
+     * country, so the list is a setting rather than one address in the code.
+     */
+    @Overwrite(env = @Env, prop = @Prop)
+    private List<String> paypalSenders = List.of("service@paypal.de", "service@paypal.com");
+
     /**
      * The name the instance signs its mail with, in the header, the footer and the subjects that
      * name it.
      */
     @Overwrite(env = @Env, prop = @Prop)
     private String senderName = "Lyna";
-    // While we do no use javamail, we use angus and both implement jakarta.mail
-    // Most of the parameters of javamail can be applied here as well
-    // https://www.tutorialspoint.com/javamail_api/javamail_api_imap_servers.htm
-    // https://www.tutorialspoint.com/javamail_api/javamail_api_smtp_servers.htm
-    @Overwrite(env = @Env, prop = @Prop)
+
+    /**
+     * Further Jakarta Mail properties, over the ones the settings above produce. Read from the file
+     * only: a map has no single environment value.
+     */
     private Map<String, String> properties = Collections.emptyMap();
 
     public boolean skipVerify() {
@@ -105,6 +112,10 @@ public class Mailing {
 
     public MailSettings imap() {
         return imap;
+    }
+
+    public List<String> paypalSenders() {
+        return paypalSenders;
     }
 
     public Properties properties() {
