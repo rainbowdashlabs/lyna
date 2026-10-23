@@ -150,6 +150,8 @@ test.describe('Managing licenses', () => {
 
         const mapping = page.getByRole('listitem').filter({hasText: code})
         await mapping.getByRole('button', {name: 'Remove'}).click()
+        await expect(mapping).toHaveCount(1)
+        await mapping.getByRole('button', {name: 'Confirm'}).click()
 
         await expect(mapping).toHaveCount(0)
         await deleteProduct(operator, id, name)

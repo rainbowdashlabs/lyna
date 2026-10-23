@@ -27,4 +27,24 @@ test.describe('The time channels page', () => {
         const zones = await operator.get(`/api/admin/g/${GUILD}/time-channels/zones?q=berlin`)
         expect(await zones.json()).toContain('Europe/Berlin')
     })
+
+    /** No channel can be set up without a bot, so the list is answered here rather than by the stack. */
+    test('stopping a channel asks for confirmation first', async ({page}) => {
+        const channel = {channelId: '77', channelName: 'berlin-time', zone: 'Europe/Berlin', template: '{time}', shows: '12:00'}
+        const deleted: string[] = []
+        await page.route(`**/api/admin/g/${GUILD}/time-channels`, route => route.fulfill({json: [channel]}))
+        await page.route(`**/api/admin/g/${GUILD}/time-channels/77`, async route => {
+            deleted.push(route.request().method())
+            await route.fulfill({status: 204})
+        })
+        await operatorPage(page)
+        await page.goto(`/admin/g/${GUILD}/time-channels`)
+
+        const row = page.getByRole('listitem', {name: 'berlin-time'})
+        await row.getByRole('button', {name: 'Stop'}).click()
+        expect(deleted).toEqual([])
+        await row.getByRole('button', {name: 'Confirm'}).click()
+
+        await expect.poll(() => deleted).toEqual(['DELETE'])
+    })
 })

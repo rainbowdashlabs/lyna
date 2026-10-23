@@ -8,6 +8,7 @@ import {useI18n} from 'vue-i18n'
 import {onMounted, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {createKofi, listGuildProducts, listKofi, type KofiMapping, type ProductSummary, removeKofiMapping} from '~/api/admin'
+import ConfirmButton from '~/components/button/ConfirmButton.vue'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import Spinner from '~/components/feedback/Spinner.vue'
 import {usePageTitle} from '~/composables/usePageTitle'
@@ -29,6 +30,7 @@ const productId = ref<number | null>(null)
 const busy = ref(false)
 const message = ref<string | null>(null)
 const isError = ref(false)
+const confirming = ref<string | null>(null)
 
 async function load() {
   loading.value = true
@@ -49,7 +51,9 @@ watch(() => route.params.guildId, (next) => {
 
 onMounted(load)
 
+/** Unlinks a code once its removal has been confirmed; a sale under it then issues nothing. */
 async function remove(code: string) {
+  confirming.value = null
   await removeKofiMapping(guildId.value, code)
   await load()
 }
@@ -117,7 +121,11 @@ async function submit() {
           <code class="font-mono">{{ m.linkCode }}</code>
           <span class="ml-2 opacity-60">→ {{ m.productName }} (id {{ m.productId }})</span>
         </div>
-        <ErrorButton compact @click="remove(m.linkCode)">{{ t('page.admin.g.guildId.kofi.remove') }}</ErrorButton>
+        <div v-if="confirming === m.linkCode" class="flex items-center gap-2">
+          <ConfirmButton @click="remove(m.linkCode)"/>
+          <SecondaryButton compact @click="confirming = null">{{ t('common.cancel') }}</SecondaryButton>
+        </div>
+        <ErrorButton v-else compact @click="confirming = m.linkCode">{{ t('page.admin.g.guildId.kofi.remove') }}</ErrorButton>
       </li>
     </ul>
     <div v-else class="rounded-theme border border-border-light dark:border-border-dark p-8 text-center opacity-70">
