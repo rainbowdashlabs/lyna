@@ -25,6 +25,16 @@ test.describe('The way into the admin area', () => {
         await expect(page).toHaveURL(/\/account$/)
     })
 
+    test('choosing a guild from the instance area opens that guild\'s products', async ({page}) => {
+        await logIn(page, {email: 'entitled@example.invalid', password: PASSWORD})
+        await expect(page).toHaveURL(/\/account$/)
+        await page.goto('/admin/instance/system')
+
+        await page.getByRole('combobox').selectOption('4242')
+
+        await expect(page).toHaveURL(/\/admin\/g\/4242\/products$/)
+    })
+
     test('an account that administers nothing is offered no way in, and told why at the door', async ({page}) => {
         await signUp(page, 'no-admin')
 

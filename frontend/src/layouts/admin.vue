@@ -74,12 +74,16 @@ const status = computed<StatusItem[]>(() => {
   ]
 })
 
+/**
+ * Opens the same page for another guild, or its products when the current page belongs to no guild -
+ * the instance area, say, which has no guild-scoped counterpart.
+ */
 function switchGuild(event: Event) {
   const target = event.target as HTMLSelectElement
   const id = target.value
   if (!id) return
-  const tail = route.path.replace(/^\/admin\/g\/[^/]+/, '')
-  router.push(`/admin/g/${id}${tail || '/products'}`)
+  const guildPage = /^\/admin\/g\/[^/]+(\/.*)?$/.exec(route.path)
+  router.push(`/admin/g/${id}${guildPage?.[1] || '/products'}`)
 }
 </script>
 
