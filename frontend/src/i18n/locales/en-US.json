@@ -33,7 +33,11 @@
       "java": "Java {version}",
       "required": "required",
       "optional": "optional"
-    }
+    },
+    "saveFailed": "Save failed.",
+    "operatorRequired": "Operator access required.",
+    "create": "Create",
+    "creating": "Creating…"
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -176,7 +180,9 @@
             "licenseIssued": "License issued",
             "noLicensesYet": "No licenses yet.",
             "identifierMailOrderId": "Identifier (mail / order id)",
-            "search": "Search by product, identifier, id or owner"
+            "search": "Search by product, identifier, id or owner",
+            "issue": "Issue",
+            "issuing": "Issuing…"
           },
           "mailing": {
             "mailingTemplates": "Mailing templates",
@@ -219,7 +225,8 @@
                 "mailing": "Mailing",
                 "announcements": "Announcements"
               }
-            }
+            },
+            "newProduct": "New product"
           },
           "registrations": {
             "registrations": "Registrations",
@@ -288,14 +295,17 @@
           "operators": "Operators",
           "anOperatorReachesEveryGuildS": "An operator reaches every guild's admin area and this one. Ids named in the configuration file cannot be withdrawn here — they are the way back in if a grant goes wrong.",
           "grantTheInstance": "Grant the instance",
-          "discordUserId": "Discord user id"
+          "discordUserId": "Discord user id",
+          "grant": "Grant",
+          "granting": "Granting…"
         },
         "system": {
           "system": "System",
           "version": "Version",
           "guilds": "Guilds",
           "discordSignIn": "Discord sign-in",
-          "notConfigured": "Not configured"
+          "notConfigured": "Not configured",
+          "couldNotLoad": "Failed to load system info."
         }
       },
       "select": {
@@ -520,7 +530,19 @@
       "nothingHasBeenDownloadedOnThis": "Nothing has been downloaded on this license yet."
     },
     "mailBlockEditor": {
-      "nothingInThisMailYetAdd": "Nothing in this mail yet. Add a block to start it."
+      "nothingInThisMailYetAdd": "Nothing in this mail yet. Add a block to start it.",
+      "types": {
+        "heading": "Heading",
+        "paragraph": "Text",
+        "key": "License key",
+        "button": "Button",
+        "list": "List",
+        "image": "Image",
+        "links": "Links",
+        "divider": "Divider",
+        "raw": "HTML, written before the editor"
+      },
+      "add": "Add {block}"
     },
     "mailBlockField": {
       "aLineAcrossTheMail": "A line across the mail.",

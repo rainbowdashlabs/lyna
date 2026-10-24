@@ -963,8 +963,6 @@ public class Admin {
      * @param botConnected whether a gateway is connected at all. Worth stating plainly rather than
      *                     leaving an operator to infer it from a guild count of zero, now that
      *                     running without a bot is a supported way to run.
-     */
-    /**
      * @param discordOauth whether somebody can sign in with Discord, which needs a client id, a
      *                     secret and a redirect uri; without them the sign-in link goes nowhere useful
      */
@@ -1193,8 +1191,6 @@ public class Admin {
      * @param url       what to paste into GitHub as the payload URL
      * @param secret    what to paste into GitHub as the secret
      * @param channelId as text, since a Discord id is larger than a JavaScript number holds exactly
-     */
-    /**
      * @param activityChannelId where pushes, pull requests and issues are posted, or nothing
      * @param activity          which of those are posted
      */

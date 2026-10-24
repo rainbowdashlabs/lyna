@@ -171,8 +171,8 @@ public class AdminMailing {
 
     /**
      * Issues a license for the address and mails it there, reaching the release types asked for or
-     * stable builds when none are named. An address
-     * that has a license for the product already is sent that one again, never a second.
+     * stable builds when none are named. An address that has a license for the product already is
+     * refused with 409 rather than given a second one.
      */
     private void send(Context ctx) {
         var admin = guard.require(ctx);

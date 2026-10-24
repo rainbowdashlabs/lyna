@@ -72,7 +72,7 @@ async function submit() {
   } catch (e) {
     const err = e as {response?: {data?: string}}
     isError.value = true
-    message.value = typeof err.response?.data === 'string' ? err.response.data : 'Save failed.'
+    message.value = typeof err.response?.data === 'string' ? err.response.data : t('common.saveFailed')
   } finally {
     busy.value = false
   }
@@ -107,7 +107,7 @@ async function submit() {
       </div>
       <div class="mt-3">
         <PrimaryButton :disabled="busy" @click="submit">
-          {{ busy ? 'Saving…' : 'Save' }}
+          {{ busy ? t('common.saving') : t('common.save') }}
         </PrimaryButton>
       </div>
     </section>
