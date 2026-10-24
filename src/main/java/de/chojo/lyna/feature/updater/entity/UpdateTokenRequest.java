@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.time.Instant;
 
 /**
- * An account asking for more upgrade tokens on a product than it is allowed.
+ * An account asking for more keys of one kind on a product than it is allowed.
  *
  * @param amount  how many more it asks for
  * @param account the username of the account, for whoever decides
@@ -21,6 +21,7 @@ public record UpdateTokenRequest(
         String account,
         int productId,
         String productName,
+        KeyKind kind,
         int amount,
         String reason,
         Status status,

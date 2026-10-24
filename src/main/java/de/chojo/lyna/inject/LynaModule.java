@@ -111,8 +111,10 @@ import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.feature.trial.service.DisposableEmailDomains;
 import de.chojo.lyna.feature.trial.service.DisposableEmailRefresh;
 import de.chojo.lyna.feature.trial.service.WebTrialService;
+import de.chojo.lyna.feature.updater.repository.DashboardProductRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenQuotaRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenRepository;
+import de.chojo.lyna.feature.updater.service.DashboardKeyService;
 import de.chojo.lyna.feature.updater.service.UpdateTokenService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
@@ -405,6 +407,8 @@ public class LynaModule extends AbstractModule {
         bind(UpdateTokenRepository.class).in(Singleton.class);
         bind(UpdateTokenQuotaRepository.class).in(Singleton.class);
         bind(UpdateTokenService.class).in(Singleton.class);
+        bind(DashboardProductRepository.class).in(Singleton.class);
+        bind(DashboardKeyService.class).in(Singleton.class);
         bind(PasswordHasher.class).in(Singleton.class);
     }
 
