@@ -6,8 +6,10 @@
 package de.chojo.lyna.service;
 
 import de.chojo.lyna.feature.download.service.DownloadAccessService;
+import de.chojo.lyna.feature.updater.entity.KeyKind;
 import de.chojo.lyna.feature.updater.entity.UpdateToken;
 import de.chojo.lyna.feature.updater.entity.UpdateTokenRequest;
+import de.chojo.lyna.feature.updater.repository.DashboardProductRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenQuotaRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenRepository;
 import de.chojo.lyna.feature.updater.service.UpdateTokenService;
@@ -70,6 +72,7 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
         return new UpdateTokenService(
                 new UpdateTokenRepository(),
                 new UpdateTokenQuotaRepository(),
+                new DashboardProductRepository(),
                 new DownloadAccessService(accountLicenses, accountRoles, productRepository),
                 kioskProducts,
                 clock);
@@ -87,13 +90,13 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
     }
 
     private UpdateToken created(String name) {
-        return service.create(account, premium, name).value();
+        return service.create(account, premium, KeyKind.UPDATE, name).value();
     }
 
     @Test
     @DisplayName("A token is made for a premium product the account may download, under a trimmed name")
     void create() {
-        var outcome = service.create(account, premium, "  lobby  ");
+        var outcome = service.create(account, premium, KeyKind.UPDATE, "  lobby  ");
 
         assertTrue(outcome.ok());
         assertEquals("lobby", outcome.value().name());
@@ -104,15 +107,21 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("No token for a free product, one the account may not download, or without a name")
     void createRefused() {
-        assertEquals(Refusal.FREE, service.create(account, free, "lobby").refusal());
         assertEquals(
-                Refusal.NO_ACCESS, service.create(account, unrelated, "lobby").refusal());
-        assertEquals(Refusal.INVALID_NAME, service.create(account, premium, " ").refusal());
+                Refusal.FREE,
+                service.create(account, free, KeyKind.UPDATE, "lobby").refusal());
         assertEquals(
-                Refusal.INVALID_NAME, service.create(account, premium, null).refusal());
+                Refusal.NO_ACCESS,
+                service.create(account, unrelated, KeyKind.UPDATE, "lobby").refusal());
         assertEquals(
                 Refusal.INVALID_NAME,
-                service.create(account, premium, "x".repeat(UpdateTokenService.MAX_NAME_LENGTH + 1))
+                service.create(account, premium, KeyKind.UPDATE, " ").refusal());
+        assertEquals(
+                Refusal.INVALID_NAME,
+                service.create(account, premium, KeyKind.UPDATE, null).refusal());
+        assertEquals(
+                Refusal.INVALID_NAME,
+                service.create(account, premium, KeyKind.UPDATE, "x".repeat(UpdateTokenService.MAX_NAME_LENGTH + 1))
                         .refusal());
     }
 
@@ -123,23 +132,26 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
 
         assertEquals(
                 Refusal.LIMIT_REACHED,
-                service.create(account, premium, "one more").refusal());
-        assertEquals(List.of(new UpdateTokenService.Allowance(premium, 10, 10)), service.allowances(account));
+                service.create(account, premium, KeyKind.UPDATE, "one more").refusal());
+        assertEquals(
+                List.of(new UpdateTokenService.Allowance(premium, KeyKind.UPDATE, 10, 10, false)),
+                service.allowances(account, KeyKind.UPDATE));
 
-        UpdateTokenRequest request =
-                service.requestMore(account, premium, 2, " a network ").value();
+        UpdateTokenRequest request = service.requestMore(account, premium, KeyKind.UPDATE, 2, " a network ")
+                .value();
         assertEquals("a network", request.reason());
         assertEquals(List.of(request), service.requests(account));
-        assertEquals(List.of(request), service.pending(GUILD));
+        assertEquals(List.of(request), service.pending(GUILD, KeyKind.UPDATE));
         assertEquals(
                 Refusal.PENDING,
-                service.requestMore(account, premium, 1, "again").refusal());
+                service.requestMore(account, premium, KeyKind.UPDATE, 1, "again")
+                        .refusal());
 
         assertTrue(service.decide(GUILD, request.id(), true, 5L).ok());
 
-        assertEquals(12, service.allowed(account, premium));
-        assertEquals(2, service.raised(GUILD).getFirst().granted());
-        assertTrue(service.create(account, premium, "one more").ok());
+        assertEquals(12, service.allowed(account, premium, KeyKind.UPDATE));
+        assertEquals(2, service.raised(GUILD, KeyKind.UPDATE).getFirst().granted());
+        assertTrue(service.create(account, premium, KeyKind.UPDATE, "one more").ok());
         assertEquals(
                 Refusal.NOT_FOUND, service.decide(GUILD, request.id(), true, 5L).refusal());
     }
@@ -149,25 +161,33 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
     void requestRefused() {
         assertEquals(
                 Refusal.INVALID_REQUEST,
-                service.requestMore(account, premium, 0, "why").refusal());
+                service.requestMore(account, premium, KeyKind.UPDATE, 0, "why").refusal());
         assertEquals(
                 Refusal.INVALID_REQUEST,
-                service.requestMore(account, premium, UpdateTokenService.MAX_REQUEST + 1, "why")
+                service.requestMore(account, premium, KeyKind.UPDATE, UpdateTokenService.MAX_REQUEST + 1, "why")
                         .refusal());
         assertEquals(
                 Refusal.INVALID_REQUEST,
-                service.requestMore(account, premium, 1, " ").refusal());
+                service.requestMore(account, premium, KeyKind.UPDATE, 1, " ").refusal());
         assertEquals(
                 Refusal.INVALID_REQUEST,
-                service.requestMore(account, premium, 1, null).refusal());
+                service.requestMore(account, premium, KeyKind.UPDATE, 1, null).refusal());
         assertEquals(
                 Refusal.INVALID_REQUEST,
-                service.requestMore(account, premium, 1, "x".repeat(UpdateTokenService.MAX_REASON_LENGTH + 1))
+                service.requestMore(
+                                account,
+                                premium,
+                                KeyKind.UPDATE,
+                                1,
+                                "x".repeat(UpdateTokenService.MAX_REASON_LENGTH + 1))
                         .refusal());
-        assertEquals(Refusal.FREE, service.requestMore(account, free, 1, "why").refusal());
+        assertEquals(
+                Refusal.FREE,
+                service.requestMore(account, free, KeyKind.UPDATE, 1, "why").refusal());
         assertEquals(
                 Refusal.NO_ACCESS,
-                service.requestMore(account, unrelated, 1, "why").refusal());
+                service.requestMore(account, unrelated, KeyKind.UPDATE, 1, "why")
+                        .refusal());
     }
 
     @Test
@@ -247,15 +267,15 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
     @Test
     @DisplayName("Lowering an allowance revokes nothing, and stops new tokens")
     void lower() {
-        service.setGranted(GUILD, account, premium, 1);
+        service.setGranted(GUILD, account, premium, KeyKind.UPDATE, 1);
         for (int i = 0; i < 11; i++) created("server " + i);
 
-        assertTrue(service.setGranted(GUILD, account, premium, 0));
+        assertTrue(service.setGranted(GUILD, account, premium, KeyKind.UPDATE, 0));
 
         assertEquals(11, service.tokens(account).size());
         assertEquals(
                 Refusal.LIMIT_REACHED,
-                service.create(account, premium, "one more").refusal());
+                service.create(account, premium, KeyKind.UPDATE, "one more").refusal());
     }
 
     @Test
@@ -271,6 +291,8 @@ class UpdateTokenServiceTest extends RepositoryTestBase {
         created("lobby");
         accountRoles.replaceDiscordRoles(account, GUILD, List.of());
 
-        assertEquals(List.of(new UpdateTokenService.Allowance(premium, 1, 10)), service.allowances(account));
+        assertEquals(
+                List.of(new UpdateTokenService.Allowance(premium, KeyKind.UPDATE, 1, 10, false)),
+                service.allowances(account, KeyKind.UPDATE));
     }
 }

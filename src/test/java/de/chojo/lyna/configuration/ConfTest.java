@@ -195,6 +195,21 @@ class ConfTest {
         }
     }
 
+    @Test
+    @DisplayName("The dashboard gateway's secret comes from outside the file and is blank without it")
+    void dashboardGatewaySecret(@TempDir Path directory) {
+        assertEquals("", new Conf(directory).main().dashboard().gatewaySecret());
+
+        System.setProperty("dashboard.gatewaySecret", "shared-with-the-gateway");
+        try {
+            Conf conf = new Conf(directory);
+
+            assertEquals("shared-with-the-gateway", conf.main().dashboard().gatewaySecret());
+        } finally {
+            System.clearProperty("dashboard.gatewaySecret");
+        }
+    }
+
     /**
      * The guarantee that makes overrides worth having: a value supplied from outside is used but not
      * recorded. Ocular writes the file before it applies the overrides, so this holds as long as

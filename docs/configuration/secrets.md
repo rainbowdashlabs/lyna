@@ -24,6 +24,7 @@ environment variables instead. Lyna never writes an environment value back into 
 | `builtByBit.oauthClientSecret` | `BUILTBYBIT_OAUTHCLIENTSECRET` |
 | `license.baseSeed` | `LICENSE_BASESEED` |
 | `github.token` | `GITHUB_TOKEN` |
+| `dashboard.gatewaySecret` | `DASHBOARD_GATEWAYSECRET` |
 
 Leave the value in the file empty (`""`). The environment variable wins over it.
 

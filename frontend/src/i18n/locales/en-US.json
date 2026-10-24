@@ -38,6 +38,7 @@
     "operatorRequired": "Operator access required.",
     "create": "Create",
     "creating": "Creating…",
+    "trial": "trial",
     "platform": {
       "KOFI": "Ko-fi",
       "BUILTBYBIT": "BuiltByBit"
@@ -159,18 +160,24 @@
         "passwordUpdated": "Password updated."
       },
       "updaters": {
-        "updaters": "Updaters",
+        "updaters": "Server keys",
         "intro": "An updater on your server holds an upgrade token and trades it for each download. Every trade gives it a new token, so a copied token is good for one download at most.",
         "nothingToUpdate": "You hold nothing an updater could fetch. Free products need no token: their download links are public.",
         "refusal": {
           "NO_ACCESS": "You may not download this product.",
           "FREE": "This product is free. Its download links are public and need no token.",
-          "LIMIT_REACHED": "You have used every updater this product allows. Request more below.",
-          "INVALID_NAME": "Give the updater a name of up to 64 characters.",
+          "LIMIT_REACHED": "You hold every key of this kind the product allows.",
+          "INVALID_NAME": "Give the server a name of up to 64 characters.",
           "INVALID_REQUEST": "Ask for between 1 and 100 more, and say what for.",
           "PENDING": "A request for this product is already waiting.",
-          "NOT_FOUND": "That updater no longer exists."
-        }
+          "NOT_FOUND": "That key no longer exists.",
+          "NOT_OFFERED": "This product does not offer dashboard keys."
+        },
+        "serverKeysIntro": "Keys your servers hold for the products you have: upgrade tokens for updaters, and dashboard keys for the hosted dashboard.",
+        "upgradeTokens": "Upgrade tokens",
+        "dashboardKeys": "Dashboard keys",
+        "dashboardIntro": "A server proves itself to the hosted dashboard with a dashboard key. It trades the key for a new one every few days by itself. A key nobody uses for a month expires; reissue it to bring the server back.",
+        "noDashboard": "None of your products offers dashboard keys."
       }
     },
     "admin": {
@@ -313,12 +320,18 @@
             "needsBot": "The bot renames these channels, and none is connected, so no new one can be set up."
           },
           "updaters": {
-            "updaters": "Updaters",
-            "intro": "Every account may run ten updaters per product. Accounts that need more ask here; approving adds what they asked for.",
+            "updaters": "Server keys",
+            "intro": "Accounts hold upgrade tokens and dashboard keys up to the default each product allows. Accounts that need more ask here; approving adds what they asked for.",
             "requests": "Requests for more",
-            "noRequests": "Nobody is waiting for more updaters.",
+            "noRequests": "Nobody is waiting for more keys of this kind.",
             "raised": "Raised allowances",
-            "noneRaised": "Every account is on the default of ten."
+            "noneRaised": "Every account is on the default.",
+            "kind": {
+              "UPDATE": "Upgrade tokens",
+              "DASHBOARD": "Dashboard keys"
+            },
+            "held": "Dashboard keys held",
+            "noneHeld": "Nobody holds a dashboard key for this guild's products."
           }
         }
       },
@@ -402,7 +415,7 @@
       "anonymous": "Anonymous",
       "notLinked": "no Discord",
       "storefront": "Storefront",
-      "updaters": "Updaters"
+      "updaters": "Server keys"
     },
     "admin": {
       "administering": "Administering",
@@ -425,7 +438,7 @@
       "downloadTypes": "Download types",
       "timeChannels": "Time channels",
       "yourAccount": "Your account",
-      "updaters": "Updaters"
+      "updaters": "Server keys"
     }
   },
   "ui": {
@@ -988,7 +1001,11 @@
       "rename": "Rename",
       "reissue": "Reissue",
       "reallyReissue": "Really reissue",
-      "reallyRevoke": "Really revoke"
+      "reallyRevoke": "Really revoke",
+      "nextRefresh": "next refresh {at}",
+      "expires": "expires {at} unless used",
+      "expired": "Expired {at} after going unused. Reissue the key and give the server the new one.",
+      "reusedKey": "A key this server had already given up was used again at {at}. Somebody holds a copy: reissue the key."
     },
     "updaterProductSection": {
       "noUpdaters": "No updaters yet.",
@@ -1034,6 +1051,28 @@
     },
     "manifestSummary": {
       "needs": "What {version} needs"
+    },
+    "dashboardProductSection": {
+      "count": "{used} of {allowed}",
+      "command": "/companyadmin dashboard key {key}",
+      "pasteOnce": "Run this on {name} to connect it to the dashboard. The key is shown here once; later you find it in the list below.",
+      "done": "Done",
+      "noKeys": "No dashboard keys yet.",
+      "add": "Add dashboard key",
+      "trialLimit": "A trial comes with one dashboard key. Buy the product to hold more."
+    },
+    "heldKeyRow": {
+      "ofAccount": "{count} held by this account"
+    },
+    "productDashboardKeys": {
+      "title": "Dashboard keys",
+      "explain": "Servers prove themselves to the hosted dashboard with a dashboard key. A buyer may hold the allowance below and ask for more; an account that only took the trial holds one.",
+      "enabled": "Hand out dashboard keys",
+      "refreshDays": "Refresh every (days)",
+      "expiryDays": "Expire after unused (days)",
+      "allowance": "Keys per buyer",
+      "save": "Save dashboard keys",
+      "couldNotSave": "Could not save the dashboard key settings."
     }
   },
   "preview": {

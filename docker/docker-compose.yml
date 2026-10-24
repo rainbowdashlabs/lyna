@@ -63,7 +63,7 @@ services:
       context: ..
       dockerfile: docker/backend.Dockerfile
     networks:
-      - lyna
+      - e2e
     depends_on:
       postgres_e2e:
         condition: service_started
@@ -85,6 +85,7 @@ services:
       # actually publishes - which toolchain.sh derives per checkout.
       API_URL: "http://localhost:${LYNA_E2E_API_PORT:-8890}"
       DEMO_ENABLED: "${LYNA_E2E_DEMO:-false}"
+      DASHBOARD_GATEWAYSECRET: "e2e-gateway-secret"
     profiles:
       - e2e
     # Derived per checkout by toolchain.sh, so two checkouts never want the same port. The default
@@ -123,7 +124,7 @@ services:
   nexus_e2e:
     image: python:3.15-alpine
     networks:
-      lyna:
+      e2e:
         aliases:
           - nexus-e2e
     depends_on:
@@ -140,7 +141,7 @@ services:
   seed_e2e:
     image: postgres:17
     networks:
-      - lyna
+      - e2e
     depends_on:
       - app_e2e
     volumes:
@@ -166,7 +167,7 @@ services:
     restart: "no"
   postgres_e2e:
     networks:
-      - lyna
+      - e2e
     image: postgres:17
     profiles:
       - e2e
@@ -197,6 +198,7 @@ networks:
   lyna:
     name: lyna
     external: false
+  e2e:
 
 volumes:
   lyna_e2e_data:
