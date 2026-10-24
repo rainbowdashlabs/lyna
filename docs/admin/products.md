@@ -30,7 +30,7 @@ A new product has no downloads yet. Add them on its **Downloads** tab.
 
 ## The product editor
 
-The editor has six tabs: **General**, **Page**, **Downloads**, **Access**, **Mailing** and **Announcements**. The tab you are on is kept in the address, so you can link to a tab and a reload stays on it.
+The editor has seven tabs: **General**, **Page**, **Downloads**, **Access**, **Server keys**, **Mailing** and **Announcements**. The tab you are on is kept in the address, so you can link to a tab and a reload stays on it.
 
 ## General
 
@@ -72,17 +72,6 @@ Some rules the server checks when you save:
 - An UpdateButler id is a positive number, and only one product can carry each id.
 - BuiltByBit ids are positive numbers. An add-on id needs a resource id, and only one product can be sold as each resource or add-on.
 - Add-ons are one level deep. A product that has add-ons cannot become an add-on, so **Belongs to** is locked for it. You also cannot pick an add-on as the parent.
-
-### Dashboard keys
-
-Whether the product hands out dashboard keys, with which servers connect to the hosted dashboard. Off for a new product.
-
-- **Hand out dashboard keys**: switches them on. Switching them off refuses every key at its next refresh or verification.
-- **Refresh every (days)**: how old a key gets before the server trades it for a new one. Default 7.
-- **Expire after unused (days)**: how long a key may go unused before it expires. Default 30.
-- **Keys per buyer**: how many keys a buyer may hold before asking for more. Default 10. An account that only took the trial always holds one.
-
-Click **Save dashboard keys**. See [Server keys](./updaters.md#dashboard-keys).
 
 ### Ko-fi shop items
 
@@ -151,6 +140,24 @@ To add one, pick a **Role** and a **Release type** and click **Grant**. **Revoke
 When a bot is connected, the role must exist in the guild, and the list shows role names. Without a bot, roles are shown by id.
 
 See [how access is decided](./download-types.md#who-may-download-what) for how roles and licenses work together.
+
+## Server keys
+
+The kinds of key the product hands out to servers, such as the key a server connects to the product's dashboard with. A product has none until you add one, and can have several.
+
+Under **Add key type**, fill in:
+
+- **Name**: what buyers see the key called, such as `Dashboard key`.
+- **Slug**: how the key type is named to its gateway: lower-case letters, digits and dashes, unique within the product.
+- **Command**: how a buyer hands a key to a server, with `{key}` where the key goes, such as `/companyadmin dashboard key {key}`. Left empty, buyers are shown the bare key.
+- **Refresh every (days)**: how old a key gets before the server trades it for a new one. Default 7.
+- **Expire after unused (days)**: how long a key may go unused before it expires. Default 30.
+- **Keys per buyer** and **Keys per trial**: how many keys a buyer, and an account that only took the trial, may hold. Defaults 10 and 1.
+- **Hand out keys of this type**: switching it off refuses every key of the type at its next refresh or verification.
+
+Click **Create key type**. Each key type then shows its **Gateway secret**. Give it to the gateway that checks these keys: it authenticates with it at `POST /api/v1/keys/verify`, and is answered about keys of this type only. **New secret** replaces it; the old one stops working at once. **Delete key type** ends the type and every key of it. Both ask a second time.
+
+See [Server keys](./updaters.md#product-keys) for allowances, requests and revoking.
 
 ## Mailing
 

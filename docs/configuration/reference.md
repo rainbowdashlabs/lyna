@@ -202,14 +202,6 @@ Reading from GitHub, for product pages that show a project's README. Environment
 | `token` | `""` | `GITHUB_TOKEN` | Optional GitHub token. Without one, GitHub allows 60 requests an hour, which cached READMEs rarely reach. |
 | `apiUrl` | `"https://api.github.com"` | `GITHUB_APIURL` | GitHub's API. Leave it. |
 
-## dashboard
-
-The hosted dashboard gateway, which asks Lyna whether a server's dashboard key is good. Environment prefix `DASHBOARD`.
-
-| Key | Default | Environment | What it does |
-|---|---|---|---|
-| `gatewaySecret` | `""` | `DASHBOARD_GATEWAYSECRET` | The secret the gateway sends to verify keys. Left empty, every verification is refused. Supply it from the environment. |
-
 ## downloads
 
 Environment prefix `DOWNLOADS`.
