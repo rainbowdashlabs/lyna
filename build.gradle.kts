@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "de.chojo"
-version = "2.1.1"
+version = "2.2.0"
 
 repositories {
     maven("https://eldonexus.de/repository/maven-proxies")
