@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.bundles.sadu)
 
     // Download api
-    implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
+    implementation("de.chojo", "nexus-api-wrapper", "2.0.0")
 
     val openapi = "7.2.3"
 

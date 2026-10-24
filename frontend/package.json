@@ -46,7 +46,7 @@
   "devDependencies": {
     "@playwright/test": "1.59.1",
     "@types/node": "^24.19.2",
-    "typescript": "~6.0.2",
+    "typescript": "~7.0.0",
     "vue-tsc": "^3.3.13"
   }
 }
