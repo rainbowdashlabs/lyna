@@ -6,6 +6,7 @@
 package de.chojo.lyna.web.api.v1;
 
 import com.google.inject.Inject;
+import de.chojo.lyna.web.api.v1.dashboard.DashboardKeyApi;
 import de.chojo.lyna.web.api.v1.debug.DebugApi;
 import de.chojo.lyna.web.api.v1.demo.DemoApi;
 import de.chojo.lyna.web.api.v1.download.Download;
@@ -40,6 +41,7 @@ public class V1 {
     private final DebugApi debug;
     private final GithubWebhook github;
     private final TrialApi trial;
+    private final DashboardKeyApi dashboard;
 
     @Inject
     public V1(
@@ -53,8 +55,10 @@ public class V1 {
             InstanceInfo instanceInfo,
             DebugApi debug,
             GithubWebhook github,
-            TrialApi trial) {
+            TrialApi trial,
+            DashboardKeyApi dashboard) {
         this.trial = trial;
+        this.dashboard = dashboard;
         this.debug = debug;
         this.github = github;
         this.instanceInfo = instanceInfo;
@@ -80,6 +84,7 @@ public class V1 {
             debug.init();
             github.init();
             trial.init();
+            dashboard.init();
         });
     }
 }
