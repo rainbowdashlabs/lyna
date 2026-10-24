@@ -67,6 +67,23 @@ Lyna only issues licenses for resources it knows. Set the BuiltByBit resource id
 for an add-on, on the [product's General tab](../admin/products.md#main-settings). The
 [BuiltByBit tab](../admin/builtbybit.md) lists every call BuiltByBit made and what came of it.
 
+## 5. Tell buyers how to claim their key
+
+A buyer finds their key inside the jar they downloaded:
+
+1. Open the plugin jar with any zip tool. A jar is a zip file.
+2. Open `build.data` at the top level of the jar.
+3. The key is the value after `lynaLicense=`.
+
+If the value is still `%%__LYNA_LICENSE__%%`, that copy carries no key. If it says "Unable to acquire
+a license key automatically", BuiltByBit couldn't reach Lyna; issue the license by hand.
+
+To claim the key, the buyer signs up on your Lyna instance and redeems the key under **Licenses** in
+their account. They can also redeem it with `/register` in your Discord server. The license then grants
+its role and opens the product's downloads.
+
+Put these steps on the resource page, so buyers see them where they bought the plugin.
+
 ## Optional: the API
 
 With BuiltByBit Ultimate you can give Lyna an API token. Lyna then asks BuiltByBit about every
