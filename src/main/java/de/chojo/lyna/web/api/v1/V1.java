@@ -6,6 +6,7 @@
 package de.chojo.lyna.web.api.v1;
 
 import com.google.inject.Inject;
+import de.chojo.lyna.web.api.v1.builtbybit.BuiltByBitApiRoutes;
 import de.chojo.lyna.web.api.v1.debug.DebugApi;
 import de.chojo.lyna.web.api.v1.demo.DemoApi;
 import de.chojo.lyna.web.api.v1.download.Download;
@@ -32,6 +33,7 @@ public class V1 {
     private final Download download;
     private final Update update;
     private final KoFiApi kofi;
+    private final BuiltByBitApiRoutes builtByBit;
     private final Products products;
     private final Releases releases;
     private final Wizard wizard;
@@ -46,6 +48,7 @@ public class V1 {
             Download download,
             Update update,
             KoFiApi kofi,
+            BuiltByBitApiRoutes builtByBit,
             Products products,
             Releases releases,
             Wizard wizard,
@@ -61,6 +64,7 @@ public class V1 {
         this.download = download;
         this.update = update;
         this.kofi = kofi;
+        this.builtByBit = builtByBit;
         this.products = products;
         this.releases = releases;
         this.wizard = wizard;
@@ -72,6 +76,7 @@ public class V1 {
             download.init();
             update.init();
             kofi.init();
+            builtByBit.init();
             products.init();
             releases.init();
             wizard.init();

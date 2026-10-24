@@ -29,9 +29,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Somebody buys a product and ends up holding a licence for it.
  *
- * <p>Three things arrive at this: a Ko-fi shop order, a payment receipt parsed out of the mailbox,
- * and an operator issuing one by hand. They differ in where the address comes from and in nothing
- * else, so the steps live here rather than three times over.
+ * <p>Four things arrive at this: a Ko-fi shop order, a payment receipt parsed out of the mailbox,
+ * an operator issuing one by hand, and BuiltByBit. The first three differ in where the address comes
+ * from and in nothing else, so the steps live here rather than three times over. BuiltByBit names
+ * nobody by address, which is what {@link #issueUnaddressed} is for.
  *
  * <p>The steps are: mint the licence, grant it the stable release, give it to whoever has already
  * proved the address, and tell the buyer which of those two happened.
@@ -87,6 +88,25 @@ public class PurchaseService {
             return license;
         }
         announce(mailTemplate.get(), license.get(), name, address);
+        return license;
+    }
+
+    /**
+     * Issues a licence for a purchase whose buyer has no address to write to.
+     *
+     * <p>Nothing is mailed and nothing is handed over: the buyer receives the key some other way and
+     * redeems it. Issuing again for the same identifier answers the licence already made, untouched,
+     * so a repeated call neither mints a second one nor gives back access an operator took away.
+     *
+     * @param identifier who bought it, as the source names them
+     * @return the licence
+     */
+    public Optional<License> issueUnaddressed(Product product, String identifier, LicenseSource source) {
+        Optional<License> existing =
+                product.products().licenseGuild().licenses().byDetails(product, identifier);
+        if (existing.isPresent()) return existing;
+        Optional<License> license = product.createLicense(identifier, source);
+        license.ifPresent(issued -> licenses.grantAccess(issued, ReleaseType.STABLE));
         return license;
     }
 
