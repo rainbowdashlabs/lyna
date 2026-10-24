@@ -28,7 +28,8 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  * a copy presented later is recognised as a copy instead of being mistaken for a key nobody issued.
  *
  * <p>When a dashboard key is due for its successor and when it expires is worked out here, from the
- * product's settings, so every reader sees the same answer.
+ * product's settings, so every reader sees the same answer. A day there is 24 hours rather than a
+ * calendar day, so a change of daylight saving time moves no key's schedule by an hour.
  */
 public class UpdateTokenRepository {
     private static final String SELECT = """
@@ -36,11 +37,11 @@ public class UpdateTokenRepository {
                    t.last_used_at, t.rotated_at, t.refreshed_at,
                    (SELECT max(r.reused_at) FROM update_token_retired r WHERE r.update_token_id = t.id) AS last_reuse_at,
                    CASE WHEN t.kind = 'DASHBOARD'
-                        THEN coalesce(t.rotated_at, t.created_at) + make_interval(days => p.dashboard_refresh_days)
+                        THEN coalesce(t.rotated_at, t.created_at) + p.dashboard_refresh_days * interval '24 hours'
                    END AS refresh_at,
                    CASE WHEN t.kind = 'DASHBOARD'
                         THEN greatest(t.last_used_at, t.rotated_at, t.created_at)
-                             + make_interval(days => p.dashboard_expiry_days)
+                             + p.dashboard_expiry_days * interval '24 hours'
                    END AS expires_at
             FROM update_token t
             JOIN product p ON p.id = t.product_id
@@ -235,7 +236,7 @@ public class UpdateTokenRepository {
                        t.last_used_at,
                        CASE WHEN t.kind = 'DASHBOARD'
                             THEN greatest(t.last_used_at, t.rotated_at, t.created_at)
-                                 + make_interval(days => p.dashboard_expiry_days)
+                                 + p.dashboard_expiry_days * interval '24 hours'
                        END AS expires_at,
                        coalesce(CASE WHEN a.discriminator IS NULL THEN a.username
                                      ELSE a.username || '#' || a.discriminator END,
