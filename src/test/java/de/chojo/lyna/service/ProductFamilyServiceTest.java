@@ -135,6 +135,6 @@ class ProductFamilyServiceTest extends RepositoryTestBase {
     }
 
     private static KioskProduct product(int id, Integer parentId) {
-        return new KioskProduct(id, GUILD, "P" + id, null, null, false, null, null, false, false, null, parentId);
+        return new KioskProduct(id, GUILD, "P" + id, null, null, false, List.of(), null, false, false, null, parentId);
     }
 }

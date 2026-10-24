@@ -14,6 +14,7 @@ import de.chojo.lyna.feature.download.service.ProductVersionService;
 import de.chojo.lyna.feature.icon.repository.ProductIconRepository;
 import de.chojo.lyna.feature.icon.service.ProductIconService;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
+import de.chojo.lyna.feature.kiosk.entity.PurchaseOption;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.kiosk.service.DescriptionAbstract;
 import de.chojo.lyna.feature.kiosk.service.ProductPageService;
@@ -241,7 +242,7 @@ public class Products {
             String url,
             String iconUrl,
             boolean free,
-            String purchaseUrl,
+            List<PurchaseOption> purchaseOptions,
             boolean entitled,
             String latestVersion,
             @JsonFormat(shape = JsonFormat.Shape.STRING) Instant updatedAt,
@@ -259,7 +260,7 @@ public class Products {
                     product.url(),
                     RelatedProduct.iconAddress(product, uploaded),
                     product.free(),
-                    product.purchaseUrl(),
+                    product.purchaseOptions(),
                     entitled,
                     latest.map(ProductVersionService.VersionView::version).orElse(null),
                     latest.map(ProductVersionService.VersionView::publishedAt).orElse(null),
@@ -291,7 +292,7 @@ public class Products {
             String url,
             String iconUrl,
             boolean free,
-            String purchaseUrl,
+            List<PurchaseOption> purchaseOptions,
             boolean entitled,
             String description,
             ProductPageService.Source pageSource,
@@ -315,7 +316,7 @@ public class Products {
                     product.url(),
                     RelatedProduct.iconAddress(product, uploaded.contains(product.id())),
                     product.free(),
-                    product.purchaseUrl(),
+                    product.purchaseOptions(),
                     entitled.contains(product.id()),
                     page.markdown(),
                     page.source(),

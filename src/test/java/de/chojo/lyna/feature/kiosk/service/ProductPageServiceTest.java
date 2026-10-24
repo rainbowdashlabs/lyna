@@ -12,6 +12,7 @@ import de.chojo.lyna.feature.readme.service.ReadmeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +32,7 @@ class ProductPageServiceTest {
     private final ProductPageService pages = new ProductPageService(readmes);
 
     private static KioskProduct product(String url, String description, boolean readme) {
-        return new KioskProduct(1, 2L, "P", url, null, true, null, description, false, readme, null, null);
+        return new KioskProduct(1, 2L, "P", url, null, true, List.of(), description, false, readme, null, null);
     }
 
     @Test

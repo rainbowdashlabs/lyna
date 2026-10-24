@@ -5,6 +5,12 @@
  */
 import client from './client'
 
+/** One place a product can be bought. */
+export interface PurchaseOption {
+    platform: 'KOFI' | 'BUILTBYBIT'
+    url: string
+}
+
 export interface KioskProduct {
     id: number
     guildId: string
@@ -12,7 +18,8 @@ export interface KioskProduct {
     url: string | null
     iconUrl: string | null
     free: boolean
-    purchaseUrl: string | null
+    /** Where to buy it, one per platform it is sold on, in the order they are offered. */
+    purchaseOptions: PurchaseOption[]
     /** Whether this visitor already holds a license covering the product. */
     entitled: boolean
     /** The newest stable version, or null when there is none. */
@@ -79,7 +86,7 @@ export interface ReleaseNote {
  */
 export function callToAction(product: KioskProduct): 'download' | 'buy' | 'unavailable' {
     if (product.free || product.entitled) return 'download'
-    return product.purchaseUrl ? 'buy' : 'unavailable'
+    return product.purchaseOptions.length ? 'buy' : 'unavailable'
 }
 
 export interface ReleaseTypeEntry {

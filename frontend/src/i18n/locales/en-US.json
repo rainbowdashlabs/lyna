@@ -37,7 +37,11 @@
     "saveFailed": "Save failed.",
     "operatorRequired": "Operator access required.",
     "create": "Create",
-    "creating": "Creating…"
+    "creating": "Creating…",
+    "platform": {
+      "KOFI": "Ko-fi",
+      "BUILTBYBIT": "BuiltByBit"
+    }
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -403,8 +407,6 @@
       "licenses": "Licenses",
       "registrations": "Registrations",
       "trial": "Trial",
-      "kofi": "Ko-fi",
-      "builtbybit": "BuiltByBit",
       "mailing": "Mailing",
       "settings": "Settings",
       "botConnected": "bot connected",
@@ -523,11 +525,14 @@
       "sortName": "Name",
       "sortUpdated": "Last updated"
     },
+    "buyButton": {
+      "buy": "Buy",
+      "buyOn": "Buy on {platform}"
+    },
     "productTile": {
       "free": "Free",
       "owned": "Owned",
       "premium": "Premium",
-      "buyOnKoFi": "Buy on Ko-fi",
       "notForSaleHere": "Not for sale here",
       "alreadyBoughtIt": "Already bought it?",
       "linkYourAccount": "Link your account",

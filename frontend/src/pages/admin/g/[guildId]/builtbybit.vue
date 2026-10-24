@@ -12,7 +12,7 @@ import Spinner from '~/components/feedback/Spinner.vue'
 import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
-usePageTitle(t('layout.admin.builtbybit'))
+usePageTitle(t('common.platform.BUILTBYBIT'))
 
 definePageMeta({layout: 'admin'})
 
@@ -40,7 +40,7 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader class="mb-4">{{ t('layout.admin.builtbybit') }}</PageHeader>
+    <PageHeader class="mb-4">{{ t('common.platform.BUILTBYBIT') }}</PageHeader>
     <MutedText class="mb-4" size="sm" tag="p">{{ t('page.admin.g.guildId.builtbybit.intro') }}</MutedText>
 
     <div v-if="loading" class="flex justify-center py-12">

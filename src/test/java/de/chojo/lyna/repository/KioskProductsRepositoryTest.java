@@ -5,7 +5,10 @@
  */
 package de.chojo.lyna.repository;
 
+import de.chojo.lyna.feature.builtbybit.entity.BuiltByBitListing;
+import de.chojo.lyna.feature.builtbybit.repository.BuiltByBitProductRepository;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
+import de.chojo.lyna.feature.kiosk.entity.PurchaseOption;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -113,10 +116,36 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
 
     @Test
     @DisplayName("A mapped Ko-fi code becomes the address the buy button points at")
-    void kofiCodeBecomesAPurchaseUrl() {
+    void kofiCodeBecomesAPurchaseOption() {
         KioskProduct premium = kioskProducts.all().getLast();
 
-        assertEquals("https://ko-fi.com/s/abc123", premium.purchaseUrl());
+        assertEquals(
+                List.of(new PurchaseOption(PurchaseOption.Platform.KOFI, "https://ko-fi.com/s/abc123")),
+                premium.purchaseOptions());
+    }
+
+    @Test
+    @DisplayName("A product sold on BuiltByBit as well is offered on both, Ko-fi first")
+    void builtByBitListingIsOfferedAfterKofi() {
+        new BuiltByBitProductRepository().assign(premiumProduct, BuiltByBitListing.resource(1234));
+
+        assertEquals(
+                List.of(
+                        new PurchaseOption(PurchaseOption.Platform.KOFI, "https://ko-fi.com/s/abc123"),
+                        new PurchaseOption(
+                                PurchaseOption.Platform.BUILTBYBIT, "https://builtbybit.com/resources/1234/")),
+                kioskProducts.byId(premiumProduct).orElseThrow().purchaseOptions());
+    }
+
+    @Test
+    @DisplayName("An add-on sold on BuiltByBit is bought on its resource's page")
+    void builtByBitAddonIsBoughtOnItsResourcePage() {
+        new BuiltByBitProductRepository().assign(freeProduct, new BuiltByBitListing(1234, 77));
+
+        assertEquals(
+                List.of(new PurchaseOption(
+                        PurchaseOption.Platform.BUILTBYBIT, "https://builtbybit.com/resources/1234/")),
+                kioskProducts.byId(freeProduct).orElseThrow().purchaseOptions());
     }
 
     @Test
@@ -133,13 +162,15 @@ class KioskProductsRepositoryTest extends RepositoryTestBase {
         assertEquals(
                 List.of("Freebie", "Premium"),
                 all.stream().map(KioskProduct::name).toList());
-        assertEquals("https://ko-fi.com/s/abc123", all.getLast().purchaseUrl());
+        assertEquals(
+                List.of(new PurchaseOption(PurchaseOption.Platform.KOFI, "https://ko-fi.com/s/abc123")),
+                all.getLast().purchaseOptions());
     }
 
     @Test
-    @DisplayName("A product nobody mapped a Ko-fi code to has nowhere to buy it")
-    void productWithoutKofiHasNoPurchaseUrl() {
-        assertNull(kioskProducts.all().getFirst().purchaseUrl());
+    @DisplayName("A product sold nowhere has nowhere to buy it")
+    void productSoldNowhereHasNoPurchaseOption() {
+        assertTrue(kioskProducts.all().getFirst().purchaseOptions().isEmpty());
     }
 
     @Test

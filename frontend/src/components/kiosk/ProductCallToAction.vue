@@ -43,16 +43,7 @@ const action = computed(() => callToAction(props.product))
         <font-awesome-icon :icon="['fas', 'download']" class="mr-1"/>
         {{ t('common.download') }}
       </PrimaryButton>
-      <a
-          v-else-if="action === 'buy'"
-          :href="product.purchaseUrl!"
-          class="rounded-theme inline-flex items-center border border-(--border) px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:border-secondary hover:bg-secondary/12"
-          rel="noopener noreferrer"
-          target="_blank"
-      >
-        <font-awesome-icon :icon="['fas', 'cart-shopping']" class="mr-1"/>
-        {{ t('ui.productTile.buyOnKoFi') }}
-      </a>
+      <BuyButton v-else-if="action === 'buy'" :options="product.purchaseOptions"/>
       <MutedText v-else size="sm">{{ t('ui.productTile.notForSaleHere') }}</MutedText>
     </footer>
     <MutedText v-if="action === 'buy' && signedIn" class="mt-2 block text-right" size="xs">
