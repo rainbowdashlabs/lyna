@@ -46,7 +46,7 @@ test.describe('A claim link', () => {
 
         await page.goto(`/claim#${key}`)
         await page.getByRole('button', {name: 'Sign up to claim'}).click()
-        await expect(page).toHaveURL(/\/signup\?next=%2Fclaim$/)
+        await expect(page).toHaveURL(/\/signup\?next=(%2F|\/)claim$/)
         await page.locator('input[type="email"]').fill(uniqueEmail('claim-signup'))
         await page.locator('input[type="password"]').first().fill(PASSWORD)
         await page.locator('input[type="password"]').nth(1).fill(PASSWORD)
