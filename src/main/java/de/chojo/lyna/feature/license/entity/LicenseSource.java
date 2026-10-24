@@ -18,5 +18,7 @@ public enum LicenseSource {
     /** A payment receipt parsed out of the mailbox. */
     MAIL,
     /** An operator, by command or through the admin area. */
-    MANUAL
+    MANUAL,
+    /** The BuiltByBit purchase webhook or licence key placeholder. */
+    BUILTBYBIT
 }

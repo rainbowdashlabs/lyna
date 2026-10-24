@@ -11,7 +11,7 @@ import {login} from '~/api/account'
 import {useSession} from '~/composables/useSession'
 import PrimaryButton from '~/components/button/PrimaryButton.vue'
 import {usePageTitle} from '~/composables/usePageTitle'
-import {discordStartUrl, rememberSignInMethod} from '~/util/signIn'
+import {discordStartUrl, rememberSignInMethod, returnPath} from '~/util/signIn'
 
 const {t} = useI18n()
 usePageTitle(t('auth.login'))
@@ -19,10 +19,7 @@ const route = useRoute()
 const router = useRouter()
 const {refresh} = useSession()
 
-const next = computed(() => {
-  const raw = typeof route.query.next === 'string' ? route.query.next : null
-  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/account'
-})
+const next = computed(() => returnPath(route.query.next, '/account'))
 
 const email = ref('')
 const password = ref('')
@@ -75,7 +72,7 @@ async function submit() {
         {{ t('auth.loginWithDiscord') }}
       </a>
       <p class="text-center text-sm opacity-70">
-        {{ t('auth.noAccount') }} <NuxtLink to="/signup" class="text-primary hover:underline">
+        {{ t('auth.noAccount') }} <NuxtLink :to="{path: '/signup', query: route.query.next ? {next} : {}}" class="text-primary hover:underline">
           {{ t('auth.signup') }}
         </NuxtLink>
         <span class="mx-2">·</span>

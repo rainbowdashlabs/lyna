@@ -14,7 +14,6 @@ import de.chojo.lyna.feature.account.entity.AccountIdentity;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.download.entity.Download;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
-import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.download.service.DownloadFilename;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
 import de.chojo.lyna.feature.product.entity.Product;
@@ -26,23 +25,24 @@ import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.http.UnauthorizedResponse;
 import org.slf4j.Logger;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Set;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * A lasting address for one build, checked against the caller on every request rather than spent once.
+ * A lasting address for one build of a free product: the public link the wizard and the update check
+ * hand out for one.
  *
- * <p>A free product needs no check, which makes this the public link the wizard hands out for one.
- * {@value #LATEST} in place of a version names the newest build of the download, so an updater can
- * fetch the current one without asking which it is.
+ * <p>A paid product is refused here, licence or not. Its builds go through a one-time token from the
+ * wizard or the updater, which is where a jar is stamped with who it was issued to and the key of their
+ * licence; a lasting address would hand the same jar out unstamped. {@value #LATEST} in place of a
+ * version names the newest build of the download, so an updater can fetch the current one without
+ * asking which it is.
  */
 public class Direct {
     private static final Logger log = getLogger(Direct.class);
@@ -50,7 +50,6 @@ public class Direct {
     private final ProductLookup products;
     private final Auth auth;
     private final AccountRepository accounts;
-    private final DownloadAccessService licenses;
     private final KioskProductRepository kiosk;
     private final DownloadLogRepository downloadLog;
     private final Api api;
@@ -60,14 +59,12 @@ public class Direct {
             ProductLookup products,
             Auth auth,
             AccountRepository accounts,
-            DownloadAccessService licenses,
             KioskProductRepository kiosk,
             DownloadLogRepository downloadLog,
             Api api) {
         this.products = products;
         this.auth = auth;
         this.accounts = accounts;
-        this.licenses = licenses;
         this.kiosk = kiosk;
         this.downloadLog = downloadLog;
         this.api = api;
@@ -86,18 +83,11 @@ public class Direct {
     }
 
     /**
-     * Refuses a build this caller may not have, by the same rule the download wizard applies: a free
-     * product is open to anybody, anything else needs a license or role that opens the release type
-     * of this download, not merely some release type of the product.
+     * Refuses a build of a paid product: those are handed out through a one-time token only.
      */
-    private void requireAccess(Context ctx, int productId, Download download) {
-        if (kiosk.isFree(productId)) return;
-        var session = auth.currentSession(ctx);
-        if (session.isEmpty()) throw new UnauthorizedResponse("Sign in to download this product");
-        Set<String> types = licenses.releaseTypes(session.get().accountId(), productId);
-        if (types.isEmpty()) throw new ForbiddenResponse("You do not hold a license for this product");
-        if (!types.contains(download.type().releaseType().name())) {
-            throw new ForbiddenResponse("You may not download that release type");
+    private void requireFree(int productId) {
+        if (!kiosk.isFree(productId)) {
+            throw new ForbiddenResponse("Paid builds are downloaded through the download wizard");
         }
     }
 
@@ -111,7 +101,7 @@ public class Direct {
                     var downloads = product.downloads()
                             .byType(Integer.parseInt(ctx.pathParam("type")))
                             .orElseThrow(() -> new NotFoundResponse("Invalid download type"));
-                    requireAccess(ctx, productId, downloads);
+                    requireFree(productId);
                     String version = ctx.pathParam("version");
                     AssetXO asset = (LATEST.equals(version)
                                     ? downloads.latestAssets().stream().findFirst()

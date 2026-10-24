@@ -8,6 +8,8 @@ import {discordStartUrl, rememberSignInMethod} from '~/util/signIn'
 
 withDefaults(defineProps<{
     label?: string
+    /** The page to come back to once signed in. */
+    next?: string
 }>(), {
     label: 'Continue with Discord',
 })
@@ -16,7 +18,7 @@ withDefaults(defineProps<{
 <template>
   <a
       class="block w-full rounded-theme border border-border-light py-2 text-center font-medium hover:bg-primary/10 dark:border-border-dark"
-      :href="discordStartUrl()"
+      :href="discordStartUrl(next)"
       @click="rememberSignInMethod('discord')"
   >
     {{ label }}

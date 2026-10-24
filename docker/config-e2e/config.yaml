@@ -39,6 +39,13 @@ downloads:
   skipJarSigning: false
 kofi:
   verificationToken: "7a777eb6-8f9e-9ddf-acba-2b5efada247a"
+builtByBit:
+  webhookSecret: "e2e-builtbybit-webhook-secret"
+  keySecret: "e2e-builtbybit-key-secret"
+  apiToken: ""
+  apiUrl: "https://api.builtbybit.com"
+  oauthClientId: ""
+  oauthClientSecret: ""
 license:
   baseSeed: "W7B6QAAKZEWL7KXAGKJ8WK9WRZXZUEQR92BKVGQUB8J3F5TMAP"
 links:
@@ -65,6 +72,9 @@ mailing:
     port: 665
     ssl: false
   user: ""
+  paypalSenders:
+  - "service@paypal.de"
+  - "service@paypal.com"
 nexus:
   host: "nexus-e2e"
   password: ""

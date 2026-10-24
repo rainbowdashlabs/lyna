@@ -170,6 +170,21 @@ Ko-fi webhooks. Environment prefix `KOFI`.
 
 See [Ko-fi](../setup/kofi.md).
 
+## builtByBit
+
+BuiltByBit's purchase webhook and license key placeholder. Environment prefix `BUILTBYBIT`.
+
+| Key | Default | Environment | What it does |
+|---|---|---|---|
+| `webhookSecret` | random | `BUILTBYBIT_WEBHOOKSECRET` | The secret at the end of the purchase webhook's address. Calls to any other address are refused. |
+| `keySecret` | random | `BUILTBYBIT_KEYSECRET` | The secret you give the license key placeholder. Requests that don't send it are refused. |
+| `apiToken` | `""` | `BUILTBYBIT_APITOKEN` | Optional API token, which needs BuiltByBit Ultimate. With one, Lyna checks every purchase with BuiltByBit before issuing a license. |
+| `apiUrl` | `"https://api.builtbybit.com"` | `BUILTBYBIT_APIURL` | BuiltByBit's API. Leave it. |
+| `oauthClientId` | `""` | `BUILTBYBIT_OAUTHCLIENTID` | Client id from the API token's Details page, for signing in with BuiltByBit. Not used yet. |
+| `oauthClientSecret` | `""` | `BUILTBYBIT_OAUTHCLIENTSECRET` | Client secret belonging to `oauthClientId`. Not used yet. |
+
+See [BuiltByBit](../setup/builtbybit.md).
+
 ## license
 
 Environment prefix `LICENSE`.
@@ -201,7 +216,7 @@ Environment prefix `DOWNLOADS`.
 
 | Key | Default | Environment | What it does |
 |---|---|---|---|
-| `skipJarSigning` | `false` | `DOWNLOADS_SKIPJARSIGNING` | Serves jars untouched instead of stamping who downloaded them. Only for testing: the stamp is how you tell which copy went to whom. |
+| `skipJarSigning` | `false` | `DOWNLOADS_SKIPJARSIGNING` | Serves jars untouched instead of stamping who downloaded them and the key of their license (`%%__LYNA_LICENSE__%%`). Only for testing: the stamp is how you tell which copy went to whom. |
 
 ## storage
 

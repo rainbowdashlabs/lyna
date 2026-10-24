@@ -24,30 +24,39 @@ async function offer(operator: APIRequestContext, productId: number, typeId: num
 }
 
 /**
- * The lasting address of one build, which anybody can type rather than be handed by the wizard. It
- * has to ask the same question the wizard does: not whether the caller holds the product, but
- * whether what they hold opens this build's release type.
+ * The lasting address of one build, which anybody can type rather than be handed by the wizard. Only a
+ * free product is served there: a paid build goes through a one-time token, which is where the jar is
+ * stamped with who it was issued to and the key of their license.
  */
 test.describe('A direct download', () => {
-    test('opens only the release types a license covers', async ({signedIn, signedUp}) => {
+    test('refuses a paid product, even to somebody holding its license', async ({signedIn, signedUp}) => {
         const operator = await signedIn(OPERATOR)
-        const name = uniqueName('Layered')
+        const name = uniqueName('Paid')
         const id = await createProduct(operator, name)
         const stable = await downloadType(operator, 'STABLE')
-        const dev = await downloadType(operator, 'DEV')
         await offer(operator, id, stable)
-        await offer(operator, id, dev)
         const issued = await (await operator.post(`/api/admin/g/${GUILD}/licenses`, {
-            data: {productId: id, identifier: uniqueEmail('stable-only'), releaseTypes: ['STABLE']},
+            data: {productId: id, identifier: uniqueEmail('paid-buyer'), releaseTypes: ['STABLE']},
         })).json()
-        const {api: buyer} = await signedUp('stable-buyer')
+        const {api: buyer} = await signedUp('paid-buyer')
         expect((await buyer.post('/api/account/licenses/redeem', {data: {key: issued.key}})).ok()).toBe(true)
 
-        expect((await buyer.get(`/api/v1/download/direct/${id}/${stable}/latest`)).status()).toBe(200)
-        expect((await buyer.get(`/api/v1/download/direct/${id}/${dev}/latest`)).status()).toBe(403)
+        expect((await buyer.get(`/api/v1/download/direct/${id}/${stable}/latest`)).status()).toBe(403)
 
         await deleteProduct(operator, id, name)
         await operator.delete(`/api/admin/g/${GUILD}/download-types/${stable}`)
-        await operator.delete(`/api/admin/g/${GUILD}/download-types/${dev}`)
+    })
+
+    test('serves a free product to anybody', async ({request, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const name = uniqueName('Free')
+        const id = await createProduct(operator, name, true)
+        const stable = await downloadType(operator, 'STABLE')
+        await offer(operator, id, stable)
+
+        expect((await request.get(`/api/v1/download/direct/${id}/${stable}/latest`)).status()).toBe(200)
+
+        await deleteProduct(operator, id, name)
+        await operator.delete(`/api/admin/g/${GUILD}/download-types/${stable}`)
     })
 })

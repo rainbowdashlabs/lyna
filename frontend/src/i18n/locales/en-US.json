@@ -38,7 +38,11 @@
     "operatorRequired": "Operator access required.",
     "create": "Create",
     "creating": "Creating…",
-    "trial": "trial"
+    "trial": "trial",
+    "platform": {
+      "KOFI": "Ko-fi",
+      "BUILTBYBIT": "BuiltByBit"
+    }
   },
   "kiosk": {
     "title": "Lyna Download Center",
@@ -82,6 +86,15 @@
       "missingTokenUseTheLinkFrom": "Missing token. Use the link from your email.",
       "thisResetLinkHasExpiredRequest": "This reset link has expired. Request a new one.",
       "title": "Choose a new password"
+    },
+    "claim": {
+      "title": "Claim your license",
+      "claim": "Claim license",
+      "noKey": "This link carries no license key. Redeem a key on your licenses page instead.",
+      "toLicenses": "Open your licenses",
+      "signInFirst": "Sign up or sign in to claim this license. You come back here afterwards.",
+      "signUp": "Sign up to claim",
+      "signIn": "Sign in to claim"
     },
     "signup": {
       "alreadyHaveAnAccount": "Already have an account?",
@@ -170,6 +183,33 @@
     "admin": {
       "g": {
         "guildId": {
+          "builtbybit": {
+            "intro": "BuiltByBit reports every purchase through a webhook and asks for a license key whenever somebody downloads. Both end at the same license, issued against the buyer's BuiltByBit member id.",
+            "setup": "Setting it up",
+            "webhookUrl": "Purchase webhook URL",
+            "webhookSecretHint": "Replace the placeholder with the webhook secret from the instance configuration.",
+            "purchaseTemplate": "Purchase webhook body",
+            "keyUrl": "License key placeholder URL",
+            "keySecretHint": "Give the placeholder the key secret from the instance configuration.",
+            "apiEnabled": "BuiltByBit's API is configured: every purchase and download is checked with BuiltByBit before a license is issued.",
+            "apiDisabled": "No API token is configured, so the secrets are all that is checked.",
+            "calls": "Recent calls",
+            "noCallsYet": "BuiltByBit has not called yet.",
+            "member": "member {id}",
+            "resource": "resource {id}",
+            "call": {
+              "PURCHASE": "Purchase",
+              "KEY": "Key request"
+            },
+            "outcome": {
+              "ISSUED": "Issued",
+              "INVALID": "Unreadable",
+              "UNKNOWN_PRODUCT": "Unknown resource",
+              "BUNDLE": "Bundle, not issued",
+              "DENIED": "Denied by BuiltByBit",
+              "API_UNAVAILABLE": "BuiltByBit unreachable"
+            }
+          },
           "kofi": {
             "koFiMappings": "Ko-fi mappings",
             "mapKoFiDirectLinkCodes": "Map Ko-fi direct-link codes to products. Used when a Ko-fi webhook arrives — the matching product issues a license.",
@@ -389,7 +429,6 @@
       "licenses": "Licenses",
       "registrations": "Registrations",
       "trial": "Trial",
-      "kofi": "Ko-fi",
       "mailing": "Mailing",
       "settings": "Settings",
       "botConnected": "bot connected",
@@ -508,11 +547,14 @@
       "sortName": "Name",
       "sortUpdated": "Last updated"
     },
+    "buyButton": {
+      "buy": "Buy",
+      "buyOn": "Buy on {platform}"
+    },
     "productTile": {
       "free": "Free",
       "owned": "Owned",
       "premium": "Premium",
-      "buyOnKoFi": "Buy on Ko-fi",
       "notForSaleHere": "Not for sale here",
       "alreadyBoughtIt": "Already bought it?",
       "linkYourAccount": "Link your account",
@@ -638,6 +680,9 @@
       "usedWhenNothingIsUploaded": "Used only when no icon has been uploaded.",
       "butlerId": "UpdateButler id",
       "butlerIdHint": "The id plugins built for UpdateButler ask for updates by. Leave empty if it never had one.",
+      "builtbybitResourceId": "BuiltByBit resource id",
+      "builtbybitAddonId": "BuiltByBit add-on id",
+      "builtbybitHint": "The BuiltByBit resource this product is sold as. Fill in the add-on id only when the product is an add-on of that resource. Leave both empty if it is not sold there.",
       "wikiUrl": "Wiki URL",
       "wikiHint": "Shown on the product page and linked from its purchase mail.",
       "reviewUrl": "Review URL",

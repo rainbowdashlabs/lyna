@@ -5,6 +5,8 @@
  */
 package de.chojo.lyna.feature.kiosk.entity;
 
+import java.util.List;
+
 /**
  * A product as the storefront shows it, across every guild the bot serves.
  *
@@ -14,7 +16,7 @@ package de.chojo.lyna.feature.kiosk.entity;
  * carries the columns it needs and nothing that has to be looked up on Discord.
  *
  * @param free        whether anyone may download it, which decides the button the tile offers
- * @param purchaseUrl where to buy it, when a Ko-fi code has been mapped to it
+ * @param purchaseOptions where to buy it, one per platform it is sold on, in the order they are offered
  * @param description what the product says about itself, as markdown, or nothing when unwritten
  * @param trial       whether somebody without a license may download it once to try it
  * @param pageReadme  whether its page shows the project's GitHub README instead of the description
@@ -28,7 +30,7 @@ public record KioskProduct(
         String url,
         String iconUrl,
         boolean free,
-        String purchaseUrl,
+        List<PurchaseOption> purchaseOptions,
         String description,
         boolean trial,
         boolean pageReadme,

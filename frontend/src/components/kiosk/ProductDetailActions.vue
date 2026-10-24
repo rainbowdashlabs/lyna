@@ -20,16 +20,7 @@ defineEmits<{ download: [] }>()
         <font-awesome-icon :icon="['fas', 'download']" class="mr-1"/>
         {{ t('common.download') }}
       </PrimaryButton>
-      <a
-          v-else-if="product.purchaseUrl"
-          :href="product.purchaseUrl"
-          class="rounded-theme inline-flex items-center border border-(--border) px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:border-secondary hover:bg-secondary/12"
-          rel="noopener noreferrer"
-          target="_blank"
-      >
-        <font-awesome-icon :icon="['fas', 'cart-shopping']" class="mr-1"/>
-        {{ t('ui.productTile.buyOnKoFi') }}
-      </a>
+      <BuyButton v-else-if="product.purchaseOptions.length" :options="product.purchaseOptions"/>
       <MutedText v-else tag="p">{{ t('ui.productTile.notForSaleHere') }}</MutedText>
     </div>
     <EmptyHint v-if="!product.free && !product.entitled && signedIn">

@@ -18,6 +18,10 @@ environment variables instead. Lyna never writes an environment value back into 
 | `nexus.password` | `NEXUS_PASSWORD` |
 | `mailing.password` | `MAIL_PASSWORD` |
 | `kofi.verificationToken` | `KOFI_VERIFICATIONTOKEN` |
+| `builtByBit.webhookSecret` | `BUILTBYBIT_WEBHOOKSECRET` |
+| `builtByBit.keySecret` | `BUILTBYBIT_KEYSECRET` |
+| `builtByBit.apiToken` | `BUILTBYBIT_APITOKEN` |
+| `builtByBit.oauthClientSecret` | `BUILTBYBIT_OAUTHCLIENTSECRET` |
 | `license.baseSeed` | `LICENSE_BASESEED` |
 | `github.token` | `GITHUB_TOKEN` |
 | `dashboard.gatewaySecret` | `DASHBOARD_GATEWAYSECRET` |
@@ -32,7 +36,8 @@ Leave the value in the file empty (`""`). The environment variable wins over it.
 openssl rand -base64 48
 ```
 
-The rest come from the services they belong to: Discord, your Nexus, your mail provider and Ko-fi.
+`builtByBit.webhookSecret` and `builtByBit.keySecret` are yours to make up as well. The rest come
+from the services they belong to: Discord, your Nexus, your mail provider, Ko-fi and BuiltByBit.
 
 ## With Docker Compose
 

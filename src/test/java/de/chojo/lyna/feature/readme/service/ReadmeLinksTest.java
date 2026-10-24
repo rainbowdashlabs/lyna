@@ -70,12 +70,14 @@ class ReadmeLinksTest {
                 "[![spigot](https://img.shields.io/x.svg)](https://www.spigotmc.org/resources/blood-night.85095/) "
                         + "[Releases](https://github.com/eldoriarpg/BloodNight/releases/latest) "
                         + "<a href=\"https://modrinth.com/plugin/bloodnight\">Modrinth</a> "
+                        + "[BuiltByBit](https://builtbybit.com/resources/blood-night.1234/) "
                         + "[Wiki](https://github.com/eldoriarpg/BloodNight/wiki) [Other](https://github.com/someone/else/releases)";
 
         assertEquals(
                 "[![spigot](https://img.shields.io/x.svg)](/products/4?download=1) "
                         + "[Releases](/products/4?download=1) "
                         + "<a href=\"/products/4?download=1\">Modrinth</a> "
+                        + "[BuiltByBit](/products/4?download=1) "
                         + "[Wiki](https://github.com/eldoriarpg/BloodNight/wiki) [Other](https://github.com/someone/else/releases)",
                 ReadmeLinks.downloadsTo(readme, REPO, "/products/4?download=1"));
     }

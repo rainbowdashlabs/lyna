@@ -31,6 +31,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
+import de.chojo.lyna.configuration.elements.BuiltByBit;
 import de.chojo.lyna.configuration.elements.Dashboard;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.DebugReports;
@@ -67,6 +68,11 @@ import de.chojo.lyna.feature.account.service.DiscordTokenRefresher;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
 import de.chojo.lyna.feature.account.service.SessionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
+import de.chojo.lyna.feature.builtbybit.repository.BuiltByBitLogRepository;
+import de.chojo.lyna.feature.builtbybit.repository.BuiltByBitProductRepository;
+import de.chojo.lyna.feature.builtbybit.service.BuiltByBitApi;
+import de.chojo.lyna.feature.builtbybit.service.BuiltByBitService;
+import de.chojo.lyna.feature.builtbybit.service.HttpBuiltByBitApi;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.butler.service.ButlerUpdateService;
 import de.chojo.lyna.feature.debug.repository.DebugReportRepository;
@@ -125,6 +131,7 @@ import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.account.AccountLicenseActions;
 import de.chojo.lyna.web.api.account.AccountUpdateTokens;
 import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.admin.AdminBuiltByBit;
 import de.chojo.lyna.web.api.admin.AdminDiscord;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
 import de.chojo.lyna.web.api.admin.AdminLicenses;
@@ -134,6 +141,7 @@ import de.chojo.lyna.web.api.admin.AdminUpdateTokens;
 import de.chojo.lyna.web.api.admin.GuildAdminGuard;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.builtbybit.BuiltByBitApiRoutes;
 import de.chojo.lyna.web.api.v1.dashboard.DashboardKeyApi;
 import de.chojo.lyna.web.api.v1.debug.DebugApi;
 import de.chojo.lyna.web.api.v1.demo.DemoApi;
@@ -149,6 +157,8 @@ import de.chojo.lyna.web.api.v1.update.UpdateTokenExchange;
 import de.chojo.lyna.web.api.v1.webhook.GithubWebhook;
 import de.chojo.lyna.web.legacy.ButlerApi;
 import de.chojo.nexus.NexusRest;
+
+import java.time.Clock;
 
 /**
  * Everything the application is built from, and how each part reaches the others.
@@ -236,6 +246,12 @@ public class LynaModule extends AbstractModule {
     @Singleton
     Kofi kofi(ConfigFile config) {
         return config.kofi();
+    }
+
+    @Provides
+    @Singleton
+    BuiltByBit builtByBit(ConfigFile config) {
+        return config.builtByBit();
     }
 
     @Provides
@@ -332,6 +348,7 @@ public class LynaModule extends AbstractModule {
         bind(AdminDownloads.class).in(Singleton.class);
         bind(AdminLicenses.class).in(Singleton.class);
         bind(AdminMailing.class).in(Singleton.class);
+        bind(AdminBuiltByBit.class).in(Singleton.class);
         bind(AdminTimeChannels.class).in(Singleton.class);
         bind(AdminUpdateTokens.class).in(Singleton.class);
         bind(AccountLicenseActions.class).in(Singleton.class);
@@ -346,6 +363,7 @@ public class LynaModule extends AbstractModule {
         bind(UpdateTokenExchange.class).in(Singleton.class);
         bind(DashboardKeyApi.class).in(Singleton.class);
         bind(KoFiApi.class).in(Singleton.class);
+        bind(BuiltByBitApiRoutes.class).in(Singleton.class);
         bind(Releases.class).in(Singleton.class);
         bind(Wizard.class).in(Singleton.class);
         bind(DemoApi.class).in(Singleton.class);
@@ -378,6 +396,9 @@ public class LynaModule extends AbstractModule {
         bind(ProductIconRepository.class).in(Singleton.class);
         bind(ButlerApplicationRepository.class).in(Singleton.class);
         bind(ButlerUpdateService.class).in(Singleton.class);
+        bind(BuiltByBitProductRepository.class).in(Singleton.class);
+        bind(BuiltByBitLogRepository.class).in(Singleton.class);
+        bind(BuiltByBitService.class).in(Singleton.class);
         bind(DebugReportRepository.class).in(Singleton.class);
         bind(DebugReportService.class).in(Singleton.class);
         bind(UploadThrottle.class).in(Singleton.class);
@@ -443,6 +464,15 @@ public class LynaModule extends AbstractModule {
     Gateway gateway(BaseSettings settings, Provider<Bot> bot) {
         if (!settings.botEnabled()) return Gateway.NONE;
         return new JdaGateway(() -> bot.get().shardManager());
+    }
+
+    /**
+     * BuiltByBit's API when a token is configured, and otherwise one that never has an opinion.
+     */
+    @Provides
+    @Singleton
+    BuiltByBitApi builtByBitApi(BuiltByBit config) {
+        return config.apiEnabled() ? new HttpBuiltByBitApi(config, Clock.systemUTC()) : BuiltByBitApi.NONE;
     }
 
     @Provides

@@ -5,8 +5,13 @@
  */
 package de.chojo.lyna.feature.kiosk.repository;
 
+import de.chojo.lyna.feature.builtbybit.entity.BuiltByBitListing;
 import de.chojo.lyna.feature.kiosk.entity.KioskProduct;
+import de.chojo.lyna.feature.kiosk.entity.PurchaseOption;
+import de.chojo.sadu.mapper.wrapper.Row;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,33 +31,26 @@ public class KioskProductRepository {
 
     /**
      * A product may carry more than one Ko-fi code, so the join takes the first by code rather than
-     * a row per mapping - otherwise the same product reaches the storefront as several tiles.
-     *
+     * a row per mapping - otherwise the same product reaches the storefront as several tiles. A
+     * product is sold as at most one BuiltByBit listing, so that join needs no such care.
+     */
+    private static final String SELECT = """
+            SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme,
+                   p.wiki_url, p.parent_id, kp.link_code, bp.resource_id AS builtbybit_resource
+            FROM product p
+            LEFT JOIN LATERAL (
+                SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
+            ) kp ON TRUE
+            LEFT JOIN builtbybit_product bp ON bp.product_id = p.id
+            """;
+
+    /**
      * @return every product, free and premium alike, by name
      */
     public List<KioskProduct> all() {
-        return query("""
-                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, p.wiki_url, p.parent_id, kp.link_code
-                FROM product p
-                LEFT JOIN LATERAL (
-                    SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
-                ) kp ON TRUE
-                ORDER BY lower(p.name), p.id
-                """)
+        return query(SELECT + "ORDER BY lower(p.name), p.id")
                 .single()
-                .map(row -> new KioskProduct(
-                        row.getInt("id"),
-                        row.getLong("guild_id"),
-                        row.getString("name"),
-                        row.getString("url"),
-                        row.getString("icon_url"),
-                        row.getBoolean("free"),
-                        row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
-                        row.getString("description"),
-                        row.getBoolean("trial"),
-                        row.getBoolean("page_readme"),
-                        row.getString("wiki_url"),
-                        (Integer) row.getObject("parent_id")))
+                .map(this::product)
                 .all();
     }
 
@@ -66,29 +64,45 @@ public class KioskProductRepository {
      * @return the product, or nothing when no such product exists
      */
     public Optional<KioskProduct> byId(int productId) {
-        return query("""
-                SELECT p.id, p.guild_id, p.name, p.url, p.icon_url, p.free, p.trial, p.description, p.page_readme, p.wiki_url, p.parent_id, kp.link_code
-                FROM product p
-                LEFT JOIN LATERAL (
-                    SELECT link_code FROM kofi_products WHERE product_id = p.id ORDER BY link_code LIMIT 1
-                ) kp ON TRUE
-                WHERE p.id = ?
-                """)
+        return query(SELECT + "WHERE p.id = ?")
                 .single(call().bind(productId))
-                .map(row -> new KioskProduct(
-                        row.getInt("id"),
-                        row.getLong("guild_id"),
-                        row.getString("name"),
-                        row.getString("url"),
-                        row.getString("icon_url"),
-                        row.getBoolean("free"),
-                        row.getString("link_code") == null ? null : KOFI_SHOP_URL + row.getString("link_code"),
-                        row.getString("description"),
-                        row.getBoolean("trial"),
-                        row.getBoolean("page_readme"),
-                        row.getString("wiki_url"),
-                        (Integer) row.getObject("parent_id")))
+                .map(this::product)
                 .first();
+    }
+
+    private KioskProduct product(Row row) throws SQLException {
+        return new KioskProduct(
+                row.getInt("id"),
+                row.getLong("guild_id"),
+                row.getString("name"),
+                row.getString("url"),
+                row.getString("icon_url"),
+                row.getBoolean("free"),
+                purchaseOptions(row),
+                row.getString("description"),
+                row.getBoolean("trial"),
+                row.getBoolean("page_readme"),
+                row.getString("wiki_url"),
+                (Integer) row.getObject("parent_id"));
+    }
+
+    /**
+     * Where the product is sold, in the order a buyer is offered the platforms. An add-on sold on
+     * BuiltByBit is bought on its resource's page.
+     */
+    private List<PurchaseOption> purchaseOptions(Row row) throws SQLException {
+        List<PurchaseOption> options = new ArrayList<>();
+        String linkCode = row.getString("link_code");
+        if (linkCode != null) {
+            options.add(new PurchaseOption(PurchaseOption.Platform.KOFI, KOFI_SHOP_URL + linkCode));
+        }
+        Long resource = (Long) row.getObject("builtbybit_resource");
+        if (resource != null) {
+            options.add(new PurchaseOption(
+                    PurchaseOption.Platform.BUILTBYBIT,
+                    BuiltByBitListing.resource(resource).shopUrl()));
+        }
+        return List.copyOf(options);
     }
 
     /**

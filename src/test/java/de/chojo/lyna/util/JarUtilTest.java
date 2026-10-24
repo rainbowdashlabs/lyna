@@ -126,7 +126,25 @@ class JarUtilTest {
                 List.of("pkg/", "pkg/UserData.class", "pkg/Broken.class", "plugin.yml"), List.copyOf(entries.keySet()));
         assertTrue(strings(entries.get("pkg/UserData.class")).contains("testId"));
         assertArrayEquals(broken, entries.get("pkg/Broken.class"));
-        assertArrayEquals(resource, entries.get("plugin.yml"), "only classes are rewritten");
+        assertArrayEquals(resource, entries.get("plugin.yml"), "only classes and build data are rewritten");
+    }
+
+    @Test
+    @DisplayName("A build data file has its placeholders replaced as text, whatever it is called")
+    void replacesInBuildData() throws IOException {
+        var input = new ByteArrayOutputStream();
+        try (var zip = new ZipOutputStream(input)) {
+            stored(zip, "build.data", "type=PUBLIC\nlynaLicense=%%__LYNA_LICENSE__%%".getBytes(StandardCharsets.UTF_8));
+            stored(zip, "addon.data", "lynaLicense=%%__LYNA_LICENSE__%%".getBytes(StandardCharsets.UTF_8));
+        }
+        Map<String, String> replacements = Map.of("%%__LYNA_LICENSE__%%", "KEY-1234");
+
+        Map<String, byte[]> entries =
+                entries(JarUtil.replaceStringsInJar(new ByteArrayInputStream(input.toByteArray()), replacements));
+
+        assertEquals(
+                "type=PUBLIC\nlynaLicense=KEY-1234", new String(entries.get("build.data"), StandardCharsets.UTF_8));
+        assertEquals("lynaLicense=KEY-1234", new String(entries.get("addon.data"), StandardCharsets.UTF_8));
     }
 
     @Test

@@ -36,6 +36,7 @@ class ManifestReaderTest {
                     {"name": "PlaceholderAPI", "required": false, "min": "2.11.0", "links": [
                       {"type": "modrinth", "id": "placeholderapi", "url": "https://modrinth.com/plugin/placeholderapi"},
                       {"type": "spigot", "id": "6245", "url": "https://www.spigotmc.org/resources/6245/"},
+                      {"type": "builtbybit", "id": "1234", "url": "https://evil.example/phish"},
                       {"type": "hangar", "id": "HelpChat/PlaceholderAPI", "url": "https://hangar.papermc.io/HelpChat/PlaceholderAPI"},
                       {"type": "url", "url": "https://github.com/PlaceholderAPI/PlaceholderAPI"}
                     ]},
@@ -69,6 +70,8 @@ class ManifestReaderTest {
                                                 new ManifestLink(
                                                         "spigot", "6245", "https://www.spigotmc.org/resources/6245/"),
                                                 new ManifestLink(
+                                                        "builtbybit", "1234", "https://builtbybit.com/resources/1234/"),
+                                                new ManifestLink(
                                                         "hangar",
                                                         "HelpChat/PlaceholderAPI",
                                                         "https://hangar.papermc.io/HelpChat/PlaceholderAPI"),
@@ -89,6 +92,7 @@ class ManifestReaderTest {
                   {"type": "modrinth", "id": "real", "url": "https://evil.example/phish"},
                   {"type": "modrinth", "id": "../evil"},
                   {"type": "spigot", "id": "0"},
+                  {"type": "builtbybit", "id": "abc"},
                   {"type": "hangar", "id": "no-owner"},
                   {"type": "url", "url": "javascript:alert(1)"},
                   {"type": "url", "url": "https:///nohost"},

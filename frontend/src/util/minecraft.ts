@@ -51,6 +51,7 @@ export function minecraftVersions(versions: VersionEntry[]): string[] {
 export function linkSite(link: {type: string, url: string}): string {
     if (link.type === 'modrinth') return 'Modrinth'
     if (link.type === 'spigot') return 'SpigotMC'
+    if (link.type === 'builtbybit') return 'BuiltByBit'
     if (link.type === 'hangar') return 'Hangar'
     try {
         return new URL(link.url).host

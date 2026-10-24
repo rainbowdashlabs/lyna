@@ -14,7 +14,7 @@ import Spinner from '~/components/feedback/Spinner.vue'
 import {usePageTitle} from '~/composables/usePageTitle'
 
 const {t} = useI18n()
-usePageTitle(t('layout.admin.kofi'))
+usePageTitle(t('common.platform.KOFI'))
 
 definePageMeta({layout: 'admin'})
 

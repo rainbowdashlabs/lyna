@@ -19,6 +19,20 @@ const ATTEMPT_KEY = 'auth.relogin'
 const ATTEMPT_WINDOW_MS = 2 * 60 * 1000
 
 /**
+ * The page a sign-in or sign-up returns to, taken from its {@code next} query parameter.
+ *
+ * <p>Only a path on this site is followed; anything else, an absolute or protocol-relative address
+ * included, falls back so the page cannot be used to send somebody elsewhere.
+ *
+ * @param raw the query parameter as the route has it
+ * @param fallback where to go without a usable one
+ */
+export function returnPath(raw: unknown, fallback: string): string {
+    const value = typeof raw === 'string' ? raw : null
+    return value && value.startsWith('/') && !value.startsWith('//') ? value : fallback
+}
+
+/**
  * @param next the page to come back to, a path on this site
  * @return where Discord sign-in starts
  */

@@ -59,6 +59,7 @@ These fields are saved together when you click **Save**. If one of them is refus
 - **Wiki URL**: shown on the product page and linked from the purchase mail.
 - **Review URL**: where the purchase mail asks a buyer to leave a review.
 - **UpdateButler id**: only for plugins built against the old UpdateButler. Leave it empty if the product never had one. See [Server keys](./updaters.md).
+- **BuiltByBit resource id** and **BuiltByBit add-on id**: the BuiltByBit resource the product is sold as. Fill in the add-on id only when the product is an add-on of that resource. Leave both empty if it is not sold there. See [BuiltByBit](./builtbybit.md).
 - **Trial available**: whether people can take a trial.
 - **Free to everyone**: whether anyone can download the product without a license. When you change it, the form warns **This changes who may download it.**
 
@@ -69,6 +70,7 @@ Some rules the server checks when you save:
 - The wiki and review addresses must start with `http://` or `https://`.
 - A new icon address must start with `http://` or `https://`, and Lyna checks that it answers with an image. An address that is already saved is not checked again.
 - An UpdateButler id is a positive number, and only one product can carry each id.
+- BuiltByBit ids are positive numbers. An add-on id needs a resource id, and only one product can be sold as each resource or add-on.
 - Add-ons are one level deep. A product that has add-ons cannot become an add-on, so **Belongs to** is locked for it. You also cannot pick an add-on as the parent.
 
 ### Dashboard keys

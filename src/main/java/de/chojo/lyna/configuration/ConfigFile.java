@@ -8,6 +8,7 @@ package de.chojo.lyna.configuration;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
+import de.chojo.lyna.configuration.elements.BuiltByBit;
 import de.chojo.lyna.configuration.elements.Dashboard;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.DebugReports;
@@ -33,6 +34,7 @@ public class ConfigFile {
     private Mailing mailing = new Mailing();
     private Storage storage = new Storage();
     private Kofi kofi = new Kofi();
+    private BuiltByBit builtByBit = new BuiltByBit();
     private Auth auth = new Auth();
     private Discord discord = new Discord();
     private Demo demo = new Demo();
@@ -75,6 +77,10 @@ public class ConfigFile {
 
     public Kofi kofi() {
         return kofi;
+    }
+
+    public BuiltByBit builtByBit() {
+        return builtByBit;
     }
 
     public Auth auth() {

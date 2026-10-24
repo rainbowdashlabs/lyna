@@ -28,6 +28,10 @@ export interface ProductSummary {
     description: string | null
     /** The id deployed plugins ask UpdateButler for this product by. */
     butlerId?: number | null
+    /** The BuiltByBit resource this product is sold as. */
+    builtbybitResourceId?: number | null
+    /** The add-on of that resource it is sold as, or nothing for the resource itself. */
+    builtbybitAddonId?: number | null
     /** Whether the product page shows the GitHub README instead of the description. */
     pageReadme?: boolean
     /** The product's documentation, shown on its page and linked from its purchase mail. */
@@ -119,6 +123,8 @@ export interface ProductEditPayload {
     /** An address to fetch the icon from, for an instance that would rather point at its own CDN. */
     iconUrl: string | null
     butlerId: number | null
+    builtbybitResourceId: number | null
+    builtbybitAddonId: number | null
     wikiUrl: string | null
     reviewUrl: string | null
     /** The product this one becomes an add-on of, or null to make it stand on its own. */
@@ -312,6 +318,34 @@ export interface KofiMapping {
     linkCode: string
     productId: number
     productName: string
+}
+
+/** One call BuiltByBit made, and what Lyna did about it. Ids are text, as BuiltByBit's may outgrow a number. */
+export interface BuiltByBitCall {
+    id: number
+    received: string
+    call: 'PURCHASE' | 'KEY'
+    memberId: string | null
+    resourceId: string | null
+    addonId: string | null
+    productId: number | null
+    productName: string | null
+    outcome: 'ISSUED' | 'INVALID' | 'UNKNOWN_PRODUCT' | 'BUNDLE' | 'DENIED' | 'API_UNAVAILABLE'
+    raw: string
+}
+
+/** What to paste into BuiltByBit, and the newest calls it made. */
+export interface BuiltByBitView {
+    webhookUrl: string
+    purchaseTemplate: string
+    keyUrl: string
+    apiEnabled: boolean
+    calls: BuiltByBitCall[]
+}
+
+export async function getBuiltByBit(guildId: string): Promise<BuiltByBitView> {
+    const {data} = await client.get<BuiltByBitView>(`/api/admin/g/${guildId}/builtbybit`)
+    return data
 }
 
 export interface TrialInfo {
