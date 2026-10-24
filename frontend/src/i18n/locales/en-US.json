@@ -86,6 +86,15 @@
       "thisResetLinkHasExpiredRequest": "This reset link has expired. Request a new one.",
       "title": "Choose a new password"
     },
+    "claim": {
+      "title": "Claim your license",
+      "claim": "Claim license",
+      "noKey": "This link carries no license key. Redeem a key on your licenses page instead.",
+      "toLicenses": "Open your licenses",
+      "signInFirst": "Sign up or sign in to claim this license. You come back here afterwards.",
+      "signUp": "Sign up to claim",
+      "signIn": "Sign in to claim"
+    },
     "signup": {
       "alreadyHaveAnAccount": "Already have an account?",
       "confirmPassword": "Confirm password",

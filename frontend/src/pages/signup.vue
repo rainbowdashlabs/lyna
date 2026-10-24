@@ -5,12 +5,12 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {ref} from 'vue'
+import {computed, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {signup} from '~/api/account'
 import {useSession} from '~/composables/useSession'
 import {usePageTitle} from '~/composables/usePageTitle'
-import {rememberSignInMethod} from '~/util/signIn'
+import {rememberSignInMethod, returnPath} from '~/util/signIn'
 
 const {t} = useI18n()
 usePageTitle(t('auth.signup'))
@@ -18,6 +18,7 @@ usePageTitle(t('auth.signup'))
 const route = useRoute()
 const router = useRouter()
 const {refresh} = useSession()
+const next = computed(() => returnPath(route.query.next, '/account'))
 
 /**
  * The address a licence mail points here with, so somebody who bought with one address does not
@@ -46,7 +47,7 @@ async function submit() {
     await signup({email: email.value, password: password.value})
     rememberSignInMethod('password')
     await refresh()
-    await router.replace('/account')
+    await router.replace(next.value)
   } catch (e) {
     const error = e as {response?: {status?: number, data?: string}}
     if (error.response?.status === 409) {
@@ -81,10 +82,10 @@ async function submit() {
       <PrimaryButton :disabled="submitting" full-width @click="submit">
         {{ submitting ? 'Creating account…' : 'Sign up' }}
       </PrimaryButton>
-      <DiscordLoginLink/>
+      <DiscordLoginLink :next="next"/>
       <MutedText class="block text-center" size="sm" tag="p">
         {{ t('page.signup.alreadyHaveAnAccount') }}
-        <NuxtLink class="text-primary hover:underline" to="/login">{{ t('auth.login') }}</NuxtLink>
+        <NuxtLink :to="{path: '/login', query: route.query.next ? {next} : {}}" class="text-primary hover:underline">{{ t('auth.login') }}</NuxtLink>
       </MutedText>
     </form>
   </main>

@@ -82,6 +82,12 @@ To claim the key, the buyer signs up on your Lyna instance and redeems the key u
 their account. They can also redeem it with `/register` in your Discord server. The license then grants
 its role and opens the product's downloads.
 
+A link does all of that in one go: `https://lyna.example.com/claim#<key>`. Opened while signed in, it
+shows the key and a **Claim license** button. Opened while signed out, it offers to sign up or sign in
+and comes back to the claim afterwards. The key comes after the `#`, which browsers never send to a
+server, so it does not end up in any log. A plugin can show this link, for example in a license
+command that prints the key and the link to whoever runs it.
+
 Put these steps on the resource page, so buyers see them where they bought the plugin.
 
 ## Optional: the API
