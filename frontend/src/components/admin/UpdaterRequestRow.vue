@@ -26,7 +26,7 @@ defineEmits<{
     <div class="space-y-1">
       <div class="flex flex-wrap items-center gap-2">
         <KeyBadge>{{ request.account }}</KeyBadge>
-        <span>{{ request.productName }}</span>
+        <span>{{ request.productName }}<template v-if="request.keyTypeName"> · {{ request.keyTypeName }}</template></span>
         <span class="font-data">+{{ request.amount }}</span>
       </div>
       <div>{{ request.reason }}</div>

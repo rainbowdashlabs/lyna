@@ -46,7 +46,7 @@ Each guild has these tabs:
 - **Products**: create and edit the products you sell or give away. See [Products](./products.md).
 - **Download types**: the kinds of build a guild offers, such as stable or dev builds. See [Download types](./download-types.md).
 - **Licenses**: find, issue and manage licenses. See [Licenses](./licenses.md).
-- **Server keys**: requests for more upgrade tokens and dashboard keys, allowances you raised, and the dashboard keys people hold. See [Server keys](./updaters.md).
+- **Server keys**: requests for more upgrade tokens and product keys, allowances you raised, and the product keys people hold. See [Server keys](./updaters.md).
 - **Registrations**: look up what a Discord user owns or has shared with them. See [Registrations](./registrations.md).
 - **Trial**: which products offer a trial, and the limits that apply. See [Trial](./trial.md).
 - **Ko-fi**: map Ko-fi shop items to products. See [Ko-fi](./kofi.md).

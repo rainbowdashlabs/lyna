@@ -13,6 +13,7 @@ import java.time.Instant;
  * A key as a guild's admin sees it: whose it is and how it is used, never the key itself.
  *
  * @param account the username of the account holding it
+ * @param keyTypeName the name of the key type it is of
  */
 public record HeldKey(
         int id,
@@ -21,6 +22,8 @@ public record HeldKey(
         int productId,
         String productName,
         KeyKind kind,
+        @Nullable Integer keyTypeId,
+        @Nullable String keyTypeName,
         String name,
         Instant createdAt,
         @Nullable Instant lastUsedAt,

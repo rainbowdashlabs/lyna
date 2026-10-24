@@ -7,7 +7,6 @@ package de.chojo.lyna.web.api.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
-import de.chojo.lyna.feature.updater.entity.DashboardSettings;
 import de.chojo.lyna.feature.updater.entity.KeyKind;
 import de.chojo.lyna.feature.updater.entity.UpdateTokenRequest;
 import de.chojo.lyna.feature.updater.service.UpdateTokenService;
@@ -36,14 +35,14 @@ public class AdminUpdateTokens {
     private final ObjectMapper json = new ObjectMapper();
 
     /**
-     * @param granted keys allowed on top of the default; zero returns the account to the default
-     * @param kind    the kind of key, upgrade tokens when not named
+     * @param granted   keys allowed on top of the default; zero returns the account to the default
+     * @param keyTypeId the key type of server keys, upgrade tokens when not named
      */
     public record Allowance(
             int accountId,
             int productId,
             int granted,
-            @Nullable String kind) {}
+            @Nullable Integer keyTypeId) {}
 
     @Inject
     public AdminUpdateTokens(GuildAdminGuard guard, UpdateTokenService service) {
@@ -62,8 +61,6 @@ public class AdminUpdateTokens {
         put("update-tokens/allowances", this::setAllowance);
         get("update-tokens/keys", this::held);
         delete("update-tokens/keys/{id}", this::revoke);
-        get("products/{productId}/dashboard-keys", this::dashboard);
-        put("products/{productId}/dashboard-keys", this::configureDashboard);
     }
 
     private void pending(Context ctx) {
@@ -116,13 +113,8 @@ public class AdminUpdateTokens {
             ctx.status(HttpStatus.BAD_REQUEST).result("Give a number of keys, zero or more");
             return;
         }
-        Optional<KeyKind> kind = KeyKind.parse(body.kind());
-        if (kind.isEmpty()) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Unknown kind of key");
-            return;
-        }
         boolean set = service.setGranted(
-                admin.guild().guildId(), body.accountId(), body.productId(), kind.get(), body.granted());
+                admin.guild().guildId(), body.accountId(), body.productId(), body.keyTypeId(), body.granted());
         ctx.status(set ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
     }
 
@@ -135,8 +127,8 @@ public class AdminUpdateTokens {
     }
 
     /**
-     * Revokes a key on one of the guild's products. Only dashboard keys: an upgrade token buys a
-     * download at most, and is its holder's to manage.
+     * Revokes a key on one of the guild's products. Only server keys: an upgrade token buys a download at
+     * most, and is its holder's to manage.
      */
     private void revoke(Context ctx) {
         var admin = guard.require(ctx);
@@ -148,46 +140,8 @@ public class AdminUpdateTokens {
             ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
-        boolean revoked = service.revokeInGuild(admin.guild().guildId(), id, KeyKind.DASHBOARD);
+        boolean revoked = service.revokeInGuild(admin.guild().guildId(), id, KeyKind.SERVER);
         ctx.status(revoked ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
-    }
-
-    private void dashboard(Context ctx) {
-        var admin = guard.require(ctx);
-        if (admin == null) return;
-        var product = guard.product(ctx, admin);
-        if (product == null) return;
-        ctx.json(service.dashboard(product.id()));
-    }
-
-    private void configureDashboard(Context ctx) {
-        var admin = guard.require(ctx);
-        if (admin == null) return;
-        var product = guard.product(ctx, admin);
-        if (product == null) return;
-        DashboardSettings body;
-        try {
-            body = json.readValue(ctx.body(), DashboardSettings.class);
-        } catch (Exception e) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
-            return;
-        }
-        if (body == null) {
-            ctx.status(HttpStatus.BAD_REQUEST).result("Invalid JSON body");
-            return;
-        }
-        var outcome = service.configureDashboard(admin.guild().guildId(), product.id(), body);
-        if (outcome.ok()) {
-            ctx.json(outcome.value());
-            return;
-        }
-        if (outcome.refusal() == UpdateTokenService.Refusal.NOT_FOUND) {
-            ctx.status(HttpStatus.NOT_FOUND);
-            return;
-        }
-        ctx.status(HttpStatus.BAD_REQUEST)
-                .result("Both intervals are 1 to %d days, and the allowance 0 to %d keys"
-                        .formatted(DashboardSettings.MAX_DAYS, DashboardSettings.MAX_ALLOWANCE));
     }
 
     /**

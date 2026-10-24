@@ -36,7 +36,7 @@ const confirming = ref(false)
     <div class="space-y-1">
       <div class="flex flex-wrap items-center gap-2">
         <KeyBadge>{{ held.account }}</KeyBadge>
-        <span>{{ held.productName }}</span>
+        <span>{{ held.productName }} · {{ held.keyTypeName }}</span>
         <span class="font-medium">{{ held.name }}</span>
         <MutedText class="font-data" size="xs">{{ t('ui.heldKeyRow.ofAccount', {count: ofAccount}) }}</MutedText>
       </div>

@@ -3,9 +3,9 @@ sidebar_position: 10
 title: Server keys
 ---
 
-The **Server keys** tab is where you decide how many upgrade tokens and dashboard keys an account may hold for one of your products, and where you revoke dashboard keys. Most accounts never need you here. You only act when somebody asks for more.
+The **Server keys** tab is where you decide how many upgrade tokens and product keys an account may hold for one of your products, and where you revoke product keys. Most accounts never need you here. You only act when somebody asks for more.
 
-The tabs **Upgrade tokens** and **Dashboard keys** at the top pick which kind of key the lists below are about.
+The tabs **Upgrade tokens** and **Product keys** at the top pick which kind of key the lists below are about.
 
 ## What an updater is
 
@@ -50,13 +50,14 @@ The **Extra** field is how many updaters the account may run on top of the defau
 
 If no account has more than the default, you see **Every account is on the default.**
 
-## Dashboard keys
+## Product keys
 
-A dashboard key lets a server connect to the hosted dashboard. Your customers make them on the **Server keys** page of their account, for every product whose [product settings](./products.md#dashboard-keys) hand them out. Creating one shows the command to paste on the server once.
+A product can hand out keys of its own, such as the key a server connects to the product's dashboard with. You set up these key types on the product's [Server keys tab](./products.md#server-keys). Your customers make keys on the product's page, where each key type has its own section. Creating one shows the key once, in the product's command.
 
-- A buyer may hold the product's **Keys per buyer**, ten by default, and ask for more like for upgrade tokens. An account that only took the product's trial holds exactly one and cannot ask for more.
-- The server trades its key for a new one every seven days by default. The old key still answers for ten minutes, so a server that lost the answer gets the new one. After that, using the old key is refused and noted on the key, like a reused upgrade token.
-- A key nobody uses for thirty days by default expires. Its owner reissues it on the **Server keys** page.
+- A buyer may hold the key type's **Keys per buyer** and ask for more like for upgrade tokens. An account that only took the product's trial holds the type's **Keys per trial** and cannot ask for more.
+- The server trades its key for a new one on the key type's schedule. The old key still answers for ten minutes, so a server that lost the answer gets the new one. After that, using the old key is refused and noted on the key, like a reused upgrade token.
+- A key nobody uses for the key type's expiry time expires. Its owner reissues it on the product's page.
 - Every refresh and every verification checks again whether the account has the product or its trial.
+- A key type's gateway is answered about its own keys only. A key of another key type, of this product or another, is unknown to it.
 
-**Dashboard keys held** lists the dashboard keys people hold for this guild's products: the account, the product, the key's name, how many keys that account holds for the product, and when the key was last used and expires. Click **Revoke** and then **Really revoke** to end a key. The server is refused at its next verification.
+**Product keys held** lists the keys people hold for this guild's products: the account, the product and key type, the key's name, how many keys of that type the account holds, and when the key was last used and expires. Click **Revoke** and then **Really revoke** to end a key. The server is refused at its next verification.

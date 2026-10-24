@@ -7,11 +7,11 @@ package de.chojo.lyna.web.api.v1;
 
 import com.google.inject.Inject;
 import de.chojo.lyna.web.api.v1.builtbybit.BuiltByBitApiRoutes;
-import de.chojo.lyna.web.api.v1.dashboard.DashboardKeyApi;
 import de.chojo.lyna.web.api.v1.debug.DebugApi;
 import de.chojo.lyna.web.api.v1.demo.DemoApi;
 import de.chojo.lyna.web.api.v1.download.Download;
 import de.chojo.lyna.web.api.v1.instance.InstanceInfo;
+import de.chojo.lyna.web.api.v1.keys.ServerKeyApi;
 import de.chojo.lyna.web.api.v1.kofi.KoFiApi;
 import de.chojo.lyna.web.api.v1.products.Products;
 import de.chojo.lyna.web.api.v1.products.TrialApi;
@@ -43,7 +43,7 @@ public class V1 {
     private final DebugApi debug;
     private final GithubWebhook github;
     private final TrialApi trial;
-    private final DashboardKeyApi dashboard;
+    private final ServerKeyApi serverKeys;
 
     @Inject
     public V1(
@@ -59,9 +59,9 @@ public class V1 {
             DebugApi debug,
             GithubWebhook github,
             TrialApi trial,
-            DashboardKeyApi dashboard) {
+            ServerKeyApi serverKeys) {
         this.trial = trial;
-        this.dashboard = dashboard;
+        this.serverKeys = serverKeys;
         this.debug = debug;
         this.github = github;
         this.instanceInfo = instanceInfo;
@@ -89,7 +89,7 @@ public class V1 {
             debug.init();
             github.init();
             trial.init();
-            dashboard.init();
+            serverKeys.init();
         });
     }
 }

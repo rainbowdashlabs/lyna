@@ -9,6 +9,7 @@ import de.chojo.lyna.feature.updater.entity.KeyKind;
 import de.chojo.lyna.feature.updater.entity.RaisedAllowance;
 import de.chojo.lyna.feature.updater.entity.UpdateTokenRequest;
 import de.chojo.sadu.mapper.wrapper.Row;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -24,22 +25,27 @@ import static de.chojo.sadu.queries.api.query.Query.query;
  */
 public class UpdateTokenQuotaRepository {
     private static final String SELECT_REQUEST = """
-            SELECT r.id, r.account_id, r.product_id, p.name AS product_name, r.kind, r.amount, r.reason, r.status,
-                   r.created_at, r.decided_at,
+            SELECT r.id, r.account_id, r.product_id, p.name AS product_name, r.kind, r.key_type_id,
+                   k.name AS key_type_name, r.amount, r.reason, r.status, r.created_at, r.decided_at,
                    coalesce(CASE WHEN a.discriminator IS NULL THEN a.username
                                  ELSE a.username || '#' || a.discriminator END,
                             'account ' || a.id) AS account
             FROM update_token_request r
             JOIN product p ON p.id = r.product_id
             JOIN account a ON a.id = r.account_id
+            LEFT JOIN product_key_type k ON k.id = r.key_type_id
             """;
 
     /**
-     * @return the keys of the kind allowed on top of the default, zero when nobody granted any
+     * @param keyTypeId the key type of server keys, null for upgrade tokens
+     * @return the keys of that sort allowed on top of the default, zero when nobody granted any
      */
-    public int granted(int accountId, int productId, KeyKind kind) {
-        return query("SELECT granted FROM update_token_quota WHERE account_id = ? AND product_id = ? AND kind = ?")
-                .single(call().bind(accountId).bind(productId).bind(kind.name()))
+    public int granted(int accountId, int productId, @Nullable Integer keyTypeId) {
+        return query("""
+                SELECT granted FROM update_token_quota
+                WHERE account_id = ? AND product_id = ? AND coalesce(key_type_id, 0) = ?
+                """)
+                .single(call().bind(accountId).bind(productId).bind(slot(keyTypeId)))
                 .map(row -> row.getInt("granted"))
                 .first()
                 .orElse(0);
@@ -49,19 +55,28 @@ public class UpdateTokenQuotaRepository {
      * Sets the tokens allowed on top of the default, for a product of the guild. Lowering it ends no
      * entry: an account above its allowance keeps what it has and cannot add more.
      *
+     * @param keyTypeId the key type of server keys, null for upgrade tokens; it has to be one of the
+     *                  product's
      * @return whether the product belongs to the guild
      */
-    public boolean setGranted(long guildId, int accountId, int productId, KeyKind kind, int granted) {
+    public boolean setGranted(long guildId, int accountId, int productId, @Nullable Integer keyTypeId, int granted) {
         return query("""
-                INSERT INTO update_token_quota (account_id, product_id, kind, granted)
-                SELECT ?, id, ?, ? FROM product WHERE id = ? AND guild_id = ?
-                ON CONFLICT (account_id, product_id, kind) DO UPDATE SET granted = EXCLUDED.granted
+                INSERT INTO update_token_quota (account_id, product_id, kind, key_type_id, granted)
+                SELECT ?, p.id, ?, ?, ? FROM product p
+                WHERE p.id = ? AND p.guild_id = ?
+                  AND (?::INTEGER IS NULL OR EXISTS (
+                      SELECT 1 FROM product_key_type k WHERE k.id = ? AND k.product_id = p.id))
+                ON CONFLICT (account_id, product_id, (coalesce(key_type_id, 0)))
+                    DO UPDATE SET granted = EXCLUDED.granted
                 """)
                 .single(call().bind(accountId)
-                        .bind(kind.name())
+                        .bind(kind(keyTypeId).name())
+                        .bind(keyTypeId)
                         .bind(Math.max(0, granted))
                         .bind(productId)
-                        .bind(guildId))
+                        .bind(guildId)
+                        .bind(keyTypeId)
+                        .bind(keyTypeId))
                 .insert()
                 .changed();
     }
@@ -72,17 +87,20 @@ public class UpdateTokenQuotaRepository {
      */
     public List<RaisedAllowance> raisedInGuild(long guildId, KeyKind kind) {
         return query("""
-                SELECT q.account_id, q.product_id, p.name AS product_name, q.kind, q.granted,
+                SELECT q.account_id, q.product_id, p.name AS product_name, q.kind, q.key_type_id,
+                       k.name AS key_type_name, q.granted,
                        (SELECT count(*) FROM update_token t
-                        WHERE t.account_id = q.account_id AND t.product_id = q.product_id AND t.kind = q.kind) AS used,
+                        WHERE t.account_id = q.account_id AND t.product_id = q.product_id
+                          AND coalesce(t.key_type_id, 0) = coalesce(q.key_type_id, 0)) AS used,
                        coalesce(CASE WHEN a.discriminator IS NULL THEN a.username
                                      ELSE a.username || '#' || a.discriminator END,
                                 'account ' || a.id) AS account
                 FROM update_token_quota q
                 JOIN product p ON p.id = q.product_id
                 JOIN account a ON a.id = q.account_id
+                LEFT JOIN product_key_type k ON k.id = q.key_type_id
                 WHERE p.guild_id = ? AND q.kind = ? AND q.granted > 0
-                ORDER BY p.name, account
+                ORDER BY p.name, k.name, account
                 """)
                 .single(call().bind(guildId).bind(kind.name()))
                 .map(row -> new RaisedAllowance(
@@ -91,24 +109,30 @@ public class UpdateTokenQuotaRepository {
                         row.getInt("product_id"),
                         row.getString("product_name"),
                         KeyKind.valueOf(row.getString("kind")),
+                        (Integer) row.getObject("key_type_id"),
+                        row.getString("key_type_name"),
                         row.getInt("granted"),
                         row.getInt("used")))
                 .all();
     }
 
     /**
-     * @return the request, or empty when the account is still waiting on one for this product and kind
+     * @param keyTypeId the key type of server keys, null for upgrade tokens
+     * @return the request, or empty when the account is still waiting on one for this product and sort of
+     *     key
      */
-    public Optional<UpdateTokenRequest> request(int accountId, int productId, KeyKind kind, int amount, String reason) {
+    public Optional<UpdateTokenRequest> request(
+            int accountId, int productId, @Nullable Integer keyTypeId, int amount, String reason) {
         Optional<Integer> id = query("""
-                INSERT INTO update_token_request (account_id, product_id, kind, amount, reason)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT (account_id, product_id, kind) WHERE status = 'PENDING' DO NOTHING
+                INSERT INTO update_token_request (account_id, product_id, kind, key_type_id, amount, reason)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT (account_id, product_id, (coalesce(key_type_id, 0))) WHERE status = 'PENDING' DO NOTHING
                 RETURNING id
                 """)
                 .single(call().bind(accountId)
                         .bind(productId)
-                        .bind(kind.name())
+                        .bind(kind(keyTypeId).name())
+                        .bind(keyTypeId)
                         .bind(amount)
                         .bind(reason))
                 .map(row -> row.getInt("id"))
@@ -158,12 +182,12 @@ public class UpdateTokenQuotaRepository {
                     UPDATE update_token_request r SET status = ?, decided_at = now(), decided_by = ?
                     FROM product p
                     WHERE r.id = ? AND r.status = 'PENDING' AND p.id = r.product_id AND p.guild_id = ?
-                    RETURNING r.id, r.account_id, r.product_id, r.kind, r.amount
+                    RETURNING r.id, r.account_id, r.product_id, r.kind, r.key_type_id, r.amount
                 ),
                 granted AS (
-                    INSERT INTO update_token_quota (account_id, product_id, kind, granted)
-                    SELECT account_id, product_id, kind, amount FROM decided WHERE ?
-                    ON CONFLICT (account_id, product_id, kind)
+                    INSERT INTO update_token_quota (account_id, product_id, kind, key_type_id, granted)
+                    SELECT account_id, product_id, kind, key_type_id, amount FROM decided WHERE ?
+                    ON CONFLICT (account_id, product_id, (coalesce(key_type_id, 0)))
                         DO UPDATE SET granted = update_token_quota.granted + EXCLUDED.granted
                 )
                 SELECT id FROM decided
@@ -186,11 +210,21 @@ public class UpdateTokenQuotaRepository {
                 row.getInt("product_id"),
                 row.getString("product_name"),
                 KeyKind.valueOf(row.getString("kind")),
+                (Integer) row.getObject("key_type_id"),
+                row.getString("key_type_name"),
                 row.getInt("amount"),
                 row.getString("reason"),
                 UpdateTokenRequest.Status.valueOf(row.getString("status")),
                 toInstant(row.getTimestamp("created_at")),
                 toInstant(row.getTimestamp("decided_at")));
+    }
+
+    private static int slot(@Nullable Integer keyTypeId) {
+        return keyTypeId == null ? 0 : keyTypeId;
+    }
+
+    private static KeyKind kind(@Nullable Integer keyTypeId) {
+        return keyTypeId == null ? KeyKind.UPDATE : KeyKind.SERVER;
     }
 
     private static Instant toInstant(Timestamp timestamp) {
