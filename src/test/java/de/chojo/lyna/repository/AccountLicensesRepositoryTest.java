@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,6 +25,7 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
     private static final long OWNER_DISCORD = 500L;
     private static final long SHAREE_DISCORD = 600L;
 
+    private int chattyProduct;
     private int chattyLicense;
     private int otherGuildLicense;
     private int owner;
@@ -47,7 +49,7 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
                 Statement statement = connection.createStatement()) {
             statement.execute(
                     "INSERT INTO %s.license_settings (guild_id, shares) VALUES (%d, 3)".formatted(schemaName, GUILD_A));
-            int chatty = insert(
+            int chatty = chattyProduct = insert(
                     statement,
                     "INSERT INTO product (guild_id, name, url, role) VALUES (%d, 'Chatty', 'https://example.invalid/chatty', 1) RETURNING id"
                             .formatted(GUILD_A));
@@ -78,6 +80,33 @@ class AccountLicensesRepositoryTest extends RepositoryTestBase {
             rows.next();
             return rows.getInt(1);
         }
+    }
+
+    @Test
+    @DisplayName("The key written into a download is that of the license the account holds for the product")
+    void keyForAnOwner() {
+        assertEquals(Optional.of("KEY-CHATTY"), accountLicenses.keyFor(owner, chattyProduct));
+        assertTrue(accountLicenses.keyFor(stranger(), chattyProduct).isEmpty());
+    }
+
+    @Test
+    @DisplayName("A sharee is handed the key of the license shared with them, unless they own one of their own")
+    void keyForASharee() throws SQLException {
+        accountLicenses.addSharee(chattyLicense, sharee);
+
+        assertEquals(Optional.of("KEY-CHATTY"), accountLicenses.keyFor(sharee, chattyProduct));
+
+        try (var connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()) {
+            int own = insert(statement, """
+                    INSERT INTO license (product_id, user_identifier, key)
+                    VALUES (%d, 'sharee@example.invalid', 'KEY-OWN') RETURNING id
+                    """.formatted(chattyProduct));
+            statement.execute("INSERT INTO %s.user_license (account_id, license_id) VALUES (%d, %d)"
+                    .formatted(schemaName, sharee, own));
+        }
+
+        assertEquals(Optional.of("KEY-OWN"), accountLicenses.keyFor(sharee, chattyProduct));
     }
 
     @Test

@@ -41,7 +41,8 @@ Bundles are not supported. A bundle purchase is logged, but no license is issued
 
 ## 3. Add the license key placeholder
 
-1. On the resource, create a custom placeholder of the type **External license key**.
+1. On the resource, create a custom placeholder of the type **External license key** and name it
+   `%%__LYNA_LICENSE__%%`.
 2. Set its URL to your address with `/api/v1/builtbybit/key` at the end:
 
    ```text
@@ -49,9 +50,13 @@ Bundles are not supported. A bundle purchase is logged, but no license is issued
    ```
 
 3. Set its secret to the key secret.
-4. Put the placeholder into the plugin where it reads its license key. Upload a new version
-   afterwards: BuiltByBit only fills placeholders in versions published after the placeholder was
-   created.
+4. Build the plugin with the placeholder in its build data: publishdata's
+   `buildData { lynaLicense() }` writes `lynaLicense=%%__LYNA_LICENSE__%%`, and eldo-util's
+   `LynaLicense` reads it back. Upload a new version afterwards: BuiltByBit only fills placeholders in
+   versions published after the placeholder was created.
+
+Lyna fills the same placeholder when it serves a download itself, with the downloader's own license
+key, so one build works for both.
 
 If Lyna can't answer, BuiltByBit writes "Unable to acquire a license key automatically, please
 contact the creator directly." instead of a key.

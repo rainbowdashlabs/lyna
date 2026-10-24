@@ -13,6 +13,7 @@ import de.chojo.jdautil.util.SnowflakeCreator;
 import de.chojo.logutil.marker.LogNotify;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Downloads;
+import de.chojo.lyna.feature.account.repository.AccountLicenseRepository;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
 import de.chojo.lyna.util.JarUtil;
 import de.chojo.nexus.NexusRest;
@@ -24,9 +25,11 @@ import org.slf4j.Logger;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -42,6 +45,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class Proxy {
     /** How long a reusable link lasts. */
     public static final Duration REUSABLE_LIFETIME = Duration.ofMinutes(5);
+
+    /** Where a plugin's build data asks for the key of the license it was downloaded under. */
+    public static final String LYNA_LICENSE = "%%__LYNA_LICENSE__%%";
 
     private static final Logger log = getLogger(Proxy.class);
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -82,13 +88,30 @@ public class Proxy {
     private final SnowflakeCreator snowflakeCreator = SnowflakeCreator.builder().build();
     private final DownloadLogRepository downloadLog;
     private final Downloads downloads;
+    private final AccountLicenseRepository licenses;
 
     @Inject
-    public Proxy(NexusRest nexus, Api apiSettings, DownloadLogRepository downloadLog, Downloads downloads) {
+    public Proxy(
+            NexusRest nexus,
+            Api apiSettings,
+            DownloadLogRepository downloadLog,
+            Downloads downloads,
+            AccountLicenseRepository licenses) {
+        this.licenses = licenses;
         this.nexus = nexus;
         this.apiSettings = apiSettings;
         this.downloadLog = downloadLog;
         this.downloads = downloads;
+    }
+
+    /**
+     * The key of the license the download was made under, which the jar carries in place of
+     * {@link #LYNA_LICENSE}. Role access, trials and free products have none, and their jars keep the
+     * placeholder.
+     */
+    private Optional<String> licenseKey(AssetDownload download) {
+        if (download.accountId() == null || download.productId() == null) return Optional.empty();
+        return licenses.keyFor(download.accountId(), download.productId());
     }
 
     public void init() {
@@ -160,10 +183,11 @@ public class Proxy {
                         return;
                     }
 
-                    Map<String, String> replacements = Map.of(
+                    Map<String, String> replacements = new HashMap<>(Map.of(
                             "%%__USER__%%", download.userId(),
                             "%%__RESOURCE__%%", download.assetId(),
-                            "%%__NONCE__%%", snowflakeCreator.nextString());
+                            "%%__NONCE__%%", snowflakeCreator.nextString()));
+                    licenseKey(download).ifPresent(key -> replacements.put(LYNA_LICENSE, key));
 
                     byte[] replacedJarFile;
                     try {

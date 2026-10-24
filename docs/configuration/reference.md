@@ -208,7 +208,7 @@ Environment prefix `DOWNLOADS`.
 
 | Key | Default | Environment | What it does |
 |---|---|---|---|
-| `skipJarSigning` | `false` | `DOWNLOADS_SKIPJARSIGNING` | Serves jars untouched instead of stamping who downloaded them. Only for testing: the stamp is how you tell which copy went to whom. |
+| `skipJarSigning` | `false` | `DOWNLOADS_SKIPJARSIGNING` | Serves jars untouched instead of stamping who downloaded them and the key of their license (`%%__LYNA_LICENSE__%%`). Only for testing: the stamp is how you tell which copy went to whom. |
 
 ## storage
 

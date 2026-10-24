@@ -11,6 +11,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -41,7 +42,8 @@ public final class JarUtil {
     private JarUtil() {}
 
     /**
-     * @return the jar with the replacements applied to every class it holds
+     * @return the jar with the replacements applied to every class it holds and to its build data files,
+     *     the {@code *.data} files publishdata writes
      */
     public static byte[] replaceStringsInJar(InputStream stream, Map<String, String> replacements) throws IOException {
         var bytesOut = new ByteArrayOutputStream();
@@ -53,8 +55,7 @@ public final class JarUtil {
                 outputZip.putNextEntry(copyOf(entry));
                 if (!entry.isDirectory()) {
                     byte[] content = inputZip.readAllBytes();
-                    outputZip.write(
-                            entry.getName().endsWith(".class") ? replaceOrKeep(content, replacements) : content);
+                    outputZip.write(replaceIn(entry.getName(), content, replacements));
                 }
                 outputZip.closeEntry();
             }
@@ -92,6 +93,15 @@ public final class JarUtil {
 
         output.write(input.readAllBytes());
         return byteArrayOutputStream.toByteArray();
+    }
+
+    private static byte[] replaceIn(String name, byte[] content, Map<String, String> replacements) {
+        if (name.endsWith(".class")) return replaceOrKeep(content, replacements);
+        if (name.endsWith(".data")) {
+            return replace(new String(content, StandardCharsets.UTF_8), replacements)
+                    .getBytes(StandardCharsets.UTF_8);
+        }
+        return content;
     }
 
     private static byte[] replaceOrKeep(byte[] content, Map<String, String> replacements) {

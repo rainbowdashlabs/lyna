@@ -186,6 +186,30 @@ public class AccountLicenseRepository {
     }
 
     /**
+     * The key of the license that lets an account have a product, for writing into the jar it downloads.
+     *
+     * <p>A license the account owns comes before one it was shared, and the oldest before newer ones, so
+     * the same account is handed the same key every time.
+     *
+     * @return the key, or nothing when no license of the account covers the product
+     */
+    public Optional<String> keyFor(int accountId, int productId) {
+        return query("""
+                SELECT l.key
+                FROM (SELECT license_id, 0 AS rank FROM user_license WHERE account_id = ?
+                      UNION ALL
+                      SELECT license_id, 1 AS rank FROM user_sub_license WHERE account_id = ?) h
+                    JOIN license l ON l.id = h.license_id
+                WHERE l.product_id = ?
+                ORDER BY h.rank, l.id
+                LIMIT 1
+                """)
+                .single(call().bind(accountId).bind(accountId).bind(productId))
+                .map(row -> row.getString("key"))
+                .first();
+    }
+
+    /**
      * The products an account may download, whether it owns the license or was shared one.
      *
      * <p>What the storefront needs to decide between a download button and a buy button, in one
