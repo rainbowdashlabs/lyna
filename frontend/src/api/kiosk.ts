@@ -106,7 +106,7 @@ export interface VersionEntry {
 
 /** Where a dependency is found. Shortcut links carry the project id on their site. */
 export interface ManifestLink {
-    type: 'modrinth' | 'spigot' | 'hangar' | 'url'
+    type: 'modrinth' | 'spigot' | 'builtbybit' | 'hangar' | 'url'
     id: string | null
     url: string
 }

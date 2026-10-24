@@ -13,15 +13,15 @@ import java.util.regex.Pattern;
 /**
  * Where a dependency is found.
  *
- * <p>A Modrinth, SpigotMC or Hangar link is rebuilt from its id, so a manifest cannot pass a link to
+ * <p>A Modrinth, SpigotMC, BuiltByBit or Hangar link is rebuilt from its id, so a manifest cannot pass a link to
  * somewhere else off as one of those sites. Any other link has to be an http or https address.
  *
- * @param type {@code modrinth}, {@code spigot}, {@code hangar} or {@code url}
+ * @param type {@code modrinth}, {@code spigot}, {@code builtbybit}, {@code hangar} or {@code url}
  * @param id   the project on that site, or null for a plain address
  */
 public record ManifestLink(String type, String id, String url) {
     private static final Pattern SLUG = Pattern.compile("[A-Za-z0-9_.-]+");
-    private static final Pattern SPIGOT = Pattern.compile("[1-9][0-9]*");
+    private static final Pattern RESOURCE_ID = Pattern.compile("[1-9][0-9]*");
     private static final Pattern HANGAR = Pattern.compile("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+");
 
     /**
@@ -33,9 +33,13 @@ public record ManifestLink(String type, String id, String url) {
             case "modrinth" ->
                 matching(SLUG, id).map(slug -> new ManifestLink(type, slug, "https://modrinth.com/plugin/" + slug));
             case "spigot" ->
-                matching(SPIGOT, id)
+                matching(RESOURCE_ID, id)
                         .map(resource -> new ManifestLink(
                                 type, resource, "https://www.spigotmc.org/resources/" + resource + "/"));
+            case "builtbybit" ->
+                matching(RESOURCE_ID, id)
+                        .map(resource ->
+                                new ManifestLink(type, resource, "https://builtbybit.com/resources/" + resource + "/"));
             case "hangar" ->
                 matching(HANGAR, id)
                         .map(project -> new ManifestLink(type, project, "https://hangar.papermc.io/" + project));

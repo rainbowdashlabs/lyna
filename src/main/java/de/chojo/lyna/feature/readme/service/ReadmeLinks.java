@@ -30,7 +30,7 @@ public final class ReadmeLinks {
     private static final Pattern LINK_TARGET =
             Pattern.compile("(\\]\\(|href=[\"'])(https?://[^)\"'\\s]+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern PLUGIN_HOST = Pattern.compile(
-            "^https?://(?:www\\.)?(?:spigotmc\\.org/resources|modrinth\\.com/(?:plugin|mod)|hangar\\.papermc\\.io|curseforge\\.com)/.*",
+            "^https?://(?:www\\.)?(?:spigotmc\\.org/resources|builtbybit\\.com/resources|modrinth\\.com/(?:plugin|mod)|hangar\\.papermc\\.io|curseforge\\.com)/.*",
             Pattern.CASE_INSENSITIVE);
 
     /**
