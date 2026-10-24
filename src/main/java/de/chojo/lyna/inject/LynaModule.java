@@ -31,6 +31,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
+import de.chojo.lyna.configuration.elements.BuiltByBit;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.configuration.elements.Demo;
@@ -232,6 +233,12 @@ public class LynaModule extends AbstractModule {
     @Singleton
     Kofi kofi(ConfigFile config) {
         return config.kofi();
+    }
+
+    @Provides
+    @Singleton
+    BuiltByBit builtByBit(ConfigFile config) {
+        return config.builtByBit();
     }
 
     @Provides

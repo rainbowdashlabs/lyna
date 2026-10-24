@@ -1,6 +1,6 @@
 ---
 title: GitHub
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 Lyna uses GitHub in two ways: it shows a project's README on its product page, and it posts releases
