@@ -30,7 +30,7 @@ const draft = ref('')
 const confirming = ref<'reissue' | 'revoke' | null>(null)
 
 const masked = computed(() => `${props.token.token.slice(0, 8)}${'•'.repeat(12)}`)
-const dashboard = computed(() => props.token.kind === 'DASHBOARD')
+const serverKey = computed(() => props.token.kind === 'SERVER')
 const expired = computed(() => !!props.token.expiresAt && new Date(props.token.expiresAt).getTime() <= Date.now())
 
 function startEditing() {
@@ -82,7 +82,7 @@ function confirmOrAsk(action: 'reissue' | 'revoke') {
         {{ t('ui.updaterTokenRow.created', {at: formatDateTime(token.createdAt)}) }} ·
         {{ token.lastUsedAt ? t('ui.updaterTokenRow.lastUsed', {at: formatDateTime(token.lastUsedAt)}) : t('ui.updaterTokenRow.neverUsed') }}
       </MutedText>
-      <MutedText v-if="dashboard && !expired" class="font-data block" size="xs">
+      <MutedText v-if="serverKey && !expired" class="font-data block" size="xs">
         {{ t('ui.updaterTokenRow.nextRefresh', {at: formatDateTime(token.refreshAt)}) }} ·
         {{ t('ui.updaterTokenRow.expires', {at: formatDateTime(token.expiresAt)}) }}
       </MutedText>
@@ -90,7 +90,7 @@ function confirmOrAsk(action: 'reissue' | 'revoke') {
         {{ t('ui.updaterTokenRow.expired', {at: formatDateTime(token.expiresAt)}) }}
       </MutedText>
       <MutedText v-if="token.lastReuseAt" class="block text-error" size="xs">
-        {{ t(dashboard ? 'ui.updaterTokenRow.reusedKey' : 'ui.updaterTokenRow.reused', {at: formatDateTime(token.lastReuseAt)}) }}
+        {{ t(serverKey ? 'ui.updaterTokenRow.reusedKey' : 'ui.updaterTokenRow.reused', {at: formatDateTime(token.lastReuseAt)}) }}
       </MutedText>
     </div>
     <template #trailing>

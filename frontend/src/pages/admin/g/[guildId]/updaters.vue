@@ -25,7 +25,7 @@ usePageTitle(t('layout.admin.updaters'))
 
 definePageMeta({layout: 'admin'})
 
-const KINDS: KeyKind[] = ['UPDATE', 'DASHBOARD']
+const KINDS: KeyKind[] = ['UPDATE', 'SERVER']
 
 const route = useRoute()
 const guildId = ref(String(route.params.guildId))
@@ -42,7 +42,7 @@ async function load() {
   try {
     requests.value = await pendingUpdateTokenRequests(guildId.value, kind.value)
     raised.value = await raisedAllowances(guildId.value, kind.value)
-    held.value = kind.value === 'DASHBOARD' ? await heldKeys(guildId.value, 'DASHBOARD') : []
+    held.value = kind.value === 'SERVER' ? await heldKeys(guildId.value, 'SERVER') : []
   } catch (e) {
     errorMessage.value = (e as Error).message
   } finally {
@@ -63,9 +63,9 @@ async function act(change: () => Promise<unknown>) {
   }
 }
 
-/** How many dashboard keys the account holding this one holds for the same product. */
+/** How many keys of the same key type the account holding this one holds. */
 function ofAccount(key: HeldKey): number {
-  return held.value.filter(other => other.accountId === key.accountId && other.productId === key.productId).length
+  return held.value.filter(other => other.accountId === key.accountId && other.keyTypeId === key.keyTypeId).length
 }
 
 watch(() => route.params.guildId, next => {
@@ -112,16 +112,16 @@ onMounted(load)
         <div v-if="raised.length" class="text-sm" role="list">
           <RaisedAllowanceRow
               v-for="(allowance, index) in raised"
-              :key="`${allowance.accountId}-${allowance.productId}`"
+              :key="`${allowance.accountId}-${allowance.productId}-${allowance.keyTypeId ?? 0}`"
               :allowance="allowance"
               :busy="busy"
               :marker="index + 1"
-              @save="granted => act(() => setAllowance(guildId, allowance.accountId, allowance.productId, granted, kind))"
+              @save="granted => act(() => setAllowance(guildId, allowance.accountId, allowance.productId, granted, allowance.keyTypeId))"
           />
         </div>
         <EmptyHint v-else>{{ t('page.admin.g.guildId.updaters.noneRaised') }}</EmptyHint>
       </section>
-      <section v-if="kind === 'DASHBOARD'" :aria-label="t('page.admin.g.guildId.updaters.held')">
+      <section v-if="kind === 'SERVER'" :aria-label="t('page.admin.g.guildId.updaters.held')">
         <CardHeader>{{ t('page.admin.g.guildId.updaters.held') }}</CardHeader>
         <div v-if="held.length" class="text-sm" role="list">
           <HeldKeyRow
