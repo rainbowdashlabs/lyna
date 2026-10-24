@@ -68,7 +68,7 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A created entry is found by its id, its token and its account")
     void createAndFind() {
-        UpdateToken created = tokens.create(KeyKind.UPDATE, account, product, "lobby", "lyu_one");
+        UpdateToken created = tokens.create(account, product, null, "lobby", "lyu_one");
 
         assertEquals("lobby", created.name());
         assertEquals("Chatty", created.productName());
@@ -78,15 +78,15 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
         assertNull(created.lastReuseAt());
         assertEquals(created, tokens.byToken("lyu_one").orElseThrow());
         assertEquals(List.of(created), tokens.forAccount(account));
-        assertEquals(1, tokens.count(account, product, KeyKind.UPDATE));
-        assertEquals(0, tokens.count(account, elsewhere, KeyKind.UPDATE));
-        assertEquals(0, tokens.count(other, product, KeyKind.UPDATE));
+        assertEquals(1, tokens.count(account, product, null));
+        assertEquals(0, tokens.count(account, elsewhere, null));
+        assertEquals(0, tokens.count(other, product, null));
     }
 
     @Test
     @DisplayName("A trade replaces the token, retires the old one and notes when it happened")
     void rotate() {
-        tokens.create(KeyKind.UPDATE, account, product, "lobby", "lyu_one");
+        tokens.create(account, product, null, "lobby", "lyu_one");
 
         UpdateToken rotated = tokens.rotate("lyu_one", "lyu_two").orElseThrow();
 
@@ -99,7 +99,7 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Of two trades of one token at the same moment, exactly one succeeds")
     void concurrentRotation() throws Exception {
-        tokens.create(KeyKind.UPDATE, account, product, "lobby", "lyu_race");
+        tokens.create(account, product, null, "lobby", "lyu_race");
 
         try (var executor = Executors.newFixedThreadPool(2)) {
             Callable<Optional<UpdateToken>> first = () -> tokens.rotate("lyu_race", "lyu_a");
@@ -124,7 +124,7 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("A retired token presented again is recorded on its entry; an unknown one finds nothing")
     void markReused() {
-        UpdateToken created = tokens.create(KeyKind.UPDATE, account, product, "lobby", "lyu_one");
+        UpdateToken created = tokens.create(account, product, null, "lobby", "lyu_one");
         tokens.rotate("lyu_one", "lyu_two");
 
         UpdateToken owner = tokens.markReused("lyu_one").orElseThrow();
@@ -137,7 +137,7 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Reissuing gives a new token, and the old one is recognised as reused afterwards")
     void reissue() {
-        UpdateToken created = tokens.create(KeyKind.UPDATE, account, product, "lobby", "lyu_one");
+        UpdateToken created = tokens.create(account, product, null, "lobby", "lyu_one");
 
         UpdateToken reissued =
                 tokens.reissue(created.id(), account, "lyu_fresh").orElseThrow();
@@ -152,7 +152,7 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("Renaming and revoking reach only the account's own entries")
     void renameAndDelete() {
-        UpdateToken created = tokens.create(KeyKind.UPDATE, account, product, "lobby", "lyu_one");
+        UpdateToken created = tokens.create(account, product, null, "lobby", "lyu_one");
 
         assertFalse(tokens.rename(created.id(), other, "theirs"));
         assertTrue(tokens.rename(created.id(), account, "survival"));
@@ -166,12 +166,12 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     @Test
     @DisplayName("An allowance starts at nothing granted, is set per guild, and can be lowered again")
     void granted() {
-        assertEquals(0, quota.granted(account, product, KeyKind.UPDATE));
+        assertEquals(0, quota.granted(account, product, null));
         assertEquals(List.of(), quota.raisedInGuild(GUILD, KeyKind.UPDATE));
 
-        assertTrue(quota.setGranted(GUILD, account, product, KeyKind.UPDATE, 5));
-        tokens.create(KeyKind.UPDATE, account, product, "lobby", "lyu_one");
-        assertEquals(5, quota.granted(account, product, KeyKind.UPDATE));
+        assertTrue(quota.setGranted(GUILD, account, product, null, 5));
+        tokens.create(account, product, null, "lobby", "lyu_one");
+        assertEquals(5, quota.granted(account, product, null));
         assertEquals(1, quota.raisedInGuild(GUILD, KeyKind.UPDATE).size());
         var raised = quota.raisedInGuild(GUILD, KeyKind.UPDATE).getFirst();
         assertEquals(5, raised.granted());
@@ -181,11 +181,11 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
         assertEquals(product, raised.productId());
         assertNotNull(raised.account());
 
-        assertFalse(quota.setGranted(GUILD + 5, account, product, KeyKind.UPDATE, 9), "another guild's admin cannot");
-        assertEquals(5, quota.granted(account, product, KeyKind.UPDATE));
+        assertFalse(quota.setGranted(GUILD + 5, account, product, null, 9), "another guild's admin cannot");
+        assertEquals(5, quota.granted(account, product, null));
 
-        quota.setGranted(GUILD, account, product, KeyKind.UPDATE, -3);
-        assertEquals(0, quota.granted(account, product, KeyKind.UPDATE), "an allowance never goes below the default");
+        quota.setGranted(GUILD, account, product, null, -3);
+        assertEquals(0, quota.granted(account, product, null), "an allowance never goes below the default");
         assertEquals(List.of(), quota.raisedInGuild(GUILD, KeyKind.UPDATE));
     }
 
@@ -193,13 +193,12 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
     @DisplayName("One pending request per product; approving adds what it asked for")
     void requestAndApprove() {
         UpdateTokenRequest request =
-                quota.request(account, product, KeyKind.UPDATE, 5, "a network").orElseThrow();
+                quota.request(account, product, null, 5, "a network").orElseThrow();
 
         assertEquals(UpdateTokenRequest.Status.PENDING, request.status());
         assertEquals("Chatty", request.productName());
         assertNotNull(request.account());
-        assertTrue(
-                quota.request(account, product, KeyKind.UPDATE, 3, "again").isEmpty(), "one request waits at a time");
+        assertTrue(quota.request(account, product, null, 3, "again").isEmpty(), "one request waits at a time");
         assertEquals(List.of(request), quota.pendingInGuild(GUILD, KeyKind.UPDATE));
         assertEquals(List.of(), quota.pendingInGuild(GUILD + 1, KeyKind.UPDATE));
 
@@ -208,31 +207,29 @@ class UpdateTokenRepositoryTest extends RepositoryTestBase {
 
         assertEquals(UpdateTokenRequest.Status.APPROVED, approved.status());
         assertNotNull(approved.decidedAt());
-        assertEquals(5, quota.granted(account, product, KeyKind.UPDATE));
+        assertEquals(5, quota.granted(account, product, null));
         assertTrue(quota.decide(GUILD, request.id(), true, 77L).isEmpty(), "a settled request stays settled");
-        assertEquals(5, quota.granted(account, product, KeyKind.UPDATE));
+        assertEquals(5, quota.granted(account, product, null));
 
         UpdateTokenRequest second =
-                quota.request(account, product, KeyKind.UPDATE, 2, "more").orElseThrow();
+                quota.request(account, product, null, 2, "more").orElseThrow();
         quota.decide(GUILD, second.id(), true, null);
-        assertEquals(7, quota.granted(account, product, KeyKind.UPDATE), "a second approval adds to the first");
+        assertEquals(7, quota.granted(account, product, null), "a second approval adds to the first");
     }
 
     @Test
     @DisplayName("Declining grants nothing, and another guild cannot settle the request")
     void decline() {
         UpdateTokenRequest request =
-                quota.request(account, product, KeyKind.UPDATE, 5, "a network").orElseThrow();
+                quota.request(account, product, null, 5, "a network").orElseThrow();
 
         assertTrue(quota.decide(GUILD + 1, request.id(), true, 1L).isEmpty());
         UpdateTokenRequest declined =
                 quota.decide(GUILD, request.id(), false, 1L).orElseThrow();
 
         assertEquals(UpdateTokenRequest.Status.DECLINED, declined.status());
-        assertEquals(0, quota.granted(account, product, KeyKind.UPDATE));
+        assertEquals(0, quota.granted(account, product, null));
         assertEquals(List.of(declined), quota.requestsOf(account));
-        assertTrue(
-                quota.request(account, product, KeyKind.UPDATE, 1, "please").isPresent(),
-                "a settled request makes room");
+        assertTrue(quota.request(account, product, null, 1, "please").isPresent(), "a settled request makes room");
     }
 }

@@ -9,13 +9,14 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.kiosk.repository.KioskProductRepository;
-import de.chojo.lyna.feature.updater.entity.DashboardSettings;
 import de.chojo.lyna.feature.updater.entity.HeldKey;
 import de.chojo.lyna.feature.updater.entity.KeyKind;
+import de.chojo.lyna.feature.updater.entity.ProductKeyType;
 import de.chojo.lyna.feature.updater.entity.RaisedAllowance;
 import de.chojo.lyna.feature.updater.entity.UpdateToken;
 import de.chojo.lyna.feature.updater.entity.UpdateTokenRequest;
-import de.chojo.lyna.feature.updater.repository.DashboardProductRepository;
+import de.chojo.lyna.feature.updater.repository.ProductKeyTypeRepository;
+import de.chojo.lyna.feature.updater.repository.TrialHolderRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenQuotaRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenRepository;
 import org.jetbrains.annotations.Nullable;
@@ -36,25 +37,23 @@ import java.util.TreeSet;
  * holds an upgrade token and trades it for a download. Every trade replaces the token, so one token
  * buys one download: a copy taken off the server is worth a single download at most, and using it
  * locks the real updater out - which its owner sees, because the next trade of the token it still
- * holds is recorded as reuse. A dashboard key proves a server to the hosted dashboard and is replaced
- * on a schedule instead; {@link DashboardKeyService} handles its use.
+ * holds is recorded as reuse. A server key is of one of a product's {@link ProductKeyType key types},
+ * proves a server to that product's gateway and is replaced on a schedule instead;
+ * {@link ServerKeyService} handles its use.
  *
  * <p>Keys belong to an account and a product, never to a licence. Whether the account may download
  * the product is asked again on every use, by the same rule the storefront uses, so a licence, a
  * share and a role all work, and losing them stops the server without anybody revoking its key.
  *
  * <p>Free products are not offered upgrade tokens: anybody may download them from their public
- * address. Dashboard keys are offered by the products that switched them on, to buyers up to the
- * product's allowance and to an account that only took the trial exactly one, which it cannot ask to
- * raise.
+ * address. Server keys are offered by every enabled key type of a product, to buyers up to the type's
+ * allowance and to an account that only took the product's trial up to the type's trial allowance,
+ * which it cannot ask to raise.
  */
 @Singleton
 public class UpdateTokenService {
     /** Upgrade tokens an account may hold for one product before it has to ask for more. */
     public static final int DEFAULT_ALLOWANCE = 10;
-
-    /** Dashboard keys an account that only took the product's trial may hold. */
-    public static final int TRIAL_ALLOWANCE = 1;
 
     /** The most one request may ask for. */
     public static final int MAX_REQUEST = 100;
@@ -70,7 +69,8 @@ public class UpdateTokenService {
 
     private final UpdateTokenRepository tokens;
     private final UpdateTokenQuotaRepository quota;
-    private final DashboardProductRepository dashboards;
+    private final TrialHolderRepository trials;
+    private final ProductKeyTypeRepository keyTypes;
     private final DownloadAccessService access;
     private final KioskProductRepository kiosk;
     private final Clock clock;
@@ -96,14 +96,14 @@ public class UpdateTokenService {
         UNKNOWN,
         /** A key that was already given up for its successor. */
         REUSED,
-        /** A dashboard key that went unused for longer than its product allows. */
+        /** A server key that went unused for longer than its key type allows. */
         EXPIRED,
         /** The key was used for this less than {@link #MIN_TRADE_INTERVAL} ago. */
         TOO_SOON
     }
 
     /**
-     * What an account holds of a product that decides how many dashboard keys it may have.
+     * What an account holds of a product that decides how many server keys it may have.
      */
     public enum Holding {
         /** Access to the product: a licence, a share or a role. */
@@ -135,33 +135,47 @@ public class UpdateTokenService {
     }
 
     /**
-     * @param used    the keys of the kind the account holds for the product
-     * @param allowed how many it may hold
-     * @param trial   whether it holds only the product's trial, which allows one dashboard key and no
-     *                request for more
+     * @param keyTypeId   the key type of server keys, null for upgrade tokens
+     * @param keyTypeName its name
+     * @param command     how a key of the type is handed to a server, with {@code {key}} where it goes
+     * @param used        the keys of the sort the account holds for the product
+     * @param allowed     how many it may hold
+     * @param trial       whether it holds only the product's trial, which allows the type's trial allowance
+     *                    and no request for more
      */
-    public record Allowance(int productId, KeyKind kind, int used, int allowed, boolean trial) {}
+    public record Allowance(
+            int productId,
+            KeyKind kind,
+            @Nullable Integer keyTypeId,
+            @Nullable String keyTypeName,
+            @Nullable String command,
+            int used,
+            int allowed,
+            boolean trial) {}
 
     @Inject
     public UpdateTokenService(
             UpdateTokenRepository tokens,
             UpdateTokenQuotaRepository quota,
-            DashboardProductRepository dashboards,
+            TrialHolderRepository trials,
+            ProductKeyTypeRepository keyTypes,
             DownloadAccessService access,
             KioskProductRepository kiosk) {
-        this(tokens, quota, dashboards, access, kiosk, Clock.systemUTC());
+        this(tokens, quota, trials, keyTypes, access, kiosk, Clock.systemUTC());
     }
 
     public UpdateTokenService(
             UpdateTokenRepository tokens,
             UpdateTokenQuotaRepository quota,
-            DashboardProductRepository dashboards,
+            TrialHolderRepository trials,
+            ProductKeyTypeRepository keyTypes,
             DownloadAccessService access,
             KioskProductRepository kiosk,
             Clock clock) {
         this.tokens = tokens;
         this.quota = quota;
-        this.dashboards = dashboards;
+        this.trials = trials;
+        this.keyTypes = keyTypes;
         this.access = access;
         this.kiosk = kiosk;
         this.clock = clock;
@@ -175,71 +189,81 @@ public class UpdateTokenService {
     }
 
     /**
-     * Upgrade tokens are offered for every premium product the account may download; dashboard keys
-     * for every product that offers them and that the account may download or took the trial of. A
-     * product the account still holds keys for is listed either way, so they can be revoked.
+     * Upgrade tokens are offered for every premium product the account may download. Server keys are
+     * offered by every enabled key type of a product the account may download or took the trial of. A
+     * product or key type the account still holds keys of is listed either way, so they can be revoked.
      *
-     * @return for every such product, how many keys of the kind the account holds and may hold
+     * @return for every such product or key type, how many keys the account holds and may hold
      */
     public List<Allowance> allowances(int accountId, KeyKind kind) {
-        Set<Integer> products = new TreeSet<>(access.entitledProductIds(accountId));
-        if (kind == KeyKind.UPDATE) {
-            products.removeIf(kiosk::isFree);
-        } else {
-            products.addAll(dashboards.trialProductIds(accountId));
-            products.removeIf(productId -> !dashboard(productId).enabled());
-        }
-        tokens.forAccount(accountId).stream()
+        List<UpdateToken> held = tokens.forAccount(accountId).stream()
                 .filter(token -> token.kind() == kind)
-                .forEach(token -> products.add(token.productId()));
-        return products.stream()
-                .map(productId -> allowance(accountId, productId, kind))
+                .toList();
+        if (kind == KeyKind.UPDATE) {
+            Set<Integer> products = new TreeSet<>(access.entitledProductIds(accountId));
+            products.removeIf(kiosk::isFree);
+            held.forEach(token -> products.add(token.productId()));
+            return products.stream()
+                    .map(productId -> allowance(accountId, productId, null))
+                    .toList();
+        }
+        Set<Integer> products = new TreeSet<>(access.entitledProductIds(accountId));
+        products.addAll(trials.trialProductIds(accountId));
+        Set<Integer> types = new TreeSet<>();
+        keyTypes.enabledFor(List.copyOf(products)).forEach(type -> types.add(type.id()));
+        held.forEach(token -> types.add(token.keyTypeId()));
+        return types.stream()
+                .map(keyTypes::byId)
+                .flatMap(Optional::stream)
+                .map(type -> allowance(accountId, type.productId(), type))
                 .toList();
     }
 
-    private Allowance allowance(int accountId, int productId, KeyKind kind) {
-        boolean trial = kind == KeyKind.DASHBOARD && holding(accountId, productId) == Holding.TRIAL;
+    private Allowance allowance(int accountId, int productId, @Nullable ProductKeyType type) {
+        Integer typeId = type == null ? null : type.id();
+        boolean trial = type != null && holding(accountId, productId) == Holding.TRIAL;
         return new Allowance(
-                productId, kind, tokens.count(accountId, productId, kind), allowed(accountId, productId, kind), trial);
+                productId,
+                type == null ? KeyKind.UPDATE : KeyKind.SERVER,
+                typeId,
+                type == null ? null : type.name(),
+                type == null ? null : type.command(),
+                tokens.count(accountId, productId, typeId),
+                allowed(accountId, productId, typeId),
+                trial);
     }
 
     /**
-     * @return how many keys of the kind the account may hold for the product
+     * @param keyTypeId the key type of server keys, null for upgrade tokens
+     * @return how many keys of that sort the account may hold for the product
      */
-    public int allowed(int accountId, int productId, KeyKind kind) {
-        if (kind == KeyKind.UPDATE) return DEFAULT_ALLOWANCE + quota.granted(accountId, productId, kind);
+    public int allowed(int accountId, int productId, @Nullable Integer keyTypeId) {
+        if (keyTypeId == null) return DEFAULT_ALLOWANCE + quota.granted(accountId, productId, null);
+        Optional<ProductKeyType> type = keyType(productId, keyTypeId);
+        if (type.isEmpty()) return 0;
         return switch (holding(accountId, productId)) {
-            case BOUGHT -> dashboard(productId).allowance() + quota.granted(accountId, productId, kind);
-            case TRIAL -> TRIAL_ALLOWANCE;
+            case BOUGHT -> type.get().allowance() + quota.granted(accountId, productId, keyTypeId);
+            case TRIAL -> type.get().trialAllowance();
             case NONE -> 0;
         };
     }
 
     /**
-     * Asked live, on every use of a dashboard key, so losing access stops it and regaining access
-     * revives it.
+     * Asked live, on every use of a server key, so losing access stops it and regaining access revives
+     * it.
      *
      * @return what the account holds of the product
      */
     public Holding holding(int accountId, int productId) {
         if (!releaseTypes(accountId, productId).isEmpty()) return Holding.BOUGHT;
-        return dashboards.tookTrial(accountId, productId) ? Holding.TRIAL : Holding.NONE;
+        return trials.tookTrial(accountId, productId) ? Holding.TRIAL : Holding.NONE;
     }
 
     /**
-     * @return how the product hands out dashboard keys; switched off for a product that does not exist
+     * @return the key type, when it is one of the product's
      */
-    public DashboardSettings dashboard(int productId) {
-        return dashboards.settings(productId).orElse(DashboardSettings.DEFAULT);
-    }
-
-    /**
-     * Changes how a product of the guild hands out dashboard keys.
-     */
-    public Outcome<DashboardSettings> configureDashboard(long guildId, int productId, DashboardSettings settings) {
-        if (!settings.valid()) return Outcome.refused(Refusal.INVALID_REQUEST);
-        if (!dashboards.set(guildId, productId, settings)) return Outcome.refused(Refusal.NOT_FOUND);
-        return Outcome.of(settings);
+    public Optional<ProductKeyType> keyType(int productId, int keyTypeId) {
+        return keyTypes.byId(keyTypeId).filter(type -> type.productId() == productId);
     }
 
     /**
@@ -250,26 +274,30 @@ public class UpdateTokenService {
         return access.releaseTypes(accountId, productId);
     }
 
-    public Outcome<UpdateToken> create(int accountId, int productId, KeyKind kind, String name) {
+    /**
+     * @param keyTypeId the key type of a server key, null for an upgrade token
+     */
+    public Outcome<UpdateToken> create(int accountId, int productId, @Nullable Integer keyTypeId, String name) {
         Optional<String> cleaned = name(name);
         if (cleaned.isEmpty()) return Outcome.refused(Refusal.INVALID_NAME);
-        Refusal refusal = offered(accountId, productId, kind);
+        Refusal refusal = offered(accountId, productId, keyTypeId);
         if (refusal != null) return Outcome.refused(refusal);
-        if (tokens.count(accountId, productId, kind) >= allowed(accountId, productId, kind)) {
+        if (tokens.count(accountId, productId, keyTypeId) >= allowed(accountId, productId, keyTypeId)) {
             return Outcome.refused(Refusal.LIMIT_REACHED);
         }
-        return Outcome.of(tokens.create(kind, accountId, productId, cleaned.get(), generate(kind)));
+        KeyKind kind = keyTypeId == null ? KeyKind.UPDATE : KeyKind.SERVER;
+        return Outcome.of(tokens.create(accountId, productId, keyTypeId, cleaned.get(), generate(kind)));
     }
 
     /**
-     * @return why the account may not have keys of the kind for the product at all, or null when it may
+     * @return why the account may not have keys of the sort for the product at all, or null when it may
      */
-    private @Nullable Refusal offered(int accountId, int productId, KeyKind kind) {
-        if (kind == KeyKind.UPDATE) {
+    private @Nullable Refusal offered(int accountId, int productId, @Nullable Integer keyTypeId) {
+        if (keyTypeId == null) {
             if (kiosk.isFree(productId)) return Refusal.FREE;
             return releaseTypes(accountId, productId).isEmpty() ? Refusal.NO_ACCESS : null;
         }
-        if (!dashboard(productId).enabled()) return Refusal.NOT_OFFERED;
+        if (keyType(productId, keyTypeId).filter(ProductKeyType::enabled).isEmpty()) return Refusal.NOT_OFFERED;
         return holding(accountId, productId) == Holding.NONE ? Refusal.NO_ACCESS : null;
     }
 
@@ -301,7 +329,7 @@ public class UpdateTokenService {
      * here; a caller that goes on to deliver something calls {@link #trade} with the same token.
      *
      * <p>A token already traded in is refused as {@link Refusal#REUSED} and recorded on its entry. A
-     * dashboard key is not an upgrade token and is refused as {@link Refusal#UNKNOWN} unlooked-at.
+     * server key is not an upgrade token and is refused as {@link Refusal#UNKNOWN} unlooked-at.
      */
     public Outcome<UpdateToken> resolve(@Nullable String token) {
         if (!KeyKind.UPDATE.marks(token)) return Outcome.refused(Refusal.UNKNOWN);
@@ -335,21 +363,23 @@ public class UpdateTokenService {
     }
 
     /**
-     * Asks for more keys of a kind on a product than the account is allowed. An account that only took
-     * the trial cannot ask for more dashboard keys.
+     * Asks for more keys of a sort on a product than the account is allowed. An account that only took
+     * the trial cannot ask for more server keys.
+     *
+     * @param keyTypeId the key type of server keys, null for upgrade tokens
      */
     public Outcome<UpdateTokenRequest> requestMore(
-            int accountId, int productId, KeyKind kind, int amount, String reason) {
+            int accountId, int productId, @Nullable Integer keyTypeId, int amount, String reason) {
         String cleaned = reason == null ? "" : reason.strip();
         if (amount < 1 || amount > MAX_REQUEST || cleaned.isEmpty() || cleaned.length() > MAX_REASON_LENGTH) {
             return Outcome.refused(Refusal.INVALID_REQUEST);
         }
-        Refusal refusal = offered(accountId, productId, kind);
+        Refusal refusal = offered(accountId, productId, keyTypeId);
         if (refusal != null) return Outcome.refused(refusal);
-        if (kind == KeyKind.DASHBOARD && holding(accountId, productId) != Holding.BOUGHT) {
+        if (keyTypeId != null && holding(accountId, productId) != Holding.BOUGHT) {
             return Outcome.refused(Refusal.NO_ACCESS);
         }
-        return Outcome.of(quota.request(accountId, productId, kind, amount, cleaned), Refusal.PENDING);
+        return Outcome.of(quota.request(accountId, productId, keyTypeId, amount, cleaned), Refusal.PENDING);
     }
 
     /**
@@ -384,13 +414,14 @@ public class UpdateTokenService {
     }
 
     /**
-     * Sets how many keys of a kind an account may hold on a product of the guild beyond the default.
+     * Sets how many keys of a sort an account may hold on a product of the guild beyond the default.
      * Lowering it revokes nothing.
      *
-     * @return whether the product belongs to the guild
+     * @param keyTypeId the key type of server keys, null for upgrade tokens
+     * @return whether the product belongs to the guild and the key type to the product
      */
-    public boolean setGranted(long guildId, int accountId, int productId, KeyKind kind, int granted) {
-        return quota.setGranted(guildId, accountId, productId, kind, granted);
+    public boolean setGranted(long guildId, int accountId, int productId, @Nullable Integer keyTypeId, int granted) {
+        return quota.setGranted(guildId, accountId, productId, keyTypeId, granted);
     }
 
     /**

@@ -12,6 +12,8 @@ import java.time.Instant;
 /**
  * An account asking for more keys of one kind on a product than it is allowed.
  *
+ * @param keyTypeId   the product key type asked about, null for upgrade tokens
+ * @param keyTypeName its name
  * @param amount  how many more it asks for
  * @param account the username of the account, for whoever decides
  */
@@ -22,6 +24,8 @@ public record UpdateTokenRequest(
         int productId,
         String productName,
         KeyKind kind,
+        @Nullable Integer keyTypeId,
+        @Nullable String keyTypeName,
         int amount,
         String reason,
         Status status,

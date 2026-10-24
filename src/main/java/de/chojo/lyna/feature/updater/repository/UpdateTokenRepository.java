@@ -10,6 +10,7 @@ import de.chojo.lyna.feature.updater.entity.KeyKind;
 import de.chojo.lyna.feature.updater.entity.RetiredKey;
 import de.chojo.lyna.feature.updater.entity.UpdateToken;
 import de.chojo.sadu.mapper.wrapper.Row;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -21,44 +22,44 @@ import static de.chojo.sadu.queries.api.call.Call.call;
 import static de.chojo.sadu.queries.api.query.Query.query;
 
 /**
- * The keys accounts hand to their servers: upgrade tokens for updaters and dashboard keys for the
- * hosted dashboard.
+ * The keys accounts hand to their servers: upgrade tokens for updaters, and server keys of the key
+ * types products hand out.
  *
  * <p>A key is replaced by {@link #rotate}, and the old one is kept in {@code update_token_retired}, so
  * a copy presented later is recognised as a copy instead of being mistaken for a key nobody issued.
  *
- * <p>When a dashboard key is due for its successor and when it expires is worked out here, from the
- * product's settings, so every reader sees the same answer. A day there is 24 hours rather than a
+ * <p>When a server key is due for its successor and when it expires is worked out here, from its key
+ * type's settings, so every reader sees the same answer. A day there is 24 hours rather than a
  * calendar day, so a change of daylight saving time moves no key's schedule by an hour.
  */
 public class UpdateTokenRepository {
     private static final String SELECT = """
-            SELECT t.id, t.account_id, t.product_id, p.name AS product_name, t.kind, t.name, t.token, t.created_at,
-                   t.last_used_at, t.rotated_at, t.refreshed_at,
+            SELECT t.id, t.account_id, t.product_id, p.name AS product_name, t.kind, t.key_type_id, t.name, t.token,
+                   t.created_at, t.last_used_at, t.rotated_at, t.refreshed_at,
                    (SELECT max(r.reused_at) FROM update_token_retired r WHERE r.update_token_id = t.id) AS last_reuse_at,
-                   CASE WHEN t.kind = 'DASHBOARD'
-                        THEN coalesce(t.rotated_at, t.created_at) + p.dashboard_refresh_days * interval '24 hours'
-                   END AS refresh_at,
-                   CASE WHEN t.kind = 'DASHBOARD'
-                        THEN greatest(t.last_used_at, t.rotated_at, t.created_at)
-                             + p.dashboard_expiry_days * interval '24 hours'
-                   END AS expires_at
+                   coalesce(t.rotated_at, t.created_at) + k.refresh_days * interval '24 hours' AS refresh_at,
+                   greatest(t.last_used_at, t.rotated_at, t.created_at) + k.expiry_days * interval '24 hours'
+                       AS expires_at
             FROM update_token t
             JOIN product p ON p.id = t.product_id
+            LEFT JOIN product_key_type k ON k.id = t.key_type_id
             """;
 
     /**
+     * @param keyTypeId the key type of a server key, null for an upgrade token
      * @return the entry, as it was written
      */
-    public UpdateToken create(KeyKind kind, int accountId, int productId, String name, String token) {
+    public UpdateToken create(int accountId, int productId, @Nullable Integer keyTypeId, String name, String token) {
+        KeyKind kind = keyTypeId == null ? KeyKind.UPDATE : KeyKind.SERVER;
         int id = query("""
-                INSERT INTO update_token (account_id, product_id, kind, name, token, rotated_at)
-                VALUES (?, ?, ?, ?, ?, now())
+                INSERT INTO update_token (account_id, product_id, kind, key_type_id, name, token, rotated_at)
+                VALUES (?, ?, ?, ?, ?, ?, now())
                 RETURNING id
                 """)
                 .single(call().bind(accountId)
                         .bind(productId)
                         .bind(kind.name())
+                        .bind(keyTypeId)
                         .bind(name)
                         .bind(token))
                 .map(row -> row.getInt("id"))
@@ -94,11 +95,16 @@ public class UpdateTokenRepository {
                 .all();
     }
 
-    public int count(int accountId, int productId, KeyKind kind) {
+    /**
+     * @param keyTypeId the key type of server keys, null for upgrade tokens
+     * @return how many keys of that sort the account holds for the product
+     */
+    public int count(int accountId, int productId, @Nullable Integer keyTypeId) {
         return query("""
-                SELECT count(*) AS count FROM update_token WHERE account_id = ? AND product_id = ? AND kind = ?
+                SELECT count(*) AS count FROM update_token
+                WHERE account_id = ? AND product_id = ? AND coalesce(key_type_id, 0) = ?
                 """)
-                .single(call().bind(accountId).bind(productId).bind(kind.name()))
+                .single(call().bind(accountId).bind(productId).bind(keyTypeId == null ? 0 : keyTypeId))
                 .map(row -> row.getInt("count"))
                 .first()
                 .orElse(0);
@@ -149,8 +155,8 @@ public class UpdateTokenRepository {
     }
 
     /**
-     * Trades a key for its successor and records the trade. A dashboard key traded this way was
-     * refreshed, which is noted too.
+     * Trades a key for its successor and records the trade. A server key traded this way was refreshed,
+     * which is noted too.
      *
      * <p>One statement, conditional on the key still being current: two trades of the same key at the
      * same moment cannot both succeed, because the second finds it already replaced.
@@ -162,7 +168,7 @@ public class UpdateTokenRepository {
                 WITH updated AS (
                     UPDATE update_token
                     SET token = ?, last_used_at = now(), rotated_at = now(),
-                        refreshed_at = CASE WHEN kind = 'DASHBOARD' THEN now() ELSE refreshed_at END
+                        refreshed_at = CASE WHEN kind = 'SERVER' THEN now() ELSE refreshed_at END
                     WHERE token = ?
                     RETURNING id
                 ),
@@ -232,20 +238,19 @@ public class UpdateTokenRepository {
      */
     public List<HeldKey> inGuild(long guildId, KeyKind kind) {
         return query("""
-                SELECT t.id, t.account_id, t.product_id, p.name AS product_name, t.kind, t.name, t.created_at,
-                       t.last_used_at,
-                       CASE WHEN t.kind = 'DASHBOARD'
-                            THEN greatest(t.last_used_at, t.rotated_at, t.created_at)
-                                 + p.dashboard_expiry_days * interval '24 hours'
-                       END AS expires_at,
+                SELECT t.id, t.account_id, t.product_id, p.name AS product_name, t.kind, t.key_type_id,
+                       k.name AS key_type_name, t.name, t.created_at, t.last_used_at,
+                       greatest(t.last_used_at, t.rotated_at, t.created_at) + k.expiry_days * interval '24 hours'
+                           AS expires_at,
                        coalesce(CASE WHEN a.discriminator IS NULL THEN a.username
                                      ELSE a.username || '#' || a.discriminator END,
                                 'account ' || a.id) AS account
                 FROM update_token t
                 JOIN product p ON p.id = t.product_id
                 JOIN account a ON a.id = t.account_id
+                LEFT JOIN product_key_type k ON k.id = t.key_type_id
                 WHERE p.guild_id = ? AND t.kind = ?
-                ORDER BY p.name, account, t.name, t.id
+                ORDER BY p.name, k.name, account, t.name, t.id
                 """)
                 .single(call().bind(guildId).bind(kind.name()))
                 .map(row -> new HeldKey(
@@ -255,6 +260,8 @@ public class UpdateTokenRepository {
                         row.getInt("product_id"),
                         row.getString("product_name"),
                         KeyKind.valueOf(row.getString("kind")),
+                        (Integer) row.getObject("key_type_id"),
+                        row.getString("key_type_name"),
                         row.getString("name"),
                         toInstant(row.getTimestamp("created_at")),
                         toInstant(row.getTimestamp("last_used_at")),
@@ -284,6 +291,7 @@ public class UpdateTokenRepository {
                 row.getInt("product_id"),
                 row.getString("product_name"),
                 KeyKind.valueOf(row.getString("kind")),
+                (Integer) row.getObject("key_type_id"),
                 row.getString("name"),
                 row.getString("token"),
                 toInstant(row.getTimestamp("created_at")),

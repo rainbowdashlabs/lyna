@@ -21,6 +21,7 @@ import io.javalin.http.HttpStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -30,9 +31,9 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.put;
 
 /**
- * The account's server keys, upgrade tokens and dashboard keys alike: making, naming, reissuing and
- * revoking them, and asking for more. A body names the kind it means; one that names none means
- * upgrade tokens, which is all there was before dashboard keys.
+ * The account's server keys, upgrade tokens and the keys of products' key types alike: making, naming,
+ * reissuing and revoking them, and asking for more. A body names the key type it means; one that names
+ * none means upgrade tokens.
  *
  * <p>A refusal is answered with the name of its {@link UpdateTokenService.Refusal} as the body, so the
  * page can say it in its own words.
@@ -44,34 +45,46 @@ public class AccountUpdateTokens {
     private final ObjectMapper json = new ObjectMapper();
 
     /**
-     * @param used    keys of the kind the account holds for the product
-     * @param allowed how many it may hold
-     * @param pending whether a request for more is waiting
-     * @param trial   whether the account only took the product's trial, which allows one dashboard key
-     *                and no request for more
+     * @param keyTypeId   the key type of server keys, null for upgrade tokens
+     * @param keyTypeName its name
+     * @param command     how a key of the type is handed to a server, with {@code {key}} where it goes
+     * @param used        keys of the sort the account holds for the product
+     * @param allowed     how many it may hold
+     * @param pending     whether a request for more is waiting
+     * @param trial       whether the account only took the product's trial, which allows the type's trial
+     *                    allowance and no request for more
      */
     public record ProductAllowance(
-            int productId, String productName, KeyKind kind, int used, int allowed, boolean pending, boolean trial) {}
+            int productId,
+            String productName,
+            KeyKind kind,
+            @Nullable Integer keyTypeId,
+            @Nullable String keyTypeName,
+            @Nullable String command,
+            int used,
+            int allowed,
+            boolean pending,
+            boolean trial) {}
 
     public record Overview(
             List<UpdateToken> tokens, List<ProductAllowance> products, List<UpdateTokenRequest> requests) {}
 
     /**
-     * @param kind the kind of key to make, upgrade token when not named
+     * @param keyTypeId the key type of the server key to make, an upgrade token when not named
      */
     public record Create(
-            int productId, String name, @Nullable String kind) {}
+            int productId, String name, @Nullable Integer keyTypeId) {}
 
     public record Rename(String name) {}
 
     /**
-     * @param kind the kind of key to ask more of, upgrade tokens when not named
+     * @param keyTypeId the key type to ask more server keys of, upgrade tokens when not named
      */
     public record RequestMore(
             int productId,
             int amount,
             String reason,
-            @Nullable String kind) {}
+            @Nullable Integer keyTypeId) {}
 
     @Inject
     public AccountUpdateTokens(Auth auth, UpdateTokenService service, ProductLookup products) {
@@ -103,11 +116,14 @@ public class AccountUpdateTokens {
                         allowance.productId(),
                         products.byId(allowance.productId()).map(Product::name).orElse("?"),
                         allowance.kind(),
+                        allowance.keyTypeId(),
+                        allowance.keyTypeName(),
+                        allowance.command(),
                         allowance.used(),
                         allowance.allowed(),
                         requests.stream()
                                 .anyMatch(request -> request.productId() == allowance.productId()
-                                        && request.kind() == allowance.kind()
+                                        && Objects.equals(request.keyTypeId(), allowance.keyTypeId())
                                         && request.status() == UpdateTokenRequest.Status.PENDING),
                         allowance.trial()))
                 .toList();
@@ -122,14 +138,9 @@ public class AccountUpdateTokens {
             ctx.status(HttpStatus.BAD_REQUEST).result(UpdateTokenService.Refusal.INVALID_NAME.name());
             return;
         }
-        Optional<KeyKind> kind = KeyKind.parse(body.kind());
-        if (kind.isEmpty()) {
-            ctx.status(HttpStatus.BAD_REQUEST).result(UpdateTokenService.Refusal.INVALID_REQUEST.name());
-            return;
-        }
         answer(
                 ctx,
-                service.create(session.get().accountId(), body.productId(), kind.get(), body.name()),
+                service.create(session.get().accountId(), body.productId(), body.keyTypeId(), body.name()),
                 HttpStatus.CREATED);
     }
 
@@ -162,15 +173,14 @@ public class AccountUpdateTokens {
         Optional<JwtService.Verified> session = session(ctx);
         if (session.isEmpty()) return;
         RequestMore body = read(ctx, RequestMore.class);
-        Optional<KeyKind> kind = body == null ? Optional.empty() : KeyKind.parse(body.kind());
-        if (kind.isEmpty()) {
+        if (body == null) {
             ctx.status(HttpStatus.BAD_REQUEST).result(UpdateTokenService.Refusal.INVALID_REQUEST.name());
             return;
         }
         answer(
                 ctx,
                 service.requestMore(
-                        session.get().accountId(), body.productId(), kind.get(), body.amount(), body.reason()),
+                        session.get().accountId(), body.productId(), body.keyTypeId(), body.amount(), body.reason()),
                 HttpStatus.CREATED);
     }
 

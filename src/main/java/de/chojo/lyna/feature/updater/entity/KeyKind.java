@@ -20,8 +20,12 @@ import java.util.Optional;
 public enum KeyKind {
     /** An upgrade token, traded by an updater for a download and replaced on every trade. */
     UPDATE("lyu_"),
-    /** A dashboard key, with which a server proves itself to the hosted dashboard; replaced on refresh. */
-    DASHBOARD("lyd_");
+    /**
+     * A key of one of a product's {@link ProductKeyType key types}, with which a server proves itself to
+     * that product's gateway; replaced on refresh. The prefix is the one dashboard keys carried, so keys
+     * issued before key types existed stay valid.
+     */
+    SERVER("lyd_");
 
     private final String prefix;
 
