@@ -58,7 +58,7 @@ These fields are saved together when you click **Save**. If one of them is refus
 - **Icon address**: the address of an image to use as the icon. Leave it empty for none. See [Icon](#icon).
 - **Wiki URL**: shown on the product page and linked from the purchase mail.
 - **Review URL**: where the purchase mail asks a buyer to leave a review.
-- **UpdateButler id**: only for plugins built against the old UpdateButler. Leave it empty if the product never had one. See [Updaters](./updaters.md).
+- **UpdateButler id**: only for plugins built against the old UpdateButler. Leave it empty if the product never had one. See [Server keys](./updaters.md).
 - **Trial available**: whether people can take a trial.
 - **Free to everyone**: whether anyone can download the product without a license. When you change it, the form warns **This changes who may download it.**
 
@@ -70,6 +70,17 @@ Some rules the server checks when you save:
 - A new icon address must start with `http://` or `https://`, and Lyna checks that it answers with an image. An address that is already saved is not checked again.
 - An UpdateButler id is a positive number, and only one product can carry each id.
 - Add-ons are one level deep. A product that has add-ons cannot become an add-on, so **Belongs to** is locked for it. You also cannot pick an add-on as the parent.
+
+### Dashboard keys
+
+Whether the product hands out dashboard keys, with which servers connect to the hosted dashboard. Off for a new product.
+
+- **Hand out dashboard keys**: switches them on. Switching them off refuses every key at its next refresh or verification.
+- **Refresh every (days)**: how old a key gets before the server trades it for a new one. Default 7.
+- **Expire after unused (days)**: how long a key may go unused before it expires. Default 30.
+- **Keys per buyer**: how many keys a buyer may hold before asking for more. Default 10. An account that only took the trial always holds one.
+
+Click **Save dashboard keys**. See [Server keys](./updaters.md#dashboard-keys).
 
 ### Ko-fi shop items
 
