@@ -10,6 +10,7 @@ import com.google.inject.Inject;
 import de.chojo.lyna.auth.JwtService;
 import de.chojo.lyna.feature.product.entity.Product;
 import de.chojo.lyna.feature.product.repository.ProductLookup;
+import de.chojo.lyna.feature.updater.entity.KeyKind;
 import de.chojo.lyna.feature.updater.entity.UpdateToken;
 import de.chojo.lyna.feature.updater.entity.UpdateTokenRequest;
 import de.chojo.lyna.feature.updater.service.UpdateTokenService;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -28,7 +30,9 @@ import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.put;
 
 /**
- * The account's upgrade tokens: making, naming, reissuing and revoking them, and asking for more.
+ * The account's server keys, upgrade tokens and dashboard keys alike: making, naming, reissuing and
+ * revoking them, and asking for more. A body names the kind it means; one that names none means
+ * upgrade tokens, which is all there was before dashboard keys.
  *
  * <p>A refusal is answered with the name of its {@link UpdateTokenService.Refusal} as the body, so the
  * page can say it in its own words.
@@ -40,20 +44,34 @@ public class AccountUpdateTokens {
     private final ObjectMapper json = new ObjectMapper();
 
     /**
-     * @param used    tokens the account holds for the product
+     * @param used    keys of the kind the account holds for the product
      * @param allowed how many it may hold
      * @param pending whether a request for more is waiting
+     * @param trial   whether the account only took the product's trial, which allows one dashboard key
+     *                and no request for more
      */
-    public record ProductAllowance(int productId, String productName, int used, int allowed, boolean pending) {}
+    public record ProductAllowance(
+            int productId, String productName, KeyKind kind, int used, int allowed, boolean pending, boolean trial) {}
 
     public record Overview(
             List<UpdateToken> tokens, List<ProductAllowance> products, List<UpdateTokenRequest> requests) {}
 
-    public record Create(int productId, String name) {}
+    /**
+     * @param kind the kind of key to make, upgrade token when not named
+     */
+    public record Create(
+            int productId, String name, @Nullable String kind) {}
 
     public record Rename(String name) {}
 
-    public record RequestMore(int productId, int amount, String reason) {}
+    /**
+     * @param kind the kind of key to ask more of, upgrade tokens when not named
+     */
+    public record RequestMore(
+            int productId,
+            int amount,
+            String reason,
+            @Nullable String kind) {}
 
     @Inject
     public AccountUpdateTokens(Auth auth, UpdateTokenService service, ProductLookup products) {
@@ -79,15 +97,19 @@ public class AccountUpdateTokens {
         if (session.isEmpty()) return;
         int accountId = session.get().accountId();
         List<UpdateTokenRequest> requests = service.requests(accountId);
-        List<ProductAllowance> allowances = service.allowances(accountId).stream()
+        List<ProductAllowance> allowances = Stream.of(KeyKind.values())
+                .flatMap(kind -> service.allowances(accountId, kind).stream())
                 .map(allowance -> new ProductAllowance(
                         allowance.productId(),
                         products.byId(allowance.productId()).map(Product::name).orElse("?"),
+                        allowance.kind(),
                         allowance.used(),
                         allowance.allowed(),
                         requests.stream()
                                 .anyMatch(request -> request.productId() == allowance.productId()
-                                        && request.status() == UpdateTokenRequest.Status.PENDING)))
+                                        && request.kind() == allowance.kind()
+                                        && request.status() == UpdateTokenRequest.Status.PENDING),
+                        allowance.trial()))
                 .toList();
         ctx.json(new Overview(service.tokens(accountId), allowances, requests));
     }
@@ -100,7 +122,15 @@ public class AccountUpdateTokens {
             ctx.status(HttpStatus.BAD_REQUEST).result(UpdateTokenService.Refusal.INVALID_NAME.name());
             return;
         }
-        answer(ctx, service.create(session.get().accountId(), body.productId(), body.name()), HttpStatus.CREATED);
+        Optional<KeyKind> kind = KeyKind.parse(body.kind());
+        if (kind.isEmpty()) {
+            ctx.status(HttpStatus.BAD_REQUEST).result(UpdateTokenService.Refusal.INVALID_REQUEST.name());
+            return;
+        }
+        answer(
+                ctx,
+                service.create(session.get().accountId(), body.productId(), kind.get(), body.name()),
+                HttpStatus.CREATED);
     }
 
     private void rename(Context ctx) {
@@ -132,13 +162,15 @@ public class AccountUpdateTokens {
         Optional<JwtService.Verified> session = session(ctx);
         if (session.isEmpty()) return;
         RequestMore body = read(ctx, RequestMore.class);
-        if (body == null) {
+        Optional<KeyKind> kind = body == null ? Optional.empty() : KeyKind.parse(body.kind());
+        if (kind.isEmpty()) {
             ctx.status(HttpStatus.BAD_REQUEST).result(UpdateTokenService.Refusal.INVALID_REQUEST.name());
             return;
         }
         answer(
                 ctx,
-                service.requestMore(session.get().accountId(), body.productId(), body.amount(), body.reason()),
+                service.requestMore(
+                        session.get().accountId(), body.productId(), kind.get(), body.amount(), body.reason()),
                 HttpStatus.CREATED);
     }
 
@@ -149,7 +181,7 @@ public class AccountUpdateTokens {
         }
         HttpStatus status =
                 switch (outcome.refusal()) {
-                    case NO_ACCESS -> HttpStatus.FORBIDDEN;
+                    case NO_ACCESS, NOT_OFFERED -> HttpStatus.FORBIDDEN;
                     case NOT_FOUND -> HttpStatus.NOT_FOUND;
                     case LIMIT_REACHED, PENDING -> HttpStatus.CONFLICT;
                     default -> HttpStatus.BAD_REQUEST;

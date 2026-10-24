@@ -8,6 +8,7 @@ package de.chojo.lyna.configuration;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
+import de.chojo.lyna.configuration.elements.Dashboard;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.configuration.elements.Demo;
@@ -38,6 +39,7 @@ public class ConfigFile {
     private Downloads downloads = new Downloads();
     private DebugReports debugReports = new DebugReports();
     private Github github = new Github();
+    private Dashboard dashboard = new Dashboard();
 
     public BaseSettings baseSettings() {
         return baseSettings;
@@ -97,5 +99,9 @@ public class ConfigFile {
 
     public Github github() {
         return github;
+    }
+
+    public Dashboard dashboard() {
+        return dashboard;
     }
 }
