@@ -60,11 +60,11 @@ async function save() {
   isError.value = false
   try {
     await updateGuildSettings(guildId.value, data.value)
-    message.value = 'Saved.'
+    message.value = t('common.saved')
   } catch (e) {
     const err = e as {response?: {data?: string}}
     isError.value = true
-    message.value = typeof err.response?.data === 'string' ? err.response.data : 'Save failed.'
+    message.value = typeof err.response?.data === 'string' ? err.response.data : t('common.saveFailed')
   } finally {
     saving.value = false
   }
@@ -103,7 +103,7 @@ async function save() {
         {{ message }}
       </div>
       <PrimaryButton :disabled="saving" @click="save">
-        {{ saving ? 'Saving…' : 'Save' }}
+        {{ saving ? t('common.saving') : t('common.save') }}
       </PrimaryButton>
     </form>
   </div>

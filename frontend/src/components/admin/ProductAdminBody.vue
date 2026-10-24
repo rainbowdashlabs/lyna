@@ -24,6 +24,7 @@ defineEmits<{ changed: [], deleted: [] }>()
         @changed="$emit('changed')"
     />
     <ProductEditForm :key="product.id" :guild-id="guildId" :product="product" @saved="$emit('changed')"/>
+    <ProductDashboardKeys :key="`dashboard-${product.id}`" :guild-id="guildId" :product-id="product.id"/>
     <ProductKofiCodes :key="`kofi-${product.id}`" :guild-id="guildId" :product-id="product.id"/>
     <ProductDeleteZone :guild-id="guildId" :product="product" @deleted="$emit('deleted')"/>
   </div>

@@ -15,20 +15,19 @@ const blocks = defineModel<MailBlock[]>({required: true})
  * What an operator can add. Deliberately short: the mail is rendered into a fixed layout, and a
  * block nobody can style wrongly is a mail that arrives looking the way it was meant to.
  */
-const TYPES: {type: MailBlock['type']; label: string; make: () => MailBlock}[] = [
-    {type: 'heading', label: 'Heading', make: () => ({type: 'heading', text: 'Thank you'})},
-    {type: 'paragraph', label: 'Text', make: () => ({type: 'paragraph', text: 'Hi {{ name }},'})},
-    {type: 'key', label: 'Licence key', make: () => ({type: 'key', label: 'Your licence key'})},
-    {type: 'button', label: 'Button', make: () => ({type: 'button', label: 'Download', url: '{{ downloadUrl }}'})},
-    {type: 'list', label: 'List', make: () => ({type: 'list', items: ['First', 'Second']})},
-    {type: 'image', label: 'Image', make: () => ({type: 'image', url: '{{ productIcon }}', alt: '{{ product }}'})},
-    {type: 'links', label: 'Links', make: () => ({type: 'links'})},
-    {type: 'divider', label: 'Divider', make: () => ({type: 'divider'})},
+const TYPES: {type: MailBlock['type']; make: () => MailBlock}[] = [
+    {type: 'heading', make: () => ({type: 'heading', text: 'Thank you'})},
+    {type: 'paragraph', make: () => ({type: 'paragraph', text: 'Hi {{ name }},'})},
+    {type: 'key', make: () => ({type: 'key', label: 'Your licence key'})},
+    {type: 'button', make: () => ({type: 'button', label: 'Download', url: '{{ downloadUrl }}'})},
+    {type: 'list', make: () => ({type: 'list', items: ['First', 'Second']})},
+    {type: 'image', make: () => ({type: 'image', url: '{{ productIcon }}', alt: '{{ product }}'})},
+    {type: 'links', make: () => ({type: 'links'})},
+    {type: 'divider', make: () => ({type: 'divider'})},
 ]
 
-function labelFor(block: MailBlock): string {
-    return TYPES.find(entry => entry.type === block.type)?.label
-        ?? (block.type === 'raw' ? 'HTML, written before the editor' : block.type)
+function labelFor(type: string): string {
+    return t(`ui.mailBlockEditor.types.${type}`)
 }
 
 function add(make: () => MailBlock) {
@@ -55,7 +54,7 @@ function move(index: number, by: number) {
       <li v-for="(block, index) in blocks" :key="index">
         <NeutralContainer>
           <header class="mb-2 flex items-center justify-between gap-2">
-            <SectionLabel>{{ labelFor(block) }}</SectionLabel>
+            <SectionLabel>{{ labelFor(block.type) }}</SectionLabel>
             <div class="flex gap-1">
               <SecondaryButton :disabled="index === 0" compact @click="move(index, -1)">↑</SecondaryButton>
               <SecondaryButton :disabled="index === blocks.length - 1" compact @click="move(index, 1)">↓</SecondaryButton>
@@ -70,7 +69,7 @@ function move(index: number, by: number) {
 
     <div class="flex flex-wrap gap-2">
       <SecondaryButton v-for="entry in TYPES" :key="entry.type" compact @click="add(entry.make)">
-        Add {{ entry.label.toLowerCase() }}
+        {{ t('ui.mailBlockEditor.add', {block: labelFor(entry.type).toLowerCase()}) }}
       </SecondaryButton>
     </div>
   </div>

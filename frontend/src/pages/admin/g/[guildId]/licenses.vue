@@ -93,7 +93,7 @@ async function submitCreate() {
         {{ t('page.admin.g.guildId.licenses.licenses') }}
       </PageHeader>
       <PrimaryButton @click="showCreate = !showCreate; issuedKey = null">
-        {{ showCreate ? 'Cancel' : 'Issue license' }}
+        {{ showCreate ? t('common.cancel') : t('page.admin.g.guildId.licenses.issueLicense') }}
       </PrimaryButton>
     </header>
 
@@ -121,7 +121,7 @@ async function submitCreate() {
       </div>
       <div class="mt-3">
         <PrimaryButton :disabled="createBusy" @click="submitCreate">
-          {{ createBusy ? 'Issuing…' : 'Issue' }}
+          {{ createBusy ? t('page.admin.g.guildId.licenses.issuing') : t('page.admin.g.guildId.licenses.issue') }}
         </PrimaryButton>
       </div>
       <div

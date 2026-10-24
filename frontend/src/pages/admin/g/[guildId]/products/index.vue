@@ -92,7 +92,7 @@ async function submitCreate() {
         {{ t('page.admin.g.guildId.products.products') }}
       </PageHeader>
       <PrimaryButton @click="showCreate = !showCreate">
-        {{ showCreate ? 'Cancel' : 'New product' }}
+        {{ showCreate ? t('common.cancel') : t('page.admin.g.guildId.products.newProduct') }}
       </PrimaryButton>
     </header>
 
@@ -125,7 +125,7 @@ async function submitCreate() {
       </div>
       <div class="mt-3">
         <PrimaryButton :disabled="createBusy" @click="submitCreate">
-          {{ createBusy ? 'Creating…' : 'Create' }}
+          {{ createBusy ? t('common.creating') : t('common.create') }}
         </PrimaryButton>
       </div>
     </section>

@@ -32,7 +32,7 @@ onMounted(async () => {
   } catch (e) {
     const error = e as {response?: {status?: number}}
     errorMessage.value = error.response?.status === 404
-        ? 'Operator access required.'
+        ? t('common.operatorRequired')
         : 'Failed to load the operators.'
   } finally {
     loading.value = false
@@ -97,7 +97,7 @@ async function doRemove() {
               <TextInput v-model="newId" inputmode="numeric" placeholder="e.g. 128014201982911361"/>
             </LabelledField>
             <PrimaryButton :disabled="busy || !newId.trim()" @click="doAdd">
-              {{ busy ? 'Granting…' : 'Grant' }}
+              {{ busy ? t('page.admin.instance.operators.granting') : t('page.admin.instance.operators.grant') }}
             </PrimaryButton>
           </div>
           <MutedText v-if="actionError" class="mt-2 block text-error" size="sm">{{ actionError }}</MutedText>

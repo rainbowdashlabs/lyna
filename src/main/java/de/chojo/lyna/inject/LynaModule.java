@@ -31,6 +31,7 @@ import de.chojo.lyna.configuration.ConfigFile;
 import de.chojo.lyna.configuration.elements.Api;
 import de.chojo.lyna.configuration.elements.Auth;
 import de.chojo.lyna.configuration.elements.BaseSettings;
+import de.chojo.lyna.configuration.elements.Dashboard;
 import de.chojo.lyna.configuration.elements.Database;
 import de.chojo.lyna.configuration.elements.DebugReports;
 import de.chojo.lyna.configuration.elements.Demo;
@@ -111,8 +112,10 @@ import de.chojo.lyna.feature.timechannel.service.TimeChannelSchedule;
 import de.chojo.lyna.feature.trial.service.DisposableEmailDomains;
 import de.chojo.lyna.feature.trial.service.DisposableEmailRefresh;
 import de.chojo.lyna.feature.trial.service.WebTrialService;
+import de.chojo.lyna.feature.updater.repository.DashboardProductRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenQuotaRepository;
 import de.chojo.lyna.feature.updater.repository.UpdateTokenRepository;
+import de.chojo.lyna.feature.updater.service.DashboardKeyService;
 import de.chojo.lyna.feature.updater.service.UpdateTokenService;
 import de.chojo.lyna.gateway.Gateway;
 import de.chojo.lyna.gateway.JdaGateway;
@@ -131,6 +134,7 @@ import de.chojo.lyna.web.api.admin.AdminUpdateTokens;
 import de.chojo.lyna.web.api.admin.GuildAdminGuard;
 import de.chojo.lyna.web.api.theme.Theme;
 import de.chojo.lyna.web.api.v1.V1;
+import de.chojo.lyna.web.api.v1.dashboard.DashboardKeyApi;
 import de.chojo.lyna.web.api.v1.debug.DebugApi;
 import de.chojo.lyna.web.api.v1.demo.DemoApi;
 import de.chojo.lyna.web.api.v1.download.Download;
@@ -276,6 +280,12 @@ public class LynaModule extends AbstractModule {
         return config.github();
     }
 
+    @Provides
+    @Singleton
+    Dashboard dashboard(ConfigFile config) {
+        return config.dashboard();
+    }
+
     /**
      * The data-access objects.
      *
@@ -334,6 +344,7 @@ public class LynaModule extends AbstractModule {
         bind(Direct.class).in(Singleton.class);
         bind(Update.class).in(Singleton.class);
         bind(UpdateTokenExchange.class).in(Singleton.class);
+        bind(DashboardKeyApi.class).in(Singleton.class);
         bind(KoFiApi.class).in(Singleton.class);
         bind(Releases.class).in(Singleton.class);
         bind(Wizard.class).in(Singleton.class);
@@ -405,6 +416,8 @@ public class LynaModule extends AbstractModule {
         bind(UpdateTokenRepository.class).in(Singleton.class);
         bind(UpdateTokenQuotaRepository.class).in(Singleton.class);
         bind(UpdateTokenService.class).in(Singleton.class);
+        bind(DashboardProductRepository.class).in(Singleton.class);
+        bind(DashboardKeyService.class).in(Singleton.class);
         bind(PasswordHasher.class).in(Singleton.class);
     }
 

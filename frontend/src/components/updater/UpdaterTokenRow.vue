@@ -14,6 +14,8 @@ const {t} = useI18n()
 const props = defineProps<{
     token: UpdateToken
     marker: number
+    /** Whether the key is held on the strength of the product's trial alone. */
+    trial?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -28,6 +30,8 @@ const draft = ref('')
 const confirming = ref<'reissue' | 'revoke' | null>(null)
 
 const masked = computed(() => `${props.token.token.slice(0, 8)}${'•'.repeat(12)}`)
+const dashboard = computed(() => props.token.kind === 'DASHBOARD')
+const expired = computed(() => !!props.token.expiresAt && new Date(props.token.expiresAt).getTime() <= Date.now())
 
 function startEditing() {
   draft.value = props.token.name
@@ -44,7 +48,7 @@ async function copy() {
   await navigator.clipboard.writeText(props.token.token)
 }
 
-/** Reissuing and revoking both break the updater using the token, so each takes a second click. */
+/** Reissuing and revoking both cut off the server using the key, so each takes a second click. */
 function confirmOrAsk(action: 'reissue' | 'revoke') {
   if (confirming.value !== action) {
     confirming.value = action
@@ -63,7 +67,10 @@ function confirmOrAsk(action: 'reissue' | 'revoke') {
         <TextInput v-model="draft" :placeholder="t('ui.updaterTokenRow.name')" @keyup.enter="saveName"/>
         <SecondaryButton compact @click="saveName">{{ t('common.save') }}</SecondaryButton>
       </div>
-      <div v-else class="font-medium">{{ token.name }}</div>
+      <div v-else class="flex items-center gap-2 font-medium">
+        {{ token.name }}
+        <NeutralBadge v-if="trial">{{ t('common.trial') }}</NeutralBadge>
+      </div>
       <div class="flex flex-wrap items-center gap-2">
         <KeyBadge class="break-all">{{ shown ? token.token : masked }}</KeyBadge>
         <SecondaryButton compact @click="shown = !shown">
@@ -75,8 +82,15 @@ function confirmOrAsk(action: 'reissue' | 'revoke') {
         {{ t('ui.updaterTokenRow.created', {at: formatDateTime(token.createdAt)}) }} ·
         {{ token.lastUsedAt ? t('ui.updaterTokenRow.lastUsed', {at: formatDateTime(token.lastUsedAt)}) : t('ui.updaterTokenRow.neverUsed') }}
       </MutedText>
+      <MutedText v-if="dashboard && !expired" class="font-data block" size="xs">
+        {{ t('ui.updaterTokenRow.nextRefresh', {at: formatDateTime(token.refreshAt)}) }} ·
+        {{ t('ui.updaterTokenRow.expires', {at: formatDateTime(token.expiresAt)}) }}
+      </MutedText>
+      <MutedText v-if="expired" class="block text-error" size="xs">
+        {{ t('ui.updaterTokenRow.expired', {at: formatDateTime(token.expiresAt)}) }}
+      </MutedText>
       <MutedText v-if="token.lastReuseAt" class="block text-error" size="xs">
-        {{ t('ui.updaterTokenRow.reused', {at: formatDateTime(token.lastReuseAt)}) }}
+        {{ t(dashboard ? 'ui.updaterTokenRow.reusedKey' : 'ui.updaterTokenRow.reused', {at: formatDateTime(token.lastReuseAt)}) }}
       </MutedText>
     </div>
     <template #trailing>

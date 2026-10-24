@@ -24,7 +24,7 @@ onMounted(async () => {
     info.value = await getInstanceSystem()
   } catch (e) {
     const error = e as {response?: {status?: number}}
-    errorMessage.value = error.response?.status === 404 ? 'Operator access required.' : 'Failed to load system info.'
+    errorMessage.value = error.response?.status === 404 ? t('common.operatorRequired') : t('page.admin.instance.system.couldNotLoad')
   } finally {
     loading.value = false
   }
