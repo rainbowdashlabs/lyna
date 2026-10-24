@@ -5,8 +5,8 @@
  */
 import client from './client'
 
-/** What a server key is for: an updater's upgrade token, or a server's key to the hosted dashboard. */
-export type KeyKind = 'UPDATE' | 'DASHBOARD'
+/** What a server key is for: an updater's upgrade token, or a key of one of a product's key types. */
+export type KeyKind = 'UPDATE' | 'SERVER'
 
 /** One server the account runs a product on, and the key of one kind it holds now. */
 export interface UpdateToken {
@@ -14,8 +14,10 @@ export interface UpdateToken {
     productId: number
     productName: string
     kind: KeyKind
+    /** The product key type a server key is of; null for an upgrade token. */
+    keyTypeId: number | null
     name: string
-    /** Replaced on every trade of an upgrade token, and on every refresh that rotates a dashboard key. */
+    /** Replaced on every trade of an upgrade token, and on every refresh that rotates a server key. */
     token: string
     createdAt: string
     lastUsedAt: string | null
@@ -23,11 +25,11 @@ export interface UpdateToken {
     lastReuseAt: string | null
     /** When the current key was issued. */
     rotatedAt: string | null
-    /** When the server holding a dashboard key last asked to refresh it. */
+    /** When the server holding a server key last asked to refresh it. */
     refreshedAt: string | null
-    /** When a refresh will trade a dashboard key for its successor; null for an upgrade token. */
+    /** When a refresh will trade a server key for its successor; null for an upgrade token. */
     refreshAt: string | null
-    /** When a dashboard key expires unless it is used before; null for an upgrade token. */
+    /** When a server key expires unless it is used before; null for an upgrade token. */
     expiresAt: string | null
 }
 
@@ -35,11 +37,17 @@ export interface ProductAllowance {
     productId: number
     productName: string
     kind: KeyKind
+    /** The product key type of server keys; null for upgrade tokens. */
+    keyTypeId: number | null
+    /** What the key type is called. */
+    keyTypeName: string | null
+    /** How a key of the type is handed to a server, with {key} where it goes; null shows the bare key. */
+    command: string | null
     used: number
     allowed: number
     /** Whether a request for more is waiting on an admin. */
     pending: boolean
-    /** Whether the account only took the product's trial: one dashboard key, and no request for more. */
+    /** Whether the account only took the product's trial: the type's trial allowance, and no request for more. */
     trial: boolean
 }
 
@@ -52,6 +60,8 @@ export interface UpdateTokenRequest {
     productId: number
     productName: string
     kind: KeyKind
+    keyTypeId: number | null
+    keyTypeName: string | null
     amount: number
     reason: string
     status: RequestStatus
@@ -76,8 +86,9 @@ export async function updateTokenOverview(): Promise<UpdateTokenOverview> {
     return data
 }
 
-export async function createUpdateToken(productId: number, name: string, kind: KeyKind = 'UPDATE'): Promise<UpdateToken> {
-    const {data} = await client.post<UpdateToken>(BASE, {productId, name, kind})
+/** Makes an upgrade token, or a server key of the key type named. */
+export async function createUpdateToken(productId: number, name: string, keyTypeId: number | null = null): Promise<UpdateToken> {
+    const {data} = await client.post<UpdateToken>(BASE, {productId, name, keyTypeId})
     return data
 }
 
@@ -95,9 +106,10 @@ export async function revokeUpdateToken(id: number): Promise<void> {
     await client.delete(`${BASE}/${id}`)
 }
 
+/** Asks for more upgrade tokens, or more server keys of the key type named. */
 export async function requestMoreUpdateTokens(
-    productId: number, amount: number, reason: string, kind: KeyKind = 'UPDATE'): Promise<UpdateTokenRequest> {
-    const {data} = await client.post<UpdateTokenRequest>(`${BASE}/requests`, {productId, amount, reason, kind})
+    productId: number, amount: number, reason: string, keyTypeId: number | null = null): Promise<UpdateTokenRequest> {
+    const {data} = await client.post<UpdateTokenRequest>(`${BASE}/requests`, {productId, amount, reason, keyTypeId})
     return data
 }
 

@@ -30,7 +30,7 @@ watch(() => props.allowance.granted, next => {
   <GutterRow :aria-label="allowance.account" :marker="marker" role="listitem">
     <div class="flex flex-wrap items-center gap-2">
       <KeyBadge>{{ allowance.account }}</KeyBadge>
-      <span>{{ allowance.productName }}</span>
+      <span>{{ allowance.productName }}<template v-if="allowance.keyTypeName"> · {{ allowance.keyTypeName }}</template></span>
       <MutedText class="font-data" size="xs">{{ t('ui.raisedAllowanceRow.inUse', {used: allowance.used}) }}</MutedText>
     </div>
     <template #trailing>

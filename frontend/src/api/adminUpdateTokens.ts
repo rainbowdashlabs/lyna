@@ -13,6 +13,9 @@ export interface RaisedAllowance {
     productId: number
     productName: string
     kind: KeyKind
+    /** The product key type of server keys; null for upgrade tokens. */
+    keyTypeId: number | null
+    keyTypeName: string | null
     /** Keys allowed on top of the default. */
     granted: number
     /** Keys of that kind the account holds now. */
@@ -27,14 +30,22 @@ export interface HeldKey {
     productId: number
     productName: string
     kind: KeyKind
+    keyTypeId: number | null
+    keyTypeName: string | null
     name: string
     createdAt: string
     lastUsedAt: string | null
     expiresAt: string | null
 }
 
-/** How a product hands out dashboard keys. */
-export interface DashboardSettings {
+/** What an admin sets on a product key type. */
+export interface KeyTypeDraft {
+    /** How the type is named to its gateway: lower-case letters, digits and dashes. */
+    slug: string
+    /** What buyers see it called. */
+    name: string
+    /** How a key is handed to a server, with {key} where it goes; null shows the bare key. */
+    command: string | null
     enabled: boolean
     /** How old a key may get before a refresh trades it for its successor. */
     refreshDays: number
@@ -42,6 +53,15 @@ export interface DashboardSettings {
     expiryDays: number
     /** The keys a buyer may hold before asking for more. */
     allowance: number
+    /** The keys an account that only took the product's trial may hold. */
+    trialAllowance: number
+}
+
+/** A kind of server key a product hands out, with the secret its gateway authenticates with. */
+export interface KeyType extends KeyTypeDraft {
+    id: number
+    productId: number
+    gatewaySecret: string
 }
 
 const base = (guildId: string) => `/api/admin/g/${guildId}/update-tokens`
@@ -60,9 +80,10 @@ export async function raisedAllowances(guildId: string, kind: KeyKind = 'UPDATE'
     return data
 }
 
+/** Sets the upgrade tokens, or the server keys of the key type named, allowed on top of the default. */
 export async function setAllowance(
-    guildId: string, accountId: number, productId: number, granted: number, kind: KeyKind = 'UPDATE'): Promise<void> {
-    await client.put(`${base(guildId)}/allowances`, {accountId, productId, granted, kind})
+    guildId: string, accountId: number, productId: number, granted: number, keyTypeId: number | null = null): Promise<void> {
+    await client.put(`${base(guildId)}/allowances`, {accountId, productId, granted, keyTypeId})
 }
 
 export async function heldKeys(guildId: string, kind: KeyKind): Promise<HeldKey[]> {
@@ -70,16 +91,35 @@ export async function heldKeys(guildId: string, kind: KeyKind): Promise<HeldKey[
     return data
 }
 
-/** Revokes a dashboard key on one of the guild's products, whoever holds it. */
+/** Revokes a server key on one of the guild's products, whoever holds it. */
 export async function revokeHeldKey(guildId: string, id: number): Promise<void> {
     await client.delete(`${base(guildId)}/keys/${id}`)
 }
 
-export async function dashboardSettings(guildId: string, productId: number): Promise<DashboardSettings> {
-    const {data} = await client.get<DashboardSettings>(`/api/admin/g/${guildId}/products/${productId}/dashboard-keys`)
+const keyTypes = (guildId: string) => `/api/admin/g/${guildId}`
+
+export async function productKeyTypes(guildId: string, productId: number): Promise<KeyType[]> {
+    const {data} = await client.get<KeyType[]>(`${keyTypes(guildId)}/products/${productId}/key-types`)
     return data
 }
 
-export async function setDashboardSettings(guildId: string, productId: number, settings: DashboardSettings): Promise<void> {
-    await client.put(`/api/admin/g/${guildId}/products/${productId}/dashboard-keys`, settings)
+export async function createKeyType(guildId: string, productId: number, draft: KeyTypeDraft): Promise<KeyType> {
+    const {data} = await client.post<KeyType>(`${keyTypes(guildId)}/products/${productId}/key-types`, draft)
+    return data
+}
+
+export async function updateKeyType(guildId: string, id: number, draft: KeyTypeDraft): Promise<KeyType> {
+    const {data} = await client.put<KeyType>(`${keyTypes(guildId)}/key-types/${id}`, draft)
+    return data
+}
+
+/** Gives a key type a new gateway secret; the old one stops working at once. */
+export async function replaceKeyTypeSecret(guildId: string, id: number): Promise<KeyType> {
+    const {data} = await client.post<KeyType>(`${keyTypes(guildId)}/key-types/${id}/secret`)
+    return data
+}
+
+/** Ends a key type and every key of it. */
+export async function deleteKeyType(guildId: string, id: number): Promise<void> {
+    await client.delete(`${keyTypes(guildId)}/key-types/${id}`)
 }

@@ -5,83 +5,36 @@
  */
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted} from 'vue'
 import {
   createUpdateToken,
-  type KeyKind,
   type ProductAllowance,
-  refusalOf,
   reissueUpdateToken,
   renameUpdateToken,
   requestMoreUpdateTokens,
   revokeUpdateToken,
-  type UpdateToken,
-  type UpdateTokenOverview,
-  updateTokenOverview,
 } from '~/api/updateTokens'
+import {useKeyOverview} from '~/composables/useKeyOverview'
 import {usePageTitle} from '~/composables/usePageTitle'
 
+/**
+ * The account's upgrade tokens, and where the keys of products' own key types are: those are managed
+ * on each product's page, since what they are and how a server takes them is the product's to say.
+ */
 const {t} = useI18n()
 usePageTitle(t('layout.account.updaters'))
 
 definePageMeta({layout: 'account'})
 
-const data = ref<UpdateTokenOverview | null>(null)
-const loading = ref(true)
-const busy = ref(false)
-const errorMessage = ref<string | null>(null)
-/** A dashboard key just made, shown once with what to paste on the server. */
-const fresh = ref<UpdateToken | null>(null)
+const {data, loading, busy, errorMessage, load, act, keysOf, lastRequestOf} = useKeyOverview()
 
 const upgradeProducts = computed(() => data.value?.products.filter(product => product.kind === 'UPDATE') ?? [])
-const dashboardProducts = computed(() => data.value?.products.filter(product => product.kind === 'DASHBOARD') ?? [])
-
-async function load() {
-  try {
-    data.value = await updateTokenOverview()
-  } catch (e) {
-    errorMessage.value = (e as Error).message
-  } finally {
-    loading.value = false
-  }
-}
+const keyTypes = computed(() => data.value?.products.filter(product => product.kind === 'SERVER') ?? [])
 
 onMounted(load)
 
-/** Runs a change, says why if it was refused, and reloads either way so the counts stay true. */
-async function act<T>(change: () => Promise<T>): Promise<T | undefined> {
-  busy.value = true
-  errorMessage.value = null
-  try {
-    return await change()
-  } catch (e) {
-    const refusal = refusalOf(e)
-    errorMessage.value = refusal ? t(`page.account.updaters.refusal.${refusal}`) : (e as Error).message
-    return undefined
-  } finally {
-    busy.value = false
-    await load()
-  }
-}
-
-async function createDashboardKey(product: ProductAllowance, name: string) {
-  fresh.value = (await act(() => createUpdateToken(product.productId, name, 'DASHBOARD'))) ?? null
-}
-
-function keysOf(product: ProductAllowance): UpdateToken[] {
-  return data.value?.tokens.filter(token => token.productId === product.productId && token.kind === product.kind) ?? []
-}
-
-function lastRequestOf(product: ProductAllowance) {
-  return data.value?.requests.find(request => request.productId === product.productId && request.kind === product.kind) ?? null
-}
-
-function freshFor(product: ProductAllowance): UpdateToken | null {
-  return fresh.value?.productId === product.productId ? fresh.value : null
-}
-
-function request(product: ProductAllowance, kind: KeyKind, amount: number, reason: string) {
-  return act(() => requestMoreUpdateTokens(product.productId, amount, reason, kind))
+function request(product: ProductAllowance, amount: number, reason: string) {
+  return act(() => requestMoreUpdateTokens(product.productId, amount, reason))
 }
 </script>
 
@@ -108,34 +61,25 @@ function request(product: ProductAllowance, kind: KeyKind, amount: number, reaso
                 @create="name => act(() => createUpdateToken(product.productId, name))"
                 @reissue="token => act(() => reissueUpdateToken(token.id))"
                 @rename="(token, name) => act(() => renameUpdateToken(token.id, name))"
-                @request="(amount, reason) => request(product, 'UPDATE', amount, reason)"
+                @request="(amount, reason) => request(product, amount, reason)"
                 @revoke="token => act(() => revokeUpdateToken(token.id))"
             />
           </div>
           <EmptyHint v-else>{{ t('page.account.updaters.nothingToUpdate') }}</EmptyHint>
           <UpdaterHowTo/>
         </section>
-        <section :aria-label="t('page.account.updaters.dashboardKeys')" class="space-y-4">
-          <SectionHeader>{{ t('page.account.updaters.dashboardKeys') }}</SectionHeader>
-          <MutedText class="block" size="sm">{{ t('page.account.updaters.dashboardIntro') }}</MutedText>
-          <div v-if="dashboardProducts.length" class="space-y-8">
-            <DashboardProductSection
-                v-for="product in dashboardProducts"
-                :key="product.productId"
-                :busy="busy"
-                :fresh="freshFor(product)"
-                :keys="keysOf(product)"
-                :last-request="lastRequestOf(product)"
-                :product="product"
-                @create="name => createDashboardKey(product, name)"
-                @dismiss="fresh = null"
-                @reissue="key => act(() => reissueUpdateToken(key.id))"
-                @rename="(key, name) => act(() => renameUpdateToken(key.id, name))"
-                @request="(amount, reason) => request(product, 'DASHBOARD', amount, reason)"
-                @revoke="key => act(() => revokeUpdateToken(key.id))"
-            />
-          </div>
-          <EmptyHint v-else>{{ t('page.account.updaters.noDashboard') }}</EmptyHint>
+        <section :aria-label="t('page.account.updaters.productKeys')" class="space-y-4">
+          <SectionHeader>{{ t('page.account.updaters.productKeys') }}</SectionHeader>
+          <MutedText class="block" size="sm">{{ t('page.account.updaters.productKeysIntro') }}</MutedText>
+          <ul v-if="keyTypes.length" class="divide-y divide-border-light border border-border-light text-sm dark:divide-border-dark dark:border-border-dark" data-testid="product-key-links">
+            <li v-for="type in keyTypes" :key="type.keyTypeId ?? 0" class="flex items-center justify-between gap-3 p-3">
+              <NuxtLink :to="`/products/${type.productId}`" class="text-primary hover:underline">
+                {{ type.productName }} · {{ type.keyTypeName }}
+              </NuxtLink>
+              <MutedText class="font-data">{{ t('ui.serverKeyTypeSection.count', {used: type.used, allowed: type.allowed}) }}</MutedText>
+            </li>
+          </ul>
+          <EmptyHint v-else>{{ t('page.account.updaters.noProductKeys') }}</EmptyHint>
         </section>
       </div>
     </AsyncSection>
