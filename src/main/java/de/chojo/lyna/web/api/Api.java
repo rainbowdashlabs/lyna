@@ -11,6 +11,7 @@ import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.account.AccountLicenseActions;
 import de.chojo.lyna.web.api.account.AccountUpdateTokens;
 import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.admin.AdminBuiltByBit;
 import de.chojo.lyna.web.api.admin.AdminDiscord;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
 import de.chojo.lyna.web.api.admin.AdminLicenses;
@@ -34,6 +35,7 @@ public class Api {
     private final Account account;
     private final Theme theme;
     private final Admin admin;
+    private final AdminBuiltByBit adminBuiltByBit;
     private final AdminDiscord adminDiscord;
     private final AdminDownloads adminDownloads;
     private final AdminLicenses adminLicenses;
@@ -54,6 +56,7 @@ public class Api {
             Account account,
             Theme theme,
             Admin admin,
+            AdminBuiltByBit adminBuiltByBit,
             AdminDiscord adminDiscord,
             AdminDownloads adminDownloads,
             AdminLicenses adminLicenses,
@@ -68,6 +71,7 @@ public class Api {
         this.adminUpdateTokens = adminUpdateTokens;
         this.adminMailing = adminMailing;
         this.adminDiscord = adminDiscord;
+        this.adminBuiltByBit = adminBuiltByBit;
         this.adminDownloads = adminDownloads;
         this.adminLicenses = adminLicenses;
         this.configuration = configuration;
@@ -89,6 +93,7 @@ public class Api {
             theme.init();
             admin.init();
             path("admin/g/{guildId}", () -> {
+                adminBuiltByBit.init();
                 adminDiscord.init();
                 adminDownloads.init();
                 adminLicenses.init();

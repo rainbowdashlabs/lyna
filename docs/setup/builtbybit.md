@@ -59,7 +59,8 @@ contact the creator directly." instead of a key.
 ## 4. Connect resources to products
 
 Lyna only issues licenses for resources it knows. Set the BuiltByBit resource id, and the add-on id
-for an add-on, on the product in the admin area.
+for an add-on, on the [product's General tab](../admin/products.md#main-settings). The
+[BuiltByBit tab](../admin/builtbybit.md) lists every call BuiltByBit made and what came of it.
 
 ## Optional: the API
 

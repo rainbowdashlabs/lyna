@@ -128,6 +128,7 @@ import de.chojo.lyna.web.api.account.Account;
 import de.chojo.lyna.web.api.account.AccountLicenseActions;
 import de.chojo.lyna.web.api.account.AccountUpdateTokens;
 import de.chojo.lyna.web.api.admin.Admin;
+import de.chojo.lyna.web.api.admin.AdminBuiltByBit;
 import de.chojo.lyna.web.api.admin.AdminDiscord;
 import de.chojo.lyna.web.api.admin.AdminDownloads;
 import de.chojo.lyna.web.api.admin.AdminLicenses;
@@ -337,6 +338,7 @@ public class LynaModule extends AbstractModule {
         bind(AdminDownloads.class).in(Singleton.class);
         bind(AdminLicenses.class).in(Singleton.class);
         bind(AdminMailing.class).in(Singleton.class);
+        bind(AdminBuiltByBit.class).in(Singleton.class);
         bind(AdminTimeChannels.class).in(Singleton.class);
         bind(AdminUpdateTokens.class).in(Singleton.class);
         bind(AccountLicenseActions.class).in(Singleton.class);

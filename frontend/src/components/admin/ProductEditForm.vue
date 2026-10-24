@@ -19,6 +19,8 @@ const roleId = ref(props.product.roleId)
 const free = ref(props.product.free)
 const trial = ref(props.product.trial)
 const butlerId = ref(props.product.butlerId?.toString() ?? '')
+const builtbybitResourceId = ref(props.product.builtbybitResourceId?.toString() ?? '')
+const builtbybitAddonId = ref(props.product.builtbybitAddonId?.toString() ?? '')
 const wikiUrl = ref(props.product.wikiUrl ?? '')
 const reviewUrl = ref(props.product.reviewUrl ?? '')
 const parentId = ref<number | null>(props.product.parentId ?? null)
@@ -40,6 +42,11 @@ onMounted(async () => {
     guildProducts.value = []
   }
 })
+
+/** An id typed into a field, or nothing when the field was left empty. */
+function optionalId(value: string): number | null {
+  return value.trim() ? Number(value.trim()) : null
+}
 
 const busy = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -63,7 +70,9 @@ async function save() {
       free: free.value,
       trial: trial.value,
       iconUrl: iconUrl.value.trim() ? iconUrl.value.trim() : null,
-      butlerId: butlerId.value.trim() ? Number(butlerId.value.trim()) : null,
+      butlerId: optionalId(butlerId.value),
+      builtbybitResourceId: optionalId(builtbybitResourceId.value),
+      builtbybitAddonId: optionalId(builtbybitAddonId.value),
       wikiUrl: wikiUrl.value.trim() || null,
       reviewUrl: reviewUrl.value.trim() || null,
       parentId: parentId.value,
@@ -117,6 +126,15 @@ async function save() {
       <TextInput v-model="butlerId" inputmode="numeric" pattern="[0-9]*"/>
       <MutedText size="xs" tag="p">{{ t('ui.productEditForm.butlerIdHint') }}</MutedText>
     </LabelledField>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <LabelledField :label="t('ui.productEditForm.builtbybitResourceId')">
+        <TextInput v-model="builtbybitResourceId" data-testid="product-builtbybit-resource" inputmode="numeric" pattern="[0-9]*"/>
+      </LabelledField>
+      <LabelledField :label="t('ui.productEditForm.builtbybitAddonId')">
+        <TextInput v-model="builtbybitAddonId" data-testid="product-builtbybit-addon" inputmode="numeric" pattern="[0-9]*"/>
+      </LabelledField>
+    </div>
+    <MutedText size="xs" tag="p">{{ t('ui.productEditForm.builtbybitHint') }}</MutedText>
     <label class="flex items-center gap-2 text-sm">
       <CheckboxInput v-model="trial"/> {{ t('ui.productEditForm.trialAvailable') }}
     </label>

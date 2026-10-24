@@ -13,6 +13,8 @@ import de.chojo.lyna.configuration.Conf;
 import de.chojo.lyna.configuration.elements.discord.OAuth;
 import de.chojo.lyna.feature.account.repository.AccountRepository;
 import de.chojo.lyna.feature.account.service.PurchaseCollectionService;
+import de.chojo.lyna.feature.builtbybit.entity.BuiltByBitListing;
+import de.chojo.lyna.feature.builtbybit.repository.BuiltByBitProductRepository;
 import de.chojo.lyna.feature.butler.repository.ButlerApplicationRepository;
 import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.guild.Guilds;
@@ -88,6 +90,7 @@ public class Admin {
     private final KoFiProductRepository kofi;
     private final KioskProductRepository kioskProducts;
     private final ButlerApplicationRepository butlerApplications;
+    private final BuiltByBitProductRepository builtByBitListings;
     private final ReleaseWebhookRepository releaseWebhooks;
     private final GithubWebhookService releasePosts;
     private final ProductRepository productRepository;
@@ -118,6 +121,7 @@ public class Admin {
             ProductIconService productIcons,
             ProductIconRepository uploadedIcons,
             ButlerApplicationRepository butlerApplications,
+            BuiltByBitProductRepository builtByBitListings,
             ReleaseWebhookRepository releaseWebhooks,
             GithubWebhookService releasePosts,
             ProductRepository productRepository,
@@ -133,6 +137,7 @@ public class Admin {
         this.productIcons = productIcons;
         this.uploadedIcons = uploadedIcons;
         this.butlerApplications = butlerApplications;
+        this.builtByBitListings = builtByBitListings;
         this.releaseWebhooks = releaseWebhooks;
         this.releasePosts = releasePosts;
         this.oauthConfig = oauthConfig;
@@ -223,10 +228,11 @@ public class Admin {
         if (resolved == null) return;
         var kioskById = kioskProducts.all().stream().collect(Collectors.toMap(KioskProduct::id, product -> product));
         Map<Integer, Integer> butlerIds = butlerApplications.butlerIdsByProduct();
+        Map<Integer, BuiltByBitListing> listings = builtByBitListings.listingsByProduct();
         Set<Integer> uploaded = uploadedIcons.withIcon();
         List<Product> products = resolved.guild().products().all();
         ctx.json(products.stream()
-                .map(p -> summary(p, kioskById, butlerIds, uploaded))
+                .map(p -> summary(p, kioskById, butlerIds, listings, uploaded))
                 .toList());
     }
 
@@ -234,9 +240,14 @@ public class Admin {
      * @param uploaded the products with an uploaded icon, which is shown in preference to an address
      */
     private ProductSummary summary(
-            Product p, Map<Integer, KioskProduct> kioskById, Map<Integer, Integer> butlerIds, Set<Integer> uploaded) {
+            Product p,
+            Map<Integer, KioskProduct> kioskById,
+            Map<Integer, Integer> butlerIds,
+            Map<Integer, BuiltByBitListing> listings,
+            Set<Integer> uploaded) {
         ProductLinks links = productLinks.get(p.id());
         KioskProduct kiosk = kioskById.get(p.id());
+        BuiltByBitListing listing = listings.get(p.id());
         return new ProductSummary(
                 p.id(),
                 p.name(),
@@ -248,6 +259,8 @@ public class Admin {
                 kiosk == null ? null : kiosk.iconUrl(),
                 kioskById.containsKey(p.id()) ? kioskById.get(p.id()).description() : null,
                 butlerIds.get(p.id()),
+                listing == null ? null : listing.resourceId(),
+                listing == null || !listing.isAddon() ? null : listing.addonId(),
                 kioskById.containsKey(p.id()) && kioskById.get(p.id()).pageReadme(),
                 links.wikiUrl(),
                 links.reviewUrl(),
@@ -357,6 +370,23 @@ public class Admin {
             ctx.status(HttpStatus.CONFLICT).result("Another product already carries that UpdateButler id");
             return;
         }
+        if ((body.builtbybitResourceId() != null && body.builtbybitResourceId() <= 0)
+                || (body.builtbybitAddonId() != null && body.builtbybitAddonId() <= 0)) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("A BuiltByBit id is a positive number");
+            return;
+        }
+        if (body.builtbybitResourceId() == null && body.builtbybitAddonId() != null) {
+            ctx.status(HttpStatus.BAD_REQUEST).result("A BuiltByBit add-on needs the resource it belongs to");
+            return;
+        }
+        Optional<BuiltByBitListing> listing = Optional.ofNullable(body.builtbybitResourceId())
+                .map(resource -> new BuiltByBitListing(
+                        resource,
+                        body.builtbybitAddonId() == null ? BuiltByBitListing.NO_ADDON : body.builtbybitAddonId()));
+        if (listing.isPresent() && builtByBitListings.takenByAnother(listing.get(), product.id())) {
+            ctx.status(HttpStatus.CONFLICT).result("Another product is already sold as that BuiltByBit listing");
+            return;
+        }
         String parentRefusal = parentRefusal(productFamily.check(product.id(), body.parentId()));
         if (parentRefusal != null) {
             ctx.status(HttpStatus.BAD_REQUEST).result(parentRefusal);
@@ -383,6 +413,8 @@ public class Admin {
         } else {
             butlerApplications.assign(product.id(), body.butlerId());
         }
+        listing.ifPresentOrElse(
+                sold -> builtByBitListings.assign(product.id(), sold), () -> builtByBitListings.clear(product.id()));
         productLinks.set(product.id(), links);
         productFamily.parent(product.id(), body.parentId());
         kioskProducts.iconUrl(product.id(), iconUrl);
@@ -702,6 +734,8 @@ public class Admin {
                         null,
                         null,
                         null,
+                        null,
+                        null,
                         false,
                         null,
                         null,
@@ -888,6 +922,8 @@ public class Admin {
                         Long.toString(p.role()),
                         p.free(),
                         p.trial(),
+                        null,
+                        null,
                         null,
                         null,
                         null,
@@ -1170,6 +1206,8 @@ public class Admin {
             String iconAddress,
             String description,
             Integer butlerId,
+            Long builtbybitResourceId,
+            Long builtbybitAddonId,
             boolean pageReadme,
             String wikiUrl,
             String reviewUrl,
@@ -1214,6 +1252,8 @@ public class Admin {
     /**
      * @param roleId   the Discord role, as text because a role id does not fit a JavaScript number
      * @param parentId the product this one becomes an add-on of, or null to make it stand on its own
+     * @param builtbybitResourceId the BuiltByBit resource it is sold as, or null when it is not sold there
+     * @param builtbybitAddonId    the add-on of that resource it is sold as, or null for the resource itself
      */
     public record ProductEdit(
             String name,
@@ -1224,6 +1264,8 @@ public class Admin {
             String description,
             String iconUrl,
             Integer butlerId,
+            Long builtbybitResourceId,
+            Long builtbybitAddonId,
             String wikiUrl,
             String reviewUrl,
             Integer parentId) {}

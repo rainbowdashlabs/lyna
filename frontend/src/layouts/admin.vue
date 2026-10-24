@@ -53,6 +53,7 @@ const sections = computed<Tab[]>(() => {
     {to: `${base}/registrations`, label: t('layout.admin.registrations')},
     {to: `${base}/trial`, label: t('layout.admin.trial')},
     {to: `${base}/kofi`, label: t('layout.admin.kofi')},
+    {to: `${base}/builtbybit`, label: t('layout.admin.builtbybit')},
     {to: `${base}/mailing`, label: t('layout.admin.mailing')},
     {to: `${base}/time-channels`, label: t('layout.admin.timeChannels')},
     {to: `${base}/settings`, label: t('layout.admin.settings')},
