@@ -63,7 +63,7 @@ services:
       context: ..
       dockerfile: docker/backend.Dockerfile
     networks:
-      - lyna
+      - e2e
     depends_on:
       postgres_e2e:
         condition: service_started
@@ -123,7 +123,7 @@ services:
   nexus_e2e:
     image: python:3.15-alpine
     networks:
-      lyna:
+      e2e:
         aliases:
           - nexus-e2e
     depends_on:
@@ -140,7 +140,7 @@ services:
   seed_e2e:
     image: postgres:17
     networks:
-      - lyna
+      - e2e
     depends_on:
       - app_e2e
     volumes:
@@ -166,7 +166,7 @@ services:
     restart: "no"
   postgres_e2e:
     networks:
-      - lyna
+      - e2e
     image: postgres:17
     profiles:
       - e2e
@@ -197,6 +197,7 @@ networks:
   lyna:
     name: lyna
     external: false
+  e2e:
 
 volumes:
   lyna_e2e_data:
