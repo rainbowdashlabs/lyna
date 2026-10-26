@@ -24,7 +24,7 @@ dependencyResolutionManagement {
             library("guice", "com.google.inject:guice:7.0.0")
             library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.3.1")
 
-            library("ocular", "dev.chojo:ocular:2.3.1")
+            library("ocular", "dev.chojo:ocular:2.4.1")
             version("jackson", "3.2.4")
             library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
             bundle("config", listOf("ocular", "jackson-yaml"))
@@ -49,7 +49,7 @@ dependencyResolutionManagement {
             library("junit-platform", "org.junit.platform:junit-platform-launcher:6.1.3")
             bundle("junit", listOf("junit-jupiter", "junit-params"))
             library("mockito", "org.mockito:mockito-core:5.+")
-            library("greenmail", "com.icegreen:greenmail:2.1.14")
+            library("greenmail", "com.icegreen:greenmail:2.1.15")
 
             version("testcontainers", "2.0.5")
             library("testcontainers-core", "org.testcontainers", "testcontainers").versionRef("testcontainers")
