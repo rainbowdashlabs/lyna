@@ -25,6 +25,7 @@ import de.chojo.lyna.feature.account.service.DiscordConnectionService;
 import de.chojo.lyna.feature.account.service.UsernameService;
 import de.chojo.lyna.feature.download.entity.DownloadLogEntry;
 import de.chojo.lyna.feature.download.repository.DownloadLogRepository;
+import de.chojo.lyna.feature.download.service.DownloadAccessService;
 import de.chojo.lyna.feature.instance.entity.InstanceSettings;
 import de.chojo.lyna.feature.instance.repository.InstanceSettingsRepository;
 import de.chojo.lyna.feature.instance.service.AppearancePolicy;
@@ -48,6 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -79,6 +81,7 @@ public class Account {
     private final JwtService jwtService;
     private final DiscordConnectionService discordConnections;
     private final ProductFamilyViews families;
+    private final DownloadAccessService access;
     private final ObjectMapper json = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Inject
@@ -101,9 +104,11 @@ public class Account {
             JwtService jwtService,
             DiscordConnectionService discordConnections,
             AccountRoleSync roleSync,
-            ProductFamilyViews families) {
+            ProductFamilyViews families,
+            DownloadAccessService access) {
         this.roleSync = roleSync;
         this.families = families;
+        this.access = access;
         this.auth = auth;
         this.accountService = accountService;
         this.usernameService = usernameService;
@@ -500,6 +505,10 @@ public class Account {
                         .toList(),
                 licenses.shared(accountId).stream()
                         .map(license -> toView(license, catalogue))
+                        .toList(),
+                access.releaseTypesByRoles(accountId).entrySet().stream()
+                        .filter(entry -> catalogue.containsKey(entry.getKey()))
+                        .map(entry -> toRoleView(catalogue.get(entry.getKey()), entry.getValue(), catalogue))
                         .toList()));
     }
 
@@ -753,6 +762,20 @@ public class Account {
     }
 
     /**
+     * @param catalogue every product by id, to name the one the product is an add-on of
+     */
+    private static RoleAccessView toRoleView(
+            KioskProduct product, Set<String> releaseTypes, Map<Integer, KioskProduct> catalogue) {
+        KioskProduct parent = product.parentId() == null ? null : catalogue.get(product.parentId());
+        return new RoleAccessView(
+                product.id(),
+                product.name(),
+                List.copyOf(releaseTypes),
+                product.parentId(),
+                parent == null ? null : parent.name());
+    }
+
+    /**
      * @param verified whether a link sent to it was followed. Everything an address is good for hangs
      *                 off this.
      */
@@ -807,7 +830,19 @@ public class Account {
             Integer parentId,
             String parentName) {}
 
-    public record LicenseList(List<LicenseView> owned, List<LicenseView> shared) {}
+    /**
+     * A product the account may download because of a Discord role it wears rather than a licence.
+     *
+     * @param parentId   the product this product is an add-on of, or null
+     * @param parentName that product's name, or null
+     */
+    public record RoleAccessView(
+            int productId, String productName, List<String> releaseTypes, Integer parentId, String parentName) {}
+
+    /**
+     * @param byRole the products roles open, whether or not a licence opens them as well
+     */
+    public record LicenseList(List<LicenseView> owned, List<LicenseView> shared, List<RoleAccessView> byRole) {}
 
     /**
      * @param addons the add-ons of the licence's product, each saying whether this account has it

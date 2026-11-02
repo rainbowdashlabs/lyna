@@ -6,7 +6,7 @@
 <script lang="ts" setup>
 import {useI18n} from 'vue-i18n'
 import {computed, onMounted, ref} from 'vue'
-import {listLicenses, type LicenseList, type LicenseView} from '~/api/account'
+import {listLicenses, type LicenseList, type RoleAccessView} from '~/api/account'
 import {usePageTitle} from '~/composables/usePageTitle'
 import {productFamilies} from '~/util/productFamilies'
 
@@ -31,22 +31,29 @@ async function load() {
   }
 }
 
-onMounted(load)
-
 const tabs = computed(() => [
   {key: 'owned', label: `Owned (${data.value?.owned.length ?? 0})`},
   {key: 'shared', label: `Shared with me (${data.value?.shared.length ?? 0})`},
+  ...(data.value?.byRole.length ? [{key: 'role', label: `Via role (${data.value.byRole.length})`}] : []),
 ])
 
-function matching(licenses: LicenseView[]): LicenseView[] {
+onMounted(async () => {
+  await load()
+  if (data.value && !data.value.owned.length && !data.value.shared.length && data.value.byRole.length) tab.value = 'role'
+})
+
+function matching<T extends {productName: string}>(entries: T[]): T[] {
   const term = search.value.trim().toLowerCase()
-  if (!term) return licenses
-  return licenses.filter(license => license.productName.toLowerCase().includes(term))
+  if (!term) return entries
+  return entries.filter(entry => entry.productName.toLowerCase().includes(term))
 }
 
 const shown = computed(() => matching(tab.value === 'owned' ? data.value?.owned ?? [] : data.value?.shared ?? []))
 const families = computed(() => productFamilies(shown.value, license => license.productId, license => license.parentId))
-const anyLicenses = computed(() => (data.value?.owned.length ?? 0) + (data.value?.shared.length ?? 0) > 0)
+const roleFamilies = computed(() => productFamilies(
+    matching<RoleAccessView>(data.value?.byRole ?? []), access => access.productId, access => access.parentId))
+const anyLicenses = computed(() =>
+    (data.value?.owned.length ?? 0) + (data.value?.shared.length ?? 0) + (data.value?.byRole.length ?? 0) > 0)
 </script>
 
 <template>
@@ -59,7 +66,16 @@ const anyLicenses = computed(() => (data.value?.owned.length ?? 0) + (data.value
       <div v-if="data">
         <TabBar v-model="tab" :tabs="tabs" class="mb-4"/>
         <SearchInput v-if="anyLicenses" v-model="search" class="mb-4" :placeholder="t('page.account.licenses.searchByProduct')"/>
-        <div v-if="shown.length" class="space-y-2">
+        <div v-if="tab === 'role'" class="space-y-2">
+          <template v-for="family in roleFamilies" :key="family.productId">
+            <RoleAccessRow v-for="access in family.heads" :key="access.productId" :access="access"/>
+            <RoleAccessRow v-for="access in family.addons" :key="access.productId" :access="access" addon/>
+          </template>
+          <EmptyHint v-if="!roleFamilies.length">
+            {{ search ? t('page.account.licenses.noLicenseMatchesThatName') : t('page.account.licenses.noRoleAccess') }}
+          </EmptyHint>
+        </div>
+        <div v-else-if="shown.length" class="space-y-2">
           <template v-for="family in families" :key="family.productId">
             <LicenseRow v-for="license in family.heads" :key="license.id" :license="license"/>
             <NuxtLink

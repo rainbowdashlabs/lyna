@@ -104,7 +104,8 @@ jobs:
           path: frontend/frontend-build.tar.gz
 
   test-frontend-e2e:
-    runs-on: ubuntu-latest
+    # TODO move back to ubuntu-latest once Playwright supports chromium on Ubuntu 26.04
+    runs-on: ubuntu-24.04
     name: Verify Frontend End-to-End
     needs: [ build-frontend ]
     timeout-minutes: 30

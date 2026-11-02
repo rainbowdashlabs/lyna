@@ -141,7 +141,8 @@
         "youDonTOwnAnyLicenses": "You don't own any licenses yet. Browse the",
         "storefront": "storefront",
         "noOneHasSharedALicense": "No one has shared a license with you.",
-        "searchByProduct": "Search by product…"
+        "searchByProduct": "Search by product…",
+        "noRoleAccess": "None of your Discord roles opens a product."
       },
       "security": {
         "security": "Security",
@@ -576,6 +577,10 @@
       "shareByUsernameOrByEmail": "Share by username, or by email address. Somebody with no Discord account still gets downloads, but not the server roles the license grants.",
       "granted": "granted",
       "withdraw": "Withdraw"
+    },
+    "roleAccessRow": {
+      "viaRole": "Via your Discord role",
+      "keysAndUpdates": "Keys and updates →"
     },
     "licenseUpdaterLink": {
       "directLinkUpdaters": "Automatic updates",
