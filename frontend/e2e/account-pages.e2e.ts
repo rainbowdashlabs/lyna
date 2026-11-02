@@ -3,8 +3,10 @@
  *
  *     Copyright (C) RainbowDashLabs and Contributor
  */
-import {expect, test} from '@playwright/test'
+import {expect, test} from './fixtures/session'
 import {signUp} from './fixtures/auth'
+import {createProduct, deleteProduct, GUILD, OPERATOR, uniqueName} from './fixtures/admin'
+import {sql} from './fixtures/database'
 
 /**
  * The self-service pages as a fresh account sees them. A new account is linked to no Discord id and
@@ -29,6 +31,27 @@ test.describe('The licenses page', () => {
         await page.getByRole('button', {name: /Shared with me/}).click()
 
         await expect(page.getByText(/No one has shared a license with you/)).toBeVisible()
+    })
+
+    test('lists a product a Discord role opens and leads to its keys', async ({page, signedIn}) => {
+        const operator = await signedIn(OPERATOR)
+        const account = await signUp(page, 'licenses-role')
+        const name = uniqueName('Role product')
+        const productId = await createProduct(operator, name)
+        const roleId = 900000000000000000n + BigInt(productId)
+        sql(`INSERT INTO role_access (product_id, role_id, release_type) VALUES (${productId}, ${roleId}, 'STABLE')`)
+        sql(`INSERT INTO account_role (account_id, guild_id, role_id, source)
+             SELECT account_id, ${GUILD}, ${roleId}, 'DISCORD' FROM account_email WHERE email = '${account.email}'`)
+
+        await page.goto('/account/licenses')
+
+        await expect(page.getByRole('button', {name: 'Via role (1)'})).toBeVisible()
+        await expect(page.getByRole('link', {name})).toHaveAttribute('href', `/products/${productId}`)
+        await expect(page.getByText('STABLE')).toBeVisible()
+        await page.getByRole('link', {name: /Keys and updates/}).click()
+        await expect(page).toHaveURL(/\/account\/updaters$/)
+        await expect(page.getByRole('region', {name})).toBeVisible()
+        await deleteProduct(operator, productId, name)
     })
 
     test('a license nobody holds is not shown to the curious', async ({page}) => {

@@ -12,7 +12,12 @@ import de.chojo.lyna.feature.download.entity.ReleaseType;
 import de.chojo.lyna.feature.product.repository.ProductRepository;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * What a Lyna account may download, by the same rule the bot applies to a member.
@@ -44,6 +49,23 @@ public class DownloadAccessService {
                 .map(ReleaseType::name)
                 .forEach(types::add);
         return Set.copyOf(types);
+    }
+
+    /**
+     * @return the release types each product opens to the account through the roles it wears alone, by
+     *     product id, as the names the RELEASE_TYPE enum uses
+     */
+    public Map<Integer, Set<String>> releaseTypesByRoles(int accountId) {
+        List<Long> worn = roles.roles(accountId);
+        Map<Integer, Set<String>> access = new TreeMap<>();
+        for (int productId : products.productsByRoles(worn)) {
+            access.put(
+                    productId,
+                    products.accessByRoles(productId, worn).stream()
+                            .map(ReleaseType::name)
+                            .collect(Collectors.toCollection(TreeSet::new)));
+        }
+        return access;
     }
 
     /**

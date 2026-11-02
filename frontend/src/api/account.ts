@@ -158,9 +158,21 @@ export interface LicenseView {
     parentName: string | null
 }
 
+/** A product the account may download because of a Discord role it wears rather than a licence. */
+export interface RoleAccessView {
+    productId: number
+    productName: string
+    releaseTypes: string[]
+    /** The product this one is an add-on of, or null. */
+    parentId: number | null
+    parentName: string | null
+}
+
 export interface LicenseList {
     owned: LicenseView[]
     shared: LicenseView[]
+    /** The products roles open, whether or not a licence opens them as well. */
+    byRole: RoleAccessView[]
 }
 
 export interface ShareeView {
