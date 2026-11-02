@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -103,5 +104,14 @@ class DownloadAccessServiceTest extends RepositoryTestBase {
         assertEquals(Set.of(licensed), access.entitledProductIds(account));
         assertEquals(Set.of("STABLE"), access.releaseTypes(account, licensed));
         assertEquals(Set.of(), access.releaseTypes(account, roleOnly));
+        assertEquals(Map.of(), access.releaseTypesByRoles(account));
+    }
+
+    @Test
+    @DisplayName("What roles open is listed by product, leaving out what only a licence carries")
+    void releaseTypesByRolesOnly() {
+        wearing(ROLE);
+
+        assertEquals(Map.of(roleOnly, Set.of("STABLE"), licensed, Set.of("DEV")), access.releaseTypesByRoles(account));
     }
 }
