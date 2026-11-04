@@ -57,7 +57,7 @@ dependencies {
     // icons
     implementation(libs.bundles.images)
     implementation("org.eclipse.angus", "angus-mail", "2.0.5")
-    implementation("org.jsoup", "jsoup", "1.23.2")
+    implementation("org.jsoup", "jsoup", "1.24.1")
 
 
     // Logging
