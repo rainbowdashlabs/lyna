@@ -12,7 +12,7 @@ dependencyResolutionManagement {
         create("libs") {
             // misc
             library("jetbrains-annotations", "org.jetbrains:annotations:26.1.0")
-            version("sadu", "2.4.1")
+            version("sadu", "2.4.2")
             library("sadu-queries", "de.chojo.sadu", "sadu-queries").versionRef("sadu")
             library("sadu-updater", "de.chojo.sadu", "sadu-updater").versionRef("sadu")
             library("sadu-postgresql", "de.chojo.sadu", "sadu-postgresql").versionRef("sadu")
@@ -25,7 +25,7 @@ dependencyResolutionManagement {
             library("caffeine", "com.github.ben-manes.caffeine:caffeine:3.3.1")
 
             library("ocular", "dev.chojo:ocular:2.4.1")
-            version("jackson", "3.2.4")
+            version("jackson", "3.3.0")
             library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
             bundle("config", listOf("ocular", "jackson-yaml"))
 
