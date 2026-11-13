@@ -29,7 +29,7 @@ dependencyResolutionManagement {
             library("jackson-yaml", "tools.jackson.dataformat", "jackson-dataformat-yaml").versionRef("jackson")
             bundle("config", listOf("ocular", "jackson-yaml"))
 
-            library("pebble", "io.pebbletemplates:pebble:4.1.2")
+            library("pebble", "io.pebbletemplates:pebble:4.1.3")
             library("thumbnailator", "net.coobird:thumbnailator:0.4.21")
             library("imageio-webp", "com.twelvemonkeys.imageio:imageio-webp:3.15.3")
             bundle("images", listOf("thumbnailator", "imageio-webp"))
