@@ -58,7 +58,7 @@ dependencyResolutionManagement {
             bundle("testcontainers", listOf("testcontainers-core", "testcontainers-junit", "testcontainers-postgres"))
 
             // plugins
-            plugin("spotless", "com.diffplug.spotless").version("8.11.0")
+            plugin("spotless", "com.diffplug.spotless").version("8.12.0")
         }
     }
 }
