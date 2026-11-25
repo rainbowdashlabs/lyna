@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
     //discord
-    implementation("de.chojo", "cjda-util", "2.15.0+jda-6.3.0") {
+    implementation("de.chojo", "cjda-util", "3.0.0") {
         exclude(group = "club.minnced", module = "opus-java")
     }
 
@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.bundles.sadu)
 
     // Download api
-    implementation("de.chojo", "nexus-api-wrapper", "1.0.5")
+    implementation("de.chojo", "nexus-api-wrapper", "2.0.0")
 
     val openapi = "7.3.0"
 

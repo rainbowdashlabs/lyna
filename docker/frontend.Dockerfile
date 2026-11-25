@@ -1,4 +1,4 @@
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 
 WORKDIR /build
 
@@ -8,7 +8,7 @@ RUN npm ci
 COPY frontend/ .
 RUN NODE_OPTIONS="--max-old-space-size=8192" npm run build
 
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 WORKDIR /app
 COPY --from=build /build/.output ./
